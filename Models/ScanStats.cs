@@ -71,26 +71,50 @@ public class ScanStats : ObservableObject
     public long LogicalBytesIndexed
     {
         get => _logicalBytesIndexed;
-        set => SetProperty(ref _logicalBytesIndexed, value);
+        set
+        {
+            if (SetProperty(ref _logicalBytesIndexed, value))
+            {
+                OnPropertyChanged(nameof(FormattedLogicalBytes));
+            }
+        }
     }
 
     // Timing and Speed
     public TimeSpan Elapsed
     {
         get => _elapsed;
-        set => SetProperty(ref _elapsed, value);
+        set
+        {
+            if (SetProperty(ref _elapsed, value))
+            {
+                OnPropertyChanged(nameof(FormattedElapsed));
+            }
+        }
     }
 
     public double FilesPerSecond
     {
         get => _filesPerSecond;
-        set => SetProperty(ref _filesPerSecond, value);
+        set
+        {
+            if (SetProperty(ref _filesPerSecond, value))
+            {
+                OnPropertyChanged(nameof(FormattedFilesPerSecond));
+            }
+        }
     }
 
     public double BytesPerSecond
     {
         get => _bytesPerSecond;
-        set => SetProperty(ref _bytesPerSecond, value);
+        set
+        {
+            if (SetProperty(ref _bytesPerSecond, value))
+            {
+                OnPropertyChanged(nameof(FormattedBytesPerSecond));
+            }
+        }
     }
 
     public string CurrentDirectory

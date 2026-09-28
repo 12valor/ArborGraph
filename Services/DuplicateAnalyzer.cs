@@ -13,16 +13,18 @@ public class DuplicateAnalyzer
         _dbService = dbService;
     }
 
-    public async Task<List<DuplicateGroup>> FindDuplicatesAsync(
+    public Task<List<DuplicateGroup>> FindDuplicatesAsync(
         long minSize = 1024,
         int maxCandidates = 500,
         IProgress<string>? statusProgress = null,
         CancellationToken cancellationToken = default)
     {
-        var confirmedDuplicates = new List<DuplicateGroup>();
+        return Task.Run(async () =>
+        {
+            var confirmedDuplicates = new List<DuplicateGroup>();
 
-        // Step 1: Find size collisions in SQLite
-        statusProgress?.Report("Step 1/3: Querying size collisions from SQLite index...");
+            // Step 1: Find size collisions in SQLite
+            statusProgress?.Report("Step 1/3: Querying size collisions from SQLite index...");
         var candidates = _dbService.GetDuplicateSizeCandidates(minCount: 2, minSize: minSize, limit: maxCandidates);
 
         if (candidates.Count == 0)
@@ -107,7 +109,8 @@ public class DuplicateAnalyzer
 
         statusProgress?.Report($"Analysis complete. Found {confirmedDuplicates.Count} confirmed duplicate groups.");
         return confirmedDuplicates;
-    }
+    }, cancellationToken);
+}
 
     private static async Task<string?> ComputePartialHashAsync(string path, long size)
     {

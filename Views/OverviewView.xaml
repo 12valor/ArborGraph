@@ -173,7 +173,11 @@
 
                 <ListBox Grid.Row="1" ItemsSource="{Binding RecentDirectories}"
                          Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
-                         FontFamily="Consolas" FontSize="11" Foreground="#7EE787" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                         FontFamily="Consolas" FontSize="11" Foreground="#7EE787"
+                         VirtualizingStackPanel.IsVirtualizing="True"
+                         VirtualizingStackPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis"/>

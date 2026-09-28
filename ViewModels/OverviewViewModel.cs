@@ -101,9 +101,15 @@ public class OverviewViewModel : ObservableObject
         OnPropertyChanged(nameof(FormattedFreeDrive));
     }
 
+    private DateTime _lastRecentDirTime = DateTime.MinValue;
+
     public void AddRecentDirectory(string dir)
     {
-        if (RecentDirectories.Count >= 100)
+        if (string.IsNullOrWhiteSpace(dir)) return;
+        if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 150) return;
+        _lastRecentDirTime = DateTime.UtcNow;
+
+        if (RecentDirectories.Count >= 50)
         {
             RecentDirectories.RemoveAt(0);
         }

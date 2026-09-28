@@ -55,13 +55,15 @@ public class ScannerService
     public IReadOnlyCollection<(string Path, string Reason)> SkippedDirectories => _skippedDirs;
     public IReadOnlyCollection<(string Path, string Reason)> SkippedFiles => _skippedFiles;
 
-    public async Task<ScanStats> ScanDrivesAsync(
+    public Task<ScanStats> ScanDrivesAsync(
         IReadOnlyList<string> roots,
         IProgress<ScanProgressReport>? progress,
         CancellationToken cancellationToken)
     {
-        // Reset counters
-        Interlocked.Exchange(ref _directoriesVisited, 0);
+        return Task.Run(async () =>
+        {
+            // Reset counters
+            Interlocked.Exchange(ref _directoriesVisited, 0);
         Interlocked.Exchange(ref _directoriesProcessed, 0);
         Interlocked.Exchange(ref _directoriesSkipped, 0);
         Interlocked.Exchange(ref _filesDiscovered, 0);
@@ -321,11 +323,8 @@ public class ScannerService
             Elapsed = finalStats.Elapsed,
             FilesPerSecond = finalStats.FilesPerSecond,
             BytesPerSecond = finalStats.BytesPerSecond,
-            CurrentDirectory = finalStats.CurrentDirectory,
-            State = finalStats.State
+            return finalStats;
         });
-
-        return finalStats;
     }
 
     private void EmitProgress(

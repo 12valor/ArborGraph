@@ -584,6 +584,370 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public List<ScanHistoryItem> GetScanHistory(int limit = 50)
+    {
+        lock (_lock)
+        {
+            var list = new List<ScanHistoryItem>();
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, scan_start, scan_finish, roots, directories_visited, directories_processed,
+                           directories_skipped, files_discovered, files_indexed, files_skipped,
+                           logical_bytes_indexed, scan_status
+                    FROM scan_metadata
+                    ORDER BY id ASC;
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                long prevBytes = 0;
+                bool isFirst = true;
+
+                while (reader.Read())
+                {
+                    long startSec = reader.IsDBNull(1) ? 0 : (long)reader.GetDouble(1);
+                    long finishSec = reader.IsDBNull(2) ? 0 : (long)reader.GetDouble(2);
+                    long bytes = reader.IsDBNull(10) ? 0 : reader.GetInt64(10);
+
+                    long growth = isFirst ? 0 : (bytes - prevBytes);
+                    prevBytes = bytes;
+                    isFirst = false;
+
+                    list.Add(new ScanHistoryItem
+                    {
+                        Id = reader.GetInt64(0),
+                        StartTime = DateTimeOffset.FromUnixTimeSeconds(startSec).UtcDateTime,
+                        FinishTime = DateTimeOffset.FromUnixTimeSeconds(finishSec).UtcDateTime,
+                        Roots = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                        DirectoriesVisited = reader.IsDBNull(4) ? 0 : reader.GetInt64(4),
+                        DirectoriesProcessed = reader.IsDBNull(5) ? 0 : reader.GetInt64(5),
+                        DirectoriesSkipped = reader.IsDBNull(6) ? 0 : reader.GetInt64(6),
+                        FilesDiscovered = reader.IsDBNull(7) ? 0 : reader.GetInt64(7),
+                        FilesIndexed = reader.IsDBNull(8) ? 0 : reader.GetInt64(8),
+                        FilesSkipped = reader.IsDBNull(9) ? 0 : reader.GetInt64(9),
+                        LogicalBytesIndexed = bytes,
+                        ScanStatus = reader.IsDBNull(11) ? "Completed" : reader.GetString(11),
+                        GrowthBytes = growth
+                    });
+                }
+
+                if (list.Count > limit)
+                {
+                    list = list.TakeLast(limit).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetScanHistory error: {ex.Message}");
+            }
+
+            return list;
+        }
+    }
+
+    public List<FileAgeBucket> GetFileAgeBreakdown()
+    {
+        lock (_lock)
+        {
+            var buckets = new List<FileAgeBucket>();
+            try
+            {
+                EnsureOpen();
+                double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                double d7 = now - (7 * 86400.0);
+                double d30 = now - (30 * 86400.0);
+                double d90 = now - (90 * 86400.0);
+                double d365 = now - (365 * 86400.0);
+
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT 
+                        SUM(CASE WHEN modified_time >= $d7 THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d7 THEN size ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d30 AND modified_time < $d7 THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d30 AND modified_time < $d7 THEN size ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d90 AND modified_time < $d30 THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d90 AND modified_time < $d30 THEN size ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d365 AND modified_time < $d90 THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN modified_time >= $d365 AND modified_time < $d90 THEN size ELSE 0 END),
+                        SUM(CASE WHEN modified_time < $d365 THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN modified_time < $d365 THEN size ELSE 0 END)
+                    FROM files;
+                ";
+                cmd.Parameters.AddWithValue("$d7", d7);
+                cmd.Parameters.AddWithValue("$d30", d30);
+                cmd.Parameters.AddWithValue("$d90", d90);
+                cmd.Parameters.AddWithValue("$d365", d365);
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    long c7 = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                    long s7 = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                    long c30 = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
+                    long s30 = reader.IsDBNull(3) ? 0 : reader.GetInt64(3);
+                    long c90 = reader.IsDBNull(4) ? 0 : reader.GetInt64(4);
+                    long s90 = reader.IsDBNull(5) ? 0 : reader.GetInt64(5);
+                    long c365 = reader.IsDBNull(6) ? 0 : reader.GetInt64(6);
+                    long s365 = reader.IsDBNull(7) ? 0 : reader.GetInt64(7);
+                    long cArch = reader.IsDBNull(8) ? 0 : reader.GetInt64(8);
+                    long sArch = reader.IsDBNull(9) ? 0 : reader.GetInt64(9);
+
+                    long totalBytes = s7 + s30 + s90 + s365 + sArch;
+                    double totalDbl = Math.Max(1L, totalBytes);
+
+                    buckets.Add(new FileAgeBucket { Name = "< 7 Days", Description = "Active & Recent", Count = c7, TotalBytes = s7, PercentageOfTotal = (double)s7 / totalDbl * 100.0 });
+                    buckets.Add(new FileAgeBucket { Name = "7–30 Days", Description = "Past Month", Count = c30, TotalBytes = s30, PercentageOfTotal = (double)s30 / totalDbl * 100.0 });
+                    buckets.Add(new FileAgeBucket { Name = "30–90 Days", Description = "Past Quarter", Count = c90, TotalBytes = s90, PercentageOfTotal = (double)s90 / totalDbl * 100.0 });
+                    buckets.Add(new FileAgeBucket { Name = "90–365 Days", Description = "Past Year", Count = c365, TotalBytes = s365, PercentageOfTotal = (double)s365 / totalDbl * 100.0 });
+                    buckets.Add(new FileAgeBucket { Name = "1 Year+", Description = "Archival / Dormant", Count = cArch, TotalBytes = sArch, PercentageOfTotal = (double)sArch / totalDbl * 100.0 });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetFileAgeBreakdown error: {ex.Message}");
+            }
+
+            return buckets;
+        }
+    }
+
+    public (int CandidateGroups, long CandidateFiles, long PotentialWastedBytes) GetDuplicateOverview()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT COUNT(*), SUM(cnt), SUM((cnt - 1) * size)
+                    FROM (
+                        SELECT size, COUNT(id) as cnt
+                        FROM files
+                        WHERE size >= 1024
+                        GROUP BY size
+                        HAVING cnt >= 2
+                    );
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    int groups = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                    long files = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                    long wasted = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
+                    return (groups, files, wasted);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetDuplicateOverview error: {ex.Message}");
+            }
+
+            return (0, 0, 0);
+        }
+    }
+
+    public (long FileCount, long TotalBytes) GetAdobeCacheAndTempStats()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT COUNT(id), SUM(size)
+                    FROM files
+                    WHERE path LIKE '%Photoshop%Temp%' 
+                       OR path LIKE '%Adobe%AutoRecover%'
+                       OR path LIKE '%Adobe%Media Cache%'
+                       OR path LIKE '%Adobe%CameraRaw%'
+                       OR path LIKE '%Photoshop%Scratch%'
+                       OR (extension IN ('.tmp', '.dmp') AND (path LIKE '%Adobe%' OR path LIKE '%Photoshop%'));
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    long count = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                    long bytes = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                    return (count, bytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetAdobeCacheAndTempStats error: {ex.Message}");
+            }
+
+            return (0, 0);
+        }
+    }
+
+    public (List<ReclaimableItem> Items, long TotalReclaimableBytes) GetReclaimableStorageBreakdown()
+    {
+        lock (_lock)
+        {
+            var list = new List<ReclaimableItem>();
+            long total = 0;
+            try
+            {
+                EnsureOpen();
+
+                // 1. Old files (180+ days)
+                double cutoff180 = DateTimeOffset.UtcNow.AddDays(-180).ToUnixTimeSeconds();
+                using (var cmd = _connection!.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT COUNT(id), SUM(size) FROM files WHERE modified_time <= $cutoff AND size > 0;";
+                    cmd.Parameters.AddWithValue("$cutoff", cutoff180);
+                    using var reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        long c = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                        long b = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                        list.Add(new ReclaimableItem
+                        {
+                            Category = "Dormant Files (180d+)",
+                            Description = "Files not modified in over 6 months",
+                            Bytes = b,
+                            FileCount = c,
+                            ActionHint = "Review in Old Files tab for archival"
+                        });
+                        total += b;
+                    }
+                }
+
+                // 2. Potential Duplicates (Exact size matches)
+                var dup = GetDuplicateOverview();
+                if (dup.PotentialWastedBytes > 0)
+                {
+                    list.Add(new ReclaimableItem
+                    {
+                        Category = "Duplicate Redundancy",
+                        Description = $"{dup.CandidateGroups:N0} collision groups sharing identical size",
+                        Bytes = dup.PotentialWastedBytes,
+                        FileCount = dup.CandidateFiles,
+                        ActionHint = "Verify cryptographically in Duplicates tab"
+                    });
+                    total += dup.PotentialWastedBytes;
+                }
+
+                // 3. Adobe Cache & Scratch Files
+                var adobe = GetAdobeCacheAndTempStats();
+                if (adobe.TotalBytes > 0)
+                {
+                    list.Add(new ReclaimableItem
+                    {
+                        Category = "Adobe & Photoshop Cache / Temp",
+                        Description = "AutoRecover snapshots, media cache, and scratch files",
+                        Bytes = adobe.TotalBytes,
+                        FileCount = adobe.FileCount,
+                        ActionHint = "Inspect Photoshop Intelligence tab"
+                    });
+                    total += adobe.TotalBytes;
+                }
+
+                // 4. General Temporary & Log files
+                using (var cmd = _connection!.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT COUNT(id), SUM(size)
+                        FROM files
+                        WHERE extension IN ('.tmp', '.log', '.bak', '.old', '.dmp', '.chk', '.wbk')
+                           OR name LIKE 'temp_%'
+                           OR name LIKE 'cache_%';
+                    ";
+                    using var reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        long c = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                        long b = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                        if (b > 0)
+                        {
+                            list.Add(new ReclaimableItem
+                            {
+                                Category = "Temporary, Log & Backup Files",
+                                Description = "Transient files with .tmp, .log, .bak, .old extensions",
+                                Bytes = b,
+                                FileCount = c,
+                                ActionHint = "Filter in Largest Files tab"
+                            });
+                            total += b;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetReclaimableStorageBreakdown error: {ex.Message}");
+            }
+
+            return (list, total);
+        }
+    }
+
+    public List<FileRecord> GetLargestPhotoshopFiles(int limit = 5)
+    {
+        lock (_lock)
+        {
+            var list = new List<FileRecord>();
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE LOWER(extension) IN ('.psd', '.psb', '.pdd')
+                    ORDER BY size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$limit", limit);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetLargestPhotoshopFiles error: {ex.Message}");
+            }
+
+            return list;
+        }
+    }
+
+    public (long TotalFiles, long TotalBytes) GetTotalIndexedStorage()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(id), SUM(size) FROM files;";
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    long count = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                    long bytes = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                    return (count, bytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetTotalIndexedStorage error: {ex.Message}");
+            }
+
+            return (0, 0);
+        }
+    }
+
     public bool CheckIntegrity()
     {
         lock (_lock)

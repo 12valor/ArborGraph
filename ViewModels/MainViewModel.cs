@@ -33,6 +33,7 @@ public class MainViewModel : ObservableObject
         _duplicateAnalyzer = new DuplicateAnalyzer(_dbService);
 
         OverviewVM = new OverviewViewModel(_dbService, _diskService);
+        AnalyticsVM = new AnalyticsViewModel(_dbService, _diskService, _fileActionService);
         LargestFilesVM = new LargestFilesViewModel(_dbService, _fileActionService);
         LargestFoldersVM = new LargestFoldersViewModel(_dbService, _fileActionService);
         FileTypesVM = new FileTypesViewModel(_dbService);
@@ -50,6 +51,7 @@ public class MainViewModel : ObservableObject
     }
 
     public OverviewViewModel OverviewVM { get; }
+    public AnalyticsViewModel AnalyticsVM { get; }
     public LargestFilesViewModel LargestFilesVM { get; }
     public LargestFoldersViewModel LargestFoldersVM { get; }
     public FileTypesViewModel FileTypesVM { get; }
@@ -99,6 +101,7 @@ public class MainViewModel : ObservableObject
         CurrentTab = tabName;
         CurrentView = tabName switch
         {
+            "Analytics" => AnalyticsVM,
             "LargestFiles" => LargestFilesVM,
             "LargestFolders" => LargestFoldersVM,
             "FileTypes" => FileTypesVM,
@@ -122,6 +125,9 @@ public class MainViewModel : ObservableObject
         {
             switch (tabName)
             {
+                case "Analytics":
+                    AnalyticsVM.RefreshData();
+                    break;
                 case "LargestFiles":
                     LargestFilesVM.RefreshData();
                     break;
@@ -274,6 +280,7 @@ public class MainViewModel : ObservableObject
 
     private void RefreshAllViews()
     {
+        try { AnalyticsVM.RefreshData(); } catch { }
         try { LargestFilesVM.RefreshData(); } catch { }
         try { LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed); } catch { }
         try { FileTypesVM.RefreshData(); } catch { }

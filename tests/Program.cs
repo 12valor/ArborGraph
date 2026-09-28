@@ -156,6 +156,38 @@ public class Program
             Assert(dbService.CheckIntegrity(), "Database corrupted after cancellation!");
             Console.WriteLine("  ✓ Safe cancellation verified: clean termination without database corruption.");
 
+            // 8. Test Analytics Engine & Metrics
+            Console.WriteLine("\n[TEST 7] Testing Analytics Engine & Metrics...");
+            // Re-run scan to populate data and metadata for analytics testing
+            await scanner.ScanDrivesAsync(new[] { testRoot }, null, CancellationToken.None);
+
+            var history = dbService.GetScanHistory();
+            Assert(history.Count >= 2, $"Expected at least 2 scan history records, got {history.Count}");
+            Console.WriteLine($"  Scan History Count: {history.Count} (Latest indexed: {history[^1].FormattedBytes})");
+
+            var ageBuckets = dbService.GetFileAgeBreakdown();
+            Assert(ageBuckets.Count == 5, $"Expected 5 age buckets, got {ageBuckets.Count}");
+            long totalAgeCount = ageBuckets.Sum(b => b.Count);
+            Assert(totalAgeCount == expectedFileCount, $"Total files in age buckets ({totalAgeCount}) != expected ({expectedFileCount})");
+            Console.WriteLine($"  File Age Buckets: {ageBuckets.Count} tiers verified ({ageBuckets[0].Name}: {ageBuckets[0].Count} files).");
+
+            var dupOverview = dbService.GetDuplicateOverview();
+            Assert(dupOverview.CandidateGroups >= 1, "Expected at least 1 duplicate candidate group");
+            Console.WriteLine($"  Duplicate Overview: {dupOverview.CandidateGroups} candidate groups, {dupOverview.CandidateFiles} files, {dupOverview.PotentialWastedBytes:N0} bytes.");
+
+            var (reclaimItems, totalReclaim) = dbService.GetReclaimableStorageBreakdown();
+            Assert(reclaimItems.Count > 0, "Expected reclaimable storage categories");
+            Console.WriteLine($"  Reclaimable Storage: {reclaimItems.Count} opportunity categories detected ({totalReclaim:N0} total bytes).");
+
+            var largestPs = dbService.GetLargestPhotoshopFiles(5);
+            Assert(largestPs.Count >= 2, $"Expected at least 2 PSD/PSB files, got {largestPs.Count}");
+            Console.WriteLine($"  Largest Photoshop Files: {largestPs.Count} documents identified (Top: {largestPs[0].Name} - {largestPs[0].FormattedSize}).");
+
+            var (totalFiles, totalBytes) = dbService.GetTotalIndexedStorage();
+            Assert(totalFiles == expectedFileCount, $"Total indexed storage files ({totalFiles}) != expected ({expectedFileCount})");
+            Console.WriteLine($"  Total Indexed Storage: {totalFiles} files, {totalBytes:N0} bytes.");
+            Console.WriteLine("  ✓ Analytics engine and database queries fully verified.");
+
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");
             Console.WriteLine("=================================================");

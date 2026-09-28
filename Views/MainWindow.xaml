@@ -88,6 +88,9 @@
                     <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
                             Style="{StaticResource NavButtonStyle}"/>
 
+                    <Button Content="Analytics" Command="{Binding NavigateCommand}" CommandParameter="Analytics" 
+                            Style="{StaticResource NavButtonStyle}"/>
+
                     <Button Content="Largest Files" Command="{Binding NavigateCommand}" CommandParameter="LargestFiles" 
                             Style="{StaticResource NavButtonStyle}"/>
 
@@ -118,6 +121,9 @@
                 <ContentControl.Resources>
                     <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
                         <views:OverviewView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:AnalyticsViewModel}">
+                        <views:AnalyticsView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:LargestFilesViewModel}">
                         <views:LargestFilesView/>

@@ -6,8 +6,8 @@
         xmlns:vm="clr-namespace:DiskScope.ViewModels"
         xmlns:views="clr-namespace:DiskScope.Views"
         mc:Ignorable="d"
-        Title="DiskScope Pro — Native Windows Storage Analyzer" 
-        Height="860" Width="1360" MinHeight="720" MinWidth="1100"
+        Title="Windows Storage Analyzer" 
+        Height="840" Width="1320" MinHeight="700" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BrushBgCanvas}">
 
@@ -17,34 +17,24 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="64"/>
+            <RowDefinition Height="52"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="32"/>
+            <RowDefinition Height="28"/>
         </Grid.RowDefinitions>
 
-        <!-- TOP BAR: Brand & Scan Controls -->
-        <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="16,10">
+        <!-- TOP TOOLBAR: Clean & Neat -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="14,8">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="16"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Brand -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="DISKSCOPE" FontSize="18" FontWeight="ExtraBold" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>
-                    <Border Background="{StaticResource BrushAccent}" CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="PRO" FontSize="11" FontWeight="Bold" Foreground="#0D1117"/>
-                    </Border>
-                </StackPanel>
-
                 <!-- Drives Selector -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Drives:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Target Drives:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,10,0"/>
                     <ItemsControl ItemsSource="{Binding OverviewVM.Drives}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -53,32 +43,34 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,14,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
                                 </CheckBox>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
 
-                <!-- Custom Directory Path -->
-                <Grid Grid.Column="4" VerticalAlignment="Center" Margin="0,0,16,0">
+                <!-- Custom Path Input -->
+                <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBox Text="{Binding CustomScanPath, UpdateSourceTrigger=PropertyChanged}" 
-                             VerticalContentAlignment="Center" Height="32" Padding="8,0"/>
-                    <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseCustomFolderCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Height="32" Margin="6,0,0,0"/>
+                    <TextBlock Grid.Column="0" Text="Folder:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding CustomScanPath, UpdateSourceTrigger=PropertyChanged}" 
+                             VerticalContentAlignment="Center" Height="28" Padding="6,0" FontSize="12"/>
+                    <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowseCustomFolderCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Height="28" Padding="10,0" Margin="6,0,0,0"/>
                 </Grid>
 
-                <!-- Scan Buttons -->
-                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="▶  Start Scan" Command="{Binding StartScanCommand}" 
-                            Style="{StaticResource PrimaryButtonStyle}" Height="34" Padding="16,0" Margin="0,0,8,0"/>
-                    <Button Content="■  Stop Scan" Command="{Binding StopScanCommand}" 
-                            Style="{StaticResource DangerButtonStyle}" Height="34" Padding="16,0"/>
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                            Style="{StaticResource PrimaryButtonStyle}" Height="30" Padding="14,0" Margin="0,0,8,0"/>
+                    <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                            Style="{StaticResource DangerButtonStyle}" Height="30" Padding="14,0"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -86,45 +78,37 @@
         <!-- MAIN CONTENT AREA -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="200"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT SIDEBAR NAVIGATION -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0" Padding="8,12">
+            <!-- LEFT SIDEBAR -->
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0" Padding="6,10">
                 <StackPanel>
-                    <TextBlock Text="NAVIGATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="12,4,12,8"/>
-
-                    <Button Content="📊  Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
-                            Style="{StaticResource NavButtonStyle}">
-                        <Button.Triggers>
-                            <!-- Visual indication handled via style or binding -->
-                        </Button.Triggers>
-                    </Button>
-
-                    <Button Content="📁  Largest Files" Command="{Binding NavigateCommand}" CommandParameter="LargestFiles" 
+                    <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Button Content="📂  Largest Folders" Command="{Binding NavigateCommand}" CommandParameter="LargestFolders" 
+                    <Button Content="Largest Files" Command="{Binding NavigateCommand}" CommandParameter="LargestFiles" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Button Content="🏷️  File Types" Command="{Binding NavigateCommand}" CommandParameter="FileTypes" 
+                    <Button Content="Largest Folders" Command="{Binding NavigateCommand}" CommandParameter="LargestFolders" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Button Content="⏳  Old Files (180d+)" Command="{Binding NavigateCommand}" CommandParameter="OldFiles" 
+                    <Button Content="File Types" Command="{Binding NavigateCommand}" CommandParameter="FileTypes" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Button Content="👯  Duplicates" Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
+                    <Button Content="Old Files (180d+)" Command="{Binding NavigateCommand}" CommandParameter="OldFiles" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Separator Background="{StaticResource BrushBorder}" Margin="8,8"/>
-
-                    <TextBlock Text="SPECIALIZED" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="12,4,12,8"/>
-
-                    <Button Content="🎨  Photoshop Intelligence" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
+                    <Button Content="Duplicates" Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
                             Style="{StaticResource NavButtonStyle}"/>
 
-                    <Button Content="📋  Scan Log &amp; Audit" Command="{Binding NavigateCommand}" CommandParameter="ScanLog" 
+                    <Separator Background="{StaticResource BrushBorder}" Margin="6,8"/>
+
+                    <Button Content="Photoshop Intelligence" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
+                            Style="{StaticResource NavButtonStyle}"/>
+
+                    <Button Content="Scan Diagnostics &amp; Log" Command="{Binding NavigateCommand}" CommandParameter="ScanLog" 
                             Style="{StaticResource NavButtonStyle}"/>
                 </StackPanel>
             </Border>
@@ -161,7 +145,7 @@
         </Grid>
 
         <!-- BOTTOM STATUS BAR -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Padding="12,4">
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Padding="12,2">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -172,13 +156,13 @@
 
                 <!-- State Badge -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="8" Height="8" Margin="0,0,8,0">
+                    <Ellipse Width="7" Height="7" Margin="0,0,6,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Setter Property="Fill" Value="{StaticResource BrushTextMuted}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Scanning">
-                                        <Setter Property="Fill" Value="#3FB950"/>
+                                        <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Stopping">
                                         <Setter Property="Fill" Value="{StaticResource BrushWarning}"/>
@@ -204,13 +188,13 @@
                 <!-- Live Metrics Summary -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding OverviewVM.Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}, StringFormat='Files: {0}'}" 
-                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,16,0"/>
+                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,14,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}, StringFormat='Dirs: {0}'}" 
-                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,16,0"/>
+                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,14,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedLogicalBytes, StringFormat='Indexed: {0}'}" 
-                               FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" Margin="0,0,16,0"/>
+                               FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" Margin="0,0,14,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedFilesPerSecond}" 
-                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,16,0"/>
+                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,14,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedElapsed, StringFormat='Elapsed: {0}'}" 
                                FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
                 </StackPanel>

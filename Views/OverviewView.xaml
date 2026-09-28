@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
-    <Grid Margin="24">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -13,174 +13,172 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Page Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="System Storage &amp; Scan Overview" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-            <TextBlock Text="Authoritative local filesystem indexing and storage metrics" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Storage Overview" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Filesystem allocation and SQLite index scan accounting" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
         </StackPanel>
 
         <!-- Top Overview Cards -->
-        <Grid Grid.Row="1" Margin="0,0,0,20">
+        <Grid Grid.Row="1" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="14"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="14"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Card 1: Physical Disk Volume -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16">
+            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
                 <StackPanel>
-                    <TextBlock Text="DISK OVERVIEW" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                    <Grid Margin="0,12,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Filesystem Used" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding FormattedUsedDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                    </Grid>
-                    <Grid Margin="0,4,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Filesystem Free" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding FormattedFreeDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushSuccess}"/>
-                    </Grid>
-                    <Grid Margin="0,4,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Filesystem Total" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding FormattedTotalDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                    </Grid>
-
-                    <!-- Drive progress bar -->
-                    <ProgressBar Height="6" Value="{Binding OverallPercentUsed, Mode=OneWay}" Maximum="100" 
-                                 Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCard}" BorderThickness="0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Card 2: Exact Scan Accounting -->
-            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16">
-                <StackPanel>
-                    <TextBlock Text="EXACT SCAN ACCOUNTING" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                    
-                    <!-- Files Discovered / Indexed / Skipped -->
-                    <Grid Margin="0,10,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Files Indexed" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}}" FontWeight="Bold" Foreground="#3FB950"/>
-                    </Grid>
-                    <Grid Margin="0,4,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Files Skipped" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.FilesSkipped, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" 
-                                   Foreground="{StaticResource BrushWarning}"/>
-                    </Grid>
-
-                    <!-- Directories Processed / Skipped -->
-                    <Grid Margin="0,8,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Dirs Processed" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                    </Grid>
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Dirs Skipped" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.DirectoriesSkipped, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" 
-                                   Foreground="{StaticResource BrushWarning}"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- Card 3: Performance & Live Metrics -->
-            <Border Grid.Column="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16">
-                <StackPanel>
-                    <TextBlock Text="SCAN STATUS &amp; SPEED" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-
+                    <TextBlock Text="DRIVE ALLOCATION" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
                     <Grid Margin="0,10,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Storage Indexed" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedLogicalBytes}" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                        <TextBlock Text="Filesystem Used" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding FormattedUsedDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
                     </Grid>
-                    <Grid Margin="0,4,0,6">
+                    <Grid Margin="0,3,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Scan State" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.State}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="Filesystem Free" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding FormattedFreeDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushSuccess}" FontSize="12"/>
                     </Grid>
-                    <Grid Margin="0,4,0,6">
+                    <Grid Margin="0,3,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Elapsed Time" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedElapsed}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="Filesystem Total" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding FormattedTotalDrive}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
                     </Grid>
-                    <Grid Margin="0,4,0,0">
+
+                    <!-- Drive progress bar -->
+                    <ProgressBar Height="6" Value="{Binding OverallPercentUsed, Mode=OneWay}" Maximum="100" 
+                                 Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 2: Exact Scan Accounting -->
+            <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="SCAN ACCOUNTING" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                    
+                    <Grid Margin="0,10,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Throughput" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedFilesPerSecond}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="Files Indexed" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}}" FontWeight="Bold" Foreground="{StaticResource BrushSuccess}" FontSize="12"/>
+                    </Grid>
+                    <Grid Margin="0,3,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Files Skipped" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.FilesSkipped, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" 
+                                   Foreground="{StaticResource BrushWarning}" FontSize="12"/>
+                    </Grid>
+
+                    <Grid Margin="0,6,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Dirs Processed" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                    </Grid>
+                    <Grid Margin="0,3,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Dirs Skipped" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.DirectoriesSkipped, Converter={StaticResource NumberFormatConverter}}" FontWeight="SemiBold" 
+                                   Foreground="{StaticResource BrushWarning}" FontSize="12"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 3: Performance & Live Metrics -->
+            <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="SCAN STATUS &amp; SPEED" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+
+                    <Grid Margin="0,10,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Storage Indexed" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedLogicalBytes}" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" FontSize="12"/>
+                    </Grid>
+                    <Grid Margin="0,3,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Scan State" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.State}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                    </Grid>
+                    <Grid Margin="0,3,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Elapsed Time" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedElapsed}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                    </Grid>
+                    <Grid Margin="0,3,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Throughput" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Stats.FormattedFilesPerSecond}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
                     </Grid>
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- Live Directory Rolling Feed -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16">
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid Grid.Row="0" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="LIVE DIRECTORY FEED" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                        <TextBlock Text=" (rolling buffer: last 100 paths)" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
+                        <TextBlock Text=" (recent traversal buffer)" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="4,0,0,0"/>
                     </StackPanel>
                     <TextBlock Grid.Column="1" Text="{Binding Stats.CurrentDirectory}" Foreground="{StaticResource BrushTextMuted}" 
                                FontSize="11" FontFamily="Consolas" MaxWidth="500" TextTrimming="CharacterEllipsis"/>
                 </Grid>
 
                 <ListBox Grid.Row="1" ItemsSource="{Binding RecentDirectories}"
-                         Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
-                         FontFamily="Consolas" FontSize="11" Foreground="#7EE787"
+                         Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                         FontFamily="Consolas" FontSize="11" Foreground="#334155"
                          VirtualizingStackPanel.IsVirtualizing="True"
                          VirtualizingStackPanel.VirtualizationMode="Recycling"
                          ScrollViewer.CanContentScroll="True"
                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" Padding="2,1"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -188,7 +186,7 @@
         </Border>
 
         <!-- Scan Integrity Panel -->
-        <Border Grid.Row="3" Margin="0,16,0,0" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16">
+        <Border Grid.Row="3" Margin="0,14,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -197,12 +195,12 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="SCAN INTEGRITY:" FontWeight="Bold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,12,0"/>
-                    <TextBlock Text="{Binding IntegrityStatus}" Foreground="{StaticResource BrushAccent}" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="SCAN INTEGRITY:" FontWeight="Bold" FontSize="11" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding IntegrityStatus}" Foreground="{StaticResource BrushAccent}" FontSize="11" FontWeight="SemiBold"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Logical Indexed Size vs Filesystem: differences expected for metadata, reserved sectors, and excluded dirs."
+                    <TextBlock Text="Logical Indexed Size vs Filesystem: differences expected for metadata, reserved space, and excluded folders."
                                FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
                 </StackPanel>
             </Grid>

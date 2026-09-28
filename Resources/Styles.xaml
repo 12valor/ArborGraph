@@ -22,11 +22,11 @@
         <Setter Property="FontSize" Value="13"/>
     </Style>
 
-    <!-- Action Button -->
+    <!-- Clean Native Button -->
     <Style x:Key="ActionButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,6"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -45,14 +45,14 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource BrushBgCardHover}"/>
-                            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="BorderBrush" Value="#94A3B8"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource BrushBorder}"/>
+                            <Setter Property="Background" Value="#E2E8F0"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.4"/>
+                            <Setter Property="Opacity" Value="0.45"/>
                             <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -61,10 +61,10 @@
         </Setter>
     </Style>
 
-    <!-- Primary Accent Button -->
+    <!-- Primary Windows Accent Button -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}"/>
+        <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
         <Setter Property="Foreground" Value="#FFFFFF"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -78,13 +78,15 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#3FB950"/>
+                            <Setter Property="Background" Value="{StaticResource BrushAccentHover}"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource BrushAccentHover}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#238636"/>
+                            <Setter Property="Background" Value="#00437D"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.4"/>
+                            <Setter Property="Opacity" Value="0.45"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -94,9 +96,9 @@
 
     <!-- Danger Button -->
     <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource BrushDanger}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushDanger}"/>
-        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="BorderBrush" Value="#FCA5A5"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -109,11 +111,15 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#F85149"/>
-                            <Setter Property="Opacity" Value="0.9"/>
+                            <Setter Property="Background" Value="#FEF2F2"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource BrushDanger}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#FEE2E2"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.4"/>
+                            <Setter Property="Opacity" Value="0.45"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -127,24 +133,23 @@
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="6"
-                            Margin="4,2"
+                            CornerRadius="4"
+                            Margin="2,1"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource BrushBgCard}"/>
+                            <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -155,9 +160,9 @@
 
     <!-- TextBox Style -->
     <Style TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,5"/>
         <Setter Property="CaretBrush" Value="{StaticResource BrushTextPrimary}"/>
@@ -179,9 +184,9 @@
 
     <!-- ComboBox Style -->
     <Style TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -196,14 +201,14 @@
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
 
-    <!-- DataGrid Professional Dark Style -->
+    <!-- DataGrid Native Light Style -->
     <Style TargetType="DataGrid">
-        <Setter Property="Background" Value="{StaticResource BrushBgCanvas}"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="RowBackground" Value="{StaticResource BrushBgSurface}"/>
-        <Setter Property="AlternatingRowBackground" Value="{StaticResource BrushBgCanvas}"/>
+        <Setter Property="RowBackground" Value="#FFFFFF"/>
+        <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorder}"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
@@ -223,8 +228,8 @@
 
     <!-- DataGridColumnHeader Style -->
     <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
-        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="Background" Value="#F1F5F9"/>
+        <Setter Property="Foreground" Value="#334155"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
         <Setter Property="BorderThickness" Value="0,0,1,1"/>
         <Setter Property="Padding" Value="10,6"/>
@@ -237,20 +242,20 @@
         <Setter Property="Padding" Value="0,2"/>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#1F3A5F"/>
-                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="Background" Value="#E0EEFF"/>
+                <Setter Property="Foreground" Value="#0F172A"/>
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#252D38"/>
+                <Setter Property="Background" Value="#F1F5F9"/>
             </Trigger>
         </Style.Triggers>
     </Style>
 
     <!-- Context Menu Style -->
     <Style TargetType="ContextMenu">
-        <Setter Property="Background" Value="{StaticResource BrushBgCard}"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         <Setter Property="BorderThickness" Value="1"/>
     </Style>
 

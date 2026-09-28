@@ -96,23 +96,44 @@ public class ScannerService
             var batch = new List<FileRecord>(batchSize);
             var reader = channel.Reader;
 
-            while (await reader.WaitToReadAsync(CancellationToken.None))
+            try
             {
-                while (reader.TryRead(out var item))
+                while (await reader.WaitToReadAsync(CancellationToken.None))
                 {
-                    batch.Add(item);
-                    if (batch.Count >= batchSize)
+                    while (reader.TryRead(out var item))
                     {
-                        _dbService.InsertBatch(batch);
-                        batch.Clear();
+                        batch.Add(item);
+                        if (batch.Count >= batchSize)
+                        {
+                            try
+                            {
+                                _dbService.InsertBatch(batch);
+                            }
+                            catch (Exception dbEx)
+                            {
+                                _skippedFiles.Add(("Batch Ingestion", dbEx.Message));
+                            }
+                            batch.Clear();
+                        }
                     }
                 }
-            }
 
-            if (batch.Count > 0)
+                if (batch.Count > 0)
+                {
+                    try
+                    {
+                        _dbService.InsertBatch(batch);
+                    }
+                    catch (Exception dbEx)
+                    {
+                        _skippedFiles.Add(("Final Batch Ingestion", dbEx.Message));
+                    }
+                    batch.Clear();
+                }
+            }
+            catch (Exception ex)
             {
-                _dbService.InsertBatch(batch);
-                batch.Clear();
+                _skippedFiles.Add(("DB Worker", ex.Message));
             }
         });
 

@@ -24,7 +24,7 @@ public class ScanLogViewModel : ObservableObject
     {
         Logs = [];
         SkippedItems = [];
-        AddLog("INFO", "DiskScope Pro initialized. Ready for scan.");
+        AddLog("INFO", "DiskScope initialized. Ready for scan.");
     }
 
     public ObservableCollection<LogItem> Logs { get; }
@@ -32,18 +32,22 @@ public class ScanLogViewModel : ObservableObject
 
     public void AddLog(string level, string message, string detail = "")
     {
-        if (Logs.Count >= 500)
+        try
         {
-            Logs.RemoveAt(0);
-        }
+            if (Logs.Count >= 500)
+            {
+                Logs.RemoveAt(0);
+            }
 
-        Logs.Add(new LogItem
-        {
-            Timestamp = DateTime.Now,
-            Level = level,
-            Message = message,
-            Detail = detail
-        });
+            Logs.Add(new LogItem
+            {
+                Timestamp = DateTime.Now,
+                Level = level,
+                Message = message,
+                Detail = detail
+            });
+        }
+        catch { }
     }
 
     public void AddSkippedDirectory(string path, string reason)

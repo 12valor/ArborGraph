@@ -79,49 +79,65 @@ public class OverviewViewModel : ObservableObject
 
     public void RefreshDrives()
     {
-        Drives.Clear();
-        long total = 0;
-        long used = 0;
-        long free = 0;
-
-        foreach (var d in _diskService.GetSystemDrives())
+        try
         {
-            Drives.Add(d);
-            total += d.TotalBytes;
-            used += d.UsedBytes;
-            free += d.FreeBytes;
-        }
+            Drives.Clear();
+            long total = 0;
+            long used = 0;
+            long free = 0;
 
-        TotalDriveBytes = total;
-        UsedDriveBytes = used;
-        FreeDriveBytes = free;
-        OverallPercentUsed = total > 0 ? (double)used / total * 100.0 : 0.0;
-        OnPropertyChanged(nameof(FormattedTotalDrive));
-        OnPropertyChanged(nameof(FormattedUsedDrive));
-        OnPropertyChanged(nameof(FormattedFreeDrive));
+            foreach (var d in _diskService.GetSystemDrives())
+            {
+                Drives.Add(d);
+                total += d.TotalBytes;
+                used += d.UsedBytes;
+                free += d.FreeBytes;
+            }
+
+            TotalDriveBytes = total;
+            UsedDriveBytes = used;
+            FreeDriveBytes = free;
+            OverallPercentUsed = total > 0 ? (double)used / total * 100.0 : 0.0;
+            OnPropertyChanged(nameof(FormattedTotalDrive));
+            OnPropertyChanged(nameof(FormattedUsedDrive));
+            OnPropertyChanged(nameof(FormattedFreeDrive));
+        }
+        catch { }
     }
 
     private DateTime _lastRecentDirTime = DateTime.MinValue;
 
     public void AddRecentDirectory(string dir)
     {
-        if (string.IsNullOrWhiteSpace(dir)) return;
-        if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 150) return;
-        _lastRecentDirTime = DateTime.UtcNow;
-
-        if (RecentDirectories.Count >= 50)
+        try
         {
-            RecentDirectories.RemoveAt(0);
+            if (string.IsNullOrWhiteSpace(dir)) return;
+            if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 150) return;
+            _lastRecentDirTime = DateTime.UtcNow;
+
+            if (RecentDirectories.Count >= 50)
+            {
+                RecentDirectories.RemoveAt(0);
+            }
+            RecentDirectories.Add(dir);
         }
-        RecentDirectories.Add(dir);
+        catch { }
     }
 
     public void VerifyIntegrity()
     {
-        bool dbOk = _dbService.CheckIntegrity();
-        IsIntegrityCheckPassed = dbOk;
-        IntegrityStatus = dbOk
-            ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
-            : "Warning: SQLite integrity verification reported an issue";
+        try
+        {
+            bool dbOk = _dbService.CheckIntegrity();
+            IsIntegrityCheckPassed = dbOk;
+            IntegrityStatus = dbOk
+                ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
+                : "Warning: SQLite integrity verification reported an issue";
+        }
+        catch
+        {
+            IsIntegrityCheckPassed = false;
+            IntegrityStatus = "Integrity check could not complete.";
+        }
     }
 }

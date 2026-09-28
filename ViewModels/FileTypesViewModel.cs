@@ -48,40 +48,44 @@ public class FileTypesViewModel : ObservableObject
 
     public void RefreshData()
     {
-        var breakdown = _dbService.GetCategoryBreakdown();
-        Categories.Clear();
-
-        long sumBytes = breakdown.Values.Sum(v => v.TotalSize);
-        long sumFiles = breakdown.Values.Sum(v => v.Count);
-
-        TotalIndexedBytes = sumBytes;
-        TotalIndexedFiles = sumFiles;
-        OnPropertyChanged(nameof(FormattedTotalBytes));
-        OnPropertyChanged(nameof(FormattedTotalFiles));
-
-        foreach (var categoryName in FileCategory.AllCategories)
+        try
         {
-            if (breakdown.TryGetValue(categoryName, out var data))
+            var breakdown = _dbService.GetCategoryBreakdown();
+            Categories.Clear();
+
+            long sumBytes = breakdown.Values.Sum(v => v.TotalSize);
+            long sumFiles = breakdown.Values.Sum(v => v.Count);
+
+            TotalIndexedBytes = sumBytes;
+            TotalIndexedFiles = sumFiles;
+            OnPropertyChanged(nameof(FormattedTotalBytes));
+            OnPropertyChanged(nameof(FormattedTotalFiles));
+
+            foreach (var categoryName in FileCategory.AllCategories)
             {
-                double pct = sumBytes > 0 ? (double)data.TotalSize / sumBytes * 100.0 : 0.0;
-                Categories.Add(new FileTypeItem
+                if (breakdown.TryGetValue(categoryName, out var data))
                 {
-                    Category = categoryName,
-                    FileCount = data.Count,
-                    LogicalBytes = data.TotalSize,
-                    StoragePercentage = pct
-                });
-            }
-            else
-            {
-                Categories.Add(new FileTypeItem
+                    double pct = sumBytes > 0 ? (double)data.TotalSize / sumBytes * 100.0 : 0.0;
+                    Categories.Add(new FileTypeItem
+                    {
+                        Category = categoryName,
+                        FileCount = data.Count,
+                        LogicalBytes = data.TotalSize,
+                        StoragePercentage = pct
+                    });
+                }
+                else
                 {
-                    Category = categoryName,
-                    FileCount = 0,
-                    LogicalBytes = 0,
-                    StoragePercentage = 0.0
-                });
+                    Categories.Add(new FileTypeItem
+                    {
+                        Category = categoryName,
+                        FileCount = 0,
+                        LogicalBytes = 0,
+                        StoragePercentage = 0.0
+                    });
+                }
             }
         }
+        catch { }
     }
 }

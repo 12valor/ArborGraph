@@ -54,16 +54,20 @@ public class OldFilesViewModel : ObservableObject
 
     public void RefreshData()
     {
-        var list = _dbService.GetOldFiles(_selectedDays, 300);
-        OldFiles.Clear();
-        foreach (var item in list)
+        try
         {
-            OldFiles.Add(item);
-        }
+            var list = _dbService.GetOldFiles(_selectedDays, 300);
+            OldFiles.Clear();
+            foreach (var item in list)
+            {
+                OldFiles.Add(item);
+            }
 
-        if (SelectedFile == null || !OldFiles.Contains(SelectedFile))
-        {
-            SelectedFile = OldFiles.FirstOrDefault();
+            if (SelectedFile == null || !OldFiles.Contains(SelectedFile))
+            {
+                SelectedFile = OldFiles.FirstOrDefault();
+            }
         }
+        catch { }
     }
 }

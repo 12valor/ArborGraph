@@ -88,29 +88,33 @@ public class PhotoshopViewModel : ObservableObject
 
     public void RefreshData()
     {
-        var (psdCnt, psbCnt, otherCnt, totalBytes, psdBytes, psbBytes) = _dbService.GetPhotoshopStats();
-
-        PsdCount = psdCnt;
-        PsbCount = psbCnt;
-        OtherCount = otherCnt;
-        TotalPhotoshopBytes = totalBytes;
-        PsdBytes = psdBytes;
-        PsbBytes = psbBytes;
-
-        OnPropertyChanged(nameof(FormattedTotalBytes));
-        OnPropertyChanged(nameof(FormattedPsdBytes));
-        OnPropertyChanged(nameof(FormattedPsbBytes));
-
-        var files = _dbService.GetPhotoshopFiles(300);
-        PhotoshopFiles.Clear();
-        foreach (var item in files)
+        try
         {
-            PhotoshopFiles.Add(item);
-        }
+            var (psdCnt, psbCnt, otherCnt, totalBytes, psdBytes, psbBytes) = _dbService.GetPhotoshopStats();
 
-        if (SelectedFile == null || !PhotoshopFiles.Contains(SelectedFile))
-        {
-            SelectedFile = PhotoshopFiles.FirstOrDefault();
+            PsdCount = psdCnt;
+            PsbCount = psbCnt;
+            OtherCount = otherCnt;
+            TotalPhotoshopBytes = totalBytes;
+            PsdBytes = psdBytes;
+            PsbBytes = psbBytes;
+
+            OnPropertyChanged(nameof(FormattedTotalBytes));
+            OnPropertyChanged(nameof(FormattedPsdBytes));
+            OnPropertyChanged(nameof(FormattedPsbBytes));
+
+            var files = _dbService.GetPhotoshopFiles(300);
+            PhotoshopFiles.Clear();
+            foreach (var item in files)
+            {
+                PhotoshopFiles.Add(item);
+            }
+
+            if (SelectedFile == null || !PhotoshopFiles.Contains(SelectedFile))
+            {
+                SelectedFile = PhotoshopFiles.FirstOrDefault();
+            }
         }
+        catch { }
     }
 }

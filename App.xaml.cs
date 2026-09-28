@@ -34,7 +34,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log($"FATAL: Exception creating/showing MainWindow: {ex}");
-            MessageBox.Show($"Startup failure:\n\n{ex}", "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Startup failure:\n\n{ex}", "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -47,7 +47,7 @@ public partial class App : Application
     {
         Log($"DispatcherUnhandledException: {e.Exception}");
         MessageBox.Show($"An unexpected UI error occurred:\n\n{e.Exception.Message}",
-            "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+            "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
     }
 
@@ -57,7 +57,7 @@ public partial class App : Application
         if (e.ExceptionObject is Exception ex)
         {
             MessageBox.Show($"A critical error occurred:\n\n{ex.Message}",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

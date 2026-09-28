@@ -44,27 +44,29 @@ public class LargestFoldersViewModel : ObservableObject
 
     public void RefreshData(long totalBytes = 0)
     {
-        if (totalBytes > 0)
+        try
         {
-            TotalIndexedBytes = totalBytes;
+            if (totalBytes > 0)
+            {
+                TotalIndexedBytes = totalBytes;
+            }
+
+            var list = _dbService.GetLargestFolders(150);
+            Folders.Clear();
+
+            long maxFolderSize = Math.Max(1L, list.Count > 0 ? list.Max(f => f.Size) : 1L);
+
+            foreach (var folder in list)
+            {
+                folder.PercentageOfTotal = (double)folder.Size / maxFolderSize * 100.0;
+                Folders.Add(folder);
+            }
+
+            if (SelectedFolder == null || !Folders.Contains(SelectedFolder))
+            {
+                SelectedFolder = Folders.FirstOrDefault();
+            }
         }
-
-        var list = _dbService.GetLargestFolders(150);
-        Folders.Clear();
-
-        long maxFolderSize = list.Count > 0 ? list.Max(f => f.Size) : 1;
-
-        foreach (var folder in list)
-        {
-            folder.PercentageOfTotal = maxFolderSize > 0
-                ? (double)folder.Size / maxFolderSize * 100.0
-                : 0.0;
-            Folders.Add(folder);
-        }
-
-        if (SelectedFolder == null || !Folders.Contains(SelectedFolder))
-        {
-            SelectedFolder = Folders.FirstOrDefault();
-        }
+        catch { }
     }
 }

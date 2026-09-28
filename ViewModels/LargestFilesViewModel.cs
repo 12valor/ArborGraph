@@ -145,34 +145,38 @@ public class LargestFilesViewModel : ObservableObject
 
     public void RefreshData()
     {
-        long minBytes = ParseMinSize(_selectedMinSizeOption);
-        int offset = (CurrentPage - 1) * PageSize;
-
-        TotalMatchingFiles = _dbService.GetFilteredFileCount(minBytes, long.MaxValue, _selectedCategory, _searchText);
-
-        var list = _dbService.GetFilesPaged(
-            offset,
-            PageSize,
-            minBytes,
-            long.MaxValue,
-            _selectedCategory,
-            _searchText,
-            _sortBy,
-            _sortDesc);
-
-        Files.Clear();
-        foreach (var item in list)
+        try
         {
-            Files.Add(item);
-        }
+            long minBytes = ParseMinSize(_selectedMinSizeOption);
+            int offset = Math.Max(0, (CurrentPage - 1) * PageSize);
 
-        if (SelectedFile == null || !Files.Contains(SelectedFile))
-        {
-            SelectedFile = Files.FirstOrDefault();
-        }
+            TotalMatchingFiles = _dbService.GetFilteredFileCount(minBytes, long.MaxValue, _selectedCategory, _searchText);
 
-        (NextPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
-        (PrevPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            var list = _dbService.GetFilesPaged(
+                offset,
+                PageSize,
+                minBytes,
+                long.MaxValue,
+                _selectedCategory,
+                _searchText,
+                _sortBy,
+                _sortDesc);
+
+            Files.Clear();
+            foreach (var item in list)
+            {
+                Files.Add(item);
+            }
+
+            if (SelectedFile == null || !Files.Contains(SelectedFile))
+            {
+                SelectedFile = Files.FirstOrDefault();
+            }
+
+            (NextPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (PrevPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+        catch { }
     }
 
     private static long ParseMinSize(string option)

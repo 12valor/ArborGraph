@@ -1,0 +1,95 @@
+<UserControl x:Class="DiskScope.Views.FileTypesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="File Type Analysis" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Classification and proportional storage distribution directly from the SQLite index" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Totals Card -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="TOTAL INDEXED STORAGE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
+                    <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="TOTAL INDEXED FILES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
+                    <TextBlock Text="{Binding FormattedTotalFiles}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Categories DataGrid -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Categories}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Total Size" Binding="{Binding FormattedSize}" Width="130">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="TextAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Storage Percentage Bar -->
+                <DataGridTemplateColumn Header="Storage Share %" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Margin="5,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <ProgressBar Height="8" Maximum="100" Value="{Binding StoragePercentage, Mode=OneWay}"
+                                             Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCard}" BorderThickness="0"
+                                             VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding FormattedPercentage}" Foreground="{StaticResource BrushTextSecondary}"
+                                           FontSize="11" TextAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="File Count" Binding="{Binding FormattedCount}" Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,158 @@
+<UserControl x:Class="DiskScope.Views.PhotoshopView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Photoshop Storage Intelligence" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Targeted analysis of .PSD, .PSB, brushes (.abr), styles (.asl), actions (.atn), and Adobe caches" 
+                       FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Top Summary Cards -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Card 1: PSD -->
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="PSD DOCUMENTS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                    <TextBlock Text="{Binding FormattedPsdBytes}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,2"/>
+                    <TextBlock Text="{Binding PsdCount, StringFormat='{}{0:N0} files'}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 2: PSB -->
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="PSB LARGE DOCS (>2GB)" FontSize="11" FontWeight="Bold" Foreground="#D2A8FF"/>
+                    <TextBlock Text="{Binding FormattedPsbBytes}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,2"/>
+                    <TextBlock Text="{Binding PsbCount, StringFormat='{}{0:N0} files'}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 3: Assets & Plugins -->
+            <Border Grid.Column="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="ASSETS &amp; PRESETS" FontSize="11" FontWeight="Bold" Foreground="#7EE787"/>
+                    <TextBlock Text="{Binding OtherCount, StringFormat='{}{0:N0} items'}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,2"/>
+                    <TextBlock Text="Brushes, styles, actions, patterns" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 4: Total Photoshop Storage -->
+            <Border Grid.Column="6" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="TOTAL PHOTOSHOP STORAGE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushWarning}"/>
+                    <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushWarning}" Margin="0,6,0,2"/>
+                    <TextBlock Text="Indexed disk footprint" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Largest Photoshop Files DataGrid -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding PhotoshopFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                  MouseDoubleClick="DataGrid_MouseDoubleClick">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Open in Photoshop" 
+                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Reveal in Windows Explorer" 
+                                          Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Copy Absolute Path" 
+                                          Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Properties" 
+                                          Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Document Name" Binding="{Binding Name}" Width="260">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="File Size" Binding="{Binding FormattedSize}" Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="TextAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Extension" Binding="{Binding Extension}" Width="90"/>
+
+                <DataGridTextColumn Header="Last Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="160"/>
+
+                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontSize" Value="11"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Selected Document Panel -->
+        <Border Grid.Row="3" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a Photoshop document'}" 
+                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
+                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open in Photoshop" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

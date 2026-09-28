@@ -1,0 +1,130 @@
+<UserControl x:Class="DiskScope.Views.OldFilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Old Files Analysis" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Identify large files unwritten for long periods (analysis only; read-only inspection)" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Age Filter Bar -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Unmodified For At Least:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,12,0"/>
+                <ComboBox Grid.Column="1" SelectedValue="{Binding SelectedDays, Mode=TwoWay}" SelectedValuePath="Tag">
+                    <ComboBoxItem Content="30+ days (1 month)" Tag="30"/>
+                    <ComboBoxItem Content="90+ days (3 months)" Tag="90"/>
+                    <ComboBoxItem Content="180+ days (6 months)" Tag="180" IsSelected="True"/>
+                    <ComboBoxItem Content="365+ days (1 year)" Tag="365"/>
+                    <ComboBoxItem Content="730+ days (2 years)" Tag="730"/>
+                </ComboBox>
+
+                <Button Grid.Column="3" Content="Refresh Analysis" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+            </Grid>
+        </Border>
+
+        <!-- Old Files DataGrid -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding OldFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                  MouseDoubleClick="DataGrid_MouseDoubleClick">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Open File" 
+                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Open File Location" 
+                                          Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Copy Absolute Path" 
+                                          Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Properties" 
+                                          Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="File Name" Binding="{Binding Name}" Width="260">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Logical Size" Binding="{Binding FormattedSize}" Width="110">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="TextAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Last Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="160"/>
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="100"/>
+
+                <DataGridTextColumn Header="Full Absolute Path" Binding="{Binding Path}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontSize" Value="11"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Selected File Panel -->
+        <Border Grid.Row="3" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select an old file'}" 
+                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
+                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

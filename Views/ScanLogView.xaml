@@ -1,0 +1,95 @@
+<UserControl x:Class="DiskScope.Views.ScanLogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Scan &amp; Integrity Diagnostic Log" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Detailed audit trail of scanner lifecycle events, warnings, and skipped filesystem entries" 
+                       FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Main Tabs: Events vs Inaccessible/Skipped items -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- Tab 1: Event Log -->
+            <TabItem Header="Events &amp; Diagnostics">
+                <DataGrid ItemsSource="{Binding Logs}" Margin="0,10,0,0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}" Width="110"/>
+                        <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="WARN">
+                                            <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+                                        </Trigger>
+                                        <Trigger Property="Text" Value="ERROR">
+                                            <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                        </Trigger>
+                                        <Trigger Property="Text" Value="INFO">
+                                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="350"/>
+
+                        <DataGridTextColumn Header="Technical Detail" Binding="{Binding Detail}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Tab 2: Skipped / Inaccessible Entries -->
+            <TabItem Header="Skipped &amp; Inaccessible Entries">
+                <DataGrid ItemsSource="{Binding SkippedItems}" Margin="0,10,0,0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item Type" Binding="{Binding Category}" Width="100"/>
+                        
+                        <DataGridTextColumn Header="Skipped Path" Binding="{Binding Path}" Width="450">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Windows Filesystem Reason" Binding="{Binding Reason}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                                    <Setter Property="FontSize" Value="12"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

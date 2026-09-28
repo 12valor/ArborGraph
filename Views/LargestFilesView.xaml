@@ -1,0 +1,197 @@
+<UserControl x:Class="DiskScope.Views.LargestFilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Largest Files" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Fast SQLite-backed index queries sorted by size descending" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Filters Toolbar -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Min Size -->
+                <TextBlock Grid.Column="0" Text="Min Size:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding MinSizeOptions}" SelectedItem="{Binding SelectedMinSizeOption, Mode=TwoWay}"/>
+
+                <!-- Category -->
+                <TextBlock Grid.Column="3" Text="Category:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="4" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"/>
+
+                <!-- Search -->
+                <TextBlock Grid.Column="6" Text="Search:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="7" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+
+                <!-- Refresh Button -->
+                <Button Grid.Column="9" Content="Refresh Query" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+            </Grid>
+        </Border>
+
+        <!-- Virtualized Files DataGrid -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Files}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                  MouseDoubleClick="DataGrid_MouseDoubleClick">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Open File" 
+                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Open File Location" 
+                                          Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Copy Absolute Path" 
+                                          Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Properties" 
+                                          Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="File Name" Binding="{Binding Name}" Width="260">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Logical Size" Binding="{Binding FormattedSize}" Width="110">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="TextAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,10,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="100"/>
+                
+                <DataGridTextColumn Header="Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="150"/>
+
+                <DataGridTextColumn Header="Full Absolute Path" Binding="{Binding Path}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontSize" Value="11"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Pagination Controls -->
+        <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1,0,1,1" Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding PageSummary}" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="◀ Previous" Command="{Binding PrevPageCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Next ▶" Command="{Binding NextPageCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Selected File Detail Panel (Single Click) -->
+        <Border Grid.Row="4" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- File Info -->
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a file to inspect details'}" 
+                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
+                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <!-- Quick Action Buttons -->
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                </StackPanel>
+
+                <!-- Metadata Row -->
+                <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                        <TextBlock Text="Logical Size: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.FormattedSize, FallbackValue='—'}" Foreground="{StaticResource BrushAccent}" FontWeight="SemiBold" FontSize="12"/>
+                        <TextBlock Text=" (" Foreground="{StaticResource BrushTextMuted}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.Size, Converter={StaticResource NumberFormatConverter}, FallbackValue='0'}" Foreground="{StaticResource BrushTextMuted}" FontSize="12"/>
+                        <TextBlock Text=" bytes)" Foreground="{StaticResource BrushTextMuted}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                        <TextBlock Text="Category: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.Category, FallbackValue='—'}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                        <TextBlock Text="Extension: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.Extension, FallbackValue='—'}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
+                        <TextBlock Text="Modified: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.ModifiedDate, Converter={StaticResource DateTimeToStringConverter}, FallbackValue='—'}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Created: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                        <TextBlock Text="{Binding SelectedFile.CreatedDate, Converter={StaticResource DateTimeToStringConverter}, FallbackValue='—'}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
+                    </StackPanel>
+                </WrapPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

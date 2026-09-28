@@ -118,23 +118,30 @@ public class MainViewModel : ObservableObject
 
     private void RefreshCurrentView(string tabName)
     {
-        switch (tabName)
+        try
         {
-            case "LargestFiles":
-                LargestFilesVM.RefreshData();
-                break;
-            case "LargestFolders":
-                LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed);
-                break;
-            case "FileTypes":
-                FileTypesVM.RefreshData();
-                break;
-            case "OldFiles":
-                OldFilesVM.RefreshData();
-                break;
-            case "Photoshop":
-                PhotoshopVM.RefreshData();
-                break;
+            switch (tabName)
+            {
+                case "LargestFiles":
+                    LargestFilesVM.RefreshData();
+                    break;
+                case "LargestFolders":
+                    LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed);
+                    break;
+                case "FileTypes":
+                    FileTypesVM.RefreshData();
+                    break;
+                case "OldFiles":
+                    OldFilesVM.RefreshData();
+                    break;
+                case "Photoshop":
+                    PhotoshopVM.RefreshData();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            ScanLogVM.AddLog("WARN", $"Failed refreshing view {tabName}: {ex.Message}");
         }
     }
 
@@ -162,7 +169,7 @@ public class MainViewModel : ObservableObject
         if (rootsToScan.Count == 0)
         {
             MessageBox.Show("Please select at least one drive or specify a valid directory to scan.",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Information);
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -232,37 +239,46 @@ public class MainViewModel : ObservableObject
             // Refresh data in all views
             RefreshAllViews();
         }
+        catch (OperationCanceledException)
+        {
+            OverviewVM.Stats.State = ScanState.Cancelled;
+            ScanLogVM.AddLog("INFO", "Scan cancelled safely by user.");
+        }
         catch (Exception ex)
         {
             OverviewVM.Stats.State = ScanState.Failed;
             ScanLogVM.AddLog("ERROR", "Scan encountered an unhandled error", ex.Message);
-            MessageBox.Show($"Scan failed: {ex.Message}", "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Scan failed: {ex.Message}", "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
             IsScanning = false;
-            _scanCts.Dispose();
+            try { _scanCts?.Dispose(); } catch { }
             _scanCts = null;
         }
     }
 
     public void StopScan()
     {
-        if (_scanCts != null && !_scanCts.IsCancellationRequested)
+        try
         {
-            OverviewVM.Stats.State = ScanState.Stopping;
-            ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
-            _scanCts.Cancel();
+            if (_scanCts != null && !_scanCts.IsCancellationRequested)
+            {
+                OverviewVM.Stats.State = ScanState.Stopping;
+                ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
+                _scanCts.Cancel();
+            }
         }
+        catch (ObjectDisposedException) { }
     }
 
     private void RefreshAllViews()
     {
-        LargestFilesVM.RefreshData();
-        LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed);
-        FileTypesVM.RefreshData();
-        OldFilesVM.RefreshData();
-        PhotoshopVM.RefreshData();
+        try { LargestFilesVM.RefreshData(); } catch { }
+        try { LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed); } catch { }
+        try { FileTypesVM.RefreshData(); } catch { }
+        try { OldFilesVM.RefreshData(); } catch { }
+        try { PhotoshopVM.RefreshData(); } catch { }
     }
 
     private void BrowseCustomFolder()

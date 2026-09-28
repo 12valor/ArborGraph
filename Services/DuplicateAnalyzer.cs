@@ -109,7 +109,7 @@ public class DuplicateAnalyzer
 
         statusProgress?.Report($"Analysis complete. Found {confirmedDuplicates.Count} confirmed duplicate groups.");
         return confirmedDuplicates;
-    }, cancellationToken);
+    });
 }
 
     private static async Task<string?> ComputePartialHashAsync(string path, long size)

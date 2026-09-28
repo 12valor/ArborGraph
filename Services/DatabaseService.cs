@@ -97,10 +97,17 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = "DELETE FROM files;";
-            cmd.ExecuteNonQuery();
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "DELETE FROM files;";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ClearIndex exception: {ex.Message}");
+            }
         }
     }
 
@@ -154,29 +161,36 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                INSERT INTO scan_metadata 
-                (scan_start, scan_finish, roots, directories_visited, directories_processed, directories_skipped,
-                 files_discovered, files_indexed, files_skipped, logical_bytes_indexed, scan_status)
-                VALUES
-                ($start, $finish, $roots, $dv, $dp, $ds, $fd, $fi, $fs, $bytes, $status);
-            ";
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    INSERT INTO scan_metadata 
+                    (scan_start, scan_finish, roots, directories_visited, directories_processed, directories_skipped,
+                     files_discovered, files_indexed, files_skipped, logical_bytes_indexed, scan_status)
+                    VALUES
+                    ($start, $finish, $roots, $dv, $dp, $ds, $fd, $fi, $fs, $bytes, $status);
+                ";
 
-            cmd.Parameters.AddWithValue("$start", new DateTimeOffset(start).ToUnixTimeSeconds());
-            cmd.Parameters.AddWithValue("$finish", new DateTimeOffset(finish).ToUnixTimeSeconds());
-            cmd.Parameters.AddWithValue("$roots", roots);
-            cmd.Parameters.AddWithValue("$dv", stats.DirectoriesVisited);
-            cmd.Parameters.AddWithValue("$dp", stats.DirectoriesProcessed);
-            cmd.Parameters.AddWithValue("$ds", stats.DirectoriesSkipped);
-            cmd.Parameters.AddWithValue("$fd", stats.FilesDiscovered);
-            cmd.Parameters.AddWithValue("$fi", stats.FilesIndexed);
-            cmd.Parameters.AddWithValue("$fs", stats.FilesSkipped);
-            cmd.Parameters.AddWithValue("$bytes", stats.LogicalBytesIndexed);
-            cmd.Parameters.AddWithValue("$status", stats.State.ToString());
+                cmd.Parameters.AddWithValue("$start", new DateTimeOffset(start).ToUnixTimeSeconds());
+                cmd.Parameters.AddWithValue("$finish", new DateTimeOffset(finish).ToUnixTimeSeconds());
+                cmd.Parameters.AddWithValue("$roots", roots);
+                cmd.Parameters.AddWithValue("$dv", stats.DirectoriesVisited);
+                cmd.Parameters.AddWithValue("$dp", stats.DirectoriesProcessed);
+                cmd.Parameters.AddWithValue("$ds", stats.DirectoriesSkipped);
+                cmd.Parameters.AddWithValue("$fd", stats.FilesDiscovered);
+                cmd.Parameters.AddWithValue("$fi", stats.FilesIndexed);
+                cmd.Parameters.AddWithValue("$fs", stats.FilesSkipped);
+                cmd.Parameters.AddWithValue("$bytes", stats.LogicalBytesIndexed);
+                cmd.Parameters.AddWithValue("$status", stats.State.ToString());
 
-            cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SaveScanMetadata error: {ex.Message}");
+            }
         }
     }
 
@@ -192,57 +206,64 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var list = new List<FileRecord>();
-            using var cmd = _connection!.CreateCommand();
-
-            string whereClause = "WHERE size >= $minSize";
-            cmd.Parameters.AddWithValue("$minSize", minSize);
-
-            if (maxSize < long.MaxValue && maxSize > 0)
+            try
             {
-                whereClause += " AND size <= $maxSize";
-                cmd.Parameters.AddWithValue("$maxSize", maxSize);
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+
+                string whereClause = "WHERE size >= $minSize";
+                cmd.Parameters.AddWithValue("$minSize", minSize);
+
+                if (maxSize < long.MaxValue && maxSize > 0)
+                {
+                    whereClause += " AND size <= $maxSize";
+                    cmd.Parameters.AddWithValue("$maxSize", maxSize);
+                }
+
+                if (!string.IsNullOrWhiteSpace(category) && category != "All")
+                {
+                    whereClause += " AND category = $category";
+                    cmd.Parameters.AddWithValue("$category", category);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    whereClause += " AND (name LIKE $search OR path LIKE $search)";
+                    cmd.Parameters.AddWithValue("$search", $"%{search}%");
+                }
+
+                string validSort = sortBy.ToLowerInvariant() switch
+                {
+                    "name" => "name",
+                    "modified_time" or "modified" or "date" => "modified_time",
+                    "category" => "category",
+                    "extension" or "ext" => "extension",
+                    _ => "size"
+                };
+
+                string direction = sortDesc ? "DESC" : "ASC";
+
+                cmd.CommandText = $@"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    {whereClause}
+                    ORDER BY {validSort} {direction}
+                    LIMIT $limit OFFSET $offset;
+                ";
+
+                cmd.Parameters.AddWithValue("$limit", limit);
+                cmd.Parameters.AddWithValue("$offset", offset);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
             }
-
-            if (!string.IsNullOrWhiteSpace(category) && category != "All")
+            catch (Exception ex)
             {
-                whereClause += " AND category = $category";
-                cmd.Parameters.AddWithValue("$category", category);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                whereClause += " AND (name LIKE $search OR path LIKE $search)";
-                cmd.Parameters.AddWithValue("$search", $"%{search}%");
-            }
-
-            string validSort = sortBy.ToLowerInvariant() switch
-            {
-                "name" => "name",
-                "modified_time" or "modified" or "date" => "modified_time",
-                "category" => "category",
-                "extension" or "ext" => "extension",
-                _ => "size"
-            };
-
-            string direction = sortDesc ? "DESC" : "ASC";
-
-            cmd.CommandText = $@"
-                SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
-                FROM files
-                {whereClause}
-                ORDER BY {validSort} {direction}
-                LIMIT $limit OFFSET $offset;
-            ";
-
-            cmd.Parameters.AddWithValue("$limit", limit);
-            cmd.Parameters.AddWithValue("$offset", offset);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                list.Add(ReadRecord(reader));
+                System.Diagnostics.Debug.WriteLine($"GetFilesPaged error: {ex.Message}");
             }
 
             return list;
@@ -257,33 +278,41 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
-            using var cmd = _connection!.CreateCommand();
-
-            string whereClause = "WHERE size >= $minSize";
-            cmd.Parameters.AddWithValue("$minSize", minSize);
-
-            if (maxSize < long.MaxValue && maxSize > 0)
+            try
             {
-                whereClause += " AND size <= $maxSize";
-                cmd.Parameters.AddWithValue("$maxSize", maxSize);
-            }
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
 
-            if (!string.IsNullOrWhiteSpace(category) && category != "All")
+                string whereClause = "WHERE size >= $minSize";
+                cmd.Parameters.AddWithValue("$minSize", minSize);
+
+                if (maxSize < long.MaxValue && maxSize > 0)
+                {
+                    whereClause += " AND size <= $maxSize";
+                    cmd.Parameters.AddWithValue("$maxSize", maxSize);
+                }
+
+                if (!string.IsNullOrWhiteSpace(category) && category != "All")
+                {
+                    whereClause += " AND category = $category";
+                    cmd.Parameters.AddWithValue("$category", category);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    whereClause += " AND (name LIKE $search OR path LIKE $search)";
+                    cmd.Parameters.AddWithValue("$search", $"%{search}%");
+                }
+
+                cmd.CommandText = $"SELECT COUNT(*) FROM files {whereClause};";
+                object? result = cmd.ExecuteScalar();
+                return result != null ? Convert.ToInt64(result) : 0;
+            }
+            catch (Exception ex)
             {
-                whereClause += " AND category = $category";
-                cmd.Parameters.AddWithValue("$category", category);
+                System.Diagnostics.Debug.WriteLine($"GetFilteredFileCount error: {ex.Message}");
+                return 0;
             }
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                whereClause += " AND (name LIKE $search OR path LIKE $search)";
-                cmd.Parameters.AddWithValue("$search", $"%{search}%");
-            }
-
-            cmd.CommandText = $"SELECT COUNT(*) FROM files {whereClause};";
-            object? result = cmd.ExecuteScalar();
-            return result != null ? Convert.ToInt64(result) : 0;
         }
     }
 
@@ -291,37 +320,44 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var list = new List<DirectoryRecord>();
-            using var cmd = _connection!.CreateCommand();
-
-            cmd.CommandText = @"
-                SELECT parent, SUM(size) as total_size, COUNT(id) as file_count
-                FROM files
-                GROUP BY parent
-                ORDER BY total_size DESC
-                LIMIT $limit;
-            ";
-            cmd.Parameters.AddWithValue("$limit", limit);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                string path = reader.GetString(0);
-                long size = reader.GetInt64(1);
-                long count = reader.GetInt64(2);
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
 
-                string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-                if (string.IsNullOrEmpty(name)) name = path;
+                cmd.CommandText = @"
+                    SELECT parent, SUM(size) as total_size, COUNT(id) as file_count
+                    FROM files
+                    GROUP BY parent
+                    ORDER BY total_size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$limit", limit);
 
-                list.Add(new DirectoryRecord
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    Path = path,
-                    Name = name,
-                    Parent = Path.GetDirectoryName(path) ?? string.Empty,
-                    Size = size,
-                    FileCount = count
-                });
+                    string path = reader.GetString(0);
+                    long size = reader.GetInt64(1);
+                    long count = reader.GetInt64(2);
+
+                    string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                    if (string.IsNullOrEmpty(name)) name = path;
+
+                    list.Add(new DirectoryRecord
+                    {
+                        Path = path,
+                        Name = name,
+                        Parent = Path.GetDirectoryName(path) ?? string.Empty,
+                        Size = size,
+                        FileCount = count
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetLargestFolders error: {ex.Message}");
             }
 
             return list;
@@ -332,24 +368,30 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var dict = new Dictionary<string, (long Count, long TotalSize)>(StringComparer.OrdinalIgnoreCase);
-
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                SELECT category, COUNT(id), SUM(size)
-                FROM files
-                GROUP BY category
-                ORDER BY SUM(size) DESC;
-            ";
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                string cat = reader.IsDBNull(0) ? FileCategory.Other : reader.GetString(0);
-                long count = reader.GetInt64(1);
-                long size = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
-                dict[cat] = (count, size);
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT category, COUNT(id), SUM(size)
+                    FROM files
+                    GROUP BY category
+                    ORDER BY SUM(size) DESC;
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    string cat = reader.IsDBNull(0) ? FileCategory.Other : reader.GetString(0);
+                    long count = reader.GetInt64(1);
+                    long size = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
+                    dict[cat] = (count, size);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetCategoryBreakdown error: {ex.Message}");
             }
 
             return dict;
@@ -360,25 +402,32 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var list = new List<FileRecord>();
-            double cutoff = DateTimeOffset.Now.AddDays(-daysOld).ToUnixTimeSeconds();
-
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
-                FROM files
-                WHERE modified_time <= $cutoff AND size > 0
-                ORDER BY size DESC
-                LIMIT $limit;
-            ";
-            cmd.Parameters.AddWithValue("$cutoff", cutoff);
-            cmd.Parameters.AddWithValue("$limit", limit);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                list.Add(ReadRecord(reader));
+                EnsureOpen();
+                double cutoff = DateTimeOffset.Now.AddDays(-daysOld).ToUnixTimeSeconds();
+
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE modified_time <= $cutoff AND size > 0
+                    ORDER BY size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$cutoff", cutoff);
+                cmd.Parameters.AddWithValue("$limit", limit);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetOldFiles error: {ex.Message}");
             }
 
             return list;
@@ -389,25 +438,31 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var list = new List<FileRecord>();
-
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
-                FROM files
-                WHERE category = 'Photoshop' 
-                   OR extension IN ('.psd', '.psb', '.pdd', '.abr', '.asl', '.atn', '.pat')
-                   OR path LIKE '%Adobe%Photoshop%'
-                ORDER BY size DESC
-                LIMIT $limit;
-            ";
-            cmd.Parameters.AddWithValue("$limit", limit);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                list.Add(ReadRecord(reader));
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE category = 'Photoshop' 
+                       OR extension IN ('.psd', '.psb', '.pdd', '.abr', '.asl', '.atn', '.pat')
+                       OR path LIKE '%Adobe%Photoshop%'
+                    ORDER BY size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$limit", limit);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetPhotoshopFiles error: {ex.Message}");
             }
 
             return list;
@@ -418,33 +473,40 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                SELECT 
-                    SUM(CASE WHEN LOWER(extension) = '.psd' THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN LOWER(extension) = '.psb' THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN LOWER(extension) NOT IN ('.psd', '.psb') AND (category = 'Photoshop' OR path LIKE '%Adobe%Photoshop%') THEN 1 ELSE 0 END),
-                    SUM(size),
-                    SUM(CASE WHEN LOWER(extension) = '.psd' THEN size ELSE 0 END),
-                    SUM(CASE WHEN LOWER(extension) = '.psb' THEN size ELSE 0 END)
-                FROM files
-                WHERE category = 'Photoshop' 
-                   OR extension IN ('.psd', '.psb', '.pdd', '.abr', '.asl', '.atn', '.pat')
-                   OR path LIKE '%Adobe%Photoshop%';
-            ";
-
-            using var reader = cmd.ExecuteReader();
-            if (reader.Read())
+            try
             {
-                long psdCount = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
-                long psbCount = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
-                long otherCount = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
-                long totalBytes = reader.IsDBNull(3) ? 0 : reader.GetInt64(3);
-                long psdBytes = reader.IsDBNull(4) ? 0 : reader.GetInt64(4);
-                long psbBytes = reader.IsDBNull(5) ? 0 : reader.GetInt64(5);
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT 
+                        SUM(CASE WHEN LOWER(extension) = '.psd' THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN LOWER(extension) = '.psb' THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN LOWER(extension) NOT IN ('.psd', '.psb') AND (category = 'Photoshop' OR path LIKE '%Adobe%Photoshop%') THEN 1 ELSE 0 END),
+                        SUM(size),
+                        SUM(CASE WHEN LOWER(extension) = '.psd' THEN size ELSE 0 END),
+                        SUM(CASE WHEN LOWER(extension) = '.psb' THEN size ELSE 0 END)
+                    FROM files
+                    WHERE category = 'Photoshop' 
+                       OR extension IN ('.psd', '.psb', '.pdd', '.abr', '.asl', '.atn', '.pat')
+                       OR path LIKE '%Adobe%Photoshop%';
+                ";
 
-                return (psdCount, psbCount, otherCount, totalBytes, psdBytes, psbBytes);
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    long psdCount = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
+                    long psbCount = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+                    long otherCount = reader.IsDBNull(2) ? 0 : reader.GetInt64(2);
+                    long totalBytes = reader.IsDBNull(3) ? 0 : reader.GetInt64(3);
+                    long psdBytes = reader.IsDBNull(4) ? 0 : reader.GetInt64(4);
+                    long psbBytes = reader.IsDBNull(5) ? 0 : reader.GetInt64(5);
+
+                    return (psdCount, psbCount, otherCount, totalBytes, psdBytes, psbBytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetPhotoshopStats error: {ex.Message}");
             }
 
             return (0, 0, 0, 0, 0, 0);
@@ -455,27 +517,34 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var candidates = new List<(long Size, int Count)>();
-            using var cmd = _connection!.CreateCommand();
-
-            cmd.CommandText = @"
-                SELECT size, COUNT(id) as cnt
-                FROM files
-                WHERE size >= $minSize
-                GROUP BY size
-                HAVING cnt >= $minCount
-                ORDER BY (size * (cnt - 1)) DESC
-                LIMIT $limit;
-            ";
-            cmd.Parameters.AddWithValue("$minSize", minSize);
-            cmd.Parameters.AddWithValue("$minCount", minCount);
-            cmd.Parameters.AddWithValue("$limit", limit);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                candidates.Add((reader.GetInt64(0), reader.GetInt32(1)));
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+
+                cmd.CommandText = @"
+                    SELECT size, COUNT(id) as cnt
+                    FROM files
+                    WHERE size >= $minSize
+                    GROUP BY size
+                    HAVING cnt >= $minCount
+                    ORDER BY (size * (cnt - 1)) DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$minSize", minSize);
+                cmd.Parameters.AddWithValue("$minCount", minCount);
+                cmd.Parameters.AddWithValue("$limit", limit);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    candidates.Add((reader.GetInt64(0), reader.GetInt32(1)));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetDuplicateSizeCandidates error: {ex.Message}");
             }
 
             return candidates;
@@ -486,22 +555,29 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
             var list = new List<FileRecord>();
-            using var cmd = _connection!.CreateCommand();
-
-            cmd.CommandText = @"
-                SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
-                FROM files
-                WHERE size = $size
-                ORDER BY path ASC;
-            ";
-            cmd.Parameters.AddWithValue("$size", size);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                list.Add(ReadRecord(reader));
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE size = $size
+                    ORDER BY path ASC;
+                ";
+                cmd.Parameters.AddWithValue("$size", size);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetFilesBySize error: {ex.Message}");
             }
 
             return list;
@@ -512,11 +588,19 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            EnsureOpen();
-            using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = "PRAGMA integrity_check;";
-            object? res = cmd.ExecuteScalar();
-            return string.Equals(res?.ToString(), "ok", StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "PRAGMA integrity_check;";
+                object? res = cmd.ExecuteScalar();
+                return string.Equals(res?.ToString(), "ok", StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CheckIntegrity error: {ex.Message}");
+                return false;
+            }
         }
     }
 
@@ -546,7 +630,16 @@ public class DatabaseService : IDisposable
         }
         else if (_connection.State != System.Data.ConnectionState.Open)
         {
-            _connection.Open();
+            try
+            {
+                _connection.Open();
+            }
+            catch
+            {
+                try { _connection.Dispose(); } catch { }
+                _connection = new SqliteConnection(_connectionString);
+                _connection.Open();
+            }
         }
     }
 
@@ -554,9 +647,16 @@ public class DatabaseService : IDisposable
     {
         lock (_lock)
         {
-            _connection?.Close();
-            _connection?.Dispose();
-            _connection = null;
+            try
+            {
+                _connection?.Close();
+                _connection?.Dispose();
+            }
+            catch { }
+            finally
+            {
+                _connection = null;
+            }
         }
         GC.SuppressFinalize(this);
     }

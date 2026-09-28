@@ -140,13 +140,17 @@ public class DuplicateViewModel : ObservableObject
         finally
         {
             IsAnalyzing = false;
-            _cts.Dispose();
+            try { _cts?.Dispose(); } catch { }
             _cts = null;
         }
     }
 
     public void CancelAnalysis()
     {
-        _cts?.Cancel();
+        try
+        {
+            _cts?.Cancel();
+        }
+        catch (ObjectDisposedException) { }
     }
 }

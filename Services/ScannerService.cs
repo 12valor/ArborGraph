@@ -209,6 +209,11 @@ public class ScannerService
                                 Interlocked.Increment(ref _filesIndexed);
                                 Interlocked.Add(ref _logicalBytesIndexed, size);
                             }
+                            catch (OperationCanceledException)
+                            {
+                                finalState = ScanState.Cancelled;
+                                break;
+                            }
                             catch (Exception ex)
                             {
                                 // File Skipped
@@ -226,6 +231,11 @@ public class ScannerService
                                 lastReportStopwatch.Restart();
                             }
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        finalState = ScanState.Cancelled;
+                        break;
                     }
                     catch (Exception ex)
                     {
@@ -270,6 +280,11 @@ public class ScannerService
                             dirQueue.Enqueue(subDir);
                         }
                     }
+                    catch (OperationCanceledException)
+                    {
+                        finalState = ScanState.Cancelled;
+                        break;
+                    }
                     catch (Exception ex)
                     {
                         if (_skippedDirs.Count < 500)
@@ -298,9 +313,16 @@ public class ScannerService
         }
         finally
         {
-            // Complete channel and wait for SQLite ingestion to drain
-            channel.Writer.Complete();
-            await dbWorker;
+            try
+            {
+                // Complete channel and wait for SQLite ingestion to drain safely
+                channel.Writer.TryComplete();
+                await dbWorker;
+            }
+            catch
+            {
+                // Channel drain failure should never crash the scanner
+            }
 
             stopwatch.Stop();
         }
@@ -328,25 +350,33 @@ public class ScannerService
             State = finalState
         };
 
-        // Save scan metadata in SQLite
-        _dbService.SaveScanMetadata(finalStats, string.Join(";", roots), scanStartTime, scanFinishTime);
+        // Save scan metadata in SQLite safely
+        try
+        {
+            _dbService.SaveScanMetadata(finalStats, string.Join(";", roots), scanStartTime, scanFinishTime);
+        }
+        catch { }
 
         // Final progress report
-        progress?.Report(new ScanProgressReport
+        try
         {
-            DirectoriesVisited = finalStats.DirectoriesVisited,
-            DirectoriesProcessed = finalStats.DirectoriesProcessed,
-            DirectoriesSkipped = finalStats.DirectoriesSkipped,
-            FilesDiscovered = finalStats.FilesDiscovered,
-            FilesIndexed = finalStats.FilesIndexed,
-            FilesSkipped = finalStats.FilesSkipped,
-            LogicalBytesIndexed = finalStats.LogicalBytesIndexed,
-            Elapsed = finalStats.Elapsed,
-            FilesPerSecond = finalStats.FilesPerSecond,
-            BytesPerSecond = finalStats.BytesPerSecond,
-            CurrentDirectory = finalStats.CurrentDirectory,
-            State = finalStats.State
-        });
+            progress?.Report(new ScanProgressReport
+            {
+                DirectoriesVisited = finalStats.DirectoriesVisited,
+                DirectoriesProcessed = finalStats.DirectoriesProcessed,
+                DirectoriesSkipped = finalStats.DirectoriesSkipped,
+                FilesDiscovered = finalStats.FilesDiscovered,
+                FilesIndexed = finalStats.FilesIndexed,
+                FilesSkipped = finalStats.FilesSkipped,
+                LogicalBytesIndexed = finalStats.LogicalBytesIndexed,
+                Elapsed = finalStats.Elapsed,
+                FilesPerSecond = finalStats.FilesPerSecond,
+                BytesPerSecond = finalStats.BytesPerSecond,
+                CurrentDirectory = finalStats.CurrentDirectory,
+                State = finalStats.State
+            });
+        }
+        catch { }
 
         return finalStats;
     });
@@ -361,25 +391,29 @@ public class ScannerService
     {
         if (progress == null) return;
 
-        long indexed = Volatile.Read(ref _filesIndexed);
-        long bytes = Volatile.Read(ref _logicalBytesIndexed);
-        double sec = sw.Elapsed.TotalSeconds;
-
-        progress.Report(new ScanProgressReport
+        try
         {
-            DirectoriesVisited = Volatile.Read(ref _directoriesVisited),
-            DirectoriesProcessed = Volatile.Read(ref _directoriesProcessed),
-            DirectoriesSkipped = Volatile.Read(ref _directoriesSkipped),
-            FilesDiscovered = Volatile.Read(ref _filesDiscovered),
-            FilesIndexed = indexed,
-            FilesSkipped = Volatile.Read(ref _filesSkipped),
-            LogicalBytesIndexed = bytes,
-            Elapsed = sw.Elapsed,
-            FilesPerSecond = sec > 0 ? indexed / sec : 0,
-            BytesPerSecond = sec > 0 ? bytes / sec : 0,
-            CurrentDirectory = currentDir,
-            State = state,
-            NewRecentDirectory = newRecentDir
-        });
+            long indexed = Volatile.Read(ref _filesIndexed);
+            long bytes = Volatile.Read(ref _logicalBytesIndexed);
+            double sec = sw.Elapsed.TotalSeconds;
+
+            progress.Report(new ScanProgressReport
+            {
+                DirectoriesVisited = Volatile.Read(ref _directoriesVisited),
+                DirectoriesProcessed = Volatile.Read(ref _directoriesProcessed),
+                DirectoriesSkipped = Volatile.Read(ref _directoriesSkipped),
+                FilesDiscovered = Volatile.Read(ref _filesDiscovered),
+                FilesIndexed = indexed,
+                FilesSkipped = Volatile.Read(ref _filesSkipped),
+                LogicalBytesIndexed = bytes,
+                Elapsed = sw.Elapsed,
+                FilesPerSecond = sec > 0 ? indexed / sec : 0,
+                BytesPerSecond = sec > 0 ? bytes / sec : 0,
+                CurrentDirectory = currentDir,
+                State = state,
+                NewRecentDirectory = newRecentDir
+            });
+        }
+        catch { }
     }
 }

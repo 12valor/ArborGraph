@@ -55,13 +55,13 @@ public class FileActionService
             else
             {
                 MessageBox.Show($"The file or directory does not exist on disk:\n\n{path}",
-                    "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to open file:\n\n{ex.Message}",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -104,14 +104,14 @@ public class FileActionService
                 else
                 {
                     MessageBox.Show($"File or parent directory does not exist:\n\n{path}",
-                        "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to reveal file in Windows Explorer:\n\n{ex.Message}",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -119,14 +119,24 @@ public class FileActionService
     {
         if (string.IsNullOrWhiteSpace(path)) return;
 
-        try
+        // Clipboard operations on Windows can intermittently fail if locked by another app
+        for (int attempt = 0; attempt < 5; attempt++)
         {
-            Clipboard.SetText(path);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Could not copy path to clipboard:\n\n{ex.Message}",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Warning);
+            try
+            {
+                Clipboard.SetDataObject(path, true);
+                return;
+            }
+            catch (COMException)
+            {
+                System.Threading.Thread.Sleep(50);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not copy path to clipboard:\n\n{ex.Message}",
+                    "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
         }
     }
 
@@ -150,7 +160,7 @@ public class FileActionService
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to open file properties:\n\n{ex.Message}",
-                "DiskScope Pro", MessageBoxButton.OK, MessageBoxImage.Error);
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

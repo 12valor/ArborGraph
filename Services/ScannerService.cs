@@ -323,9 +323,13 @@ public class ScannerService
             Elapsed = finalStats.Elapsed,
             FilesPerSecond = finalStats.FilesPerSecond,
             BytesPerSecond = finalStats.BytesPerSecond,
-            return finalStats;
+            CurrentDirectory = finalStats.CurrentDirectory,
+            State = finalStats.State
         });
-    }
+
+        return finalStats;
+    });
+}
 
     private void EmitProgress(
         IProgress<ScanProgressReport>? progress,

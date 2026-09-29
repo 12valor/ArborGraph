@@ -188,6 +188,71 @@ public class Program
             Console.WriteLine($"  Total Indexed Storage: {totalFiles} files, {totalBytes:N0} bytes.");
             Console.WriteLine("  ✓ Analytics engine and database queries fully verified.");
 
+            // -----------------------------------------------------------------------------------------
+            // TEST 8: Junk Cleaner Detection & Locked-File Safe Deletion
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 8] Testing Junk Cleaner Detection & Safe Deletion...");
+            string testJunkRoot = Path.Combine(Path.GetTempPath(), "DiskScope_Junk_" + Guid.NewGuid().ToString("N")[..8]);
+            Directory.CreateDirectory(testJunkRoot);
+            string junkTemp = Path.Combine(testJunkRoot, "Temp");
+            string junkNuget = Path.Combine(testJunkRoot, "Nuget");
+            Directory.CreateDirectory(junkTemp);
+            Directory.CreateDirectory(junkNuget);
+
+            File.WriteAllBytes(Path.Combine(junkTemp, "temp1.tmp"), new byte[2048]);
+            File.WriteAllBytes(Path.Combine(junkTemp, "temp2.tmp"), new byte[4096]);
+            string lockedFile = Path.Combine(junkTemp, "in_use.tmp");
+            File.WriteAllBytes(lockedFile, new byte[8192]);
+
+            File.WriteAllBytes(Path.Combine(junkNuget, "pkg1.nupkg"), new byte[16384]);
+            File.WriteAllBytes(Path.Combine(junkNuget, "pkg2.nupkg"), new byte[32768]);
+
+            var junkService = new JunkCleanerService();
+            var mockTargets = new List<JunkTarget>
+            {
+                new()
+                {
+                    Id = "mock_temp",
+                    Name = "Mock Temp",
+                    Category = JunkCategory.System,
+                    TargetDirectories = [junkTemp]
+                },
+                new()
+                {
+                    Id = "mock_nuget",
+                    Name = "Mock NuGet",
+                    Category = JunkCategory.Developer,
+                    TargetDirectories = [junkNuget]
+                }
+            };
+
+            await junkService.ScanAllAsync(mockTargets);
+            Assert(mockTargets[0].FileCount == 3, $"Expected 3 files in mock_temp, got {mockTargets[0].FileCount}");
+            Assert(mockTargets[1].FileCount == 2, $"Expected 2 files in mock_nuget, got {mockTargets[1].FileCount}");
+            long expectedJunkBytes = 2048 + 4096 + 8192 + 16384 + 32768;
+            long foundJunkBytes = mockTargets.Sum(t => t.SizeInBytes);
+            Assert(foundJunkBytes == expectedJunkBytes, $"Expected {expectedJunkBytes} junk bytes, found {foundJunkBytes}");
+            Console.WriteLine($"  ✓ Junk discovery verified: {mockTargets.Sum(t => t.FileCount)} files, {foundJunkBytes:N0} bytes.");
+
+            // Now lock the in_use.tmp file to simulate an active running program
+            FileStream? lockStream = null;
+            try
+            {
+                lockStream = new FileStream(lockedFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+                var cleanResult = await junkService.CleanTargetsAsync(mockTargets);
+                Assert(cleanResult.FilesDeleted == 4, $"Expected 4 files deleted, got {cleanResult.FilesDeleted}");
+                Assert(cleanResult.FilesSkipped == 1, $"Expected 1 locked file skipped, got {cleanResult.FilesSkipped}");
+                Assert(cleanResult.BytesFreed == expectedJunkBytes - 8192, $"Expected {expectedJunkBytes - 8192} bytes freed, got {cleanResult.BytesFreed}");
+                Assert(File.Exists(lockedFile), "Locked file should still exist and remain safe on disk");
+                Console.WriteLine($"  ✓ Safe deletion verified: {cleanResult.FilesDeleted} deleted, {cleanResult.FilesSkipped} in-use file safely skipped.");
+            }
+            finally
+            {
+                lockStream?.Dispose();
+                try { if (Directory.Exists(testJunkRoot)) Directory.Delete(testJunkRoot, true); } catch { }
+            }
+
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");
             Console.WriteLine("=================================================");

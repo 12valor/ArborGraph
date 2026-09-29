@@ -45,6 +45,7 @@ From PowerShell:
 - **File category breakdown:** Groups storage by type (documents, media, archives, code, executables).
 - **Largest files and folders:** Sortable lists ranking the heaviest space consumers.
 - **Duplicate finder:** Three-stage detection (size filter, header check, full SHA-256 hash) to avoid false positives.
+- **System and developer junk cleaner:** Scans and purges user temp files, crash dumps, Windows Update downloads, web browser caches (Chrome, Edge, Firefox, Brave), and developer stores (NuGet, npm, pip, Cargo) with automatic locked-file skipping.
 - **Photoshop inspector:** Dedicated views for `.psd` and `.psb` working files and cache buildup.
 - **Old files filter:** Lists files untouched for 1, 2, or 3+ years.
 - **Safe deletion:** Sends files to the Windows Recycle Bin or deletes permanently on confirmation.

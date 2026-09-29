@@ -147,16 +147,6 @@ body {
     font-weight: 400;
 }
 
-.win-ver-badge {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    padding: 1px 6px;
-    border-radius: var(--radius-xs);
-    margin-left: 4px;
-}
-
 .win-window-controls {
     display: flex;
     align-items: center;
@@ -397,23 +387,6 @@ body {
     margin-top: 2px;
 }
 
-.installer-spec-badge-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.spec-pill {
-    background-color: var(--win-surface);
-    border: 1px solid var(--win-border);
-    font-size: 11px;
-    font-family: var(--font-mono);
-    color: var(--win-blue-800);
-    padding: 3px 8px;
-    border-radius: var(--radius-xs);
-    font-weight: 500;
-}
-
 .installer-desc {
     font-size: 13px;
     color: var(--win-text-sec);
@@ -497,17 +470,6 @@ body {
     background: #e2e8f0;
     padding: 1px 4px;
     border-radius: 2px;
-}
-
-.mode-tag {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--win-blue-700);
-    background-color: var(--win-blue-100);
-    border: 1px solid var(--win-blue-border);
-    padding: 1px 6px;
-    border-radius: var(--radius-xs);
-    text-transform: uppercase;
 }
 
 /* Primary Installer Action Box */
@@ -1331,16 +1293,6 @@ body {
     font-size: 14px;
     font-weight: 600;
     color: var(--win-text);
-}
-
-.changelog-badge {
-    background-color: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: var(--radius-xs);
 }
 
 .changelog-items-list {

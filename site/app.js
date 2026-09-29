@@ -1,35 +1,61 @@
 // DiskScope: Windows Disk Analysis & Setup Utility Script
+// Modern Developer Tool Portal Script (Interactive Navigation, Setup Stepper, Diagnostics & Verification)
+
 document.addEventListener('DOMContentLoaded', () => {
     const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
 
     // =========================================================
-    // 1. APPLICATION TAB NAVIGATION & DEEP LINKING
+    // 1. HEADER NAVIGATION, SCROLLSPY & MOBILE DRAWER
     // =========================================================
-    const tabButtons = document.querySelectorAll('.win-tab');
-    const tabPanes = document.querySelectorAll('.tab-pane');
+    const siteHeader = document.getElementById('siteHeader');
+    const navLinks = document.querySelectorAll('.site-nav .nav-link');
+    const mobileNavToggle = document.getElementById('mobileNavToggle');
+    const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+    const sections = document.querySelectorAll('section.site-section');
 
-    function switchTab(tabId) {
-        tabButtons.forEach(btn => {
-            const matches = btn.getAttribute('data-tab') === tabId;
-            btn.classList.toggle('active', matches);
-            btn.setAttribute('aria-selected', matches ? 'true' : 'false');
+    // Sticky header shadow on scroll
+    window.addEventListener('scroll', () => {
+        if (siteHeader) {
+            siteHeader.classList.toggle('scrolled', window.scrollY > 20);
+        }
+    }, { passive: true });
+
+    // Mobile nav toggle
+    if (mobileNavToggle && mobileNavDrawer) {
+        mobileNavToggle.addEventListener('click', () => {
+            mobileNavDrawer.classList.toggle('open');
         });
 
-        tabPanes.forEach(pane => {
-            const matches = pane.id === `pane${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`;
-            pane.classList.toggle('active', matches);
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileNavDrawer.classList.remove('open');
+            });
         });
     }
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.getAttribute('data-tab');
-            if (tabId) {
-                switchTab(tabId);
-                history.replaceState(null, '', `#${tabId}`);
-            }
-        });
-    });
+    // Scrollspy: update active nav link as user scrolls
+    if ('IntersectionObserver' in window && sections.length > 0) {
+        const observerOptions = {
+            root: null,
+            rootMargin: '-20% 0px -60% 0px',
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        link.classList.toggle('active', href === `#${id}`);
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(sec => observer.observe(sec));
+    }
 
     // =========================================================
     // 2. TOAST NOTIFICATION HELPER
@@ -385,10 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
     footerDocLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            switchTab('docs');
             const targetDoc = link.getAttribute('data-doc');
             if (targetDoc) switchDoc(targetDoc);
-            window.scrollTo({ top: 120, behavior: 'smooth' });
+            const docElement = document.getElementById('docs');
+            if (docElement) {
+                docElement.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     });
 
@@ -396,27 +424,29 @@ document.addEventListener('DOMContentLoaded', () => {
     footerLegalLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            switchTab('legal');
             const targetLegal = link.getAttribute('data-legal');
             if (targetLegal) switchLegal(targetLegal);
-            window.scrollTo({ top: 120, behavior: 'smooth' });
+            const legalElement = document.getElementById('legal');
+            if (legalElement) {
+                legalElement.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     });
 
-    // Initial URL Hash Parsing with Sub-route support
+    // Initial URL Hash Handling
     if (window.location.hash) {
-        const hash = window.location.hash.replace('#', '').toLowerCase();
-        const validTabs = ['setup', 'scanner', 'verify', 'specs', 'docs', 'legal', 'changelog'];
-        if (validTabs.includes(hash)) {
-            switchTab(hash);
-        } else if (hash.startsWith('docs-') || hash.startsWith('doc')) {
-            switchTab('docs');
-            const matchingDoc = document.getElementById(hash);
-            if (matchingDoc) switchDoc(hash);
-        } else if (hash.startsWith('legal-') || hash.startsWith('legal')) {
-            switchTab('legal');
-            const matchingLegal = document.getElementById(hash);
-            if (matchingLegal) switchLegal(hash);
+        const hash = window.location.hash.replace('#', '');
+        if (hash.startsWith('doc')) {
+            switchDoc(hash);
+            const docsEl = document.getElementById('docs');
+            if (docsEl) docsEl.scrollIntoView();
+        } else if (hash.startsWith('legal')) {
+            switchLegal(hash);
+            const legalEl = document.getElementById('legal');
+            if (legalEl) legalEl.scrollIntoView();
+        } else {
+            const targetSection = document.getElementById(hash);
+            if (targetSection) targetSection.scrollIntoView();
         }
     }
 
@@ -446,27 +476,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const catPsdSize = document.getElementById('catPsdSize');
     const catJunkSize = document.getElementById('catJunkSize');
     const catCodeSize = document.getElementById('catCodeSize');
-
-    const tiles = [
-        document.getElementById('tileVideo'),
-        document.getElementById('tileImages'),
-        document.getElementById('tilePsd'),
-        document.getElementById('tileJunk'),
-        document.getElementById('tileCode')
-    ];
-
-    const samplePaths = [
-        "C:\\Windows\\System32\\DriverStore\\FileRepository\\nv_dispi.inf_amd64",
-        "C:\\Users\\admin\\AppData\\Local\\Temp\\scoped_dir_94812\\data.tmp",
-        "C:\\Program Files\\Adobe\\Adobe Photoshop 2026\\Photoshop.exe",
-        "C:\\Users\\admin\\.gradle\\caches\\modules-2\\files-2.1\\cache.bin",
-        "C:\\Users\\admin\\source\\repos\\DiskScope\\Services\\ScannerService.cs",
-        "C:\\Users\\admin\\.cargo\\registry\\cache\\index.crates.io-6f17d22bba15001f",
-        "C:\\Users\\admin\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cache",
-        "C:\\Users\\admin\\Videos\\Captures\\Master_Render_4K_ProRes.mov",
-        "C:\\Users\\admin\\Documents\\Photoshop\\hero_keyvisual_master.psb",
-        "C:\\Windows\\assembly\\NativeImages_v4.0.30319_64\\mscorlib.dll"
-    ];
 
     const driveProfiles = {
         "C:": {
@@ -504,6 +513,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const samplePaths = [
+        "C:\\Windows\\System32\\DriverStore\\FileRepository\\nv_dispi.inf_amd64",
+        "C:\\Users\\admin\\AppData\\Local\\Temp\\scoped_dir_94812\\data.tmp",
+        "C:\\Program Files\\Adobe\\Adobe Photoshop 2026\\Photoshop.exe",
+        "C:\\Users\\admin\\.gradle\\caches\\modules-2\\files-2.1\\cache.bin",
+        "C:\\Users\\admin\\source\\repos\\DiskScope\\Services\\ScannerService.cs",
+        "C:\\Users\\admin\\.cargo\\registry\\cache\\index.crates.io-6f17d22bba15001f",
+        "C:\\Users\\admin\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cache",
+        "C:\\Users\\admin\\Videos\\Captures\\Master_Render_4K_ProRes.mov",
+        "C:\\Users\\admin\\Documents\\Photoshop\\hero_keyvisual_master.psb",
+        "C:\\Windows\\assembly\\NativeImages_v4.0.30319_64\\mscorlib.dll"
+    ];
+
     function updateDriveDisplay(driveKey) {
         const profile = driveProfiles[driveKey] || driveProfiles["C:"];
         if (driveCapacityTitle) driveCapacityTitle.textContent = profile.title;
@@ -539,149 +561,130 @@ document.addEventListener('DOMContentLoaded', () => {
             const driveVal = simDriveSelect ? simDriveSelect.value : "C:";
             const profile = driveProfiles[driveVal] || driveProfiles["C:"];
 
-            // Reset tiles
-            tiles.forEach(t => t && t.classList.remove('active'));
-
             let currentFiles = 0;
             const duration = 2400;
             const startTime = performance.now();
             let tickerIndex = 0;
 
             if (simConsole) {
-                simConsole.textContent = `> Initializing traversal on ${driveVal}...\n> Threadpool allocated: 8 worker threads\n> Bounded channel: 20,000 slots\n> Ingestion streaming started.`;
+                simConsole.textContent = `> Initiating DiskScope multi-threaded traversal on ${driveVal}...\n> Threadpool spawned: 8 worker threads.\n> SQLite WAL ingestion active.`;
             }
 
             const simInterval = setInterval(() => {
                 const elapsed = performance.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 3);
+                const progressRatio = Math.min(1, elapsed / duration);
+                const pct = Math.floor(progressRatio * 100);
 
-                const pct = Math.floor(progress * 100);
                 simProgressFill.style.width = `${pct}%`;
                 scanPctBadge.textContent = `${pct}%`;
 
-                currentFiles = Math.floor(ease * profile.targetFiles);
+                currentFiles = Math.floor(progressRatio * profile.targetFiles);
                 hudFiles.textContent = currentFiles.toLocaleString();
 
-                const currentSpeed = progress < 1 
-                    ? Math.floor(ease * profile.maxSpeed * (0.85 + Math.random() * 0.3)) 
-                    : profile.maxSpeed;
-                hudSpeed.textContent = currentSpeed.toLocaleString() + ' f/s';
+                const currentVol = (progressRatio * profile.targetVolume).toFixed(1);
+                hudVolume.textContent = `${currentVol} GB`;
 
-                hudVolume.textContent = (ease * profile.targetVolume).toFixed(1) + ' GB';
-                hudJunk.textContent = (ease * profile.targetJunk).toFixed(1) + ' GB';
+                const currentJunk = (progressRatio * profile.targetJunk).toFixed(1);
+                hudJunk.textContent = `${currentJunk} GB`;
 
-                simTicker.textContent = `[WAL Batch] Indexed: ${samplePaths[tickerIndex % samplePaths.length]}`;
-                tickerIndex++;
+                const randomSpeed = Math.floor(profile.maxSpeed * (0.8 + Math.random() * 0.2));
+                hudSpeed.textContent = `${randomSpeed.toLocaleString()} f/s`;
 
-                if (progress > 0.15 && tiles[0]) tiles[0].classList.add('active');
-                if (progress > 0.35 && tiles[1]) tiles[1].classList.add('active');
-                if (progress > 0.55 && tiles[2]) tiles[2].classList.add('active');
-                if (progress > 0.75 && tiles[3]) tiles[3].classList.add('active');
-                if (progress > 0.90 && tiles[4]) tiles[4].classList.add('active');
+                tickerIndex = (tickerIndex + 1) % samplePaths.length;
+                simTicker.textContent = samplePaths[tickerIndex];
 
-                if (progress >= 1) {
+                if (progressRatio >= 1) {
                     clearInterval(simInterval);
                     isScanning = false;
                     btnStartSim.disabled = false;
-                    simBtnText.textContent = "Re-run Scan";
-                    scanStateBadge.textContent = "Scan complete";
-                    scanPctBadge.textContent = "100%";
-                    hudFiles.textContent = profile.targetFiles.toLocaleString();
-                    hudSpeed.textContent = "58,400 f/s (Peak)";
-                    hudVolume.textContent = profile.targetVolume.toFixed(1) + ' GB';
-                    hudJunk.textContent = profile.targetJunk.toFixed(1) + ' GB';
-                    simTicker.textContent = `Scan complete: ${profile.targetFiles.toLocaleString()} files indexed in 2.4s. Cleanable junk: ${profile.targetJunk.toFixed(1)} GB.`;
-
+                    simBtnText.textContent = "Scan Completed (Restart)";
+                    scanStateBadge.textContent = "Scan Completed";
+                    hudSpeed.textContent = "0 f/s";
+                    simTicker.textContent = `Completed: Indexed ${profile.targetFiles.toLocaleString()} files across ${driveVal} in 2.4s.`;
                     if (simConsole) {
-                        simConsole.textContent = `> Traversal completed on ${driveVal}\n> Indexed records: ${profile.targetFiles.toLocaleString()} files\n> Secondary B-tree indexes rebuilt in 0.18s\n> Passive WAL checkpoint executed\n> Reclaimable developer/system junk: ${profile.targetJunk.toFixed(1)} GB`;
+                        simConsole.textContent += `\n> Traversal complete.\n> Indexed: ${profile.targetFiles.toLocaleString()} records.\n> SQLite secondary indexes rebuilt in 42ms.\n> Reclaimable developer junk: ${profile.junk}.`;
+                        simConsole.scrollTop = simConsole.scrollHeight;
                     }
-                    showToast(`Scan complete: ${profile.targetFiles.toLocaleString()} files indexed on ${driveVal}.`);
+                    showToast(`Filesystem scan of ${driveVal} completed successfully!`);
                 }
-            }, 60);
+            }, 50);
         });
     }
 
     // =========================================================
-    // 9. INTERACTIVE CHECKSUM COMPARATOR
+    // 9. PACKAGE VERIFICATION INTERACTION
     // =========================================================
+    const copyOfficialHashBtn = document.getElementById('copyOfficialHashBtn');
     const verifyInput = document.getElementById('verifyInput');
     const verifyBtn = document.getElementById('verifyBtn');
     const verifyResult = document.getElementById('verifyResult');
 
-    function executeVerification() {
-        if (!verifyInput || !verifyResult) return;
-        const inputVal = verifyInput.value.trim().toUpperCase();
-        if (!inputVal) {
-            verifyResult.style.display = 'none';
-            return;
-        }
-
-        verifyResult.style.display = 'block';
-        if (inputVal === OFFICIAL_HASH) {
-            verifyResult.className = 'verify-status-banner match';
-            verifyResult.textContent = '✓ Checksum Verified: Exact match with official release v1.0.0 (SHA-256 Validated).';
-        } else {
-            verifyResult.className = 'verify-status-banner mismatch';
-            verifyResult.textContent = '✕ Hash Mismatch: Checksum does not match official release (Length: ' + inputVal.length + ' chars).';
-        }
-    }
-
-    if (verifyBtn) {
-        verifyBtn.addEventListener('click', executeVerification);
-    }
-    if (verifyInput) {
-        verifyInput.addEventListener('input', executeVerification);
-        verifyInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') executeVerification();
-        });
-    }
-
-    // =========================================================
-    // 10. 1-CLICK CLIPBOARD UTILITIES
-    // =========================================================
-    const copyOfficialBtn = document.getElementById('copyOfficialHashBtn');
-    if (copyOfficialBtn) {
-        copyOfficialBtn.addEventListener('click', () => {
+    if (copyOfficialHashBtn) {
+        copyOfficialHashBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(OFFICIAL_HASH).then(() => {
-                showToast('Copied official SHA-256 digest to clipboard');
-                const orig = copyOfficialBtn.textContent;
-                copyOfficialBtn.textContent = 'Copied!';
-                setTimeout(() => { copyOfficialBtn.textContent = orig; }, 2000);
+                showToast('Official SHA-256 hash copied to clipboard!');
+            }).catch(() => {
+                showToast('Hash: ' + OFFICIAL_HASH);
             });
         });
     }
 
-    const tableHashBtns = document.querySelectorAll('.copy-hash-btn');
-    tableHashBtns.forEach(btn => {
+    if (verifyBtn && verifyInput && verifyResult) {
+        verifyBtn.addEventListener('click', () => {
+            const entered = verifyInput.value.trim().toUpperCase();
+            if (!entered) {
+                showToast('Please enter or paste a SHA-256 hash first.');
+                return;
+            }
+
+            verifyResult.style.display = 'block';
+            if (entered === OFFICIAL_HASH) {
+                verifyResult.className = 'verify-status-banner match';
+                verifyResult.innerHTML = `
+                    <strong>INTEGRITY VERIFIED:</strong> Checksum matches official binary digest bit-for-bit.<br>
+                    <span style="font-size: 11px;">Algorithm: SHA-256 &bull; Status: Authenticated Release</span>
+                `;
+                showToast('Hash verified: Authenticity confirmed!');
+            } else {
+                verifyResult.className = 'verify-status-banner mismatch';
+                verifyResult.innerHTML = `
+                    <strong>MISMATCH DETECTED:</strong> Hash does not match the official release digest.<br>
+                    <span style="font-size: 11px;">Expected: ${OFFICIAL_HASH}<br>Received: ${entered}</span>
+                `;
+                showToast('Hash mismatch: Binary may be corrupted or altered.');
+            }
+        });
+    }
+
+    // =========================================================
+    // 10. GLOBAL COPY BUTTONS
+    // =========================================================
+    document.querySelectorAll('.copy-hash-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const hash = btn.getAttribute('data-hash') || OFFICIAL_HASH;
             navigator.clipboard.writeText(hash).then(() => {
-                showToast('SHA-256 hash copied to clipboard');
-                const orig = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(() => { btn.textContent = orig; }, 2000);
+                showToast('SHA-256 checksum copied to clipboard!');
+            }).catch(() => {
+                showToast('Hash copied: ' + hash);
             });
         });
     });
 
-    const copyCmdBtns = document.querySelectorAll('.copy-cmd-btn');
-    copyCmdBtns.forEach(btn => {
+    document.querySelectorAll('.copy-cmd-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const targetId = btn.getAttribute('data-target');
             const targetEl = document.getElementById(targetId);
             if (targetEl) {
-                const cmdText = targetEl.textContent.trim();
-                navigator.clipboard.writeText(cmdText).then(() => {
-                    showToast('Command copied to clipboard');
-                    const orig = btn.textContent;
-                    btn.textContent = 'Copied!';
-                    setTimeout(() => { btn.textContent = orig; }, 2000);
+                const text = targetEl.textContent.trim();
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Command copied: ' + text);
+                }).catch(() => {
+                    showToast('Copied: ' + text);
                 });
             }
         });
     });
 
-    // Initialize Setup Wizard
+    // Initialize Setup Stepper UI
     updateWizardUI();
 });

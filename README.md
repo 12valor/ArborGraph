@@ -42,6 +42,7 @@ From PowerShell:
 ## Features
 
 - **Drive and folder analysis:** Scans selected drives or custom folders, showing directory size trees and capacity bars.
+- **Interactive visual treemap:** Squarified, color-coded space map of indexed files and folders with drill-down navigation and breadcrumb pathing.
 - **File category breakdown:** Groups storage by type (documents, media, archives, code, executables).
 - **Largest files and folders:** Sortable lists ranking the heaviest space consumers.
 - **Duplicate finder:** Three-stage detection (size filter, header check, full SHA-256 hash) to avoid false positives.

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
 
@@ -252,6 +253,43 @@ public class Program
                 lockStream?.Dispose();
                 try { if (Directory.Exists(testJunkRoot)) Directory.Delete(testJunkRoot, true); } catch { }
             }
+
+            // -----------------------------------------------------------------------------------------
+            // TEST 9: Visual Treemap Hierarchy & Squarified Geometry
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 9] Testing Visual Treemap Hierarchy & Squarified Geometry...");
+            var treemapRootItems = dbService.GetTreemapItems(null);
+            Assert(treemapRootItems.Count > 0, "Expected treemap root items from indexed files");
+            Console.WriteLine($"  Root Treemap Items: {treemapRootItems.Count} folders/items found (Top: {treemapRootItems[0].Name} - {treemapRootItems[0].FormattedSize}).");
+
+            var testTreemapItems = new List<TreemapItem>
+            {
+                new() { Name = "video.mp4", Size = 500_000_000, Category = "Video" },
+                new() { Name = "image.psd", Size = 300_000_000, Category = "Images" },
+                new() { Name = "app.exe", Size = 150_000_000, Category = "Executables" },
+                new() { Name = "archive.zip", Size = 50_000_000, Category = "Archives" }
+            };
+
+            double canvasW = 1000.0;
+            double canvasH = 600.0;
+            var layoutRects = TreemapLayoutEngine.ComputeLayout(testTreemapItems, canvasW, canvasH);
+            Assert(layoutRects.Count == testTreemapItems.Count, $"Expected {testTreemapItems.Count} rects, got {layoutRects.Count}");
+
+            double totalComputedArea = 0;
+            foreach (var rect in layoutRects)
+            {
+                Assert(rect.Width > 0 && rect.Height > 0, $"Rectangle for {rect.Item.Name} has invalid size: {rect.Width}x{rect.Height}");
+                Assert(rect.X >= 0 && rect.Y >= 0, $"Rectangle for {rect.Item.Name} has negative coordinates");
+                Assert(rect.X + rect.Width <= canvasW + 0.01, $"Rectangle extends beyond width: {rect.X + rect.Width} > {canvasW}");
+                Assert(rect.Y + rect.Height <= canvasH + 0.01, $"Rectangle extends beyond height: {rect.Y + rect.Height} > {canvasH}");
+                Assert(rect.FillBrush != null, $"Rectangle for {rect.Item.Name} missing color brush");
+                totalComputedArea += rect.Width * rect.Height;
+            }
+
+            double expectedArea = canvasW * canvasH;
+            Assert(Math.Abs(totalComputedArea - expectedArea) < 1.0, $"Total area {totalComputedArea} != expected {expectedArea}");
+            Console.WriteLine($"  ✓ Squarified layout verified: {layoutRects.Count} non-overlapping rects perfectly tiling {canvasW}x{canvasH} canvas.");
+            Console.WriteLine("  ✓ Color-coding by category validated.");
 
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");

@@ -42,6 +42,7 @@ public class MainViewModel : ObservableObject
         DuplicatesVM = new DuplicateViewModel(_duplicateAnalyzer, _fileActionService);
         PhotoshopVM = new PhotoshopViewModel(_dbService, _fileActionService);
         JunkCleanerVM = new JunkCleanerViewModel(_junkCleanerService, _fileActionService);
+        TreemapVM = new TreemapViewModel(_dbService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
 
         _currentView = OverviewVM;
@@ -63,6 +64,7 @@ public class MainViewModel : ObservableObject
     public DuplicateViewModel DuplicatesVM { get; }
     public PhotoshopViewModel PhotoshopVM { get; }
     public JunkCleanerViewModel JunkCleanerVM { get; }
+    public TreemapViewModel TreemapVM { get; }
     public ScanLogViewModel ScanLogVM { get; }
 
     public object CurrentView
@@ -114,6 +116,7 @@ public class MainViewModel : ObservableObject
             "Duplicates" => DuplicatesVM,
             "Photoshop" => PhotoshopVM,
             "JunkCleaner" => JunkCleanerVM,
+            "Treemap" => TreemapVM,
             "ScanLog" => ScanLogVM,
             _ => OverviewVM
         };
@@ -151,6 +154,9 @@ public class MainViewModel : ObservableObject
                     break;
                 case "JunkCleaner":
                     JunkCleanerVM.RefreshData();
+                    break;
+                case "Treemap":
+                    TreemapVM.RefreshData();
                     break;
             }
         }

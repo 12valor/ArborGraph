@@ -109,6 +109,9 @@
                     <Button Content="Junk &amp; Cache Cleaner" Command="{Binding NavigateCommand}" CommandParameter="JunkCleaner" 
                             Style="{StaticResource NavButtonStyle}"/>
 
+                    <Button Content="Visual Space Treemap" Command="{Binding NavigateCommand}" CommandParameter="Treemap" 
+                            Style="{StaticResource NavButtonStyle}"/>
+
                     <Separator Background="{StaticResource BrushBorder}" Margin="6,8"/>
 
                     <Button Content="Photoshop Intelligence" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
@@ -148,6 +151,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:JunkCleanerViewModel}">
                         <views:JunkCleanerView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:TreemapViewModel}">
+                        <views:TreemapView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:ScanLogViewModel}">
                         <views:ScanLogView/>

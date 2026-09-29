@@ -364,6 +364,150 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public List<TreemapItem> GetTreemapItems(string? parentPath = null, int limit = 150)
+    {
+        lock (_lock)
+        {
+            var items = new List<TreemapItem>();
+            try
+            {
+                EnsureOpen();
+
+                if (string.IsNullOrWhiteSpace(parentPath))
+                {
+                    // Root view: Return top largest folders
+                    using var cmdFolders = _connection!.CreateCommand();
+                    cmdFolders.CommandText = @"
+                        SELECT parent, SUM(size) as total_size, COUNT(id) as file_count
+                        FROM files
+                        GROUP BY parent
+                        ORDER BY total_size DESC
+                        LIMIT $limit;
+                    ";
+                    cmdFolders.Parameters.AddWithValue("$limit", limit);
+
+                    using var readerFolders = cmdFolders.ExecuteReader();
+                    while (readerFolders.Read())
+                    {
+                        string path = readerFolders.GetString(0);
+                        long size = readerFolders.GetInt64(1);
+                        int count = readerFolders.GetInt32(2);
+
+                        string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                        if (string.IsNullOrEmpty(name)) name = path;
+
+                        items.Add(new TreemapItem
+                        {
+                            Path = path,
+                            Name = name,
+                            Size = size,
+                            IsDirectory = true,
+                            Category = "Folder",
+                            ChildCount = count
+                        });
+                    }
+                }
+                else
+                {
+                    // 1. Direct child files in parentPath
+                    using var cmdFiles = _connection!.CreateCommand();
+                    cmdFiles.CommandText = @"
+                        SELECT name, path, size, category, extension, modified_time
+                        FROM files
+                        WHERE parent = $parent
+                        ORDER BY size DESC;
+                    ";
+                    cmdFiles.Parameters.AddWithValue("$parent", parentPath);
+
+                    using var readerFiles = cmdFiles.ExecuteReader();
+                    while (readerFiles.Read())
+                    {
+                        string name = readerFiles.GetString(0);
+                        string path = readerFiles.GetString(1);
+                        long size = readerFiles.GetInt64(2);
+                        string category = readerFiles.IsDBNull(3) ? "Other" : readerFiles.GetString(3);
+                        string ext = readerFiles.IsDBNull(4) ? string.Empty : readerFiles.GetString(4);
+                        double mod = readerFiles.IsDBNull(5) ? 0 : readerFiles.GetDouble(5);
+
+                        items.Add(new TreemapItem
+                        {
+                            Name = name,
+                            Path = path,
+                            Size = size,
+                            IsDirectory = false,
+                            Category = category,
+                            Extension = ext,
+                            LastModified = mod > 0 ? DateTime.UnixEpoch.AddSeconds(mod) : DateTime.MinValue
+                        });
+                    }
+
+                    // 2. Immediate subdirectories under parentPath
+                    string normalizedParent = parentPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    string prefix = normalizedParent + Path.DirectorySeparatorChar + "%";
+
+                    using var cmdSubdirs = _connection!.CreateCommand();
+                    cmdSubdirs.CommandText = @"
+                        SELECT parent, SUM(size) as total_size, COUNT(id) as file_count
+                        FROM files
+                        WHERE parent LIKE $prefix AND parent != $parent
+                        GROUP BY parent;
+                    ";
+                    cmdSubdirs.Parameters.AddWithValue("$prefix", prefix);
+                    cmdSubdirs.Parameters.AddWithValue("$parent", parentPath);
+
+                    var subDirAggregates = new Dictionary<string, (long Size, int Count)>(StringComparer.OrdinalIgnoreCase);
+
+                    using var readerSubdirs = cmdSubdirs.ExecuteReader();
+                    while (readerSubdirs.Read())
+                    {
+                        string p = readerSubdirs.GetString(0);
+                        long s = readerSubdirs.GetInt64(1);
+                        int c = readerSubdirs.GetInt32(2);
+
+                        if (p.Length > normalizedParent.Length)
+                        {
+                            string relative = p.Substring(normalizedParent.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                            int slashIndex = relative.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]);
+                            string directChildName = slashIndex >= 0 ? relative.Substring(0, slashIndex) : relative;
+
+                            if (!string.IsNullOrEmpty(directChildName))
+                            {
+                                string directChildFullPath = Path.Combine(normalizedParent, directChildName);
+                                if (subDirAggregates.TryGetValue(directChildFullPath, out var current))
+                                {
+                                    subDirAggregates[directChildFullPath] = (current.Size + s, current.Count + c);
+                                }
+                                else
+                                {
+                                    subDirAggregates[directChildFullPath] = (s, c);
+                                }
+                            }
+                        }
+                    }
+
+                    foreach (var kvp in subDirAggregates)
+                    {
+                        items.Add(new TreemapItem
+                        {
+                            Path = kvp.Key,
+                            Name = Path.GetFileName(kvp.Key),
+                            Size = kvp.Value.Size,
+                            IsDirectory = true,
+                            Category = "Folder",
+                            ChildCount = kvp.Value.Count
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetTreemapItems error: {ex.Message}");
+            }
+
+            return items.OrderByDescending(i => i.Size).Take(limit).ToList();
+        }
+    }
+
     public Dictionary<string, (long Count, long TotalSize)> GetCategoryBreakdown()
     {
         lock (_lock)

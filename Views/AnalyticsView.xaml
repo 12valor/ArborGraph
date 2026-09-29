@@ -77,7 +77,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Storage Indexed by PrismDrive" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontSize="12"/>
+                            <TextBlock Text="Storage Indexed by DiskScope" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontSize="12"/>
                             <TextBlock Grid.Column="1" Text="{Binding FormattedIndexedBytes}" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" FontSize="13"/>
                         </Grid>
 

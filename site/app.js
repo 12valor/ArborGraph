@@ -1,6 +1,6 @@
-// PrismDrive Pro — Installer & Download Portal Dynamic Script
+// DiskScope Pro — Installer & Download Portal Dynamic Script
 document.addEventListener('DOMContentLoaded', () => {
-    const OFFICIAL_HASH = 'DA66547E74F0C82BFF04A04E786140F6544CCEC240A9171E1F350FCA07D86D25';
+    const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
 
     // 1. Toast Notification Helper
     const toast = document.getElementById('toastMsg');
@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (/Windows/i.test(userAgent)) {
             osText = 'System Check: Windows OS Detected ✓';
         } else if (/Mac/i.test(userAgent)) {
-            osText = 'Note: macOS Detected. PrismDrive runs natively on Windows 10/11 x64.';
+            osText = 'Note: macOS Detected. DiskScope runs natively on Windows 10/11 x64.';
         } else if (/Linux/i.test(userAgent)) {
-            osText = 'Note: Linux Detected. PrismDrive runs natively on Windows 10/11 x64.';
+            osText = 'Note: Linux Detected. DiskScope runs natively on Windows 10/11 x64.';
         }
         detectedOSEl.textContent = osText;
     }
@@ -41,13 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            showToast('Starting download of PrismDrive.exe (72.7 MB)...');
+            showToast('Starting download of DiskScope.exe (72.7 MB)...');
 
             if (progressBox && progressBarFill && progressStatusText && progressPercent) {
                 progressBox.style.display = 'block';
                 progressBarFill.style.width = '0%';
                 progressPercent.textContent = '0%';
-                progressStatusText.textContent = 'Transferring PrismDrive.exe package...';
+                progressStatusText.textContent = 'Transferring DiskScope.exe package...';
 
                 let progress = 0;
                 const interval = setInterval(() => {
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (progress >= 100) {
                         clearInterval(interval);
                         progressStatusText.textContent = '✓ Download completed! Ready to run.';
-                        showToast('✓ PrismDrive.exe ready. Follow Step 1-3 to launch.');
+                        showToast('✓ DiskScope.exe ready. Follow Step 1-3 to launch.');
                     }
                 }, 110);
             }
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (inputVal === OFFICIAL_HASH) {
             verifyResult.className = 'verify-result match';
-            verifyResult.textContent = '✓ Checksum Verified: Exact match with official PrismDrive v1.0.0 release.';
+            verifyResult.textContent = '✓ Checksum Verified: Exact match with official DiskScope v1.0.0 release.';
         } else {
             verifyResult.className = 'verify-result mismatch';
             verifyResult.textContent = '✕ Hash Mismatch: Checksum does not match official release (Length: ' + inputVal.length + ' chars).';

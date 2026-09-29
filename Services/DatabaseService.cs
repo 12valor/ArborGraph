@@ -16,7 +16,7 @@ public class DatabaseService : IDisposable
         if (string.IsNullOrWhiteSpace(customDbPath))
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string folder = Path.Combine(appData, "PrismDrivePro");
+            string folder = Path.Combine(appData, "DiskScopePro");
             Directory.CreateDirectory(folder);
             _dbPath = Path.Combine(folder, "scan_index.db");
         }

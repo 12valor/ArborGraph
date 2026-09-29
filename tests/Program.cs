@@ -11,7 +11,7 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         Console.WriteLine("=================================================");
-        Console.WriteLine("  PRISMDRIVE PRO — AUTOMATED INTEGRATION TESTS");
+        Console.WriteLine("  DISKSCOPE PRO — AUTOMATED INTEGRATION TESTS");
         Console.WriteLine("=================================================");
 
         string testRoot = Path.Combine(Path.GetTempPath(), "DiskScope_TestFiles_" + Guid.NewGuid().ToString("N")[..8]);

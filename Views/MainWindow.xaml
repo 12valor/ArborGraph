@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:DiskScope.ViewModels"
         xmlns:views="clr-namespace:DiskScope.Views"
         mc:Ignorable="d"
-        Title="PrismDrive Pro — Windows Storage Analyzer" 
+        Title="DiskScope Pro — Windows Storage Analyzer" 
         Height="840" Width="1320" MinHeight="700" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BrushBgCanvas}">

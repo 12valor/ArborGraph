@@ -7,7 +7,7 @@ public partial class MainWindow : Window
 {
     private static readonly string LogFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "PrismDrivePro",
+        "DiskScopePro",
         "app.log");
 
     public MainWindow()

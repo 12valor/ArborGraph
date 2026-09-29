@@ -12,47 +12,54 @@ public static class FileCategory
     public const string Executables = "Executables";
     public const string Other = "Other";
 
-    private static readonly HashSet<string> PhotoshopExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".psd", ".psb", ".pdd", ".abr", ".asl", ".atn", ".pat"
-    };
+    private static readonly Dictionary<string, string> ExtensionMap;
 
-    private static readonly HashSet<string> ImageExts = new(StringComparer.OrdinalIgnoreCase)
+    static FileCategory()
     {
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg",
-        ".raw", ".cr2", ".nef", ".arw", ".dng", ".heic", ".ico"
-    };
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-    private static readonly HashSet<string> VideoExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".mp4", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".m4v", ".mpg", ".mpeg", ".3gp", ".ts"
-    };
+        void Register(string[] exts, string category)
+        {
+            foreach (var ext in exts)
+            {
+                map[ext] = category;
+            }
+        }
 
-    private static readonly HashSet<string> AudioExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".alac", ".aiff", ".mid", ".midi"
-    };
+        Register([".psd", ".psb", ".pdd", ".abr", ".asl", ".atn", ".pat"], Photoshop);
 
-    private static readonly HashSet<string> ArchiveExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".cab", ".dmg", ".tgz", ".wim", ".vhd", ".vhdx"
-    };
+        Register([
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".svg",
+            ".raw", ".cr2", ".nef", ".arw", ".dng", ".heic", ".ico"
+        ], Images);
 
-    private static readonly HashSet<string> DocumentExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".txt", ".rtf", ".odt", ".csv", ".md", ".epub"
-    };
+        Register([
+            ".mp4", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".m4v", ".mpg", ".mpeg", ".3gp", ".ts"
+        ], Video);
 
-    private static readonly HashSet<string> CodeExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".cs", ".js", ".ts", ".tsx", ".jsx", ".html", ".htm", ".css", ".scss", ".json", ".xml", ".yaml", ".yml",
-        ".py", ".cpp", ".c", ".h", ".hpp", ".java", ".go", ".rs", ".sql", ".sh", ".ps1", ".php", ".rb", ".swift", ".kt"
-    };
+        Register([
+            ".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".alac", ".aiff", ".mid", ".midi"
+        ], Audio);
 
-    private static readonly HashSet<string> ExecutableExts = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".exe", ".dll", ".msi", ".sys", ".drv", ".bat", ".cmd", ".com", ".scr", ".ocx"
-    };
+        Register([
+            ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".cab", ".dmg", ".tgz", ".wim", ".vhd", ".vhdx"
+        ], Archives);
+
+        Register([
+            ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".txt", ".rtf", ".odt", ".csv", ".md", ".epub"
+        ], Documents);
+
+        Register([
+            ".cs", ".js", ".ts", ".tsx", ".jsx", ".html", ".htm", ".css", ".scss", ".json", ".xml", ".yaml", ".yml",
+            ".py", ".cpp", ".c", ".h", ".hpp", ".java", ".go", ".rs", ".sql", ".sh", ".ps1", ".php", ".rb", ".swift", ".kt"
+        ], Code);
+
+        Register([
+            ".exe", ".dll", ".msi", ".sys", ".drv", ".bat", ".cmd", ".com", ".scr", ".ocx"
+        ], Executables);
+
+        ExtensionMap = map;
+    }
 
     public static string FromExtension(string? extension)
     {
@@ -60,16 +67,7 @@ public static class FileCategory
 
         string ext = extension.StartsWith('.') ? extension : "." + extension;
 
-        if (PhotoshopExts.Contains(ext)) return Photoshop;
-        if (ImageExts.Contains(ext)) return Images;
-        if (VideoExts.Contains(ext)) return Video;
-        if (AudioExts.Contains(ext)) return Audio;
-        if (ArchiveExts.Contains(ext)) return Archives;
-        if (DocumentExts.Contains(ext)) return Documents;
-        if (CodeExts.Contains(ext)) return Code;
-        if (ExecutableExts.Contains(ext)) return Executables;
-
-        return Other;
+        return ExtensionMap.TryGetValue(ext, out var cat) ? cat : Other;
     }
 
     public static readonly string[] AllCategories =

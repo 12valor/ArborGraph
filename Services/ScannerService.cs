@@ -75,7 +75,7 @@ public class ScannerService
         _skippedDirs.Clear();
         _skippedFiles.Clear();
 
-        _dbService.ClearIndex();
+        _dbService.ClearIndex(roots);
         _dbService.BeginBulkIngestion();
 
         var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
@@ -169,12 +169,17 @@ public class ScannerService
 
         ScanState finalState = ScanState.Completed;
 
+        var visitedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         try
         {
             foreach (var root in roots)
             {
                 if (cancellationToken.IsCancellationRequested) break;
                 if (!Directory.Exists(root)) continue;
+
+                string normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (!visitedPaths.Add(normalizedRoot)) continue;
 
                 var dirQueue = new Queue<string>();
                 dirQueue.Enqueue(root);
@@ -306,6 +311,12 @@ public class ScannerService
                                 if ((di.Attributes & FileAttributes.ReparsePoint) != 0)
                                 {
                                     // By default, do not follow symlinks/reparse points to avoid infinite recursion
+                                    continue;
+                                }
+
+                                string normalizedSubDir = Path.GetFullPath(subDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                                if (!visitedPaths.Add(normalizedSubDir))
+                                {
                                     continue;
                                 }
                             }

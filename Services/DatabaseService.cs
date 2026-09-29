@@ -93,16 +93,56 @@ public class DatabaseService : IDisposable
         }
     }
 
-    public void ClearIndex()
+    public void ClearIndex(IReadOnlyList<string>? roots = null)
     {
         lock (_lock)
         {
             try
             {
                 EnsureOpen();
-                using var cmd = _connection!.CreateCommand();
-                cmd.CommandText = "DELETE FROM files;";
-                cmd.ExecuteNonQuery();
+                using var tx = _connection!.BeginTransaction();
+                try
+                {
+                    if (roots == null || roots.Count == 0)
+                    {
+                        using var cmd = _connection.CreateCommand();
+                        cmd.Transaction = tx;
+                        cmd.CommandText = "DELETE FROM files;";
+                        cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        using var cmd = _connection.CreateCommand();
+                        cmd.Transaction = tx;
+                        cmd.CommandText = @"
+                            DELETE FROM files 
+                            WHERE path = $root COLLATE NOCASE 
+                               OR substr(path, 1, $len) = $prefix COLLATE NOCASE;
+                        ";
+                        var pRoot = cmd.Parameters.Add("$root", SqliteType.Text);
+                        var pPrefix = cmd.Parameters.Add("$prefix", SqliteType.Text);
+                        var pLen = cmd.Parameters.Add("$len", SqliteType.Integer);
+
+                        foreach (var root in roots)
+                        {
+                            if (string.IsNullOrWhiteSpace(root)) continue;
+                            string cleanRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                            string prefix = cleanRoot + Path.DirectorySeparatorChar;
+
+                            pRoot.Value = cleanRoot;
+                            pPrefix.Value = prefix;
+                            pLen.Value = prefix.Length;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
             }
             catch (Exception ex)
             {
@@ -123,6 +163,13 @@ public class DatabaseService : IDisposable
                     PRAGMA synchronous = OFF;
                     PRAGMA temp_store = MEMORY;
                     PRAGMA cache_size = -64000;
+
+                    DROP INDEX IF EXISTS idx_files_size;
+                    DROP INDEX IF EXISTS idx_files_parent;
+                    DROP INDEX IF EXISTS idx_files_modified;
+                    DROP INDEX IF EXISTS idx_files_extension;
+                    DROP INDEX IF EXISTS idx_files_category;
+                    DROP INDEX IF EXISTS idx_files_name;
                 ";
                 cmd.ExecuteNonQuery();
             }
@@ -142,6 +189,13 @@ public class DatabaseService : IDisposable
                 EnsureOpen();
                 using var cmd = _connection!.CreateCommand();
                 cmd.CommandText = @"
+                    CREATE INDEX IF NOT EXISTS idx_files_size ON files(size DESC);
+                    CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent);
+                    CREATE INDEX IF NOT EXISTS idx_files_modified ON files(modified_time DESC);
+                    CREATE INDEX IF NOT EXISTS idx_files_extension ON files(extension);
+                    CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
+                    CREATE INDEX IF NOT EXISTS idx_files_name ON files(name);
+
                     PRAGMA synchronous = NORMAL;
                     PRAGMA wal_checkpoint(PASSIVE);
                 ";

@@ -291,6 +291,67 @@ public class Program
             Console.WriteLine($"  ✓ Squarified layout verified: {layoutRects.Count} non-overlapping rects perfectly tiling {canvasW}x{canvasH} canvas.");
             Console.WriteLine("  ✓ Color-coding by category validated.");
 
+            // -----------------------------------------------------------------------------------------
+            // TEST 10: Production Hardening: Scoped ClearIndex, Index Lifecycle & Category Mapping
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 10] Testing Production Hardening Enhancements...");
+
+            // 1. O(1) Category mapping checks
+            Assert(FileCategory.FromExtension(".psd") == FileCategory.Photoshop, "PSD should be Photoshop");
+            Assert(FileCategory.FromExtension("PSD") == FileCategory.Photoshop, "PSD without dot should be Photoshop");
+            Assert(FileCategory.FromExtension(".mp4") == FileCategory.Video, ".mp4 should be Video");
+            Assert(FileCategory.FromExtension("unknown_ext_999") == FileCategory.Other, "Unknown ext should be Other");
+            Assert(FileCategory.FromExtension(null) == FileCategory.Other, "Null ext should be Other");
+            Assert(FileCategory.FromExtension("") == FileCategory.Other, "Empty ext should be Other");
+            Console.WriteLine("  ✓ O(1) Dictionary category mapping verified across variations.");
+
+            // 2. Scoped ClearIndex
+            var recA = new FileRecord
+            {
+                Path = @"C:\ScopedTest\DriveA\sub\fileA.txt",
+                Name = "fileA.txt",
+                Parent = @"C:\ScopedTest\DriveA\sub",
+                Size = 100,
+                ModifiedTime = 1234567,
+                CreatedTime = 1234567,
+                Extension = ".txt",
+                Category = FileCategory.Documents,
+                Accessible = 1
+            };
+            var recB = new FileRecord
+            {
+                Path = @"C:\ScopedTest\DriveB\sub\fileB.txt",
+                Name = "fileB.txt",
+                Parent = @"C:\ScopedTest\DriveB\sub",
+                Size = 200,
+                ModifiedTime = 1234567,
+                CreatedTime = 1234567,
+                Extension = ".txt",
+                Category = FileCategory.Documents,
+                Accessible = 1
+            };
+            dbService.InsertBatch(new[] { recA, recB });
+
+            // Clear ONLY DriveA
+            dbService.ClearIndex(new[] { @"C:\ScopedTest\DriveA" });
+            var pagedAfterScoped = dbService.GetFilesPaged(0, 100);
+            Assert(pagedAfterScoped.Any(f => f.Path == recB.Path), "DriveB record should NOT have been cleared");
+            Assert(!pagedAfterScoped.Any(f => f.Path == recA.Path), "DriveA record SHOULD have been cleared");
+            Console.WriteLine("  ✓ Scoped ClearIndex verified: target drive cleared while preserving other drives.");
+
+            // Clear unscoped
+            dbService.ClearIndex();
+            var pagedAfterAllCleared = dbService.GetFilesPaged(0, 100);
+            Assert(pagedAfterAllCleared.Count == 0, "Unscoped ClearIndex should have cleared all remaining records");
+            Console.WriteLine("  ✓ Unscoped ClearIndex verified.");
+
+            // 3. Index recreation cycle
+            dbService.BeginBulkIngestion();
+            dbService.InsertSingle(recA);
+            dbService.EndBulkIngestion();
+            Assert(dbService.CheckIntegrity(), "Database integrity should remain valid after index drop and recreate");
+            Console.WriteLine("  ✓ Deferred secondary index drop and rebuild verified with integrity check.");
+
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");
             Console.WriteLine("=================================================");

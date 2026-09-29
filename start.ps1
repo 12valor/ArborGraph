@@ -83,27 +83,31 @@ if ($Site) {
     }
 }
 
-$rootExe = Join-Path $ScriptDir "DiskScope.exe"
-$distExe = Join-Path $ScriptDir "dist\DiskScope.exe"
-$debugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\DiskScope.exe"
-$publishExe = Join-Path $ScriptDir "bin\publish\DiskScope.exe"
+$rootExe = Join-Path $ScriptDir "PrismDrive.exe"
+$distExe = Join-Path $ScriptDir "dist\PrismDrive.exe"
+$debugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\PrismDrive.exe"
+$publishExe = Join-Path $ScriptDir "bin\publish\PrismDrive.exe"
+
+$legacyRootExe = Join-Path $ScriptDir "DiskScope.exe"
+$legacyDistExe = Join-Path $ScriptDir "dist\DiskScope.exe"
+$legacyDebugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\DiskScope.exe"
 
 # 2. Publish Mode
 if ($Publish) {
     if (Test-Path $rootExe) {
-        Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+        Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
         Start-Process -FilePath $rootExe
         return
     } elseif (Test-Path $distExe) {
-        Write-Host "[*] Launching standalone published DiskScope..." -ForegroundColor Green
+        Write-Host "[*] Launching standalone published PrismDrive..." -ForegroundColor Green
         Start-Process -FilePath $distExe
         return
-    } elseif (Test-Path $publishExe) {
-        Write-Host "[*] Launching published standalone DiskScope..." -ForegroundColor Green
-        Start-Process -FilePath $publishExe
+    } elseif (Test-Path $legacyRootExe) {
+        Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
+        Start-Process -FilePath $legacyRootExe
         return
     } else {
-        Write-Host "[*] Building single-file release package..." -ForegroundColor Yellow
+        Write-Host "[*] Building single-file release package (PrismDrive)..." -ForegroundColor Yellow
         & dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
         if (Test-Path $distExe) {
             Copy-Item $distExe -Destination $rootExe -Force
@@ -146,45 +150,56 @@ try {
 
 # 5. Dev Mode (Attached to console)
 if ($Dev) {
-    Write-Host "[*] Starting DiskScope in attached console mode..." -ForegroundColor Cyan
+    Write-Host "[*] Starting PrismDrive in attached console mode..." -ForegroundColor Cyan
     & dotnet run -c $Configuration --project (Join-Path $ScriptDir "DiskScope.csproj")
     return
 }
 
 # 6. Standard Launch: Incremental build + detached GUI launch
 if ($hasNet8) {
-    Write-Host "[*] Building DiskScope ($Configuration)..." -ForegroundColor Cyan
+    Write-Host "[*] Building PrismDrive ($Configuration)..." -ForegroundColor Cyan
     & dotnet build DiskScope.csproj -c $Configuration --nologo -v quiet
     if (Test-Path $debugExe) {
-        Write-Host "[*] Starting DiskScope..." -ForegroundColor Green
+        Write-Host "[*] Starting PrismDrive..." -ForegroundColor Green
         Start-Process -FilePath $debugExe
+        return
+    } elseif (Test-Path $legacyDebugExe) {
+        Write-Host "[*] Starting PrismDrive..." -ForegroundColor Green
+        Start-Process -FilePath $legacyDebugExe
         return
     }
 }
 
 # 7. Fallback to existing binaries if SDK not found
 if (Test-Path $rootExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+    Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
     Start-Process -FilePath $rootExe
     return
 }
 
 if (Test-Path $distExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+    Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
     Start-Process -FilePath $distExe
     return
 }
 
+if (Test-Path $legacyRootExe) {
+    Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
+    Start-Process -FilePath $legacyRootExe
+    return
+}
+
 if (Test-Path $publishExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+    Write-Host "[*] Launching standalone PrismDrive..." -ForegroundColor Green
     Start-Process -FilePath $publishExe
     return
 }
 
 if (Test-Path $debugExe) {
-    Write-Host "[*] Launching existing DiskScope binary..." -ForegroundColor Green
+    Write-Host "[*] Launching existing PrismDrive binary..." -ForegroundColor Green
     Start-Process -FilePath $debugExe
     return
 }
 
-Write-Error "Could not start DiskScope. Please ensure .NET 8 SDK is installed (https://dotnet.microsoft.com/download/dotnet/8.0)."
+Write-Error "Could not start PrismDrive. Please ensure .NET 8 SDK is installed (https://dotnet.microsoft.com/download/dotnet/8.0)."
+

@@ -1,5 +1,5 @@
-/* DiskScope Pro — Official Installer & Direct Download Portal */
-/* Strictly White and Sky Blue Color Palette */
+/* PrismDrive Pro — Official Installer & Direct Distribution Portal */
+/* Strictly White and Sky Blue Color Palette • Light, Elegant, High-Legibility Typography */
 
 :root {
     --white: #ffffff;
@@ -15,30 +15,29 @@
     --sky-900: #0c4a6e;
     --sky-950: #082f49;
 
-    --bg-page: #f0f9ff;
+    --bg-page: #f8fafc;
     --bg-card: #ffffff;
-    --bg-muted: #e0f2fe;
-    --bg-accent: #0284c7;
+    --bg-elevated: #f0f9ff;
 
     --border-light: #e0f2fe;
     --border-medium: #bae6fd;
-    --border-strong: #0ea5e9;
+    --border-strong: #0284c7;
 
-    --text-main: #0c4a6e;
-    --text-muted: #0369a1;
-    --text-bright: #0284c7;
+    --text-primary: #0c4a6e;
+    --text-secondary: #0369a1;
+    --text-muted: #075985;
     --text-white: #ffffff;
 
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: "Consolas", "Courier New", monospace;
 
     --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
 
     --shadow-sm: 0 1px 3px rgba(2, 132, 199, 0.08);
-    --shadow-md: 0 4px 14px rgba(2, 132, 199, 0.12);
-    --shadow-lg: 0 10px 30px rgba(2, 132, 199, 0.15);
+    --shadow-md: 0 6px 18px rgba(2, 132, 199, 0.1);
+    --shadow-lg: 0 12px 32px rgba(2, 132, 199, 0.14);
 }
 
 * {
@@ -53,71 +52,79 @@ html {
 
 body {
     background-color: var(--bg-page);
-    color: var(--text-main);
+    color: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
 }
 
 /* Container */
 .container {
-    max-width: 980px;
+    max-width: 1040px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
 }
 
-/* Header & Top Bar */
+/* =========================================================
+   TOP NAVBAR — BLUE PALETTE (NOT WHITE)
+   ========================================================= */
 .top-header {
-    background-color: var(--white);
-    border-bottom: 2px solid var(--sky-200);
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border-bottom: 2px solid #075985;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.2);
 }
 
 .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 56px;
+    height: 60px;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     text-decoration: none;
-    color: var(--text-main);
+    color: var(--white);
 }
 
 .brand-icon {
     width: 32px;
     height: 32px;
-    background-color: var(--sky-600);
-    color: var(--white);
+    background-color: var(--white);
+    color: var(--sky-700);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
+    font-size: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .brand-title {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--sky-900);
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    color: var(--white);
+}
+
+.brand-title strong {
+    font-weight: 600;
 }
 
 .brand-ver {
-    background-color: var(--sky-100);
-    color: var(--sky-700);
-    border: 1px solid var(--sky-300);
+    background-color: rgba(255, 255, 255, 0.18);
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     font-size: 11px;
-    font-weight: 700;
-    padding: 2px 7px;
+    font-weight: 500;
+    padding: 2px 8px;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
 }
@@ -125,45 +132,50 @@ body {
 .nav-links {
     display: flex;
     list-style: none;
-    gap: 18px;
+    gap: 8px;
+    align-items: center;
 }
 
 .nav-links a {
-    color: var(--sky-800);
+    color: rgba(255, 255, 255, 0.92);
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 6px 12px;
     border-radius: var(--radius-sm);
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .nav-links a:hover {
-    background-color: var(--sky-100);
-    color: var(--sky-600);
+    background-color: rgba(255, 255, 255, 0.16);
+    color: var(--white);
 }
 
 .nav-download-btn {
-    background-color: var(--sky-600);
-    color: var(--white) !important;
-    border: 1px solid var(--sky-700);
+    background-color: var(--white) !important;
+    color: var(--sky-700) !important;
+    font-weight: 500 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    margin-left: 6px;
 }
 
 .nav-download-btn:hover {
-    background-color: var(--sky-700) !important;
+    background-color: var(--sky-50) !important;
+    color: var(--sky-900) !important;
 }
 
-/* System Banner / Pill */
+/* System Verification Pill */
 .system-alert {
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 8px 14px;
-    margin: 20px 0 16px;
+    padding: 10px 16px;
+    margin: 24px 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 13px;
+    font-weight: 400;
     color: var(--sky-900);
     box-shadow: var(--shadow-sm);
 }
@@ -171,7 +183,7 @@ body {
 .system-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .status-dot {
@@ -188,39 +200,49 @@ body {
     font-size: 12px;
 }
 
-/* Main Installer Hero Section */
+/* =========================================================
+   HERO INSTALLER CARD — BIGGER & LIGHTER TYPOGRAPHY
+   ========================================================= */
 .hero-installer {
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-top: 4px solid var(--sky-600);
     border-radius: var(--radius-md);
-    padding: 28px;
-    margin-bottom: 24px;
+    padding: 34px 32px;
+    margin-bottom: 28px;
     box-shadow: var(--shadow-md);
 }
 
 .installer-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: 28px;
     border-bottom: 1px solid var(--sky-100);
-    padding-bottom: 22px;
-    margin-bottom: 22px;
+    padding-bottom: 26px;
+    margin-bottom: 24px;
 }
 
 .installer-headings h1 {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: 34px;
+    font-weight: 300;
     color: var(--sky-950);
-    line-height: 1.2;
-    margin-bottom: 6px;
+    line-height: 1.25;
+    margin-bottom: 8px;
+    letter-spacing: -0.4px;
+}
+
+.installer-headings h1 strong {
+    font-weight: 600;
+    color: var(--sky-600);
 }
 
 .installer-headings p {
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 300;
     color: var(--sky-800);
-    max-width: 600px;
+    max-width: 620px;
+    line-height: 1.6;
 }
 
 .download-cta-group {
@@ -228,7 +250,7 @@ body {
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
-    min-width: 260px;
+    min-width: 280px;
 }
 
 .btn-main-download {
@@ -236,16 +258,16 @@ body {
     color: var(--white);
     text-decoration: none;
     font-size: 16px;
-    font-weight: 700;
-    padding: 14px 24px;
+    font-weight: 500;
+    padding: 16px 26px;
     border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     border: 1px solid var(--sky-700);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
     cursor: pointer;
     transition: background-color 0.15s ease, transform 0.05s ease;
 }
@@ -259,7 +281,8 @@ body {
 }
 
 .download-subtext {
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 400;
     color: var(--sky-700);
     font-family: var(--font-mono);
     text-align: right;
@@ -275,44 +298,44 @@ body {
 .spec-cell {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: var(--radius-sm);
 }
 
 .spec-label {
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     color: var(--sky-700);
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 
 .spec-val {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--sky-950);
     font-family: var(--font-mono);
 }
 
-/* Dynamic Live Download Notification & Progress */
+/* Download Progress Notification & Guide */
 .download-progress-box {
     display: none;
     background-color: var(--sky-50);
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-top: 18px;
-    animation: fadeIn 0.2s ease-in-out;
+    padding: 18px;
+    margin-top: 20px;
+    animation: fadeIn 0.25s ease-in-out;
 }
 
 .progress-header {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--sky-900);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .progress-track {
@@ -321,25 +344,185 @@ body {
     background-color: var(--sky-200);
     border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .progress-bar-fill {
     width: 0%;
     height: 100%;
     background-color: var(--sky-600);
-    transition: width 0.2s linear;
+    transition: width 0.15s linear;
 }
 
 .progress-guide {
-    font-size: 12px;
-    color: var(--sky-800);
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--sky-900);
     display: flex;
-    gap: 12px;
+    gap: 16px;
 }
 
 .progress-guide strong {
+    font-weight: 500;
     color: var(--sky-950);
+}
+
+/* =========================================================
+   INTERACTIVE LIVE MINI-SCANNER SIMULATOR
+   ========================================================= */
+.simulator-box {
+    background-color: var(--white);
+    border: 1px solid var(--sky-200);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.sim-control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.sim-drive-select {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    padding: 9px 14px;
+    border: 1px solid var(--sky-300);
+    border-radius: var(--radius-sm);
+    background-color: var(--white);
+    color: var(--sky-950);
+    outline: none;
+    min-width: 240px;
+}
+
+.sim-drive-select:focus {
+    border-color: var(--sky-600);
+    box-shadow: 0 0 0 2px var(--sky-200);
+}
+
+.btn-start-sim {
+    background-color: var(--sky-600);
+    color: var(--white);
+    border: 1px solid var(--sky-700);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 20px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s ease;
+}
+
+.btn-start-sim:hover {
+    background-color: var(--sky-700);
+}
+
+.sim-hud-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.sim-hud-card {
+    background-color: var(--sky-50);
+    border: 1px solid var(--sky-200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+}
+
+.sim-hud-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--sky-700);
+}
+
+.sim-hud-val {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--sky-950);
+    font-family: var(--font-mono);
+}
+
+.sim-terminal-ticker {
+    background-color: var(--white);
+    border: 1px solid var(--sky-200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--sky-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 16px;
+}
+
+/* Dynamic Treemap Mini Canvas */
+.sim-treemap-canvas {
+    height: 180px;
+    background-color: var(--sky-100);
+    border: 1px solid var(--sky-200);
+    border-radius: var(--radius-sm);
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    overflow: hidden;
+}
+
+.sim-tile {
+    border-radius: 3px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--white);
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    opacity: 0.2;
+}
+
+.sim-tile.active {
+    opacity: 1;
+}
+
+.sim-tile:hover {
+    transform: scale(0.99);
+}
+
+.tile-video {
+    background-color: #0369a1;
+    grid-row: span 2;
+}
+
+.tile-images {
+    background-color: #0284c7;
+}
+
+.tile-psd {
+    background-color: #0ea5e9;
+}
+
+.tile-junk {
+    background-color: #38bdf8;
+    color: #082f49;
+}
+
+.tile-code {
+    background-color: #7dd3fc;
+    color: #082f49;
 }
 
 /* Section Card */
@@ -347,24 +530,28 @@ body {
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-md);
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 28px;
+    margin-bottom: 28px;
     box-shadow: var(--shadow-sm);
 }
 
 .section-title {
-    font-size: 17px;
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 300;
     color: var(--sky-950);
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     border-bottom: 1px solid var(--sky-100);
-    padding-bottom: 10px;
+    padding-bottom: 12px;
 }
 
-/* Installer Package Downloads Table */
+.section-title svg {
+    color: var(--sky-600);
+}
+
+/* Downloads Table */
 .downloads-table-wrap {
     overflow-x: auto;
 }
@@ -372,22 +559,23 @@ body {
 .downloads-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 14px;
     text-align: left;
 }
 
 .downloads-table th {
     background-color: var(--sky-100);
     color: var(--sky-900);
-    font-weight: 700;
-    padding: 10px 14px;
+    font-weight: 500;
+    padding: 12px 16px;
     border: 1px solid var(--sky-200);
 }
 
 .downloads-table td {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border: 1px solid var(--sky-200);
     color: var(--sky-900);
+    font-weight: 300;
 }
 
 .downloads-table tr:nth-child(even) {
@@ -399,7 +587,7 @@ body {
 }
 
 .file-primary {
-    font-weight: 700;
+    font-weight: 500;
     font-family: var(--font-mono);
     color: var(--sky-950);
 }
@@ -408,12 +596,13 @@ body {
     background-color: var(--sky-600);
     color: var(--white);
     text-decoration: none;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
     border-radius: var(--radius-sm);
     display: inline-block;
     border: 1px solid var(--sky-700);
+    transition: background-color 0.15s ease;
 }
 
 .table-btn:hover {
@@ -424,12 +613,13 @@ body {
     background-color: var(--white);
     color: var(--sky-700);
     border: 1px solid var(--sky-300);
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: var(--radius-sm);
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     font-family: var(--font-mono);
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-secondary:hover {
@@ -442,7 +632,7 @@ body {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 14px;
+    padding: 18px;
     margin-top: 14px;
 }
 
@@ -455,11 +645,12 @@ body {
 
 .hash-val-box {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 400;
     color: var(--sky-950);
     background-color: var(--white);
     border: 1px solid var(--sky-300);
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: var(--radius-sm);
     flex-grow: 1;
     overflow-x: auto;
@@ -468,22 +659,22 @@ body {
 
 /* Interactive Checksum Verifier */
 .verify-interactive-tool {
-    margin-top: 14px;
-    padding-top: 14px;
+    margin-top: 16px;
+    padding-top: 16px;
     border-top: 1px dashed var(--sky-200);
 }
 
 .verify-input-group {
     display: flex;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .verify-input {
     flex-grow: 1;
     font-family: var(--font-mono);
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 13px;
+    padding: 9px 14px;
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
     outline: none;
@@ -497,11 +688,11 @@ body {
 }
 
 .verify-result {
-    font-size: 12px;
-    font-weight: 700;
-    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 10px;
     display: none;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
 }
@@ -520,11 +711,11 @@ body {
     border: 1px dashed var(--sky-500);
 }
 
-/* Technical Specification List */
+/* Technical Specifications */
 .specs-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 24px;
 }
 
 .spec-list {
@@ -532,11 +723,11 @@ body {
 }
 
 .spec-list li {
-    padding: 8px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--sky-100);
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .spec-list li:last-child {
@@ -545,55 +736,56 @@ body {
 
 .spec-name {
     color: var(--sky-800);
-    font-weight: 500;
+    font-weight: 300;
 }
 
 .spec-value {
     color: var(--sky-950);
-    font-weight: 700;
+    font-weight: 500;
     font-family: var(--font-mono);
 }
 
-/* Feature Checkpoints (Direct & Relevant) */
+/* Feature Checkpoints */
 .features-direct {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 16px;
 }
 
 .feature-box {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-left: 3px solid var(--sky-600);
-    padding: 12px 14px;
+    padding: 16px 18px;
     border-radius: var(--radius-sm);
 }
 
 .feature-box h4 {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--sky-950);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .feature-box p {
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 300;
     color: var(--sky-800);
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-/* Interactive Quick Terminal Commands */
+/* Terminal Command Blocks */
 .terminal-block {
     background-color: var(--white);
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
-    padding: 12px 14px;
+    padding: 12px 16px;
     margin-top: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 13px;
     color: var(--sky-900);
 }
 
@@ -602,27 +794,29 @@ body {
     overflow-x: auto;
 }
 
-/* Release Notes / Changelog */
+/* Changelog */
 .changelog-box {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 14px;
-    font-size: 13px;
+    padding: 18px;
+    font-size: 14px;
     color: var(--sky-900);
 }
 
 .changelog-box ul {
-    margin-left: 18px;
-    margin-top: 8px;
+    margin-left: 20px;
+    margin-top: 10px;
 }
 
 .changelog-box li {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    font-weight: 300;
     color: var(--sky-800);
 }
 
 .changelog-box li strong {
+    font-weight: 500;
     color: var(--sky-950);
 }
 
@@ -635,26 +829,27 @@ body {
     color: var(--white);
     border: 1px solid var(--sky-500);
     box-shadow: var(--shadow-lg);
-    padding: 10px 18px;
+    padding: 12px 20px;
     border-radius: var(--radius-sm);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     display: none;
     z-index: 9999;
 }
 
 .toast-msg.show {
     display: block;
-    animation: fadeIn 0.2s ease-in-out;
+    animation: fadeIn 0.25s ease-in-out;
 }
 
 /* Footer */
 .portal-footer {
     background-color: var(--white);
     border-top: 2px solid var(--sky-200);
-    padding: 24px 0;
-    margin-top: 40px;
-    font-size: 12px;
+    padding: 28px 0;
+    margin-top: 48px;
+    font-size: 13px;
+    font-weight: 300;
     color: var(--sky-700);
 }
 
@@ -667,17 +862,17 @@ body {
 .footer-links a {
     color: var(--sky-600);
     text-decoration: none;
-    margin-left: 16px;
-    font-weight: 600;
+    margin-left: 18px;
+    font-weight: 400;
 }
 
 .footer-links a:hover {
     text-decoration: underline;
 }
 
-/* Animations */
+/* Keyframe animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -700,9 +895,12 @@ body {
     .features-direct {
         grid-template-columns: 1fr;
     }
+    .sim-hud-grid {
+        grid-template-columns: 1fr 1fr;
+    }
     .footer-content {
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
         text-align: center;
     }
     .nav-links {

@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DiskScope Pro — Official Windows 64-bit standalone executable installer and direct download portal. SQLite-indexed storage analyzer and developer junk cleaner.">
-    <title>DiskScope Pro — Official Windows Installer &amp; Direct Download</title>
+    <meta name="description" content="PrismDrive Pro — Official Windows 64-bit standalone executable installer and direct download portal. SQLite-indexed storage visualizer and developer junk cleaner.">
+    <title>PrismDrive Pro — Official Windows Installer &amp; Direct Download</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Top Sticky Header -->
+    <!-- Top Sticky Header: Blue Palette -->
     <header class="top-header">
         <div class="container header-inner">
             <a href="#" class="brand">
-                <div class="brand-icon">D</div>
-                <div class="brand-title">DiskScope</div>
+                <div class="brand-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 22 22 22 12 2"></polygon>
+                    </svg>
+                </div>
+                <div class="brand-title"><strong>Prism</strong>Drive</div>
                 <div class="brand-ver">v1.0.0</div>
             </a>
             <ul class="nav-links">
+                <li><a href="#simulator">Live Demo</a></li>
                 <li><a href="#downloads">Downloads</a></li>
                 <li><a href="#checksums">Verification</a></li>
                 <li><a href="#specs">Specifications</a></li>
                 <li><a href="#terminal">CLI Run</a></li>
                 <li><a href="#changelog">Release Notes</a></li>
-                <li><a href="downloads/DiskScope.exe" class="nav-download-btn" download>Download .exe</a></li>
+                <li><a href="downloads/PrismDrive.exe" class="nav-links nav-download-btn" download>Download .exe</a></li>
             </ul>
         </div>
     </header>
@@ -42,20 +47,20 @@
         <section class="hero-installer" id="installer">
             <div class="installer-top">
                 <div class="installer-headings">
-                    <h1>DiskScope Pro for Windows</h1>
+                    <h1><strong>PrismDrive Pro</strong> for Windows</h1>
                     <p>
                         High-speed disk visualizer, SQLite-indexed file scanner, and developer junk cleaner. 
                         Completely portable single-file binary with zero runtime dependencies.
                     </p>
                 </div>
                 <div class="download-cta-group">
-                    <a href="downloads/DiskScope.exe" class="btn-main-download" id="heroDownloadBtn" download>
+                    <a href="downloads/PrismDrive.exe" class="btn-main-download" id="heroDownloadBtn" download>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Download DiskScope.exe</span>
+                        <span>Download PrismDrive.exe</span>
                     </a>
                     <div class="download-subtext">Version 1.0.0 • 72.7 MB • Win-x64 Portable</div>
                 </div>
@@ -84,16 +89,87 @@
             <!-- Dynamic Download Progress & Run Guide -->
             <div class="download-progress-box" id="downloadProgressBox">
                 <div class="progress-header">
-                    <span id="progressStatusText">Starting download of DiskScope.exe...</span>
+                    <span id="progressStatusText">Starting download of PrismDrive.exe...</span>
                     <span id="progressPercent">100%</span>
                 </div>
                 <div class="progress-track">
                     <div class="progress-bar-fill" id="progressBarFill"></div>
                 </div>
                 <div class="progress-guide">
-                    <div><strong>Step 1:</strong> Save <code>DiskScope.exe</code> to your Desktop, Downloads, or USB drive.</div>
+                    <div><strong>Step 1:</strong> Save <code>PrismDrive.exe</code> to your Desktop, Downloads, or USB drive.</div>
                     <div><strong>Step 2:</strong> Double-click the file to launch immediately. No installer wizard needed.</div>
                     <div><strong>Step 3:</strong> Select target drives or folders and click <em>Start Scan</em>.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Live Mini-Scanner Simulator -->
+        <section class="simulator-box" id="simulator">
+            <h2 class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Interactive Ingestion &amp; Treemap Simulator
+            </h2>
+            <div class="sim-control-bar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="simDriveSelect" style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Select Drive:</label>
+                    <select id="simDriveSelect" class="sim-drive-select">
+                        <option value="C:">C:\ [System NVMe SSD — 512 GB]</option>
+                        <option value="D:">D:\ [Developer Repositories — 1 TB]</option>
+                        <option value="E:">E:\ [Photoshop &amp; Media Archive — 4 TB]</option>
+                    </select>
+                </div>
+                <button class="btn-start-sim" id="btnStartSim">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <span id="simBtnText">Start Simulated Scan</span>
+                </button>
+            </div>
+
+            <!-- Live Telemetry HUD -->
+            <div class="sim-hud-grid">
+                <div class="sim-hud-card">
+                    <div class="sim-hud-label">Indexed Files</div>
+                    <div class="sim-hud-val" id="hudFiles">0</div>
+                </div>
+                <div class="sim-hud-card">
+                    <div class="sim-hud-label">Ingestion Speed</div>
+                    <div class="sim-hud-val" id="hudSpeed" style="color: var(--sky-600);">0 f/s</div>
+                </div>
+                <div class="sim-hud-card">
+                    <div class="sim-hud-label">Volume Processed</div>
+                    <div class="sim-hud-val" id="hudVolume">0.0 GB</div>
+                </div>
+                <div class="sim-hud-card">
+                    <div class="sim-hud-label">Reclaimable Junk</div>
+                    <div class="sim-hud-val" id="hudJunk" style="color: var(--sky-500);">0.0 GB</div>
+                </div>
+            </div>
+
+            <!-- Streaming Terminal Path Ticker -->
+            <div class="sim-terminal-ticker" id="simTicker">
+                Ready. Click "Start Simulated Scan" to test high-throughput SQLite ingestion and spatial treemap mapping.
+            </div>
+
+            <!-- Interactive Treemap Mini Canvas -->
+            <div class="sim-treemap-canvas" id="simTreemapCanvas">
+                <div class="sim-tile tile-video" id="tileVideo">
+                    <div style="font-weight: 600;">4K Video Renders</div>
+                    <div style="opacity: 0.85;">21.4 GB (41%)</div>
+                </div>
+                <div class="sim-tile tile-images" id="tileImages">
+                    <div style="font-weight: 600;">RAW Photos &amp; Assets</div>
+                    <div style="opacity: 0.85;">12.1 GB (23%)</div>
+                </div>
+                <div class="sim-tile tile-psd" id="tilePsd">
+                    <div style="font-weight: 600;">Photoshop Projects</div>
+                    <div style="opacity: 0.85;">7.8 GB (15%)</div>
+                </div>
+                <div class="sim-tile tile-junk" id="tileJunk">
+                    <div style="font-weight: 600;">node_modules &amp; Caches</div>
+                    <div style="opacity: 0.85;">6.2 GB (12%)</div>
+                </div>
+                <div class="sim-tile tile-code" id="tileCode">
+                    <div style="font-weight: 600;">Source Repositories</div>
+                    <div style="opacity: 0.85;">4.9 GB (9%)</div>
                 </div>
             </div>
         </section>
@@ -101,7 +177,7 @@
         <!-- Official Packages Table -->
         <section class="section-card" id="downloads">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 Available Packages &amp; Builds
             </h2>
             <div class="downloads-table-wrap">
@@ -118,27 +194,27 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><span class="file-primary">DiskScope.exe</span></td>
+                            <td><span class="file-primary">PrismDrive.exe</span></td>
                             <td>Standalone Single-File</td>
                             <td>Windows 10 / 11 (x64)</td>
                             <td>72.7 MB</td>
-                            <td><button class="btn-secondary copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
-                            <td><a href="downloads/DiskScope.exe" class="table-btn" download>Download</a></td>
+                            <td><button class="btn-secondary copy-hash-btn" data-hash="DA66547E74F0C82BFF04A04E786140F6544CCEC240A9171E1F350FCA07D86D25">Copy SHA-256</button></td>
+                            <td><a href="downloads/PrismDrive.exe" class="table-btn" download>Download</a></td>
                         </tr>
                         <tr>
-                            <td><span class="file-primary">DiskScope.zip</span></td>
+                            <td><span class="file-primary">PrismDrive.zip</span></td>
                             <td>Portable Archive</td>
                             <td>Windows 10 / 11 (x64)</td>
                             <td>72.7 MB</td>
-                            <td><button class="btn-secondary copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
-                            <td><a href="downloads/DiskScope.exe" class="table-btn" download>Download</a></td>
+                            <td><button class="btn-secondary copy-hash-btn" data-hash="DA66547E74F0C82BFF04A04E786140F6544CCEC240A9171E1F350FCA07D86D25">Copy SHA-256</button></td>
+                            <td><a href="downloads/PrismDrive.exe" class="table-btn" download>Download</a></td>
                         </tr>
                         <tr>
                             <td><span class="file-primary">Source Code (.zip)</span></td>
                             <td>C# / WPF Source Tree</td>
                             <td>Cross-Platform Source</td>
                             <td>1.2 MB</td>
-                            <td><span style="font-family: var(--font-mono); font-size: 11px; color: var(--sky-700);">Git Hash (HEAD)</span></td>
+                            <td><span style="font-family: var(--font-mono); font-size: 12px; color: var(--sky-700);">Git Hash (HEAD)</span></td>
                             <td><a href="https://github.com/12valor/C-file-scanner" target="_blank" class="table-btn">Repository</a></td>
                         </tr>
                     </tbody>
@@ -149,33 +225,33 @@
         <!-- Cryptographic Checksum & Live Verification Tool -->
         <section class="section-card" id="checksums">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 Package Integrity &amp; Cryptographic Verification
             </h2>
             <div class="hash-card">
-                <div style="font-size: 11px; font-weight: 700; color: var(--sky-800); margin-bottom: 6px;">OFFICIAL SHA-256 DIGEST:</div>
+                <div style="font-size: 11px; font-weight: 500; color: var(--sky-800); margin-bottom: 6px;">OFFICIAL SHA-256 DIGEST:</div>
                 <div class="hash-row">
-                    <div class="hash-val-box" id="officialHash">095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C</div>
-                    <button class="btn-secondary" id="copyOfficialHashBtn" style="padding: 8px 14px; font-size: 12px;">Copy Digest</button>
+                    <div class="hash-val-box" id="officialHash">DA66547E74F0C82BFF04A04E786140F6544CCEC240A9171E1F350FCA07D86D25</div>
+                    <button class="btn-secondary" id="copyOfficialHashBtn" style="padding: 10px 16px;">Copy Digest</button>
                 </div>
 
                 <!-- Interactive Hash Comparator -->
                 <div class="verify-interactive-tool">
-                    <div style="font-size: 12px; font-weight: 700; color: var(--sky-900);">Interactive Checksum Comparator:</div>
-                    <div style="font-size: 11px; color: var(--sky-700); margin-top: 2px;">Paste your locally calculated hash below to immediately verify file integrity:</div>
+                    <div style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Interactive Checksum Comparator:</div>
+                    <div style="font-size: 12px; font-weight: 300; color: var(--sky-700); margin-top: 2px;">Paste your locally calculated hash below to immediately verify file integrity:</div>
                     <div class="verify-input-group">
                         <input type="text" class="verify-input" id="verifyInput" placeholder="Paste calculated SHA-256 hash here..." spellcheck="false">
-                        <button class="btn-secondary" id="verifyBtn" style="padding: 8px 14px;">Verify</button>
+                        <button class="btn-secondary" id="verifyBtn" style="padding: 9px 16px;">Verify</button>
                     </div>
                     <div class="verify-result" id="verifyResult"></div>
                 </div>
             </div>
 
             <!-- Terminal Verification Command -->
-            <div style="margin-top: 14px;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--sky-900);">Verify with Windows PowerShell:</div>
+            <div style="margin-top: 16px;">
+                <div style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Verify with Windows PowerShell:</div>
                 <div class="terminal-block">
-                    <span class="terminal-cmd" id="psCommand">Get-FileHash .\DiskScope.exe -Algorithm SHA256</span>
+                    <span class="terminal-cmd" id="psCommand">Get-FileHash .\PrismDrive.exe -Algorithm SHA256</span>
                     <button class="btn-secondary copy-cmd-btn" data-target="psCommand">Copy</button>
                 </div>
             </div>
@@ -184,12 +260,12 @@
         <!-- Direct Technical Specifications -->
         <section class="section-card" id="specs">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
                 Technical Specifications &amp; Requirements
             </h2>
             <div class="specs-grid">
                 <div>
-                    <h3 style="font-size: 13px; font-weight: 800; color: var(--sky-900); margin-bottom: 8px;">SYSTEM REQUIREMENTS</h3>
+                    <h3 style="font-size: 14px; font-weight: 500; color: var(--sky-900); margin-bottom: 10px;">SYSTEM REQUIREMENTS</h3>
                     <ul class="spec-list">
                         <li>
                             <span class="spec-name">Operating System</span>
@@ -214,7 +290,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h3 style="font-size: 13px; font-weight: 800; color: var(--sky-900); margin-bottom: 8px;">ENGINEERING SPECIFICATIONS</h3>
+                    <h3 style="font-size: 14px; font-weight: 500; color: var(--sky-900); margin-bottom: 10px;">ENGINEERING SPECIFICATIONS</h3>
                     <ul class="spec-list">
                         <li>
                             <span class="spec-name">Database Engine</span>
@@ -241,11 +317,11 @@
             </div>
         </section>
 
-        <!-- Direct Feature Highlights (Engineering Truths Only) -->
+        <!-- Direct Feature Highlights -->
         <section class="section-card">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                Core Functionality
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                Core Capabilities
             </h2>
             <div class="features-direct">
                 <div class="feature-box">
@@ -270,19 +346,19 @@
         <!-- Quick Terminal Run Section -->
         <section class="section-card" id="terminal">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
                 Quick Command Line Launch
             </h2>
-            <p style="font-size: 13px; color: var(--sky-800); margin-bottom: 8px;">
-                You can launch or test DiskScope directly using the included workspace scripts:
+            <p style="font-size: 14px; font-weight: 300; color: var(--sky-800); margin-bottom: 10px;">
+                You can launch or test PrismDrive directly using the included workspace scripts:
             </p>
-            <div style="font-size: 11px; font-weight: 700; color: var(--sky-900);">Launch Executable Immediately (Windows CMD):</div>
+            <div style="font-size: 12px; font-weight: 500; color: var(--sky-900);">Launch Executable Immediately (Windows CMD):</div>
             <div class="terminal-block">
                 <span class="terminal-cmd" id="cmdLaunch">start.bat --fast</span>
                 <button class="btn-secondary copy-cmd-btn" data-target="cmdLaunch">Copy</button>
             </div>
 
-            <div style="font-size: 11px; font-weight: 700; color: var(--sky-900); margin-top: 10px;">Run Automated Integration Suite:</div>
+            <div style="font-size: 12px; font-weight: 500; color: var(--sky-900); margin-top: 12px;">Run Automated Integration Suite:</div>
             <div class="terminal-block">
                 <span class="terminal-cmd" id="cmdTest">start.bat --test</span>
                 <button class="btn-secondary copy-cmd-btn" data-target="cmdTest">Copy</button>
@@ -292,11 +368,11 @@
         <!-- Changelog / Release Notes -->
         <section class="section-card" id="changelog">
             <h2 class="section-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                 Release Notes — Version 1.0.0
             </h2>
             <div class="changelog-box">
-                <div style="font-weight: 700; color: var(--sky-950);">Version 1.0.0 (Release Date: September 29, 2026)</div>
+                <div style="font-weight: 500; color: var(--sky-950);">Version 1.0.0 (Release Date: September 29, 2026)</div>
                 <ul>
                     <li><strong>Single-File Package:</strong> Self-contained x64 Windows executable with .NET 8 and WPF runtime bundled. Compressed from 164 MB to 72.7 MB.</li>
                     <li><strong>Scanner Engine:</strong> Multi-threaded asynchronous traversal with bounded producer/consumer channels and atomic progress reporting.</li>
@@ -314,10 +390,11 @@
     <footer class="portal-footer">
         <div class="container footer-content">
             <div>
-                <strong>DiskScope Pro</strong> — Windows Storage Analyzer &amp; System Junk Cleaner
+                <strong>PrismDrive Pro</strong> — Windows Storage Analyzer &amp; System Junk Cleaner
             </div>
             <div class="footer-links">
                 <a href="#installer">Back to Top</a>
+                <a href="#simulator">Simulator</a>
                 <a href="#downloads">Downloads</a>
                 <a href="#checksums">SHA-256</a>
                 <a href="https://github.com/12valor/C-file-scanner" target="_blank">Source Code (GitHub)</a>

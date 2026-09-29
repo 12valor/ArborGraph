@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DiskScope Pro. Official Windows 64-bit standalone executable download portal, SQLite storage visualizer, and junk cleaner.">
+    <meta name="description" content="DiskScope Pro. Official Windows 64-bit standalone executable download portal, SQLite storage visualizer, junk cleaner, documentation, and licensing.">
     <title>DiskScope Pro: Windows Disk Analysis &amp; Setup Utility</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -86,7 +86,7 @@
             <nav class="win-tabs" role="tablist" aria-label="Utility navigation tabs">
                 <button class="win-tab active" role="tab" id="tabBtnSetup" aria-selected="true" aria-controls="paneSetup" data-tab="setup">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Setup &amp; Distribution</span>
+                    <span>Setup &amp; Wizard</span>
                 </button>
                 <button class="win-tab" role="tab" id="tabBtnScanner" aria-selected="false" aria-controls="paneScanner" data-tab="scanner">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -100,6 +100,14 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
                     <span>Specifications &amp; CLI</span>
                 </button>
+                <button class="win-tab" role="tab" id="tabBtnDocs" aria-selected="false" aria-controls="paneDocs" data-tab="docs">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span>Documentation</span>
+                </button>
+                <button class="win-tab" role="tab" id="tabBtnLegal" aria-selected="false" aria-controls="paneLegal" data-tab="legal">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>Legal &amp; Privacy</span>
+                </button>
                 <button class="win-tab" role="tab" id="tabBtnChangelog" aria-selected="false" aria-controls="paneChangelog" data-tab="changelog">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                     <span>Release Notes</span>
@@ -110,98 +118,281 @@
             <div class="win-body">
 
                 <!-- ==========================================
-                     TAB 1: SETUP & DISTRIBUTION
+                     TAB 1: SETUP & DISTRIBUTION (INSTALLER CONSENT)
                      ========================================== -->
                 <section class="tab-pane active" id="paneSetup" role="tabpanel" aria-labelledby="tabBtnSetup">
                     
-                    <!-- Installer Welcome Banner -->
-                    <div class="installer-card">
-                        <div class="installer-card-header">
-                            <div>
-                                <h1 class="installer-title">DiskScope Pro</h1>
-                                <p class="installer-subtitle">Windows Disk Analysis &amp; Cleanup Utility</p>
+                    <!-- Official Windows Setup Wizard Experience -->
+                    <div class="setup-wizard-shell" id="setupWizardWindow">
+                        <div class="wizard-header">
+                            <div class="wizard-title-group">
+                                <span class="wizard-window-title">DiskScope Pro Setup</span>
+                                <span class="wizard-step-badge" id="wizardStepBadge">Step 1 of 7: Welcome</span>
+                            </div>
+                            <div class="wizard-mode-pill">
+                                <span>Installer Consent &amp; Deployment</span>
                             </div>
                         </div>
 
-                        <p class="installer-desc">
-                            High-speed disk space visualizer, SQLite-indexed file scanner, and developer junk cleaner. 
-                            Fully self-contained single-file binary with bundled .NET 8 runtime and zero dependencies.
-                        </p>
+                        <div class="wizard-body-layout">
+                            <!-- Left Sidebar Steps Column -->
+                            <aside class="wizard-sidebar" aria-label="Setup steps">
+                                <div class="wizard-branding-art">
+                                    <div class="wizard-branding-icon">
+                                        <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+                                            <circle cx="16" cy="16" r="14" stroke="#0078d4" stroke-width="2"/>
+                                            <circle cx="16" cy="16" r="5" stroke="#0078d4" stroke-width="2"/>
+                                            <path d="M16 2 L16 8 M16 24 L16 30 M2 16 L8 16 M24 16 L30 16" stroke="#0078d4" stroke-width="2"/>
+                                        </svg>
+                                    </div>
+                                    <div class="wizard-branding-text">
+                                        <div class="wizard-branding-name">DiskScope Pro</div>
+                                        <div class="wizard-branding-arch">x64 Edition</div>
+                                    </div>
+                                </div>
+                                <ol class="wizard-steps-list" id="wizardStepsList">
+                                    <li class="wizard-step-item active" data-step="1"><span>1.</span> Welcome</li>
+                                    <li class="wizard-step-item" data-step="2"><span>2.</span> License Agreement</li>
+                                    <li class="wizard-step-item" data-step="3"><span>3.</span> Installation Location</li>
+                                    <li class="wizard-step-item" data-step="4"><span>4.</span> Installation Options</li>
+                                    <li class="wizard-step-item" data-step="5"><span>5.</span> Ready to Install</li>
+                                    <li class="wizard-step-item" data-step="6"><span>6.</span> Installation Progress</li>
+                                    <li class="wizard-step-item" data-step="7"><span>7.</span> Complete</li>
+                                </ol>
+                            </aside>
 
-                        <!-- Installation Mode Selector (Installer Experience) -->
-                        <div class="setup-mode-section">
-                            <div class="setup-section-title">Deployment Options</div>
-                            <div class="mode-options-grid">
-                                <label class="mode-option selected">
-                                    <input type="radio" name="installMode" value="portable" checked>
-                                    <div class="mode-option-content">
-                                        <div class="mode-option-title">Portable Standalone Executable (Recommended)</div>
-                                        <div class="mode-option-desc">Run immediately from Downloads, Desktop, or USB drives. Leaves zero registry footprints.</div>
+                            <!-- Right Stage Viewport -->
+                            <div class="wizard-stage-viewport">
+                                
+                                <!-- STEP 1: WELCOME -->
+                                <div class="wizard-pane active" id="wizardStep1">
+                                    <h3 class="wizard-heading">Welcome to DiskScope Pro Setup</h3>
+                                    <p class="wizard-para">
+                                        This setup wizard will configure and deploy <strong>DiskScope Pro v1.0.0</strong> on your computer.
+                                    </p>
+                                    <p class="wizard-para">
+                                        DiskScope Pro is a dedicated Windows disk space analyzer, SQLite-indexed filesystem scanner, and developer junk cleaner designed for 64-bit systems.
+                                    </p>
+                                    <div class="wizard-info-box">
+                                        <div class="wizard-info-row"><strong>Architecture:</strong> Windows 10 / 11 (64-bit x64)</div>
+                                        <div class="wizard-info-row"><strong>Packaging:</strong> Self-Contained Single-File Executable (Bundled .NET 8)</div>
+                                        <div class="wizard-info-row"><strong>Privacy &amp; Telemetry:</strong> 100% Offline execution. Zero network calls or external tracking.</div>
                                     </div>
-                                </label>
-                                <label class="mode-option">
-                                    <input type="radio" name="installMode" value="profile">
-                                    <div class="mode-option-content">
-                                        <div class="mode-option-title">Local User Environment</div>
-                                        <div class="mode-option-desc">Maintains workspace databases in <code>%LocalAppData%\DiskScopePro</code> for fast repeated scans.</div>
+                                    <p class="wizard-para">
+                                        Click <strong>Next</strong> to review the End User License Agreement before proceeding with installation.
+                                    </p>
+                                </div>
+
+                                <!-- STEP 2: LICENSE AGREEMENT (EULA CONSENT GATE) -->
+                                <div class="wizard-pane" id="wizardStep2">
+                                    <h3 class="wizard-heading">License Agreement</h3>
+                                    <p class="wizard-subheading">Please review the DiskScope Pro End User License Agreement before continuing.</p>
+                                    
+                                    <div class="wizard-eula-container" tabindex="0" role="region" aria-label="EULA Agreement Text">
+                                        <div class="wizard-eula-text">
+<strong>DISKSCOPE PRO END USER LICENSE AGREEMENT (EULA)</strong>
+Version: 1.0 &bull; Effective Date: September 29, 2026
+Publisher: [OWNER / PUBLISHER NAME]
+Contact: [LEGAL / SUPPORT EMAIL]
+
+IMPORTANT NOTICE: PLEASE READ THIS END USER LICENSE AGREEMENT ("EULA" OR "AGREEMENT") CAREFULLY BEFORE INSTALLING, COPYING, OR USING DISKSCOPE PRO ("SOFTWARE"). BY DOWNLOADING, INSTALLING, COPYING, OR USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL, COPY, OR USE THE SOFTWARE.
+
+1. LICENSE GRANT
+Subject to the terms and conditions of this Agreement, [OWNER / PUBLISHER NAME] ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute DiskScope Pro in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
+
+2. PERMITTED AND RESTRICTED USES
+(a) Permitted Use: You may install and execute an unlimited number of copies of the Software on hardware you own, lease, or manage.
+(b) Reverse Engineering Restrictions: Except to the extent that applicable law expressly permits despite this limitation, you may not decompile, disassemble, reverse engineer, decrypt, modify, or create derivative works of the compiled Software binary.
+(c) Redistribution Restrictions: You may not sell, rent, lease, sub-license, host as a commercial cloud service, or redistribute the Software binaries for commercial financial gain without explicit prior written authorization from the Licensor.
+(d) Automated Abuse: You may not bundle the Software with third-party software, malware, adware, or unwanted software distributors.
+
+3. LOCAL ARCHITECTURE &amp; PRIVACY COMMITMENT
+DiskScope Pro operates exclusively as a local, on-device utility. The Software:
+(a) Does not collect, transmit, or synchronize personal data, filenames, or filesystem metadata with remote servers.
+(b) Contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services.
+(c) Stores scan catalog data exclusively on the local host within the user profile directory (%LocalAppData%\DiskScopePro).
+
+4. FILE DELETION, SYSTEM ACCESS &amp; USER RESPONSIBILITY
+(a) Deletion Capabilities: The Software includes tools (such as the Junk Cleaner and duplicate file manager) capable of permanently deleting files and directories from your system storage upon your explicit command.
+(b) User Sole Responsibility: YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES OR DIRECTORIES TARGETED FOR DELETION.
+(c) Data Backups: Licensor strongly advises maintaining verified, independent system backups prior to executing disk cleanup operations. Licensor shall not be liable for the loss, alteration, or corruption of any files, data, system configurations, or system stability resulting from your use of the Software.
+
+5. INTELLECTUAL PROPERTY RIGHTS
+The Software, including its graphical interface, binary code, design layouts, icons, documentation, and name, is protected by copyright, trademark, and other applicable intellectual property laws. Licensor retains all title, ownership rights, and intellectual property rights in and to the Software.
+
+6. THIRD-PARTY COMPONENTS
+The Software incorporates certain third-party libraries and runtime components, including Microsoft.Data.Sqlite, SQLitePCLRaw, SQLite, and the Microsoft .NET Runtime. These components are distributed pursuant to their respective open-source licenses (MIT, Apache 2.0, and Public Domain). A complete schedule of third-party licenses and notices is available in the Software documentation. Nothing in this Agreement restricts or overrides rights granted to you under applicable open-source component licenses.
+
+7. DISCLAIMER OF WARRANTIES ("AS IS")
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, DISKSCOPE PRO IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, AND NON-INFRINGEMENT.
+
+8. LIMITATION OF LIABILITY
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR, ITS CONTRIBUTORS, OR SUPPLIERS BE LIABLE FOR ANY DIRECT, INDIRECT, PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF DATA, LOSS OF PROFITS, LOSS OF REVENUE, BUSINESS INTERRUPTION, LOSS OF GOODWILL, OR HARDWARE FAILURE, ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.
+
+9. GOVERNING LAW &amp; JURISDICTION
+[REQUIRES OWNER CONFIRMATION: Governing law and dispute resolution venue to be specified by the copyright owner.]
+This Agreement shall be construed and governed in accordance with the laws of [GOVERNING JURISDICTION / APPLICABLE LAW], without regard to conflict of law principles.
+
+10. CONTACT
+For legal notices, licensing inquiries, or permissions, contact: [LEGAL / SUPPORT EMAIL]
+                                        </div>
                                     </div>
-                                </label>
-                                <label class="mode-option">
-                                    <input type="radio" name="installMode" value="explorer">
-                                    <div class="mode-option-content">
-                                        <div class="mode-option-title">Windows Explorer Integration</div>
-                                        <div class="mode-option-desc">Launch directly via right-click "Open in DiskScope" on any drive or directory.</div>
+
+                                    <div class="wizard-consent-control">
+                                        <label class="wizard-check-label" for="wizardEulaCheck">
+                                            <input type="checkbox" id="wizardEulaCheck">
+                                            <span class="wizard-check-text"><strong>I accept the terms of the License Agreement</strong></span>
+                                        </label>
+                                        <div class="wizard-gate-warning" id="wizardGateWarning">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                            <span>Acceptance required. The Next button is disabled until accepted.</span>
+                                        </div>
                                     </div>
-                                </label>
+                                </div>
+
+                                <!-- STEP 3: DESTINATION LOCATION -->
+                                <div class="wizard-pane" id="wizardStep3">
+                                    <h3 class="wizard-heading">Select Destination Location</h3>
+                                    <p class="wizard-subheading">Where should DiskScope Pro be installed?</p>
+                                    
+                                    <div class="wizard-path-section">
+                                        <label for="wizardInstallPath" class="toolbar-label">Setup will install DiskScope Pro into the following folder:</label>
+                                        <div class="wizard-path-input-group">
+                                            <input type="text" id="wizardInstallPath" class="win-input" value="C:\Program Files\DiskScope" readonly>
+                                            <button type="button" class="btn-win-secondary" id="btnTogglePortablePath">Use Portable Dir</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="wizard-storage-metrics">
+                                        <div class="metric-row">
+                                            <span>Required disk space:</span>
+                                            <strong>75.0 MB</strong>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span>Available disk space on target volume:</span>
+                                            <strong>142.4 GB</strong>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span>Runtime footprint:</span>
+                                            <span>Self-contained (.NET 8 runtime embedded)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 4: SELECT TASKS / OPTIONS -->
+                                <div class="wizard-pane" id="wizardStep4">
+                                    <h3 class="wizard-heading">Select Additional Tasks</h3>
+                                    <p class="wizard-subheading">Select the additional tasks you would like Setup to perform:</p>
+                                    
+                                    <div class="wizard-tasks-group">
+                                        <div class="task-group-title">Additional shortcuts:</div>
+                                        <label class="wizard-task-option">
+                                            <input type="checkbox" id="taskDesktopIcon" checked>
+                                            <span>Create a &amp;Desktop shortcut</span>
+                                        </label>
+                                        <label class="wizard-task-option">
+                                            <input type="checkbox" id="taskStartMenu" checked>
+                                            <span>Create a &amp;Start Menu program entry</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="wizard-tasks-group">
+                                        <div class="task-group-title">Engine Initialization:</div>
+                                        <label class="wizard-task-option">
+                                            <input type="checkbox" id="taskInitDb" checked>
+                                            <span>Pre-initialize local SQLite catalog directory (<code>%LocalAppData%\DiskScopePro</code>)</span>
+                                        </label>
+                                        <label class="wizard-task-option">
+                                            <input type="checkbox" id="taskHashVerify" checked>
+                                            <span>Verify SHA-256 binary integrity hash prior to first execution</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 5: READY TO INSTALL -->
+                                <div class="wizard-pane" id="wizardStep5">
+                                    <h3 class="wizard-heading">Ready to Install</h3>
+                                    <p class="wizard-subheading">Setup is now ready to begin installing DiskScope Pro on your computer.</p>
+                                    
+                                    <div class="wizard-summary-panel">
+                                        <div class="summary-line"><strong>Destination location:</strong> <span id="summaryLocation">C:\Program Files\DiskScope</span></div>
+                                        <div class="summary-line"><strong>Setup type:</strong> Standalone Win-x64 Application Deployment</div>
+                                        <div class="summary-line"><strong>Selected tasks:</strong> Desktop icon, Start Menu, Local SQLite catalog</div>
+                                        <div class="summary-line"><strong>License status:</strong> <span class="badge-verified">EULA v1.0 Accepted</span></div>
+                                        <div class="summary-line"><strong>Consent record:</strong> Will be recorded offline in local browser/client store</div>
+                                    </div>
+                                    <p class="wizard-para">
+                                        Click <strong>Install</strong> to continue with the installation.
+                                    </p>
+                                </div>
+
+                                <!-- STEP 6: INSTALLATION PROGRESS -->
+                                <div class="wizard-pane" id="wizardStep6">
+                                    <h3 class="wizard-heading">Installing DiskScope Pro</h3>
+                                    <p class="wizard-subheading" id="wizardExtractStatus">Extracting package files...</p>
+                                    
+                                    <div class="win-progress-track">
+                                        <div class="win-progress-fill" id="wizardProgressFill" style="width: 0%;"></div>
+                                    </div>
+
+                                    <div class="wizard-log-terminal">
+                                        <pre class="wizard-log-text" id="wizardLogText">> DiskScope Setup engine initialized.
+> Destination target verified.
+> Awaiting extraction sequence...</pre>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 7: COMPLETE -->
+                                <div class="wizard-pane" id="wizardStep7">
+                                    <div class="wizard-complete-layout">
+                                        <div class="wizard-complete-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+                                                <circle cx="24" cy="24" r="22" stroke="#0078d4" stroke-width="3"/>
+                                                <path d="M14 24 L21 31 L34 17" stroke="#0078d4" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <div class="wizard-complete-body">
+                                            <h3 class="wizard-heading">Completing the DiskScope Pro Setup Wizard</h3>
+                                            <p class="wizard-para">
+                                                Setup has finished installing DiskScope Pro on your computer. The application may be launched by selecting the installed shortcuts or executing the binary directly.
+                                            </p>
+                                            
+                                            <div class="wizard-consent-badge-box">
+                                                <div class="consent-badge-title">OFFLINE LEGAL ACCEPTANCE RECORDED:</div>
+                                                <div class="consent-badge-items" id="consentSummaryDetails">
+                                                    <div>EULA Version: 1.0</div>
+                                                    <div>Accepted: True (Verified)</div>
+                                                    <div>Recorded locally: localStorage (Zero external transmission)</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="wizard-finish-launch">
+                                                <label class="wizard-check-label" for="wizardLaunchApp">
+                                                    <input type="checkbox" id="wizardLaunchApp" checked>
+                                                    <span class="wizard-check-text"><strong>Launch DiskScope Pro (Download Executable)</strong></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
-                        <!-- Primary Download Box -->
-                        <div class="installer-action-panel">
-                            <div class="installer-download-row">
-                                <a href="downloads/DiskScope.exe" class="btn-primary-installer" id="mainDownloadBtn" download>
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    <span>Download DiskScope.exe</span>
-                                </a>
-                                <div class="installer-action-meta">
-                                    <div><strong>Package:</strong> 72.7 MB • Single-File Binary</div>
-                                    <div><strong>Target:</strong> Windows 10 / 11 (64-bit)</div>
-                                    <div><strong>Integrity:</strong> SHA-256 Validated</div>
-                                </div>
+                        <!-- Wizard Bottom Navigation Action Bar -->
+                        <div class="wizard-actionbar">
+                            <div class="wizard-actionbar-left">
+                                <span class="wizard-offline-notice">Offline Utility &bull; Zero Telemetry</span>
                             </div>
-
-                            <!-- Live Simulated Download Progress Box -->
-                            <div class="installer-progress-box" id="downloadProgressBox" style="display: none;">
-                                <div class="progress-status-row">
-                                    <span id="progressStatusText">Transferring DiskScope.exe package...</span>
-                                    <span class="progress-pct" id="progressPercent">0%</span>
-                                </div>
-                                <div class="win-progress-track">
-                                    <div class="win-progress-fill" id="progressBarFill"></div>
-                                </div>
-                                <div class="progress-run-steps">
-                                    <div class="step-card">
-                                        <div class="step-num">Step 1</div>
-                                        <div class="step-text">Save <code>DiskScope.exe</code> to your preferred drive or folder.</div>
-                                    </div>
-                                    <div class="step-card">
-                                        <div class="step-num">Step 2</div>
-                                        <div class="step-text">Double-click the binary to launch immediately. No wizard needed.</div>
-                                    </div>
-                                    <div class="step-card">
-                                        <div class="step-num">Step 3</div>
-                                        <div class="step-text">Select target drives and click <em>Start Scan</em> to index storage.</div>
-                                    </div>
-                                </div>
+                            <div class="wizard-actionbar-right">
+                                <button type="button" class="btn-win-secondary" id="btnWizardBack" disabled>&lt; Back</button>
+                                <button type="button" class="btn-win-primary" id="btnWizardNext">Next &gt;</button>
+                                <button type="button" class="btn-win-secondary" id="btnWizardCancel">Cancel</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Official Distribution Builds Table -->
+                    <!-- Distribution Packages & Source Table -->
                     <div class="panel-section">
                         <div class="panel-section-header">
                             <h2 class="panel-heading">Official Distribution Packages</h2>
@@ -235,6 +426,14 @@
                                         <td>72.7 MB</td>
                                         <td><button class="btn-win-mini copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
                                         <td><a href="downloads/DiskScope.exe" class="btn-win-table-action" download>Download</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="file-name">installer.iss</span></td>
+                                        <td>Inno Setup Script</td>
+                                        <td>Windows Installer Compiler</td>
+                                        <td>2.5 KB</td>
+                                        <td><span class="mono-meta">Inno Setup 6</span></td>
+                                        <td><a href="https://github.com/12valor/C-file-scanner/blob/main/installer/installer.iss" target="_blank" class="btn-win-table-action">View Script</a></td>
                                     </tr>
                                     <tr>
                                         <td><span class="file-name">Source Code (.zip)</span></td>
@@ -532,10 +731,10 @@
                                 </div>
                             </div>
                             <div class="cli-card">
-                                <div class="cli-card-label">Launch with Diagnostic Logging:</div>
+                                <div class="cli-card-label">Launch with Attached Console:</div>
                                 <div class="cli-command-box">
-                                    <span class="cli-code" id="cmdDiag">.\DiskScope.exe --verbose</span>
-                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdDiag">Copy</button>
+                                    <span class="cli-code" id="cmdDev">start.bat --dev</span>
+                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdDev">Copy</button>
                                 </div>
                             </div>
                             <div class="cli-card">
@@ -551,13 +750,541 @@
                 </section>
 
                 <!-- ==========================================
-                     TAB 5: RELEASE NOTES
+                     TAB 5: DOCUMENTATION
+                     ========================================== -->
+                <section class="tab-pane" id="paneDocs" role="tabpanel" aria-labelledby="tabBtnDocs">
+                    <div class="subnav-layout">
+                        <!-- Left Navigation Sidebar -->
+                        <aside class="subnav-sidebar" aria-label="Documentation Navigation">
+                            <div class="subnav-header">DOCUMENTATION</div>
+                            <ul class="subnav-list">
+                                <li><button type="button" class="subnav-btn active" data-target-doc="docGettingStarted">Getting Started</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docInstallation">Installation Guide</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docUserGuide">User Guide &amp; Features</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docCli">CLI Usage &amp; Automation</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docRequirements">System Requirements</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docSecurity">Security &amp; Permissions</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docTroubleshooting">Troubleshooting</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-doc="docUninstallation">Uninstallation &amp; Data Removal</button></li>
+                            </ul>
+                        </aside>
+
+                        <!-- Right Document Reading Body -->
+                        <article class="subnav-article" id="docReadingPane">
+                            
+                            <!-- 1. Getting Started -->
+                            <div class="doc-section active" id="docGettingStarted">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Getting Started with DiskScope Pro</h2>
+                                    <span class="doc-meta">Windows Disk Analysis &amp; Storage Visualization</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>What is DiskScope?</h3>
+                                    <p>
+                                        DiskScope Pro is a dedicated Windows desktop storage diagnostic and cleanup utility. It combines multi-threaded filesystem traversal with an embedded SQLite catalog to index millions of files rapidly while maintaining near-zero CPU and memory overhead.
+                                    </p>
+
+                                    <h3>First Scan Walkthrough</h3>
+                                    <ol class="doc-ordered-list">
+                                        <li><strong>Launch DiskScope.exe:</strong> Run the standalone binary or launch from the Start Menu.</li>
+                                        <li><strong>Select Target Drives:</strong> In the top drive selection combo, choose the drive volume (e.g. <code>C:\</code>) or specific directory tree you wish to analyze.</li>
+                                        <li><strong>Click Start Scan:</strong> The traversal engine will begin indexing file records into the local SQLite database at rates exceeding 50,000 files/sec on NVMe storage.</li>
+                                        <li><strong>Inspect Ingestion Ticker:</strong> Real-time statistics will display indexed count, current scan path, and aggregated storage consumption.</li>
+                                    </ol>
+
+                                    <h3>Understanding Disk Usage</h3>
+                                    <p>
+                                        DiskScope categorizes file items across multiple dimensions:
+                                    </p>
+                                    <ul class="doc-bullet-list">
+                                        <li><strong>Spatial Treemap:</strong> Uses the Squarified Bruls-Huizing layout algorithm to render nested rectangular tiles representing relative folder and file footprints.</li>
+                                        <li><strong>Category Breakdown:</strong> Groups storage into Video Renders, RAW Images, Photoshop Projects (.psd/.psb), Source Code, and Build Caches.</li>
+                                        <li><strong>Duplicates:</strong> Groups files with identical cryptographic SHA-256 digests.</li>
+                                    </ul>
+
+                                    <h3>Reviewing Files Before Deletion &amp; Safe Cleanup</h3>
+                                    <div class="doc-alert-box alert-warning">
+                                        <strong>CRITICAL SAFETY RULE:</strong> DiskScope Pro never performs background or automatic deletions. Every file removal operation must be explicitly confirmed by you. Always verify target paths before clicking "Purge Selected Items".
+                                    </div>
+                                    <p>
+                                        The Junk Cleaner isolates temporary build caches (<code>node_modules</code>, <code>.gradle</code>, <code>.cargo</code>) and system temp paths. Files locked by active processes are automatically detected and skipped to preserve system stability.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 2. Installation Guide -->
+                            <div class="doc-section" id="docInstallation">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Installation Guide</h2>
+                                    <span class="doc-meta">Portable Executable vs Guided Setup Wizard</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>Deployment Modes</h3>
+                                    <p>DiskScope Pro supports two primary distribution configurations:</p>
+                                    
+                                    <h4>1. Standalone Portable Binary (Recommended)</h4>
+                                    <p>
+                                        Download <code>DiskScope.exe</code> directly into any directory (such as Downloads, Desktop, or an external USB drive). Double-click to execute immediately. It creates no registry entries and requires no administrative installer.
+                                    </p>
+
+                                    <h4>2. Windows Setup Wizard Deployment</h4>
+                                    <p>
+                                        Using the Setup Wizard on the <em>Setup &amp; Wizard</em> tab or running the Inno Setup script (<code>installer.iss</code>) deploys DiskScope to <code>C:\Program Files\DiskScope</code>, establishes Start Menu and Desktop shortcuts, and pre-registers catalog paths.
+                                    </p>
+
+                                    <h3>Verifying Package Integrity</h3>
+                                    <p>
+                                        Before executing the binary on production machines, verify its SHA-256 cryptographic digest via Windows PowerShell:
+                                    </p>
+                                    <div class="doc-code-block">
+                                        <code>Get-FileHash .\DiskScope.exe -Algorithm SHA256</code>
+                                    </div>
+                                    <p>Confirm the resulting hash matches official digest: <code>095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C</code>.</p>
+                                </div>
+                            </div>
+
+                            <!-- 3. User Guide & Features -->
+                            <div class="doc-section" id="docUserGuide">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">User Guide &amp; Core Features</h2>
+                                    <span class="doc-meta">Spatial Analysis, Deduplication, and Junk Cleaner</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>Interactive Treemap Navigation</h3>
+                                    <p>
+                                        The Squarified Treemap geometry visually represents disk space as proportional rectangles.
+                                    </p>
+                                    <ul class="doc-bullet-list">
+                                        <li><strong>Left-Click Folder Tile:</strong> Drills down into that subfolder tree with animated breadcrumb navigation.</li>
+                                        <li><strong>Right-Click File Tile:</strong> Opens the native Windows context menu ("Open in File Explorer", "Copy File Path").</li>
+                                        <li><strong>Hover:</strong> Displays exact file size, extension, and last modification date in the HUD tooltip.</li>
+                                    </ul>
+
+                                    <h3>3-Stage Cryptographic Deduplication</h3>
+                                    <p>
+                                        To prevent false positives without wasting I/O bandwidth, duplicate identification follows a strictly phased pipeline:
+                                    </p>
+                                    <ol class="doc-ordered-list">
+                                        <li><strong>Stage 1 (Exact Length Matching):</strong> Files of unique byte lengths are immediately pruned from candidate sets.</li>
+                                        <li><strong>Stage 2 (Header Verification):</strong> The first 4,096 bytes are read and compared. Files with differing headers are discarded.</li>
+                                        <li><strong>Stage 3 (Full Streaming SHA-256 Digest):</strong> Remaining candidates are hashed via a memory-bounded SHA-256 stream to confirm bit-for-bit equality.</li>
+                                    </ol>
+
+                                    <h3>Developer Junk Cleaner</h3>
+                                    <p>
+                                        Scans known ephemeral compiler caches:
+                                    </p>
+                                    <ul class="doc-bullet-list">
+                                        <li><code>node_modules</code> (JavaScript / TypeScript npm and yarn dependencies)</li>
+                                        <li><code>.gradle\caches</code> (Android / Java build outputs)</li>
+                                        <li><code>.cargo\registry</code> (Rust package build artifacts)</li>
+                                        <li><code>%LocalAppData%\Temp</code> &amp; <code>C:\Windows\Temp</code> (System user temp files)</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 4. CLI Usage & Automation -->
+                            <div class="doc-section" id="docCli">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">CLI Usage &amp; Automation</h2>
+                                    <span class="doc-meta">Batch Scripts and Command-Line Flags</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>Launcher Script Flags (start.bat / start.ps1)</h3>
+                                    <p>DiskScope includes automated automation scripts for developers and CI/CD validation:</p>
+                                    
+                                    <table class="win-data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Command Flag</th>
+                                                <th>Action</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><code>start.bat</code></td>
+                                                <td>Default Launch</td>
+                                                <td>Builds latest code (if .NET 8 SDK present) and launches application.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>start.bat --fast</code></td>
+                                                <td>Instant Execution</td>
+                                                <td>Launches precompiled <code>DiskScope.exe</code> immediately with zero build latency.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>start.bat --dev</code></td>
+                                                <td>Console Attached</td>
+                                                <td>Executes via <code>dotnet run</code> with live stdout/stderr diagnostic streams.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>start.bat --test</code></td>
+                                                <td>Integration Suite</td>
+                                                <td>Executes all 11 automated test suites in <code>tests\DiskScope.Tests.csproj</code>.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>start.bat --publish</code></td>
+                                                <td>Standalone Packaging</td>
+                                                <td>Builds single-file compressed release binary into <code>dist\DiskScope.exe</code>.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>start.bat --site</code></td>
+                                                <td>Web Utility Portal</td>
+                                                <td>Opens the local documentation and setup utility in default browser.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 5. System Requirements -->
+                            <div class="doc-section" id="docRequirements">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">System Requirements</h2>
+                                    <span class="doc-meta">Minimum and Recommended Hardware Configurations</span>
+                                </div>
+                                <div class="doc-body">
+                                    <table class="win-data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Component</th>
+                                                <th>Minimum Specification</th>
+                                                <th>Recommended Specification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Operating System</strong></td>
+                                                <td>Windows 10 64-bit (Build 1809 or higher)</td>
+                                                <td>Windows 11 64-bit (Build 22H2 or higher)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Processor (CPU)</strong></td>
+                                                <td>64-bit Dual-Core x86-64 processor</td>
+                                                <td>Quad-Core 3.0 GHz+ (Intel Core i5/i7 or AMD Ryzen)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Memory (RAM)</strong></td>
+                                                <td>64 MB free RAM</td>
+                                                <td>256 MB+ RAM (for index sets &gt; 5,000,000 files)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Storage Space</strong></td>
+                                                <td>75 MB for binary executable</td>
+                                                <td>Fast NVMe SSD recommended for maximum SQLite write throughput</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Runtime Prerequisites</strong></td>
+                                                <td>None (Bundled .NET 8.0 &amp; WPF runtime)</td>
+                                                <td>Zero external frameworks or runtimes required</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 6. Security & Permissions -->
+                            <div class="doc-section" id="docSecurity">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Security &amp; Permissions</h2>
+                                    <span class="doc-meta">Windows Security Model, Privileges, and Isolation</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>Standard User Context (No Elevation Required)</h3>
+                                    <p>
+                                        DiskScope Pro executes natively under the privileges of the active logged-in Windows user account. It does <strong>not</strong> require UAC Administrator elevation to run or analyze user drives.
+                                    </p>
+
+                                    <h3>Handling Protected System Paths</h3>
+                                    <p>
+                                        When scanning drives that contain protected operating system directories (e.g. <code>C:\Windows\System32</code>, <code>System Volume Information</code>), Windows NTFS Access Control Lists (ACLs) prevent standard users from reading certain metadata. DiskScope safely catches <code>UnauthorizedAccessException</code> and skips those nodes without crashing or hanging.
+                                    </p>
+
+                                    <h3>Strict Offline Architecture</h3>
+                                    <p>
+                                        DiskScope is fully local:
+                                    </p>
+                                    <ul class="doc-bullet-list">
+                                        <li><strong>Zero Network Calls:</strong> The desktop executable contains zero HTTP, socket, or cloud synchronization code.</li>
+                                        <li><strong>Zero Telemetry:</strong> No analytics, crash telemetries, or usage statistics are ever collected or transmitted.</li>
+                                        <li><strong>File Isolation:</strong> File contents are never uploaded or read beyond the streaming byte windows required for deduplication.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 7. Troubleshooting -->
+                            <div class="doc-section" id="docTroubleshooting">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Troubleshooting Guide</h2>
+                                    <span class="doc-meta">Common Questions, Warnings, and Solutions</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>"Windows protected your PC" (Microsoft Defender SmartScreen)</h3>
+                                    <p>
+                                        When executing newly downloaded standalone executables that are not digitally code-signed with an expensive commercial EV certificate, Windows Defender SmartScreen may display an informational dialog.
+                                    </p>
+                                    <p>
+                                        <strong>To proceed:</strong> Click <em>"More info"</em> followed by <em>"Run anyway"</em>. You can verify binary authenticity anytime by checking the published SHA-256 hash.
+                                    </p>
+
+                                    <h3>Locked Files During Cleanup</h3>
+                                    <p>
+                                        If the Junk Cleaner displays a warning that a file could not be deleted, the file is currently open and locked by another Windows process (e.g., Chrome cache, running node service). DiskScope automatically skips locked files to avoid corrupting running processes.
+                                    </p>
+
+                                    <h3>Resetting the Local SQLite Index</h3>
+                                    <p>
+                                        If you ever wish to completely clear your indexed file records and start from scratch, close DiskScope and delete the database file located at:
+                                    </p>
+                                    <div class="doc-code-block">
+                                        <code>%LocalAppData%\DiskScopePro\scan_index.db</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 8. Uninstallation & Data Removal -->
+                            <div class="doc-section" id="docUninstallation">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Uninstallation &amp; Data Removal</h2>
+                                    <span class="doc-meta">Clean System Removal Procedures</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h3>Portable Executable Removal</h3>
+                                    <p>
+                                        If you ran DiskScope as a standalone portable binary, simply delete <code>DiskScope.exe</code>. The binary creates zero registry keys and zero system driver hooks.
+                                    </p>
+
+                                    <h3>Purging Cached Application Data</h3>
+                                    <p>
+                                        DiskScope stores its SQLite catalog database in the user profile directory. To completely remove all associated data, delete the directory:
+                                    </p>
+                                    <div class="doc-code-block">
+                                        <code>%LocalAppData%\DiskScopePro</code>
+                                    </div>
+                                    <p>
+                                        Once this folder is deleted, zero residual files, indices, or logs remain on the machine.
+                                    </p>
+
+                                    <h3>Windows Setup Uninstaller</h3>
+                                    <p>
+                                        If installed via the Inno Setup installer package, open <strong>Windows Settings &gt; Apps &gt; Installed Apps</strong>, locate <strong>DiskScope Pro</strong>, and click <strong>Uninstall</strong>. The uninstaller will cleanly remove program files and shortcuts.
+                                    </p>
+                                </div>
+                            </div>
+
+                        </article>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 6: LEGAL & COMPLIANCE
+                     ========================================== -->
+                <section class="tab-pane" id="paneLegal" role="tabpanel" aria-labelledby="tabBtnLegal">
+                    <div class="subnav-layout">
+                        <!-- Left Navigation Sidebar -->
+                        <aside class="subnav-sidebar" aria-label="Legal Navigation">
+                            <div class="subnav-header">LEGAL &amp; COMPLIANCE</div>
+                            <ul class="subnav-list">
+                                <li><button type="button" class="subnav-btn active" data-target-legal="legalEula">End User License Agreement</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-legal="legalTerms">Terms of Use</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-legal="legalPrivacy">Privacy Policy</button></li>
+                                <li><button type="button" class="subnav-btn" data-target-legal="legalLicenses">Third-Party Licenses</button></li>
+                            </ul>
+                        </aside>
+
+                        <!-- Right Legal Document Reading Body -->
+                        <article class="subnav-article" id="legalReadingPane">
+
+                            <!-- 1. EULA -->
+                            <div class="doc-section active" id="legalEula">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">DiskScope Pro End User License Agreement (EULA)</h2>
+                                    <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                                </div>
+                                <div class="doc-body">
+                                    <div class="legal-notice-box">
+                                        <strong>Publisher:</strong> [OWNER / PUBLISHER NAME]<br>
+                                        <strong>Contact:</strong> [LEGAL / SUPPORT EMAIL]<br>
+                                        <strong>Applicable Law:</strong> [REQUIRES OWNER CONFIRMATION: Governing Jurisdiction / Applicable Law]
+                                    </div>
+
+                                    <p>
+                                        PLEASE READ THIS END USER LICENSE AGREEMENT ("EULA" OR "AGREEMENT") CAREFULLY BEFORE DOWNLOADING, INSTALLING, OR USING DISKSCOPE PRO ("SOFTWARE"). BY DOWNLOADING, INSTALLING, COPYING, OR USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT.
+                                    </p>
+
+                                    <h3>1. License Grant</h3>
+                                    <p>
+                                        Subject to the terms of this Agreement, Licensor grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute DiskScope Pro in compiled binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
+                                    </p>
+
+                                    <h3>2. Permitted and Restricted Uses</h3>
+                                    <p>
+                                        You may execute the Software on computers you own or manage. You may not decompile, disassemble, reverse engineer, decrypt, modify, or create derivative works of the compiled Software binary, nor redistribute the Software for commercial financial gain without prior written authorization from Licensor.
+                                    </p>
+
+                                    <h3>3. Local Architecture &amp; Privacy</h3>
+                                    <p>
+                                        DiskScope Pro operates exclusively as a local, on-device utility. The Software contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services. Scan catalog data is stored exclusively on the local host within <code>%LocalAppData%\DiskScopePro</code>.
+                                    </p>
+
+                                    <h3>4. File Deletion Responsibility &amp; Disclaimers</h3>
+                                    <p>
+                                        The Software includes utilities (such as the Junk Cleaner) capable of permanently deleting files from your system storage upon your explicit command. <strong>YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES TARGETED FOR DELETION.</strong> Licensor strongly recommends maintaining verified, independent system backups prior to executing disk cleanup operations.
+                                    </p>
+
+                                    <h3>5. Disclaimer of Warranties ("AS IS")</h3>
+                                    <p>
+                                        TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, DISKSCOPE PRO IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+                                    </p>
+
+                                    <h3>6. Limitation of Liability</h3>
+                                    <p>
+                                        IN NO EVENT SHALL LICENSOR, ITS CONTRIBUTORS, OR SUPPLIERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES (INCLUDING LOSS OF DATA, LOSS OF PROFITS, OR BUSINESS INTERRUPTION) ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 2. Terms of Use -->
+                            <div class="doc-section" id="legalTerms">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Website Terms of Use</h2>
+                                    <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                                </div>
+                                <div class="doc-body">
+                                    <p>
+                                        These Terms of Use govern your access to and use of the DiskScope website and distribution portal. This document applies to the web portal; usage of the desktop application is governed by the Software EULA.
+                                    </p>
+
+                                    <h3>1. Web Portal &amp; Direct Downloads</h3>
+                                    <p>
+                                        The DiskScope portal provides documentation, specifications, integrity hashes, and direct download links for the official DiskScope binary executable packages. You agree to use the portal only for lawful purposes.
+                                    </p>
+
+                                    <h3>2. Intellectual Property</h3>
+                                    <p>
+                                        The text, diagrams, interface styling, icons, and layout of this portal are protected by copyright and intellectual property laws. You may copy code snippets and command lines for your personal or internal use.
+                                    </p>
+
+                                    <h3>3. Disclaimers</h3>
+                                    <p>
+                                        The website materials and software download packages are provided on an "as is" and "as available" basis without warranties of any kind.
+                                    </p>
+
+                                    <h3>4. Contact</h3>
+                                    <p>Inquiries regarding terms of use may be directed to: <code>[LEGAL / SUPPORT EMAIL]</code>.</p>
+                                </div>
+                            </div>
+
+                            <!-- 3. Privacy Policy -->
+                            <div class="doc-section" id="legalPrivacy">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Privacy Policy</h2>
+                                    <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                                </div>
+                                <div class="doc-body">
+                                    <div class="doc-alert-box alert-verified">
+                                        <strong>TECHNICAL VERIFICATION:</strong> DiskScope Pro was architected from the ground up as a 100% offline, local Windows utility.
+                                    </div>
+
+                                    <h3>Part A: DiskScope Desktop Application</h3>
+                                    <ul class="doc-bullet-list">
+                                        <li><strong>No Telemetry or Analytics:</strong> The desktop executable contains zero tracking SDKs, zero analytics code, and zero telemetry listeners.</li>
+                                        <li><strong>No Cloud Sync:</strong> Scanned file paths, file sizes, categories, and duplicate records remain strictly within the local host computer.</li>
+                                        <li><strong>Local Database:</strong> Scan indexes are stored exclusively in <code>%LocalAppData%\DiskScopePro\scan_index.db</code>.</li>
+                                        <li><strong>No File Uploads:</strong> DiskScope never reads file contents into network sockets or uploads documents to remote servers.</li>
+                                    </ul>
+
+                                    <h3>Part B: DiskScope Web Portal</h3>
+                                    <ul class="doc-bullet-list">
+                                        <li><strong>No Tracking Cookies:</strong> The website uses zero third-party tracking, advertising, or marketing cookies.</li>
+                                        <li><strong>Local Storage Consent:</strong> When you complete the Setup Wizard, your acceptance status (EULA version and timestamp) is stored strictly in your local browser <code>localStorage</code>. It is never transmitted to an external server.</li>
+                                    </ul>
+
+                                    <h3>Part C: Data Retention &amp; User Deletion</h3>
+                                    <p>
+                                        You retain total control over your local data. Deleting the folder <code>%LocalAppData%\DiskScopePro</code> permanently removes all local catalog records and indices.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 4. Third-Party Licenses -->
+                            <div class="doc-section" id="legalLicenses">
+                                <div class="doc-header-banner">
+                                    <h2 class="doc-title">Third-Party Licenses &amp; Open Source Acknowledgements</h2>
+                                    <span class="doc-meta">Dependency Manifest &amp; License Texts</span>
+                                </div>
+                                <div class="doc-body">
+                                    <p>
+                                        DiskScope Pro is built with high-quality open-source components. In accordance with license requirements, the relevant notices and license terms are reproduced below:
+                                    </p>
+
+                                    <!-- Component 1 -->
+                                    <div class="license-entry-card">
+                                        <div class="license-entry-header">
+                                            <span class="license-pkg-name">Microsoft.Data.Sqlite (v8.0.10)</span>
+                                            <span class="license-badge">MIT License</span>
+                                        </div>
+                                        <div class="license-copyright">Copyright &copy; Microsoft Corporation. All rights reserved.</div>
+                                        <pre class="license-text-block">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.</pre>
+                                    </div>
+
+                                    <!-- Component 2 -->
+                                    <div class="license-entry-card">
+                                        <div class="license-entry-header">
+                                            <span class="license-pkg-name">SQLitePCLRaw.bundle_e_sqlite3 (v2.1.6)</span>
+                                            <span class="license-badge">Apache License 2.0</span>
+                                        </div>
+                                        <div class="license-copyright">Copyright &copy; 2014-2023 Eric Sink</div>
+                                        <pre class="license-text-block">Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</pre>
+                                    </div>
+
+                                    <!-- Component 3 -->
+                                    <div class="license-entry-card">
+                                        <div class="license-entry-header">
+                                            <span class="license-pkg-name">SQLite Database Engine (v3.45)</span>
+                                            <span class="license-badge">Public Domain</span>
+                                        </div>
+                                        <div class="license-copyright">SQLite is in the Public Domain (D. Richard Hipp)</div>
+                                        <pre class="license-text-block">The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:
+
+    May you do good and not evil.
+    May you find forgiveness for yourself and forgive others.
+    May you share freely, never taking more than you give.</pre>
+                                    </div>
+
+                                    <!-- Component 4 -->
+                                    <div class="license-entry-card">
+                                        <div class="license-entry-header">
+                                            <span class="license-pkg-name">Microsoft .NET Runtime &amp; WPF Libraries (.NET 8.0)</span>
+                                            <span class="license-badge">MIT License</span>
+                                        </div>
+                                        <div class="license-copyright">Copyright &copy; .NET Foundation and Contributors</div>
+                                        <pre class="license-text-block">Licensed under the MIT License. See https://github.com/dotnet/runtime for complete details.</pre>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </article>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 7: RELEASE NOTES
                      ========================================== -->
                 <section class="tab-pane" id="paneChangelog" role="tabpanel" aria-labelledby="tabBtnChangelog">
                     <div class="panel-section">
                         <div class="panel-section-header">
                             <h2 class="panel-heading">Release Notes: Version 1.0.0</h2>
-                            <span class="panel-subtext">Release Date: September 29, 2026 • Windows x64 Stable Channel</span>
+                            <span class="panel-subtext">Release Date: September 29, 2026 &bull; Windows x64 Stable Channel</span>
                         </div>
 
                         <div class="changelog-entry-card">
@@ -567,6 +1294,9 @@
                             <ul class="changelog-items-list">
                                 <li>
                                     <strong>Single-File Package:</strong> Self-contained x64 Windows binary bundling .NET 8 and WPF runtime libraries. Compressed from 164 MB to 72.7 MB with zero prerequisite installers.
+                                </li>
+                                <li>
+                                    <strong>Installer Consent Layer:</strong> Interactive Windows Setup wizard requiring explicit EULA agreement with local offline consent recording.
                                 </li>
                                 <li>
                                     <strong>Scanner Engine:</strong> Multi-threaded asynchronous directory traversal with bounded producer/consumer channels and atomic progress reporting.
@@ -586,6 +1316,9 @@
                                 <li>
                                     <strong>Reporting Engine:</strong> Standalone dark-mode HTML executive generator, precision CSV tables, and structured JSON output.
                                 </li>
+                                <li>
+                                    <strong>Documentation &amp; Legal:</strong> Full legal ecosystem with EULA, Terms of Use, Privacy Policy, and Third-Party Licenses.
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -604,6 +1337,57 @@
                     <a href="https://github.com/12valor/C-file-scanner" target="_blank" class="statusbar-link">GitHub Repository</a>
                 </div>
             </footer>
+
+            <!-- 6. Professional Windows Utility Footer -->
+            <div class="win-utility-footer">
+                <div class="footer-columns-grid">
+                    <div class="footer-col">
+                        <div class="footer-col-title">DiskScope Pro</div>
+                        <p class="footer-col-desc">
+                            Windows Disk Analysis &amp; Storage Visualization Utility. 100% offline, zero-telemetry local system utility.
+                        </p>
+                        <div class="footer-meta-line">Version 1.0.0 &bull; win-x64</div>
+                    </div>
+
+                    <div class="footer-col">
+                        <div class="footer-col-title">Documentation</div>
+                        <ul class="footer-links">
+                            <li><a href="#docs" class="footer-doc-link" data-doc="docGettingStarted">Getting Started</a></li>
+                            <li><a href="#docs" class="footer-doc-link" data-doc="docInstallation">Installation Guide</a></li>
+                            <li><a href="#docs" class="footer-doc-link" data-doc="docCli">CLI Automation</a></li>
+                            <li><a href="#docs" class="footer-doc-link" data-doc="docSecurity">Security &amp; Permissions</a></li>
+                            <li><a href="#docs" class="footer-doc-link" data-doc="docUninstallation">Uninstallation</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col">
+                        <div class="footer-col-title">Legal &amp; Compliance</div>
+                        <ul class="footer-links">
+                            <li><a href="#legal" class="footer-legal-link" data-legal="legalEula">End User License Agreement</a></li>
+                            <li><a href="#legal" class="footer-legal-link" data-legal="legalTerms">Terms of Use</a></li>
+                            <li><a href="#legal" class="footer-legal-link" data-legal="legalPrivacy">Privacy Policy</a></li>
+                            <li><a href="#legal" class="footer-legal-link" data-legal="legalLicenses">Third-Party Licenses</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col">
+                        <div class="footer-col-title">Support &amp; Publisher</div>
+                        <div class="footer-contact-item">Publisher: [OWNER / PUBLISHER NAME]</div>
+                        <div class="footer-contact-item">Support: [LEGAL / SUPPORT EMAIL]</div>
+                        <div class="footer-contact-item">Build: 2026.09.29 (Stable)</div>
+                        <div class="footer-contact-item">Status: Clean Verified Package</div>
+                    </div>
+                </div>
+
+                <div class="footer-bottom-bar">
+                    <div class="footer-copy">
+                        Copyright &copy; 2026 [OWNER / PUBLISHER NAME]. All rights reserved.
+                    </div>
+                    <div class="footer-badge">
+                        <span>Offline System Utility &bull; Zero External Network Transmissions</span>
+                    </div>
+                </div>
+            </div>
 
         </main>
     </div>

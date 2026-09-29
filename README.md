@@ -111,3 +111,13 @@ If running manually in a standard command prompt, add your .NET 8 directory firs
 set PATH=%USERPROFILE%\.dotnet;%PATH%
 dotnet run
 ```
+
+## Documentation, Installer & Legal Ecosystem
+
+DiskScope Pro includes a complete legal, installation, and documentation framework:
+
+- **EULA:** See [LICENSE.md](LICENSE.md) or the in-app portal (`#legal`).
+- **Third-Party Open Source Licenses:** See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) covering `Microsoft.Data.Sqlite`, `SQLite`, and `.NET Runtime`.
+- **Installer Script:** [installer/installer.iss](installer/installer.iss) for building native Windows Setup packages with an explicit EULA acceptance gate.
+- **Web Portal & Documentation:** Run `start.bat --site` or open `site/index.html` to access the interactive Windows Setup Wizard, User Guide, System Requirements, Security Model, and Troubleshooting.
+

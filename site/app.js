@@ -31,15 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Check initial URL hash
-    if (window.location.hash) {
-        const hash = window.location.hash.replace('#', '').toLowerCase();
-        const validTabs = ['setup', 'scanner', 'verify', 'specs', 'changelog'];
-        if (validTabs.includes(hash)) {
-            switchTab(hash);
-        }
-    }
-
     // =========================================================
     // 2. TOAST NOTIFICATION HELPER
     // =========================================================
@@ -75,56 +66,362 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // 4. INSTALLATION MODE SELECTOR INTERACTION
+    // 4. WINDOWS SETUP WIZARD WITH STRICT EULA CONSENT GATE
     // =========================================================
-    const modeOptions = document.querySelectorAll('.mode-option');
-    modeOptions.forEach(opt => {
-        opt.addEventListener('click', () => {
-            modeOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            const radio = opt.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+    let wizardCurrentStep = 1;
+    const totalWizardSteps = 7;
+    const stepNames = [
+        "Welcome",
+        "License Agreement",
+        "Installation Location",
+        "Installation Options",
+        "Ready to Install",
+        "Installation Progress",
+        "Complete"
+    ];
+
+    const wizardStepBadge = document.getElementById('wizardStepBadge');
+    const wizardStepItems = document.querySelectorAll('.wizard-step-item');
+    const wizardPanes = document.querySelectorAll('.wizard-pane');
+    const btnWizardBack = document.getElementById('btnWizardBack');
+    const btnWizardNext = document.getElementById('btnWizardNext');
+    const btnWizardCancel = document.getElementById('btnWizardCancel');
+    const wizardEulaCheck = document.getElementById('wizardEulaCheck');
+    const wizardGateWarning = document.getElementById('wizardGateWarning');
+    const btnTogglePortablePath = document.getElementById('btnTogglePortablePath');
+    const wizardInstallPath = document.getElementById('wizardInstallPath');
+    const summaryLocation = document.getElementById('summaryLocation');
+    const wizardProgressFill = document.getElementById('wizardProgressFill');
+    const wizardLogText = document.getElementById('wizardLogText');
+    const wizardExtractStatus = document.getElementById('wizardExtractStatus');
+    const consentSummaryDetails = document.getElementById('consentSummaryDetails');
+    const wizardLaunchApp = document.getElementById('wizardLaunchApp');
+
+    function updateWizardUI() {
+        // 1. Update step badge
+        if (wizardStepBadge) {
+            wizardStepBadge.textContent = `Step ${wizardCurrentStep} of ${totalWizardSteps}: ${stepNames[wizardCurrentStep - 1]}`;
+        }
+
+        // 2. Update step sidebar list
+        wizardStepItems.forEach(item => {
+            const stepNum = parseInt(item.getAttribute('data-step'), 10);
+            item.classList.toggle('active', stepNum === wizardCurrentStep);
+            item.classList.toggle('completed', stepNum < wizardCurrentStep);
         });
-    });
 
-    // =========================================================
-    // 5. DOWNLOAD TRIGGER & LIVE PROGRESS SIMULATION
-    // =========================================================
-    const downloadBtns = document.querySelectorAll('a[download]');
-    const progressBox = document.getElementById('downloadProgressBox');
-    const progressBarFill = document.getElementById('progressBarFill');
-    const progressStatusText = document.getElementById('progressStatusText');
-    const progressPercent = document.getElementById('progressPercent');
+        // 3. Switch active pane
+        wizardPanes.forEach(pane => {
+            const isTarget = pane.id === `wizardStep${wizardCurrentStep}`;
+            pane.classList.toggle('active', isTarget);
+        });
 
-    downloadBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            showToast('Starting transfer: DiskScope.exe (72.7 MB)...');
+        // 4. Update Back button state
+        if (btnWizardBack) {
+            btnWizardBack.disabled = (wizardCurrentStep === 1 || wizardCurrentStep === 6 || wizardCurrentStep === 7);
+        }
 
-            if (progressBox && progressBarFill && progressStatusText && progressPercent) {
-                progressBox.style.display = 'block';
-                progressBarFill.style.width = '0%';
-                progressPercent.textContent = '0%';
-                progressStatusText.textContent = 'Transferring DiskScope.exe binary...';
+        // 5. Update Next/Install/Finish button state and text
+        if (btnWizardNext) {
+            if (wizardCurrentStep === 2) {
+                // EULA CONSENT GATE: NEXT IS STRICTLY DISABLED UNLESS CHECKED
+                btnWizardNext.textContent = "Next >";
+                btnWizardNext.disabled = !wizardEulaCheck.checked;
+            } else if (wizardCurrentStep === 5) {
+                btnWizardNext.textContent = "Install";
+                btnWizardNext.disabled = false;
+            } else if (wizardCurrentStep === 6) {
+                btnWizardNext.textContent = "Installing...";
+                btnWizardNext.disabled = true;
+            } else if (wizardCurrentStep === 7) {
+                btnWizardNext.textContent = "Finish";
+                btnWizardNext.disabled = false;
+            } else {
+                btnWizardNext.textContent = "Next >";
+                btnWizardNext.disabled = false;
+            }
+        }
 
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 12;
-                    if (progress > 100) progress = 100;
-                    progressBarFill.style.width = `${progress}%`;
-                    progressPercent.textContent = `${progress}%`;
+        // 6. Step 5 summary update
+        if (wizardCurrentStep === 5 && summaryLocation && wizardInstallPath) {
+            summaryLocation.textContent = wizardInstallPath.value;
+        }
 
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        progressStatusText.textContent = 'Transfer complete. Binary ready to launch.';
-                        showToast('DiskScope.exe ready. Follow Step 1-3 to launch.');
-                    }
-                }, 100);
+        // 7. Step 6 extraction trigger
+        if (wizardCurrentStep === 6) {
+            startExtractionSimulation();
+        }
+
+        // 8. Step 7 complete & local consent record
+        if (wizardCurrentStep === 7) {
+            recordOfflineConsent();
+        }
+    }
+
+    // EULA Consent Checkbox Listener
+    if (wizardEulaCheck) {
+        wizardEulaCheck.addEventListener('change', () => {
+            const isAccepted = wizardEulaCheck.checked;
+            if (wizardCurrentStep === 2 && btnWizardNext) {
+                btnWizardNext.disabled = !isAccepted;
+            }
+            if (wizardGateWarning) {
+                if (isAccepted) {
+                    wizardGateWarning.classList.add('accepted');
+                    wizardGateWarning.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Agreement accepted. You may now continue.</span>
+                    `;
+                } else {
+                    wizardGateWarning.classList.remove('accepted');
+                    wizardGateWarning.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <span>Acceptance required. The Next button is disabled until accepted.</span>
+                    `;
+                }
             }
         });
+    }
+
+    // Next / Install / Finish button listener
+    if (btnWizardNext) {
+        btnWizardNext.addEventListener('click', () => {
+            // Guard: Cannot advance past step 2 without explicit consent
+            if (wizardCurrentStep === 2 && !wizardEulaCheck.checked) {
+                showToast('Please check the agreement box to accept the EULA.');
+                return;
+            }
+
+            if (wizardCurrentStep === 7) {
+                // Finish button clicked
+                if (wizardLaunchApp && wizardLaunchApp.checked) {
+                    showToast('Launching DiskScope Pro (Downloading binary)...');
+                    const link = document.createElement('a');
+                    link.href = 'downloads/DiskScope.exe';
+                    link.download = 'DiskScope.exe';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    showToast('DiskScope Pro Setup successfully completed.');
+                }
+                // Reset wizard back to Step 1
+                wizardCurrentStep = 1;
+                if (wizardEulaCheck) wizardEulaCheck.checked = false;
+                if (wizardGateWarning) {
+                    wizardGateWarning.classList.remove('accepted');
+                    wizardGateWarning.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <span>Acceptance required. The Next button is disabled until accepted.</span>
+                    `;
+                }
+                updateWizardUI();
+                return;
+            }
+
+            if (wizardCurrentStep < totalWizardSteps) {
+                wizardCurrentStep++;
+                updateWizardUI();
+            }
+        });
+    }
+
+    // Back button listener
+    if (btnWizardBack) {
+        btnWizardBack.addEventListener('click', () => {
+            if (wizardCurrentStep > 1 && wizardCurrentStep !== 6 && wizardCurrentStep !== 7) {
+                wizardCurrentStep--;
+                updateWizardUI();
+            }
+        });
+    }
+
+    // Cancel button listener
+    if (btnWizardCancel) {
+        btnWizardCancel.addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel DiskScope Pro Setup?')) {
+                wizardCurrentStep = 1;
+                if (wizardEulaCheck) wizardEulaCheck.checked = false;
+                updateWizardUI();
+                showToast('Setup cancelled.');
+            }
+        });
+    }
+
+    // Destination Path Toggle
+    if (btnTogglePortablePath && wizardInstallPath) {
+        let isDefaultProgFiles = true;
+        btnTogglePortablePath.addEventListener('click', () => {
+            if (isDefaultProgFiles) {
+                wizardInstallPath.value = "%LocalAppData%\\DiskScopePro";
+                btnTogglePortablePath.textContent = "Use Program Files";
+            } else {
+                wizardInstallPath.value = "C:\\Program Files\\DiskScope";
+                btnTogglePortablePath.textContent = "Use Portable Dir";
+            }
+            isDefaultProgFiles = !isDefaultProgFiles;
+            showToast(`Installation path updated: ${wizardInstallPath.value}`);
+        });
+    }
+
+    // Simulated Extraction Engine for Step 6
+    function startExtractionSimulation() {
+        if (!wizardProgressFill || !wizardLogText || !wizardExtractStatus) return;
+
+        wizardProgressFill.style.width = '0%';
+        wizardExtractStatus.textContent = 'Extracting DiskScope.exe package...';
+        wizardLogText.textContent = '> Initializing Windows Installer engine...\n> Verifying local NTFS volume permissions...\n> Bounded staging buffer created.';
+
+        const steps = [
+            { pct: 15, msg: "Extracting core binary: DiskScope.exe (72.7 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
+            { pct: 35, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore.dll & PresentationFramework.dll\n> Validating DirectX Hardware Acceleration..." },
+            { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScopePro..." },
+            { pct: 78, msg: "Creating application environment...", log: "> Configuring WAL journal mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
+            { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: 095EAE7A...FCB4C\n> Cryptographic match verified bit-for-bit." },
+            { pct: 100, msg: "Setup installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
+        ];
+
+        let index = 0;
+        const interval = setInterval(() => {
+            if (index < steps.length) {
+                const s = steps[index];
+                wizardProgressFill.style.width = `${s.pct}%`;
+                wizardExtractStatus.textContent = s.msg;
+                wizardLogText.textContent += `\n${s.log}`;
+                wizardLogText.scrollTop = wizardLogText.scrollHeight;
+                index++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => {
+                    wizardCurrentStep = 7;
+                    updateWizardUI();
+                }, 400);
+            }
+        }, 380);
+    }
+
+    // Offline Local Consent Recorder (Zero Network Telemetry)
+    function recordOfflineConsent() {
+        const consentRecord = {
+            eulaVersion: "1.0",
+            accepted: true,
+            acceptedAt: new Date().toISOString(),
+            applicationVersion: "1.0.0",
+            architecture: "win-x64",
+            publisher: "[OWNER / PUBLISHER NAME]",
+            offlineStorage: "%LocalAppData%\\DiskScopePro"
+        };
+
+        try {
+            localStorage.setItem('diskscope_installer_consent', JSON.stringify(consentRecord));
+        } catch (e) {
+            // LocalStorage fallback for file:// protocol if restricted
+        }
+
+        if (consentSummaryDetails) {
+            consentSummaryDetails.innerHTML = `
+                <div>EULA Version: ${consentRecord.eulaVersion}</div>
+                <div>Status: Accepted (Offline Record Validated)</div>
+                <div>Timestamp: ${consentRecord.acceptedAt}</div>
+                <div>Storage: Stored exclusively in local client storage</div>
+            `;
+        }
+    }
+
+    // =========================================================
+    // 5. DOCUMENTATION SUBNAVIGATION
+    // =========================================================
+    const docButtons = document.querySelectorAll('.subnav-btn[data-target-doc]');
+    const docSections = document.querySelectorAll('#docReadingPane .doc-section');
+
+    function switchDoc(targetId) {
+        docButtons.forEach(btn => {
+            const matches = btn.getAttribute('data-target-doc') === targetId;
+            btn.classList.toggle('active', matches);
+        });
+
+        docSections.forEach(sec => {
+            const matches = sec.id === targetId;
+            sec.classList.toggle('active', matches);
+        });
+    }
+
+    docButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target-doc');
+            if (targetId) switchDoc(targetId);
+        });
     });
 
     // =========================================================
-    // 6. DISK DIAGNOSTICS & SCANNER SIMULATOR
+    // 6. LEGAL & COMPLIANCE SUBNAVIGATION
+    // =========================================================
+    const legalButtons = document.querySelectorAll('.subnav-btn[data-target-legal]');
+    const legalSections = document.querySelectorAll('#legalReadingPane .doc-section');
+
+    function switchLegal(targetId) {
+        legalButtons.forEach(btn => {
+            const matches = btn.getAttribute('data-target-legal') === targetId;
+            btn.classList.toggle('active', matches);
+        });
+
+        legalSections.forEach(sec => {
+            const matches = sec.id === targetId;
+            sec.classList.toggle('active', matches);
+        });
+    }
+
+    legalButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target-legal');
+            if (targetId) switchLegal(targetId);
+        });
+    });
+
+    // =========================================================
+    // 7. FOOTER DIRECT LINK DISPATCHER
+    // =========================================================
+    const footerDocLinks = document.querySelectorAll('.footer-doc-link');
+    footerDocLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchTab('docs');
+            const targetDoc = link.getAttribute('data-doc');
+            if (targetDoc) switchDoc(targetDoc);
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+        });
+    });
+
+    const footerLegalLinks = document.querySelectorAll('.footer-legal-link');
+    footerLegalLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchTab('legal');
+            const targetLegal = link.getAttribute('data-legal');
+            if (targetLegal) switchLegal(targetLegal);
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+        });
+    });
+
+    // Initial URL Hash Parsing with Sub-route support
+    if (window.location.hash) {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        const validTabs = ['setup', 'scanner', 'verify', 'specs', 'docs', 'legal', 'changelog'];
+        if (validTabs.includes(hash)) {
+            switchTab(hash);
+        } else if (hash.startsWith('docs-') || hash.startsWith('doc')) {
+            switchTab('docs');
+            const matchingDoc = document.getElementById(hash);
+            if (matchingDoc) switchDoc(hash);
+        } else if (hash.startsWith('legal-') || hash.startsWith('legal')) {
+            switchTab('legal');
+            const matchingLegal = document.getElementById(hash);
+            if (matchingLegal) switchLegal(hash);
+        }
+    }
+
+    // =========================================================
+    // 8. DISK DIAGNOSTICS & SCANNER SIMULATOR
     // =========================================================
     const btnStartSim = document.getElementById('btnStartSim');
     const simBtnText = document.getElementById('simBtnText');
@@ -171,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "C:\\Windows\\assembly\\NativeImages_v4.0.30319_64\\mscorlib.dll"
     ];
 
-    // Drive configuration profiles
     const driveProfiles = {
         "C:": {
             title: "C:\\ System NVMe SSD (512 GB Total Capacity)",
@@ -278,7 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 simTicker.textContent = `[WAL Batch] Indexed: ${samplePaths[tickerIndex % samplePaths.length]}`;
                 tickerIndex++;
 
-                // Progressively activate treemap tiles
                 if (progress > 0.15 && tiles[0]) tiles[0].classList.add('active');
                 if (progress > 0.35 && tiles[1]) tiles[1].classList.add('active');
                 if (progress > 0.55 && tiles[2]) tiles[2].classList.add('active');
@@ -308,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // 7. INTERACTIVE CHECKSUM COMPARATOR
+    // 9. INTERACTIVE CHECKSUM COMPARATOR
     // =========================================================
     const verifyInput = document.getElementById('verifyInput');
     const verifyBtn = document.getElementById('verifyBtn');
@@ -343,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // 8. 1-CLICK CLIPBOARD UTILITIES
+    // 10. 1-CLICK CLIPBOARD UTILITIES
     // =========================================================
     const copyOfficialBtn = document.getElementById('copyOfficialHashBtn');
     if (copyOfficialBtn) {
@@ -386,4 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Initialize Setup Wizard
+    updateWizardUI();
 });

@@ -31,6 +31,7 @@ public class MainViewModel : ObservableObject
         _diskService = new DiskService();
         _fileActionService = new FileActionService();
         _duplicateAnalyzer = new DuplicateAnalyzer(_dbService);
+        _junkCleanerService = new JunkCleanerService();
 
         OverviewVM = new OverviewViewModel(_dbService, _diskService);
         AnalyticsVM = new AnalyticsViewModel(_dbService, _diskService, _fileActionService);
@@ -40,6 +41,7 @@ public class MainViewModel : ObservableObject
         OldFilesVM = new OldFilesViewModel(_dbService, _fileActionService);
         DuplicatesVM = new DuplicateViewModel(_duplicateAnalyzer, _fileActionService);
         PhotoshopVM = new PhotoshopViewModel(_dbService, _fileActionService);
+        JunkCleanerVM = new JunkCleanerViewModel(_junkCleanerService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
 
         _currentView = OverviewVM;
@@ -50,6 +52,8 @@ public class MainViewModel : ObservableObject
         BrowseCustomFolderCommand = new RelayCommand(_ => BrowseCustomFolder());
     }
 
+    private readonly JunkCleanerService _junkCleanerService;
+
     public OverviewViewModel OverviewVM { get; }
     public AnalyticsViewModel AnalyticsVM { get; }
     public LargestFilesViewModel LargestFilesVM { get; }
@@ -58,6 +62,7 @@ public class MainViewModel : ObservableObject
     public OldFilesViewModel OldFilesVM { get; }
     public DuplicateViewModel DuplicatesVM { get; }
     public PhotoshopViewModel PhotoshopVM { get; }
+    public JunkCleanerViewModel JunkCleanerVM { get; }
     public ScanLogViewModel ScanLogVM { get; }
 
     public object CurrentView
@@ -108,6 +113,7 @@ public class MainViewModel : ObservableObject
             "OldFiles" => OldFilesVM,
             "Duplicates" => DuplicatesVM,
             "Photoshop" => PhotoshopVM,
+            "JunkCleaner" => JunkCleanerVM,
             "ScanLog" => ScanLogVM,
             _ => OverviewVM
         };
@@ -142,6 +148,9 @@ public class MainViewModel : ObservableObject
                     break;
                 case "Photoshop":
                     PhotoshopVM.RefreshData();
+                    break;
+                case "JunkCleaner":
+                    JunkCleanerVM.RefreshData();
                     break;
             }
         }

@@ -47,10 +47,6 @@ TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR, I
 ### 9. Termination
 This Agreement is effective until terminated. Your rights under this Agreement will terminate automatically without notice if you fail to comply with any of its terms. Upon termination, you must cease all use of the Software and delete all copies in your possession or control.
 
-### 10. Governing Law & Jurisdiction
-*[REQUIRES OWNER CONFIRMATION: Governing law and dispute resolution venue to be specified by the copyright owner.]*  
-This Agreement shall be construed and governed in accordance with the laws of [GOVERNING JURISDICTION / APPLICABLE LAW], without regard to conflict of law principles.
-
-### 11. Contact & Inquiries
+### 10. Contact & Inquiries
 For legal notices, licensing inquiries, or permissions, contact:  
-`[LEGAL / SUPPORT EMAIL]`
+evangelista.agdiaz@gmail.com

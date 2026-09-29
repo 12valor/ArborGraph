@@ -1,5 +1,5 @@
-/* PrismDrive Pro — Official Installer & Direct Distribution Portal */
-/* Strictly White and Sky Blue Color Palette • Light, Elegant, High-Legibility Typography */
+/* DiskScope Pro — Official Installer & Direct Distribution Portal */
+/* Strictly White and Sky Blue Color Palette • Fluid, Container-Aware, Mobile-First Responsive Design */
 
 :root {
     --white: #ffffff;
@@ -31,6 +31,13 @@
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: "Consolas", "Courier New", monospace;
 
+    /* Fluid typography scales */
+    --text-hero: clamp(1.6rem, 1.25rem + 1.6vw, 2.35rem);
+    --text-section: clamp(1.15rem, 1.02rem + 0.6vw, 1.45rem);
+    --text-base: clamp(0.925rem, 0.88rem + 0.2vw, 1.025rem);
+    --text-sm: clamp(0.78rem, 0.74rem + 0.15vw, 0.875rem);
+    --gutter: clamp(14px, 3.5vw, 28px);
+
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
@@ -48,27 +55,31 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
     background-color: var(--bg-page);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 300;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* Container */
 .container {
+    width: 100%;
     max-width: 1040px;
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 0 var(--gutter);
 }
 
 /* =========================================================
-   TOP NAVBAR — BLUE PALETTE (NOT WHITE)
+   TOP NAVBAR — BLUE PALETTE (RESPONSIVE & ACCESSIBLE)
    ========================================================= */
 .top-header {
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -84,6 +95,7 @@ body {
     align-items: center;
     justify-content: space-between;
     height: 60px;
+    position: relative;
 }
 
 .brand {
@@ -92,6 +104,7 @@ body {
     gap: 12px;
     text-decoration: none;
     color: var(--white);
+    min-height: 44px;
 }
 
 .brand-icon {
@@ -132,10 +145,11 @@ body {
     font-family: var(--font-mono);
 }
 
+/* Desktop Nav Links */
 .nav-links {
     display: flex;
     list-style: none;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
 }
 
@@ -144,9 +158,11 @@ body {
     text-decoration: none;
     font-size: 14px;
     font-weight: 400;
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: var(--radius-sm);
     transition: background-color 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
 }
 
 .nav-links a:hover {
@@ -167,20 +183,41 @@ body {
     color: var(--sky-900) !important;
 }
 
+/* Mobile Menu Toggle Button */
+.mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 /* System Verification Pill */
 .system-alert {
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
     padding: 10px 16px;
-    margin: 24px 0 20px;
+    margin: 20px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 400;
     color: var(--sky-900);
     box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .system-status {
@@ -195,6 +232,7 @@ body {
     background-color: var(--sky-500);
     border-radius: 50%;
     box-shadow: 0 0 6px var(--sky-400);
+    flex-shrink: 0;
 }
 
 .system-meta {
@@ -204,15 +242,17 @@ body {
 }
 
 /* =========================================================
-   HERO INSTALLER CARD — BIGGER & LIGHTER TYPOGRAPHY
+   HERO INSTALLER CARD — CONTAINER QUERY READY
    ========================================================= */
 .hero-installer {
+    container-type: inline-size;
+    container-name: hero;
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-top: 4px solid var(--sky-600);
     border-radius: var(--radius-md);
-    padding: 34px 32px;
-    margin-bottom: 28px;
+    padding: clamp(20px, 4vw, 34px);
+    margin-bottom: 24px;
     box-shadow: var(--shadow-md);
 }
 
@@ -220,14 +260,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 28px;
+    gap: 24px;
     border-bottom: 1px solid var(--sky-100);
-    padding-bottom: 26px;
-    margin-bottom: 24px;
+    padding-bottom: 22px;
+    margin-bottom: 22px;
 }
 
 .installer-headings h1 {
-    font-size: 34px;
+    font-size: var(--text-hero);
     font-weight: 300;
     color: var(--sky-950);
     line-height: 1.25;
@@ -241,7 +281,7 @@ body {
 }
 
 .installer-headings p {
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 300;
     color: var(--sky-800);
     max-width: 620px;
@@ -262,13 +302,14 @@ body {
     text-decoration: none;
     font-size: 16px;
     font-weight: 500;
-    padding: 16px 26px;
+    padding: 14px 24px;
     border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     width: 100%;
+    min-height: 48px;
     border: 1px solid var(--sky-700);
     box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
     cursor: pointer;
@@ -294,14 +335,14 @@ body {
 /* Quick Spec Strip */
 .spec-strip {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
 }
 
 .spec-cell {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
-    padding: 12px 16px;
+    padding: 12px 14px;
     border-radius: var(--radius-sm);
 }
 
@@ -311,11 +352,11 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--sky-700);
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 .spec-val {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--sky-950);
     font-family: var(--font-mono);
@@ -329,7 +370,7 @@ body {
     border-radius: var(--radius-sm);
     padding: 18px;
     margin-top: 20px;
-    animation: fadeIn 0.25s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
 }
 
 .progress-header {
@@ -361,8 +402,9 @@ body {
     font-size: 13px;
     font-weight: 300;
     color: var(--sky-900);
-    display: flex;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
 }
 
 .progress-guide strong {
@@ -374,11 +416,13 @@ body {
    INTERACTIVE LIVE MINI-SCANNER SIMULATOR
    ========================================================= */
 .simulator-box {
+    container-type: inline-size;
+    container-name: sim;
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-md);
-    padding: 28px;
-    margin-bottom: 28px;
+    padding: clamp(18px, 3.5vw, 28px);
+    margin-bottom: 24px;
     box-shadow: var(--shadow-sm);
 }
 
@@ -386,8 +430,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 18px;
+    gap: 14px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
 }
 
@@ -395,13 +439,14 @@ body {
     font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 400;
-    padding: 9px 14px;
+    padding: 10px 14px;
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
     background-color: var(--white);
     color: var(--sky-950);
     outline: none;
-    min-width: 240px;
+    min-height: 44px;
+    min-width: min(280px, 100%);
 }
 
 .sim-drive-select:focus {
@@ -415,12 +460,14 @@ body {
     border: 1px solid var(--sky-700);
     font-size: 14px;
     font-weight: 500;
-    padding: 9px 20px;
+    padding: 10px 20px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-height: 44px;
     transition: background-color 0.15s ease;
 }
 
@@ -430,16 +477,16 @@ body {
 
 .sim-hud-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
 }
 
 .sim-hud-card {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 10px 14px;
+    padding: 10px 12px;
 }
 
 .sim-hud-label {
@@ -467,17 +514,17 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 /* Dynamic Treemap Mini Canvas */
 .sim-treemap-canvas {
-    height: 180px;
+    height: clamp(160px, 25vw, 200px);
     background-color: var(--sky-100);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
     display: grid;
-    grid-template-columns: 2fr 1.4fr 1fr;
+    grid-template-columns: 2fr 1.3fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 4px;
     padding: 4px;
@@ -493,16 +540,14 @@ body {
     font-size: 11px;
     font-family: var(--font-mono);
     color: var(--white);
-    transition: opacity 0.3s ease, transform 0.2s ease;
-    opacity: 0.2;
+    transition: opacity 0.3s ease, transform 0.15s ease;
+    opacity: 0.25;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .sim-tile.active {
     opacity: 1;
-}
-
-.sim-tile:hover {
-    transform: scale(0.99);
 }
 
 .tile-video {
@@ -530,39 +575,47 @@ body {
 
 /* Section Card */
 .section-card {
+    container-type: inline-size;
+    container-name: card;
     background-color: var(--white);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-md);
-    padding: 28px;
-    margin-bottom: 28px;
+    padding: clamp(18px, 3.5vw, 28px);
+    margin-bottom: 24px;
     box-shadow: var(--shadow-sm);
 }
 
 .section-title {
-    font-size: 20px;
+    font-size: var(--text-section);
     font-weight: 300;
     color: var(--sky-950);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid var(--sky-100);
-    padding-bottom: 12px;
+    padding-bottom: 10px;
 }
 
 .section-title svg {
     color: var(--sky-600);
+    flex-shrink: 0;
 }
 
 /* Downloads Table */
 .downloads-table-wrap {
+    width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--sky-200);
+    border-radius: var(--radius-sm);
 }
 
 .downloads-table {
     width: 100%;
+    min-width: 580px;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
     text-align: left;
 }
 
@@ -570,15 +623,17 @@ body {
     background-color: var(--sky-100);
     color: var(--sky-900);
     font-weight: 500;
-    padding: 12px 16px;
-    border: 1px solid var(--sky-200);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--sky-200);
+    white-space: nowrap;
 }
 
 .downloads-table td {
-    padding: 12px 16px;
-    border: 1px solid var(--sky-200);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--sky-100);
     color: var(--sky-900);
     font-weight: 300;
+    white-space: nowrap;
 }
 
 .downloads-table tr:nth-child(even) {
@@ -599,11 +654,14 @@ body {
     background-color: var(--sky-600);
     color: var(--white);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
-    padding: 7px 14px;
+    padding: 8px 14px;
     border-radius: var(--radius-sm);
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
     border: 1px solid var(--sky-700);
     transition: background-color 0.15s ease;
 }
@@ -616,12 +674,16 @@ body {
     background-color: var(--white);
     color: var(--sky-700);
     border: 1px solid var(--sky-300);
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: var(--radius-sm);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     font-family: var(--font-mono);
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -635,7 +697,7 @@ body {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 18px;
+    padding: clamp(14px, 3vw, 18px);
     margin-top: 14px;
 }
 
@@ -643,46 +705,49 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .hash-val-box {
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 400;
     color: var(--sky-950);
     background-color: var(--white);
     border: 1px solid var(--sky-300);
     padding: 10px 14px;
     border-radius: var(--radius-sm);
-    flex-grow: 1;
+    flex: 1 1 280px;
     overflow-x: auto;
     white-space: nowrap;
 }
 
 /* Interactive Checksum Verifier */
 .verify-interactive-tool {
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px dashed var(--sky-200);
 }
 
 .verify-input-group {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
 }
 
 .verify-input {
-    flex-grow: 1;
+    flex: 1 1 240px;
     font-family: var(--font-mono);
-    font-size: 13px;
-    padding: 9px 14px;
+    font-size: 12px;
+    padding: 10px 12px;
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
     outline: none;
     color: var(--sky-900);
     background-color: var(--white);
+    min-height: 44px;
 }
 
 .verify-input:focus {
@@ -717,8 +782,8 @@ body {
 /* Technical Specifications */
 .specs-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
 }
 
 .spec-list {
@@ -726,11 +791,12 @@ body {
 }
 
 .spec-list li {
-    padding: 10px 0;
+    padding: 8px 0;
     border-bottom: 1px solid var(--sky-100);
     display: flex;
     justify-content: space-between;
-    font-size: 14px;
+    font-size: 13px;
+    gap: 12px;
 }
 
 .spec-list li:last-child {
@@ -746,20 +812,21 @@ body {
     color: var(--sky-950);
     font-weight: 500;
     font-family: var(--font-mono);
+    text-align: right;
 }
 
 /* Feature Checkpoints */
 .features-direct {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
 }
 
 .feature-box {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-left: 3px solid var(--sky-600);
-    padding: 16px 18px;
+    padding: 14px 16px;
     border-radius: var(--radius-sm);
 }
 
@@ -767,7 +834,7 @@ body {
     font-size: 14px;
     font-weight: 500;
     color: var(--sky-950);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .feature-box p {
@@ -782,19 +849,22 @@ body {
     background-color: var(--white);
     border: 1px solid var(--sky-300);
     border-radius: var(--radius-sm);
-    padding: 12px 16px;
-    margin-top: 10px;
+    padding: 10px 14px;
+    margin-top: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12px;
     color: var(--sky-900);
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .terminal-cmd {
     user-select: all;
     overflow-x: auto;
+    flex: 1 1 200px;
 }
 
 /* Changelog */
@@ -802,14 +872,14 @@ body {
     background-color: var(--sky-50);
     border: 1px solid var(--sky-200);
     border-radius: var(--radius-sm);
-    padding: 18px;
-    font-size: 14px;
+    padding: 16px;
+    font-size: 13px;
     color: var(--sky-900);
 }
 
 .changelog-box ul {
-    margin-left: 20px;
-    margin-top: 10px;
+    margin-left: 18px;
+    margin-top: 8px;
 }
 
 .changelog-box li {
@@ -826,32 +896,34 @@ body {
 /* Toast */
 .toast-msg {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
     background-color: var(--sky-700);
     color: var(--white);
     border: 1px solid var(--sky-500);
     box-shadow: var(--shadow-lg);
-    padding: 12px 20px;
+    padding: 12px 18px;
     border-radius: var(--radius-sm);
     font-size: 13px;
     font-weight: 500;
     display: none;
     z-index: 9999;
+    max-width: min(380px, calc(100vw - 40px));
 }
 
 .toast-msg.show {
     display: block;
-    animation: fadeIn 0.25s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
 }
 
 /* Footer */
 .portal-footer {
     background-color: var(--white);
     border-top: 2px solid var(--sky-200);
-    padding: 28px 0;
-    margin-top: 48px;
-    font-size: 13px;
+    padding: 24px 0;
+    margin-top: 40px;
+    font-size: 12px;
     font-weight: 300;
     color: var(--sky-700);
 }
@@ -860,53 +932,135 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
 .footer-links a {
     color: var(--sky-600);
     text-decoration: none;
-    margin-left: 18px;
     font-weight: 400;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .footer-links a:hover {
     text-decoration: underline;
 }
 
-/* Keyframe animations */
+/* Animation */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* =========================================================
+   CONTAINER QUERIES FOR ADAPTIVE LAYOUT
+   ========================================================= */
+@container hero (max-width: 680px) {
     .installer-top {
         flex-direction: column;
         align-items: stretch;
+        gap: 16px;
     }
     .download-cta-group {
         align-items: stretch;
         width: 100%;
+        min-width: 0;
     }
-    .spec-strip {
-        grid-template-columns: 1fr 1fr;
-    }
-    .specs-grid {
-        grid-template-columns: 1fr;
-    }
-    .features-direct {
-        grid-template-columns: 1fr;
-    }
-    .sim-hud-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .footer-content {
-        flex-direction: column;
-        gap: 14px;
+    .download-subtext {
         text-align: center;
     }
+}
+
+@container sim (max-width: 600px) {
+    .sim-control-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .sim-control-bar > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-start-sim {
+        width: 100%;
+    }
+    .sim-treemap-canvas {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(3, 1fr);
+        height: 220px;
+    }
+    .tile-video {
+        grid-row: span 1;
+        grid-column: span 2;
+    }
+}
+
+/* =========================================================
+   VIEWPORT BREAKPOINTS (MEDIA QUERIES)
+   ========================================================= */
+@media (max-width: 820px) {
+    .mobile-menu-btn {
+        display: inline-flex;
+    }
+
     .nav-links {
         display: none;
+        position: absolute;
+        top: 60px;
+        left: calc(-1 * var(--gutter));
+        right: calc(-1 * var(--gutter));
+        background: linear-gradient(180deg, #0369a1 0%, #0284c7 100%);
+        border-bottom: 2px solid #075985;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px var(--gutter) 16px;
+        gap: 4px;
+        box-shadow: var(--shadow-lg);
+        z-index: 1001;
+    }
+
+    .nav-links.open {
+        display: flex;
+        animation: fadeIn 0.15s ease-out;
+    }
+
+    .nav-links a {
+        padding: 12px 14px;
+        min-height: 44px;
+        font-size: 15px;
+    }
+
+    .nav-download-btn {
+        margin-left: 0;
+        margin-top: 8px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .btn-secondary,
+    .table-btn {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .toast-msg {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

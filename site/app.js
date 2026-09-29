@@ -1,8 +1,35 @@
-// DiskScope Pro — Installer & Download Portal Dynamic Script
+// DiskScope Pro: Installer & Download Portal Script
 document.addEventListener('DOMContentLoaded', () => {
     const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
 
-    // 1. Toast Notification Helper
+    // 1. Mobile Navigation Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.querySelector('.nav-links');
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = navLinks.classList.toggle('open');
+            mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        // Close menu on navigation link click
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('open');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileMenuBtn.contains(e.target) && !navLinks.contains(e.target)) {
+                navLinks.classList.remove('open');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    // 2. Toast Notification Helper
     const toast = document.getElementById('toastMsg');
     let toastTimeout;
     function showToast(message) {
@@ -15,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3200);
     }
 
-    // 2. Client OS & Architecture Detection
+    // 3. Client OS & Architecture Detection
     const detectedOSEl = document.getElementById('detectedOS');
     if (detectedOSEl) {
         const userAgent = window.navigator.userAgent;
@@ -169,8 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     hudSpeed.textContent = "58,400 f/s (Peak)";
                     hudVolume.textContent = targetVolume.toFixed(1) + ' GB';
                     hudJunk.textContent = targetJunk.toFixed(1) + ' GB';
-                    simTicker.textContent = `✓ Scan Complete: ${targetFiles.toLocaleString()} files indexed in 2.4s. Reclaimable: ${targetJunk.toFixed(1)} GB cleanable junk across 5 categories.`;
-                    showToast(`✓ Simulated scan complete! ${targetJunk.toFixed(1)} GB cleanable junk identified.`);
+                    simTicker.textContent = `✓ Scan complete: ${targetFiles.toLocaleString()} files indexed in 2.4s. Cleanable junk: ${targetJunk.toFixed(1)} GB across 5 categories.`;
+                    showToast(`✓ Simulated scan complete. ${targetJunk.toFixed(1)} GB cleanable junk identified.`);
                 }
             }, 60);
         });

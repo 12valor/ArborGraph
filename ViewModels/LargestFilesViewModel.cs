@@ -62,11 +62,13 @@ public class LargestFilesViewModel : ObservableObject
         NextPageCommand = new RelayCommand(_ => { CurrentPage++; RefreshData(); }, _ => CurrentPage < TotalPages);
         PrevPageCommand = new RelayCommand(_ => { CurrentPage--; RefreshData(); }, _ => CurrentPage > 1);
         RefreshCommand = new RelayCommand(_ => { CurrentPage = 1; RefreshData(); });
+        ExportCsvCommand = new RelayCommand(async _ => await ExportCsvAsync(), _ => Files.Count > 0);
     }
 
     public ObservableCollection<FileRecord> Files { get; }
     public IReadOnlyList<string> MinSizeOptions { get; }
     public IReadOnlyList<string> Categories { get; }
+    public ICommand ExportCsvCommand { get; }
 
     public FileRecord? SelectedFile
     {
@@ -175,8 +177,42 @@ public class LargestFilesViewModel : ObservableObject
 
             (NextPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PrevPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
         catch { }
+    }
+
+    public async Task ExportCsvAsync()
+    {
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            FileName = $"diskscope_largest_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            Title = "Export Largest Files to CSV"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                var exporter = new ExportService();
+                await exporter.ExportFilesToCsvAsync(Files, sfd.FileName);
+                var res = System.Windows.MessageBox.Show(
+                    $"Exported {Files.Count:N0} files to:\n{sfd.FileName}\n\nWould you like to open it now?",
+                    "Export Successful",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+
+                if (res == System.Windows.MessageBoxResult.Yes)
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Export failed: {ex.Message}", "Export Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     }
 
     private static long ParseMinSize(string option)

@@ -32,9 +32,11 @@ public class DuplicateViewModel : ObservableObject
         OpenFileLocationCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.OpenFileLocation(SelectedFile.Path); });
         CopyPathCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.CopyPath(SelectedFile.Path); });
         ShowPropertiesCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.ShowProperties(SelectedFile.Path); });
+        ExportCsvCommand = new RelayCommand(async _ => await ExportCsvAsync(), _ => DuplicateGroups.Count > 0);
     }
 
     public ObservableCollection<DuplicateGroup> DuplicateGroups { get; }
+    public ICommand ExportCsvCommand { get; }
 
     public DuplicateGroup? SelectedGroup
     {
@@ -128,6 +130,7 @@ public class DuplicateViewModel : ObservableObject
             TotalWastedBytes = results.Sum(g => g.WastedBytes);
             TotalDuplicateFiles = results.Sum(g => g.FileCount);
             SelectedGroup = DuplicateGroups.FirstOrDefault();
+            (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
         catch (OperationCanceledException)
         {
@@ -152,5 +155,38 @@ public class DuplicateViewModel : ObservableObject
             _cts?.Cancel();
         }
         catch (ObjectDisposedException) { }
+    }
+
+    public async Task ExportCsvAsync()
+    {
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            FileName = $"diskscope_duplicates_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            Title = "Export Duplicates to CSV"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                var exporter = new ExportService();
+                await exporter.ExportDuplicatesToCsvAsync(DuplicateGroups, sfd.FileName);
+                var res = System.Windows.MessageBox.Show(
+                    $"Exported {DuplicateGroups.Count:N0} duplicate groups to:\n{sfd.FileName}\n\nWould you like to open it now?",
+                    "Export Successful",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+
+                if (res == System.Windows.MessageBoxResult.Yes)
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Export failed: {ex.Message}", "Export Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     }
 }

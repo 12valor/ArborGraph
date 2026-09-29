@@ -113,6 +113,7 @@ public class JunkCleanerViewModel : ObservableObject
         InspectTargetCommand = new RelayCommand(param => InspectTarget(param as JunkTarget));
         OpenTargetFolderCommand = new RelayCommand(param => OpenTargetFolder(param as JunkTarget));
         ClosePreviewCommand = new RelayCommand(_ => SelectedTarget = null);
+        ExportCsvCommand = new RelayCommand(async _ => await ExportCsvAsync(), _ => Targets.Count > 0);
     }
 
     public ObservableCollection<JunkTarget> Targets { get; }
@@ -126,6 +127,7 @@ public class JunkCleanerViewModel : ObservableObject
     public ICommand InspectTargetCommand { get; }
     public ICommand OpenTargetFolderCommand { get; }
     public ICommand ClosePreviewCommand { get; }
+    public ICommand ExportCsvCommand { get; }
 
     public bool IsScanning
     {

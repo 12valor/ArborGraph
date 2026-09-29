@@ -20,6 +20,16 @@ public partial class MainWindow : Window
         Log("MainWindow constructor completed.");
     }
 
+    private void ExportButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn && btn.ContextMenu != null)
+        {
+            btn.ContextMenu.PlacementTarget = btn;
+            btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            btn.ContextMenu.IsOpen = true;
+        }
+    }
+
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         Log("MainWindow Loaded event fired. Window is active on desktop.");

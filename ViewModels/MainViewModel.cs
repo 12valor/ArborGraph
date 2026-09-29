@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -15,6 +16,8 @@ public class MainViewModel : ObservableObject
     private readonly DiskService _diskService;
     private readonly FileActionService _fileActionService;
     private readonly DuplicateAnalyzer _duplicateAnalyzer;
+    private readonly JunkCleanerService _junkCleanerService;
+    private readonly ExportService _exportService;
 
     private object _currentView;
     private string _currentTab = "Overview";
@@ -32,6 +35,7 @@ public class MainViewModel : ObservableObject
         _fileActionService = new FileActionService();
         _duplicateAnalyzer = new DuplicateAnalyzer(_dbService);
         _junkCleanerService = new JunkCleanerService();
+        _exportService = new ExportService();
 
         OverviewVM = new OverviewViewModel(_dbService, _diskService);
         AnalyticsVM = new AnalyticsViewModel(_dbService, _diskService, _fileActionService);
@@ -51,9 +55,11 @@ public class MainViewModel : ObservableObject
         StopScanCommand = new RelayCommand(_ => StopScan(), _ => IsScanning);
         NavigateCommand = new RelayCommand(param => NavigateTo(param?.ToString() ?? "Overview"));
         BrowseCustomFolderCommand = new RelayCommand(_ => BrowseCustomFolder());
-    }
 
-    private readonly JunkCleanerService _junkCleanerService;
+        ExportHtmlReportCommand = new RelayCommand(async _ => await ExportHtmlReportAsync(), _ => !IsScanning);
+        ExportJsonReportCommand = new RelayCommand(async _ => await ExportJsonReportAsync(), _ => !IsScanning);
+        ExportFilesCsvCommand = new RelayCommand(async _ => await ExportFilesCsvAsync(), _ => !IsScanning);
+    }
 
     public OverviewViewModel OverviewVM { get; }
     public AnalyticsViewModel AnalyticsVM { get; }
@@ -88,6 +94,9 @@ public class MainViewModel : ObservableObject
             {
                 (StartScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (StopScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ExportHtmlReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ExportJsonReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ExportFilesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -102,6 +111,9 @@ public class MainViewModel : ObservableObject
     public ICommand StopScanCommand { get; }
     public ICommand NavigateCommand { get; }
     public ICommand BrowseCustomFolderCommand { get; }
+    public ICommand ExportHtmlReportCommand { get; }
+    public ICommand ExportJsonReportCommand { get; }
+    public ICommand ExportFilesCsvCommand { get; }
 
     public void NavigateTo(string tabName)
     {
@@ -314,6 +326,131 @@ public class MainViewModel : ObservableObject
         if (dialog.ShowDialog() == true)
         {
             CustomScanPath = dialog.FolderName;
+        }
+    }
+
+    private async Task ExportHtmlReportAsync()
+    {
+        if (IsScanning) return;
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "HTML Files (*.html)|*.html|All Files (*.*)|*.*",
+            FileName = $"diskscope_audit_{DateTime.Now:yyyyMMdd_HHmmss}.html",
+            Title = "Export Executive HTML Audit Report"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                string targetRoots = !string.IsNullOrWhiteSpace(CustomScanPath)
+                    ? CustomScanPath
+                    : string.Join(", ", OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name));
+
+                var report = await _exportService.BuildAuditReportAsync(
+                    _dbService,
+                    _junkCleanerService,
+                    OverviewVM.Stats,
+                    targetRoots,
+                    DuplicatesVM.DuplicateGroups);
+
+                await _exportService.ExportToHtmlAsync(report, sfd.FileName);
+
+                var res = MessageBox.Show(
+                    $"Executive HTML audit report saved successfully to:\n{sfd.FileName}\n\nWould you like to open it now in your browser?",
+                    "Report Exported",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (res == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export HTML report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private async Task ExportJsonReportAsync()
+    {
+        if (IsScanning) return;
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+            FileName = $"diskscope_audit_{DateTime.Now:yyyyMMdd_HHmmss}.json",
+            Title = "Export Structured JSON Audit Dump"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                string targetRoots = !string.IsNullOrWhiteSpace(CustomScanPath)
+                    ? CustomScanPath
+                    : string.Join(", ", OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name));
+
+                var report = await _exportService.BuildAuditReportAsync(
+                    _dbService,
+                    _junkCleanerService,
+                    OverviewVM.Stats,
+                    targetRoots,
+                    DuplicatesVM.DuplicateGroups);
+
+                await _exportService.ExportToJsonAsync(report, sfd.FileName);
+
+                var res = MessageBox.Show(
+                    $"JSON audit dump saved successfully to:\n{sfd.FileName}\n\nWould you like to open it now?",
+                    "Export Successful",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (res == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export JSON: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private async Task ExportFilesCsvAsync()
+    {
+        if (IsScanning) return;
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            FileName = $"diskscope_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            Title = "Export Indexed Files to CSV"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                var files = _dbService.GetFilesPaged(0, 10000, sortBy: "size", sortDesc: true);
+                await _exportService.ExportFilesToCsvAsync(files, sfd.FileName);
+
+                var res = MessageBox.Show(
+                    $"Exported {files.Count:N0} files to:\n{sfd.FileName}\n\nWould you like to open it now?",
+                    "Export Successful",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (res == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

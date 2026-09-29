@@ -375,5 +375,39 @@ public class JunkCleanerViewModel : ObservableObject
         (ScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (CleanCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+    }
+
+    public async Task ExportCsvAsync()
+    {
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            FileName = $"diskscope_junk_targets_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            Title = "Export Junk Targets to CSV"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            try
+            {
+                var exporter = new ExportService();
+                await exporter.ExportJunkToCsvAsync(Targets, sfd.FileName);
+                var res = MessageBox.Show(
+                    $"Exported {Targets.Count:N0} junk targets to:\n{sfd.FileName}\n\nWould you like to open it now?",
+                    "Export Successful",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (res == MessageBoxResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }

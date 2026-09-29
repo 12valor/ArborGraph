@@ -8,7 +8,7 @@ public partial class App : Application
 {
     private static readonly string LogFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DiskScopePro",
+        "DiskScope",
         "app.log");
 
     protected override void OnStartup(StartupEventArgs e)

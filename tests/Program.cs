@@ -11,7 +11,7 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         Console.WriteLine("=================================================");
-        Console.WriteLine("  DISKSCOPE PRO — AUTOMATED INTEGRATION TESTS");
+        Console.WriteLine("  DISKSCOPE — AUTOMATED INTEGRATION TESTS");
         Console.WriteLine("=================================================");
 
         string testRoot = Path.Combine(Path.GetTempPath(), "DiskScope_TestFiles_" + Guid.NewGuid().ToString("N")[..8]);
@@ -377,7 +377,7 @@ public class Program
             Assert(File.Exists(htmlPath), "HTML report was not created");
             string htmlContent = await File.ReadAllTextAsync(htmlPath);
             Assert(htmlContent.Contains("<!DOCTYPE html>"), "Missing HTML5 doctype");
-            Assert(htmlContent.Contains("DISKSCOPE PRO"), "Missing branding badge in HTML");
+            Assert(htmlContent.Contains("DISKSCOPE"), "Missing branding badge in HTML");
             Assert(htmlContent.Contains("Storage Audit"), "Missing report title in HTML");
             Assert(htmlContent.Contains("Storage Distribution by Category"), "Missing categories section in HTML");
             Console.WriteLine($"  ✓ Standalone HTML executive report verified ({new FileInfo(htmlPath).Length:N0} bytes).");

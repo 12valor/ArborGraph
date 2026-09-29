@@ -1,4 +1,4 @@
-// DiskScope Pro: Windows Disk Analysis & Setup Utility Script
+// DiskScope: Windows Disk Analysis & Setup Utility Script
 document.addEventListener('DOMContentLoaded', () => {
     const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
 
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wizardCurrentStep === 7) {
                 // Finish button clicked
                 if (wizardLaunchApp && wizardLaunchApp.checked) {
-                    showToast('Launching DiskScope Pro (Downloading binary)...');
+                    showToast('Launching DiskScope (Downloading binary)...');
                     const link = document.createElement('a');
                     link.href = 'downloads/DiskScope.exe';
                     link.download = 'DiskScope.exe';
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     link.click();
                     document.body.removeChild(link);
                 } else {
-                    showToast('DiskScope Pro Setup successfully completed.');
+                    showToast('DiskScope Setup successfully completed.');
                 }
                 // Reset wizard back to Step 1
                 wizardCurrentStep = 1;
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cancel button listener
     if (btnWizardCancel) {
         btnWizardCancel.addEventListener('click', () => {
-            if (confirm('Are you sure you want to cancel DiskScope Pro Setup?')) {
+            if (confirm('Are you sure you want to cancel DiskScope Setup?')) {
                 wizardCurrentStep = 1;
                 if (wizardEulaCheck) wizardEulaCheck.checked = false;
                 updateWizardUI();
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isDefaultProgFiles = true;
         btnTogglePortablePath.addEventListener('click', () => {
             if (isDefaultProgFiles) {
-                wizardInstallPath.value = "%LocalAppData%\\DiskScopePro";
+                wizardInstallPath.value = "%LocalAppData%\\DiskScope";
                 btnTogglePortablePath.textContent = "Use Program Files";
             } else {
                 wizardInstallPath.value = "C:\\Program Files\\DiskScope";
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const steps = [
             { pct: 15, msg: "Extracting core binary: DiskScope.exe (72.7 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
             { pct: 35, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore.dll & PresentationFramework.dll\n> Validating DirectX Hardware Acceleration..." },
-            { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScopePro..." },
+            { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScope..." },
             { pct: 78, msg: "Creating application environment...", log: "> Configuring WAL journal mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
             { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: 095EAE7A...FCB4C\n> Cryptographic match verified bit-for-bit." },
             { pct: 100, msg: "Setup installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
@@ -308,8 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
             acceptedAt: new Date().toISOString(),
             applicationVersion: "1.0.0",
             architecture: "win-x64",
-            publisher: "[OWNER / PUBLISHER NAME]",
-            offlineStorage: "%LocalAppData%\\DiskScopePro"
+            publisher: "AG DIAZ EVANGELISTA",
+            offlineStorage: "%LocalAppData%\\DiskScope"
         };
 
         try {

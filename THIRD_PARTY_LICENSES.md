@@ -1,6 +1,6 @@
 # Third-Party Software Licenses & Open Source Acknowledgements
 
-DiskScope Pro incorporates and redistributes third-party open-source components under the terms of their respective licenses. Below is the complete schedule of third-party dependencies, version numbers, copyright notices, and license terms:
+DiskScope incorporates and redistributes third-party open-source components under the terms of their respective licenses. Below is the complete schedule of third-party dependencies, version numbers, copyright notices, and license terms:
 
 ---
 

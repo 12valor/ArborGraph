@@ -16,8 +16,15 @@ public class DatabaseService : IDisposable
         if (string.IsNullOrWhiteSpace(customDbPath))
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string folder = Path.Combine(appData, "DiskScopePro");
-            Directory.CreateDirectory(folder);
+            string folder = Path.Combine(appData, "DiskScope");
+            if (!Directory.Exists(folder) && Directory.Exists(Path.Combine(appData, "DiskScopePro")))
+            {
+                folder = Path.Combine(appData, "DiskScopePro");
+            }
+            else
+            {
+                Directory.CreateDirectory(folder);
+            }
             _dbPath = Path.Combine(folder, "scan_index.db");
         }
         else

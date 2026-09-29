@@ -93,10 +93,10 @@ dotnet run --project tests\DiskScope.Tests.csproj
 
 ## Data and log locations
 
-DiskScope stores its database and logs under `%LOCALAPPDATA%\DiskScopePro`:
+DiskScope stores its database and logs under `%LOCALAPPDATA%\DiskScope`:
 
-- Database: `%LOCALAPPDATA%\DiskScopePro\scan_index.db`
-- Application log: `%LOCALAPPDATA%\DiskScopePro\app.log`
+- Database: `%LOCALAPPDATA%\DiskScope\scan_index.db`
+- Application log: `%LOCALAPPDATA%\DiskScope\app.log`
 
 To reset scan data, delete `scan_index.db` while the application is closed.
 
@@ -114,7 +114,7 @@ dotnet run
 
 ## Documentation, Installer & Legal Ecosystem
 
-DiskScope Pro includes a complete legal, installation, and documentation framework:
+DiskScope includes a complete legal, installation, and documentation framework:
 
 - **EULA:** See [LICENSE.md](LICENSE.md) or the in-app portal (`#legal`).
 - **Third-Party Open Source Licenses:** See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) covering `Microsoft.Data.Sqlite`, `SQLite`, and `.NET Runtime`.

@@ -1,16 +1,16 @@
 ; =====================================================================
-; DiskScope Pro - Official Inno Setup 6 Installer Script
+; DiskScope - Official Inno Setup 6 Installer Script
 ; Target: Windows 10 / 11 (64-bit x64)
 ; =====================================================================
 
-#define MyAppName "DiskScope Pro"
+#define MyAppName "DiskScope"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "[OWNER / PUBLISHER NAME]"
+#define MyAppPublisher "AG DIAZ EVANGELISTA"
 #define MyAppURL "https://github.com/12valor/C-file-scanner"
 #define MyAppExeName "DiskScope.exe"
 
 [Setup]
-; Unique AppId generated for DiskScope Pro
+; Unique AppId generated for DiskScope
 AppId={{D37F7E1A-85F4-4BC3-9C1D-72810C24A59E}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
@@ -62,6 +62,6 @@ begin
   if CurStep = ssPostInstall then
   begin
     // Local acceptance recorded on disk
-    Log('DiskScope Pro EULA accepted at: ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':'));
+    Log('DiskScope EULA accepted at: ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':'));
   end;
 end;

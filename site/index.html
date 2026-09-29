@@ -4,438 +4,621 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="DiskScope Pro. Official Windows 64-bit standalone executable download portal, SQLite storage visualizer, and junk cleaner.">
-    <title>DiskScope Pro: Official Windows Installer and Direct Download</title>
+    <title>DiskScope Pro: Windows Disk Analysis &amp; Setup Utility</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Top Sticky Header: Blue Palette with Custom DiskScope Logo -->
-    <header class="top-header">
-        <div class="container header-inner">
-            <a href="#" class="brand">
-                <div class="brand-icon">
-                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="navDiskGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%" stop-color="#E0F2FE"/>
-                                <stop offset="100%" stop-color="#BAE6FD"/>
-                            </linearGradient>
-                            <radialGradient id="navRadarSweep" cx="24" cy="24" r="20" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.6"/>
-                                <stop offset="80%" stop-color="#BAE6FD" stop-opacity="0.15"/>
-                                <stop offset="100%" stop-color="#BAE6FD" stop-opacity="0"/>
-                            </radialGradient>
-                        </defs>
-                        <!-- Outer Disk Platter -->
-                        <circle cx="24" cy="24" r="21" stroke="url(#navDiskGrad)" stroke-width="2.5"/>
-                        <!-- Scanner Radar Sector -->
-                        <path d="M24 24 L38.8 9.2 A21 21 0 0 1 45 24 Z" fill="url(#navRadarSweep)"/>
-                        <!-- Concentric Data Track -->
-                        <circle cx="24" cy="24" r="14" stroke="#FFFFFF" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.9"/>
-                        <!-- Inner Platter Ring -->
-                        <circle cx="24" cy="24" r="7.5" stroke="#E0F2FE" stroke-width="1.8"/>
-                        <!-- Scope Center Hub -->
-                        <circle cx="24" cy="24" r="3.2" fill="#FFFFFF"/>
-                        <!-- Precision Reticle Ticks -->
-                        <line x1="24" y1="1" x2="24" y2="7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="24" y1="41" x2="24" y2="47" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="1" y1="24" x2="7" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="41" y1="24" x2="47" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <div class="brand-title"><strong>Disk</strong>Scope</div>
-                <div class="brand-ver">PRO v1.0.0</div>
-            </a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
-            <ul class="nav-links">
-                <li><a href="#simulator">Live Demo</a></li>
-                <li><a href="#downloads">Downloads</a></li>
-                <li><a href="#checksums">Verification</a></li>
-                <li><a href="#specs">Specifications</a></li>
-                <li><a href="#terminal">CLI Run</a></li>
-                <li><a href="#changelog">Release Notes</a></li>
-                <li><a href="downloads/DiskScope.exe" class="nav-download-btn" download>Download .exe</a></li>
-            </ul>
-        </div>
-    </header>
+    <!-- Outer Application Shell -->
+    <div class="app-shell">
+        <main class="win-window" id="utilityWindow">
 
-    <div class="container">
-        <!-- System Auto-Detection Banner -->
-        <div class="system-alert">
-            <div class="system-status">
-                <span class="status-dot"></span>
-                <span id="detectedOS">System Check: Windows 64-bit Architecture Verified</span>
-            </div>
-            <div class="system-meta">Build: 2026.09.29 • Channel: Stable (win-x64)</div>
-        </div>
-
-        <!-- Main Installer Box (Direct to the point) -->
-        <section class="hero-installer" id="installer">
-            <div class="installer-top">
-                <div class="installer-headings">
-                    <h1><strong>DiskScope Pro</strong> for Windows</h1>
-                    <p>
-                        High-speed disk visualizer, SQLite-indexed file scanner, and developer junk cleaner. 
-                        Portable single-file binary with zero runtime dependencies.
-                    </p>
+            <!-- 1. Window Title Bar (Windows Utility Chrome) -->
+            <header class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <div class="win-app-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="titleDiskGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#E0F2FE"/>
+                                    <stop offset="100%" stop-color="#BAE6FD"/>
+                                </linearGradient>
+                                <radialGradient id="titleRadarSweep" cx="24" cy="24" r="20" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+                                    <stop offset="80%" stop-color="#BAE6FD" stop-opacity="0.2"/>
+                                    <stop offset="100%" stop-color="#BAE6FD" stop-opacity="0"/>
+                                </radialGradient>
+                            </defs>
+                            <circle cx="24" cy="24" r="21" stroke="url(#titleDiskGrad)" stroke-width="2.5"/>
+                            <path d="M24 24 L38.8 9.2 A21 21 0 0 1 45 24 Z" fill="url(#titleRadarSweep)"/>
+                            <circle cx="24" cy="24" r="14" stroke="#FFFFFF" stroke-width="1.2" stroke-dasharray="3 3"/>
+                            <circle cx="24" cy="24" r="7.5" stroke="#E0F2FE" stroke-width="1.8"/>
+                            <circle cx="24" cy="24" r="3.2" fill="#FFFFFF"/>
+                            <line x1="24" y1="1" x2="24" y2="7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="24" y1="41" x2="24" y2="47" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="1" y1="24" x2="7" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="41" y1="24" x2="47" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="win-title-text">
+                        <span class="win-title-name">DiskScope Pro</span>
+                        <span class="win-title-sep">:</span>
+                        <span class="win-title-desc">Windows Disk Analysis &amp; Setup Utility</span>
+                        <span class="win-ver-badge">v1.0.0</span>
+                    </div>
                 </div>
-                <div class="download-cta-group">
-                    <a href="downloads/DiskScope.exe" class="btn-main-download" id="heroDownloadBtn" download>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="win-window-controls" aria-hidden="true">
+                    <button class="win-ctrl-btn" type="button" tabindex="-1" title="Minimize">
+                        <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
+                    </button>
+                    <button class="win-ctrl-btn" type="button" tabindex="-1" title="Maximize">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor"/></svg>
+                    </button>
+                    <button class="win-ctrl-btn win-ctrl-close" type="button" tabindex="-1" title="Close">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1 L9 9 M9 1 L1 9" stroke="currentColor" stroke-width="1.2"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 2. System Diagnostic & Quick Action Bar -->
+            <div class="win-actionbar">
+                <div class="win-diag-strip">
+                    <span class="status-indicator-dot"></span>
+                    <span class="diag-label" id="systemDiagStatus">SYSTEM READY: Windows 64-bit Architecture Verified</span>
+                    <span class="diag-divider">|</span>
+                    <span class="diag-meta">Build: 2026.09.29</span>
+                    <span class="diag-divider">|</span>
+                    <span class="diag-meta">Channel: Stable (win-x64)</span>
+                </div>
+                <div class="win-quick-cta">
+                    <a href="downloads/DiskScope.exe" class="btn-win-download" download>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
                         <span>Download DiskScope.exe</span>
+                        <span class="btn-sub-size">(72.7 MB)</span>
                     </a>
-                    <div class="download-subtext">Version 1.0.0 • 72.7 MB • Win-x64 Portable</div>
                 </div>
             </div>
 
-            <!-- Quick Specs Row -->
-            <div class="spec-strip">
-                <div class="spec-cell">
-                    <div class="spec-label">Package Format</div>
-                    <div class="spec-val">Standalone Executable</div>
-                </div>
-                <div class="spec-cell">
-                    <div class="spec-label">Target Architecture</div>
-                    <div class="spec-val">Windows x64 (64-bit)</div>
-                </div>
-                <div class="spec-cell">
-                    <div class="spec-label">Dependencies</div>
-                    <div class="spec-val">None (Self-Contained)</div>
-                </div>
-                <div class="spec-cell">
-                    <div class="spec-label">Verification</div>
-                    <div class="spec-val">SHA-256 Validated</div>
-                </div>
-            </div>
-
-            <!-- Dynamic Download Progress & Run Guide -->
-            <div class="download-progress-box" id="downloadProgressBox">
-                <div class="progress-header">
-                    <span id="progressStatusText">Starting download of DiskScope.exe...</span>
-                    <span id="progressPercent">100%</span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-bar-fill" id="progressBarFill"></div>
-                </div>
-                <div class="progress-guide">
-                    <div><strong>Step 1:</strong> Save <code>DiskScope.exe</code> to your Desktop, Downloads, or USB drive.</div>
-                    <div><strong>Step 2:</strong> Double-click the file to launch immediately. No installer wizard needed.</div>
-                    <div><strong>Step 3:</strong> Select target drives or folders and click <em>Start Scan</em>.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Dynamic Live Mini-Scanner Simulator -->
-        <section class="simulator-box" id="simulator">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                Interactive Ingestion and Treemap Simulator
-            </h2>
-            <div class="sim-control-bar">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label for="simDriveSelect" style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Select Drive:</label>
-                    <select id="simDriveSelect" class="sim-drive-select">
-                        <option value="C:">C:\ [System NVMe SSD: 512 GB]</option>
-                        <option value="D:">D:\ [Developer Repositories: 1 TB]</option>
-                        <option value="E:">E:\ [Photoshop &amp; Media Archive: 4 TB]</option>
-                    </select>
-                </div>
-                <button class="btn-start-sim" id="btnStartSim">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span id="simBtnText">Start Simulated Scan</span>
+            <!-- 3. Windows Application Tab Ribbon -->
+            <nav class="win-tabs" role="tablist" aria-label="Utility navigation tabs">
+                <button class="win-tab active" role="tab" id="tabBtnSetup" aria-selected="true" aria-controls="paneSetup" data-tab="setup">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Setup &amp; Distribution</span>
                 </button>
-            </div>
+                <button class="win-tab" role="tab" id="tabBtnScanner" aria-selected="false" aria-controls="paneScanner" data-tab="scanner">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <span>Disk Diagnostics &amp; Scanner</span>
+                </button>
+                <button class="win-tab" role="tab" id="tabBtnVerify" aria-selected="false" aria-controls="paneVerify" data-tab="verify">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>Package Verification</span>
+                </button>
+                <button class="win-tab" role="tab" id="tabBtnSpecs" aria-selected="false" aria-controls="paneSpecs" data-tab="specs">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
+                    <span>Specifications &amp; CLI</span>
+                </button>
+                <button class="win-tab" role="tab" id="tabBtnChangelog" aria-selected="false" aria-controls="paneChangelog" data-tab="changelog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <span>Release Notes</span>
+                </button>
+            </nav>
 
-            <!-- Live Telemetry HUD -->
-            <div class="sim-hud-grid">
-                <div class="sim-hud-card">
-                    <div class="sim-hud-label">Indexed Files</div>
-                    <div class="sim-hud-val" id="hudFiles">0</div>
-                </div>
-                <div class="sim-hud-card">
-                    <div class="sim-hud-label">Ingestion Speed</div>
-                    <div class="sim-hud-val" id="hudSpeed" style="color: var(--sky-600);">0 f/s</div>
-                </div>
-                <div class="sim-hud-card">
-                    <div class="sim-hud-label">Volume Processed</div>
-                    <div class="sim-hud-val" id="hudVolume">0.0 GB</div>
-                </div>
-                <div class="sim-hud-card">
-                    <div class="sim-hud-label">Reclaimable Junk</div>
-                    <div class="sim-hud-val" id="hudJunk" style="color: var(--sky-500);">0.0 GB</div>
-                </div>
-            </div>
+            <!-- 4. Tab Panes Container -->
+            <div class="win-body">
 
-            <!-- Streaming Terminal Path Ticker -->
-            <div class="sim-terminal-ticker" id="simTicker">
-                Ready. Click "Start Simulated Scan" to test high-throughput SQLite ingestion and spatial treemap mapping.
-            </div>
+                <!-- ==========================================
+                     TAB 1: SETUP & DISTRIBUTION
+                     ========================================== -->
+                <section class="tab-pane active" id="paneSetup" role="tabpanel" aria-labelledby="tabBtnSetup">
+                    
+                    <!-- Installer Welcome Banner -->
+                    <div class="installer-card">
+                        <div class="installer-card-header">
+                            <div>
+                                <h1 class="installer-title">DiskScope Pro</h1>
+                                <p class="installer-subtitle">Windows Disk Analysis &amp; Cleanup Utility</p>
+                            </div>
+                            <div class="installer-spec-badge-group">
+                                <span class="spec-pill">Version 1.0.0</span>
+                                <span class="spec-pill">Windows x64</span>
+                                <span class="spec-pill">Portable Binary</span>
+                                <span class="spec-pill">Zero Prerequisites</span>
+                            </div>
+                        </div>
 
-            <!-- Interactive Treemap Mini Canvas -->
-            <div class="sim-treemap-canvas" id="simTreemapCanvas">
-                <div class="sim-tile tile-video" id="tileVideo">
-                    <div style="font-weight: 600;">4K Video Renders</div>
-                    <div style="opacity: 0.85;">21.4 GB (41%)</div>
-                </div>
-                <div class="sim-tile tile-images" id="tileImages">
-                    <div style="font-weight: 600;">RAW Photos &amp; Assets</div>
-                    <div style="opacity: 0.85;">12.1 GB (23%)</div>
-                </div>
-                <div class="sim-tile tile-psd" id="tilePsd">
-                    <div style="font-weight: 600;">Photoshop Projects</div>
-                    <div style="opacity: 0.85;">7.8 GB (15%)</div>
-                </div>
-                <div class="sim-tile tile-junk" id="tileJunk">
-                    <div style="font-weight: 600;">node_modules &amp; Caches</div>
-                    <div style="opacity: 0.85;">6.2 GB (12%)</div>
-                </div>
-                <div class="sim-tile tile-code" id="tileCode">
-                    <div style="font-weight: 600;">Source Repositories</div>
-                    <div style="opacity: 0.85;">4.9 GB (9%)</div>
-                </div>
-            </div>
-        </section>
+                        <p class="installer-desc">
+                            High-speed disk space visualizer, SQLite-indexed file scanner, and developer junk cleaner. 
+                            Fully self-contained single-file binary with bundled .NET 8 runtime and zero dependencies.
+                        </p>
 
-        <!-- Official Packages Table -->
-        <section class="section-card" id="downloads">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Available Packages and Builds
-            </h2>
-            <div class="downloads-table-wrap">
-                <table class="downloads-table">
-                    <thead>
-                        <tr>
-                            <th>Package / File</th>
-                            <th>Type</th>
-                            <th>Architecture</th>
-                            <th>Size</th>
-                            <th>Checksum</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="file-primary">DiskScope.exe</span></td>
-                            <td>Standalone Single-File</td>
-                            <td>Windows 10 / 11 (x64)</td>
-                            <td>72.7 MB</td>
-                            <td><button class="btn-secondary copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
-                            <td><a href="downloads/DiskScope.exe" class="table-btn" download>Download</a></td>
-                        </tr>
-                        <tr>
-                            <td><span class="file-primary">DiskScope.zip</span></td>
-                            <td>Portable Archive</td>
-                            <td>Windows 10 / 11 (x64)</td>
-                            <td>72.7 MB</td>
-                            <td><button class="btn-secondary copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
-                            <td><a href="downloads/DiskScope.exe" class="table-btn" download>Download</a></td>
-                        </tr>
-                        <tr>
-                            <td><span class="file-primary">Source Code (.zip)</span></td>
-                            <td>C# / WPF Source Tree</td>
-                            <td>Cross-Platform Source</td>
-                            <td>1.2 MB</td>
-                            <td><span style="font-family: var(--font-mono); font-size: 12px; color: var(--sky-700);">Git Hash (HEAD)</span></td>
-                            <td><a href="https://github.com/12valor/C-file-scanner" target="_blank" class="table-btn">Repository</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                        <!-- Installation Mode Selector (Installer Experience) -->
+                        <div class="setup-mode-section">
+                            <div class="setup-section-title">Deployment Options</div>
+                            <div class="mode-options-grid">
+                                <label class="mode-option selected">
+                                    <input type="radio" name="installMode" value="portable" checked>
+                                    <div class="mode-option-content">
+                                        <div class="mode-option-title">Portable Standalone Executable (Recommended)</div>
+                                        <div class="mode-option-desc">Run immediately from Downloads, Desktop, or USB drives. Leaves zero registry footprints.</div>
+                                    </div>
+                                    <span class="mode-tag">Default</span>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="installMode" value="profile">
+                                    <div class="mode-option-content">
+                                        <div class="mode-option-title">Local User Environment</div>
+                                        <div class="mode-option-desc">Maintains workspace databases in <code>%LocalAppData%\DiskScopePro</code> for fast repeated scans.</div>
+                                    </div>
+                                </label>
+                                <label class="mode-option">
+                                    <input type="radio" name="installMode" value="explorer">
+                                    <div class="mode-option-content">
+                                        <div class="mode-option-title">Windows Explorer Integration</div>
+                                        <div class="mode-option-desc">Launch directly via right-click "Open in DiskScope" on any drive or directory.</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
 
-        <!-- Cryptographic Checksum & Live Verification Tool -->
-        <section class="section-card" id="checksums">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Package Integrity and Cryptographic Verification
-            </h2>
-            <div class="hash-card">
-                <div style="font-size: 11px; font-weight: 500; color: var(--sky-800); margin-bottom: 6px;">OFFICIAL SHA-256 DIGEST:</div>
-                <div class="hash-row">
-                    <div class="hash-val-box" id="officialHash">095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C</div>
-                    <button class="btn-secondary" id="copyOfficialHashBtn" style="padding: 10px 16px;">Copy Digest</button>
-                </div>
+                        <!-- Primary Download Box -->
+                        <div class="installer-action-panel">
+                            <div class="installer-download-row">
+                                <a href="downloads/DiskScope.exe" class="btn-primary-installer" id="mainDownloadBtn" download>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span>Download DiskScope.exe</span>
+                                </a>
+                                <div class="installer-action-meta">
+                                    <div><strong>Package:</strong> 72.7 MB • Single-File Binary</div>
+                                    <div><strong>Target:</strong> Windows 10 / 11 (64-bit)</div>
+                                    <div><strong>Integrity:</strong> SHA-256 Validated</div>
+                                </div>
+                            </div>
 
-                <!-- Interactive Hash Comparator -->
-                <div class="verify-interactive-tool">
-                    <div style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Interactive Checksum Comparator:</div>
-                    <div style="font-size: 12px; font-weight: 300; color: var(--sky-700); margin-top: 2px;">Paste your locally calculated hash below to immediately verify file integrity:</div>
-                    <div class="verify-input-group">
-                        <input type="text" class="verify-input" id="verifyInput" placeholder="Paste calculated SHA-256 hash here..." spellcheck="false">
-                        <button class="btn-secondary" id="verifyBtn" style="padding: 9px 16px;">Verify</button>
+                            <!-- Live Simulated Download Progress Box -->
+                            <div class="installer-progress-box" id="downloadProgressBox" style="display: none;">
+                                <div class="progress-status-row">
+                                    <span id="progressStatusText">Transferring DiskScope.exe package...</span>
+                                    <span class="progress-pct" id="progressPercent">0%</span>
+                                </div>
+                                <div class="win-progress-track">
+                                    <div class="win-progress-fill" id="progressBarFill"></div>
+                                </div>
+                                <div class="progress-run-steps">
+                                    <div class="step-card">
+                                        <div class="step-num">Step 1</div>
+                                        <div class="step-text">Save <code>DiskScope.exe</code> to your preferred drive or folder.</div>
+                                    </div>
+                                    <div class="step-card">
+                                        <div class="step-num">Step 2</div>
+                                        <div class="step-text">Double-click the binary to launch immediately. No wizard needed.</div>
+                                    </div>
+                                    <div class="step-card">
+                                        <div class="step-num">Step 3</div>
+                                        <div class="step-text">Select target drives and click <em>Start Scan</em> to index storage.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="verify-result" id="verifyResult"></div>
-                </div>
+
+                    <!-- Official Distribution Builds Table -->
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h2 class="panel-heading">Official Distribution Packages</h2>
+                            <span class="panel-subtext">Direct download links and checksum hashes for stable release v1.0.0</span>
+                        </div>
+                        <div class="table-responsive-container">
+                            <table class="win-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Package</th>
+                                        <th>Format</th>
+                                        <th>Architecture</th>
+                                        <th>Size</th>
+                                        <th>Digest</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="file-name">DiskScope.exe</span></td>
+                                        <td>Single-File Standalone</td>
+                                        <td>Windows 10 / 11 (x64)</td>
+                                        <td>72.7 MB</td>
+                                        <td><button class="btn-win-mini copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
+                                        <td><a href="downloads/DiskScope.exe" class="btn-win-table-action" download>Download</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="file-name">DiskScope.zip</span></td>
+                                        <td>Portable Zip Archive</td>
+                                        <td>Windows 10 / 11 (x64)</td>
+                                        <td>72.7 MB</td>
+                                        <td><button class="btn-win-mini copy-hash-btn" data-hash="095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C">Copy SHA-256</button></td>
+                                        <td><a href="downloads/DiskScope.exe" class="btn-win-table-action" download>Download</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="file-name">Source Code (.zip)</span></td>
+                                        <td>C# / WPF Source Tree</td>
+                                        <td>Any Platform</td>
+                                        <td>1.2 MB</td>
+                                        <td><span class="mono-meta">Git HEAD</span></td>
+                                        <td><a href="https://github.com/12valor/C-file-scanner" target="_blank" class="btn-win-table-action">Repository</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 2: DISK DIAGNOSTICS & LIVE SCANNER
+                     ========================================== -->
+                <section class="tab-pane" id="paneScanner" role="tabpanel" aria-labelledby="tabBtnScanner">
+                    <div class="scanner-split-layout">
+                        
+                        <!-- Left Pane: Scanner Engine Controls & Telemetry -->
+                        <div class="scanner-left-panel">
+                            <div class="panel-section-header">
+                                <h2 class="panel-heading">Filesystem Scanner Control</h2>
+                                <span class="panel-subtext">Multi-threaded traversal engine with bounded SQLite ingestion</span>
+                            </div>
+
+                            <!-- Drive Select & Action Bar -->
+                            <div class="scanner-toolbar">
+                                <div class="drive-select-group">
+                                    <label for="simDriveSelect" class="toolbar-label">Target Drive:</label>
+                                    <select id="simDriveSelect" class="win-select">
+                                        <option value="C:">C:\ [System NVMe SSD: 512 GB]</option>
+                                        <option value="D:">D:\ [Developer Repositories: 1 TB]</option>
+                                        <option value="E:">E:\ [Photoshop and Media: 4 TB]</option>
+                                    </select>
+                                </div>
+                                <button class="btn-win-primary" id="btnStartSim">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    <span id="simBtnText">Start Simulated Scan</span>
+                                </button>
+                            </div>
+
+                            <!-- Live Scan Progress Bar -->
+                            <div class="scan-status-panel">
+                                <div class="scan-status-header">
+                                    <span class="scan-state-badge" id="scanStateBadge">Ready</span>
+                                    <span class="scan-pct-badge" id="scanPctBadge">0%</span>
+                                </div>
+                                <div class="win-progress-track">
+                                    <div class="win-progress-fill" id="simProgressFill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Telemetry HUD Counters -->
+                            <div class="telemetry-hud-grid">
+                                <div class="hud-stat-cell">
+                                    <div class="hud-stat-label">Files Indexed</div>
+                                    <div class="hud-stat-val" id="hudFiles">0</div>
+                                </div>
+                                <div class="hud-stat-cell">
+                                    <div class="hud-stat-label">Ingestion Rate</div>
+                                    <div class="hud-stat-val val-blue" id="hudSpeed">0 f/s</div>
+                                </div>
+                                <div class="hud-stat-cell">
+                                    <div class="hud-stat-label">Volume Indexed</div>
+                                    <div class="hud-stat-val" id="hudVolume">0.0 GB</div>
+                                </div>
+                                <div class="hud-stat-cell">
+                                    <div class="hud-stat-label">Cleanable Junk</div>
+                                    <div class="hud-stat-val val-cyan" id="hudJunk">0.0 GB</div>
+                                </div>
+                            </div>
+
+                            <!-- Streaming File Path Ticker -->
+                            <div class="path-ticker-box">
+                                <div class="path-ticker-label">CURRENT INGESTION PATH:</div>
+                                <div class="path-ticker-content" id="simTicker">Ready. Click "Start Simulated Scan" to execute multi-threaded SQLite indexer.</div>
+                            </div>
+
+                            <!-- Subtle Terminal Log Output -->
+                            <div class="terminal-log-widget">
+                                <div class="terminal-log-header">
+                                    <span class="terminal-log-dot"></span>
+                                    <span>DiskScope Engine Diagnostics Log</span>
+                                </div>
+                                <pre class="terminal-log-body" id="simConsole">> DiskScope Scanner v1.0.0
+> SQLite index initialized in WAL mode.
+> Bounded channel capacity: 20,000 items.
+> System architecture: win-x64 verified.
+> Awaiting scan initiation...</pre>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane: Disk Capacity Visualization & Categories -->
+                        <div class="scanner-right-panel">
+                            <div class="panel-section-header">
+                                <h2 class="panel-heading">Storage Allocation Analysis</h2>
+                                <span class="panel-subtext" id="driveCapacityTitle">C:\ System NVMe SSD (512 GB Total Capacity)</span>
+                            </div>
+
+                            <!-- Segmented Drive Capacity Gauge -->
+                            <div class="disk-gauge-container">
+                                <div class="disk-gauge-bar" id="diskGaugeBar">
+                                    <div class="gauge-segment seg-used" style="width: 74.6%;" title="Used Storage (382 GB)"></div>
+                                    <div class="gauge-segment seg-junk" style="width: 2.9%;" title="Cleanable Junk (14.8 GB)"></div>
+                                    <div class="gauge-segment seg-free" style="width: 22.5%;" title="Free Storage (130 GB)"></div>
+                                </div>
+                                <div class="disk-gauge-legend">
+                                    <div class="legend-item"><span class="legend-dot dot-used"></span><span>Used: <strong id="gaugeUsedText">382.0 GB</strong></span></div>
+                                    <div class="legend-item"><span class="legend-dot dot-free"></span><span>Free: <strong id="gaugeFreeText">130.0 GB</strong></span></div>
+                                    <div class="legend-item"><span class="legend-dot dot-junk"></span><span>Cleanable: <strong id="gaugeJunkText">14.8 GB</strong></span></div>
+                                </div>
+                            </div>
+
+                            <!-- Storage Categories Breakdown Table -->
+                            <div class="category-breakdown-panel">
+                                <div class="breakdown-title">Filesystem Category Breakdown</div>
+                                <div class="category-rows-list">
+                                    <div class="category-row">
+                                        <div class="cat-info"><span class="cat-name">Video &amp; Render Cache</span><span class="cat-size" id="catVideoSize">21.4 GB</span></div>
+                                        <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 41%;"></div></div>
+                                    </div>
+                                    <div class="category-row">
+                                        <div class="cat-info"><span class="cat-name">RAW Photos &amp; Image Assets</span><span class="cat-size" id="catImagesSize">12.1 GB</span></div>
+                                        <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 23%;"></div></div>
+                                    </div>
+                                    <div class="category-row">
+                                        <div class="cat-info"><span class="cat-name">Photoshop Projects (.psd / .psb)</span><span class="cat-size" id="catPsdSize">7.8 GB</span></div>
+                                        <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 15%;"></div></div>
+                                    </div>
+                                    <div class="category-row highlight-junk">
+                                        <div class="cat-info"><span class="cat-name">node_modules &amp; Build Caches</span><span class="cat-size" id="catJunkSize">6.2 GB</span></div>
+                                        <div class="cat-progress-track"><div class="cat-progress-fill fill-cyan" style="width: 12%;"></div></div>
+                                    </div>
+                                    <div class="category-row">
+                                        <div class="cat-info"><span class="cat-name">Source Code &amp; Repositories</span><span class="cat-size" id="catCodeSize">4.9 GB</span></div>
+                                        <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 9%;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Compact Squarified Treemap Representation -->
+                            <div class="treemap-preview-panel">
+                                <div class="breakdown-title">Squarified Spatial Geometry (Bruls-Huizing Layout)</div>
+                                <div class="treemap-preview-canvas" id="simTreemapCanvas">
+                                    <div class="sim-tile tile-video" id="tileVideo">
+                                        <div class="tile-title">4K Video Renders</div>
+                                        <div class="tile-meta">21.4 GB (41%)</div>
+                                    </div>
+                                    <div class="sim-tile tile-images" id="tileImages">
+                                        <div class="tile-title">RAW Photos</div>
+                                        <div class="tile-meta">12.1 GB (23%)</div>
+                                    </div>
+                                    <div class="sim-tile tile-psd" id="tilePsd">
+                                        <div class="tile-title">Photoshop</div>
+                                        <div class="tile-meta">7.8 GB (15%)</div>
+                                    </div>
+                                    <div class="sim-tile tile-junk" id="tileJunk">
+                                        <div class="tile-title">node_modules</div>
+                                        <div class="tile-meta">6.2 GB (12%)</div>
+                                    </div>
+                                    <div class="sim-tile tile-code" id="tileCode">
+                                        <div class="tile-title">Source Code</div>
+                                        <div class="tile-meta">4.9 GB (9%)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 3: PACKAGE VERIFICATION
+                     ========================================== -->
+                <section class="tab-pane" id="paneVerify" role="tabpanel" aria-labelledby="tabBtnVerify">
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h2 class="panel-heading">Cryptographic Verification &amp; Hash Integrity</h2>
+                            <span class="panel-subtext">Validate binary authenticity before execution using SHA-256 digests</span>
+                        </div>
+
+                        <!-- Official Hash Property Box -->
+                        <div class="verify-property-card">
+                            <div class="property-label">OFFICIAL SHA-256 CHECKSUM (DiskScope.exe):</div>
+                            <div class="property-row">
+                                <div class="property-code-box" id="officialHash">095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C</div>
+                                <button class="btn-win-secondary" id="copyOfficialHashBtn">Copy SHA-256</button>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Checksum Comparator -->
+                        <div class="verify-comparator-card">
+                            <div class="comparator-title">Interactive Hash Comparator</div>
+                            <p class="comparator-desc">Paste your locally computed SHA-256 hash below to verify exact bit-for-bit authenticity:</p>
+                            <div class="comparator-input-row">
+                                <input type="text" class="win-input" id="verifyInput" placeholder="Paste local SHA-256 checksum here..." spellcheck="false">
+                                <button class="btn-win-primary" id="verifyBtn">Verify Integrity</button>
+                            </div>
+                            <div class="verify-status-banner" id="verifyResult" style="display: none;"></div>
+                        </div>
+
+                        <!-- PowerShell Command Snippet -->
+                        <div class="cli-snippet-panel">
+                            <div class="cli-snippet-title">Calculate Hash Locally via Windows PowerShell:</div>
+                            <div class="cli-command-box">
+                                <span class="cli-code" id="psCommand">Get-FileHash .\DiskScope.exe -Algorithm SHA256</span>
+                                <button class="btn-win-mini copy-cmd-btn" data-target="psCommand">Copy Command</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     TAB 4: SPECIFICATIONS & CLI
+                     ========================================== -->
+                <section class="tab-pane" id="paneSpecs" role="tabpanel" aria-labelledby="tabBtnSpecs">
+                    
+                    <!-- System Requirements & Specs Grid -->
+                    <div class="specs-columns-grid">
+                        <div class="specs-column-card">
+                            <div class="column-card-title">SYSTEM REQUIREMENTS</div>
+                            <table class="win-prop-grid">
+                                <tr>
+                                    <td class="prop-key">Operating System</td>
+                                    <td class="prop-val">Windows 10 / 11 (64-bit)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">CPU Architecture</td>
+                                    <td class="prop-val">x86-64 (AMD64 / Intel 64)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Memory (RAM)</td>
+                                    <td class="prop-val">64 MB min (256 MB recommended)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Disk Space</td>
+                                    <td class="prop-val">75 MB available storage</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Dependencies</td>
+                                    <td class="prop-val">None (.NET 8 runtime bundled)</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="specs-column-card">
+                            <div class="column-card-title">ENGINEERING SPECIFICATIONS</div>
+                            <table class="win-prop-grid">
+                                <tr>
+                                    <td class="prop-key">Database Engine</td>
+                                    <td class="prop-val">SQLite 3.45 (WAL Mode, Async Write)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Scan Rate</td>
+                                    <td class="prop-val">50,000+ files / sec (Bounded Queue)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Treemap Geometry</td>
+                                    <td class="prop-val">Squarified Aspect Ratio ~1:1</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Deduplication</td>
+                                    <td class="prop-val">3-Stage (Length + Header + SHA-256)</td>
+                                </tr>
+                                <tr>
+                                    <td class="prop-key">Cleaner Safety</td>
+                                    <td class="prop-val">Locked-file skip &amp; path isolation</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Command Line Execution & Script Launcher -->
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h2 class="panel-heading">Workspace CLI &amp; Automated Scripts</h2>
+                            <span class="panel-subtext">Direct command-line execution for development, fast launching, and integration suites</span>
+                        </div>
+                        <div class="cli-cards-grid">
+                            <div class="cli-card">
+                                <div class="cli-card-label">Launch Standalone Executable (Windows CMD):</div>
+                                <div class="cli-command-box">
+                                    <span class="cli-code" id="cmdLaunch">start.bat --fast</span>
+                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdLaunch">Copy</button>
+                                </div>
+                            </div>
+                            <div class="cli-card">
+                                <div class="cli-card-label">Run Automated Integration Suite:</div>
+                                <div class="cli-command-box">
+                                    <span class="cli-code" id="cmdTest">start.bat --test</span>
+                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdTest">Copy</button>
+                                </div>
+                            </div>
+                            <div class="cli-card">
+                                <div class="cli-card-label">Launch with Diagnostic Logging:</div>
+                                <div class="cli-command-box">
+                                    <span class="cli-code" id="cmdDiag">.\DiskScope.exe --verbose</span>
+                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdDiag">Copy</button>
+                                </div>
+                            </div>
+                            <div class="cli-card">
+                                <div class="cli-card-label">Open Local Utility Portal:</div>
+                                <div class="cli-command-box">
+                                    <span class="cli-code" id="cmdSite">start.bat --site</span>
+                                    <button class="btn-win-mini copy-cmd-btn" data-target="cmdSite">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ==========================================
+                     TAB 5: RELEASE NOTES
+                     ========================================== -->
+                <section class="tab-pane" id="paneChangelog" role="tabpanel" aria-labelledby="tabBtnChangelog">
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h2 class="panel-heading">Release Notes: Version 1.0.0</h2>
+                            <span class="panel-subtext">Release Date: September 29, 2026 • Windows x64 Stable Channel</span>
+                        </div>
+
+                        <div class="changelog-entry-card">
+                            <div class="changelog-header-row">
+                                <span class="changelog-ver">DiskScope Pro v1.0.0</span>
+                                <span class="changelog-badge">Initial Stable Release</span>
+                            </div>
+                            <ul class="changelog-items-list">
+                                <li>
+                                    <strong>Single-File Package:</strong> Self-contained x64 Windows binary bundling .NET 8 and WPF runtime libraries. Compressed from 164 MB to 72.7 MB with zero prerequisite installers.
+                                </li>
+                                <li>
+                                    <strong>Scanner Engine:</strong> Multi-threaded asynchronous directory traversal with bounded producer/consumer channels and atomic progress reporting.
+                                </li>
+                                <li>
+                                    <strong>Database Architecture:</strong> SQLite WAL mode with deferred secondary B-tree index rebuilds for 5x write throughput.
+                                </li>
+                                <li>
+                                    <strong>Interactive Treemap:</strong> Squarified aspect-ratio spatial mapping with recursive directory aggregation and breadcrumb zoom.
+                                </li>
+                                <li>
+                                    <strong>Junk Cleaner:</strong> Targeted cleanup for developer directories (node_modules, gradle, cargo) and system cache trees with locked-file skip protection.
+                                </li>
+                                <li>
+                                    <strong>Deduplication:</strong> 3-stage cryptographic pipeline prevents false positives from size collisions.
+                                </li>
+                                <li>
+                                    <strong>Reporting Engine:</strong> Standalone dark-mode HTML executive generator, precision CSV tables, and structured JSON output.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
             </div>
 
-            <!-- Terminal Verification Command -->
-            <div style="margin-top: 16px;">
-                <div style="font-size: 13px; font-weight: 500; color: var(--sky-900);">Verify with Windows PowerShell:</div>
-                <div class="terminal-block">
-                    <span class="terminal-cmd" id="psCommand">Get-FileHash .\DiskScope.exe -Algorithm SHA256</span>
-                    <button class="btn-secondary copy-cmd-btn" data-target="psCommand">Copy</button>
+            <!-- 5. Windows Utility Status Bar -->
+            <footer class="win-statusbar">
+                <div class="statusbar-cell"><span class="status-ready-dot"></span><span>Ready</span></div>
+                <div class="statusbar-cell">Engine: SQLite 3.45 (WAL)</div>
+                <div class="statusbar-cell">Throughput: 50,000+ f/s</div>
+                <div class="statusbar-cell">Arch: win-x64</div>
+                <div class="statusbar-cell">SHA: 095EAE7A...FCB4C</div>
+                <div class="statusbar-cell statusbar-right">
+                    <a href="https://github.com/12valor/C-file-scanner" target="_blank" class="statusbar-link">GitHub Repository</a>
                 </div>
-            </div>
-        </section>
+            </footer>
 
-        <!-- Direct Technical Specifications -->
-        <section class="section-card" id="specs">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-                Technical Specifications and Requirements
-            </h2>
-            <div class="specs-grid">
-                <div>
-                    <h3 style="font-size: 14px; font-weight: 500; color: var(--sky-900); margin-bottom: 10px;">SYSTEM REQUIREMENTS</h3>
-                    <ul class="spec-list">
-                        <li>
-                            <span class="spec-name">Operating System</span>
-                            <span class="spec-value">Windows 10 / 11 (64-bit)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">CPU Architecture</span>
-                            <span class="spec-value">x86-64 (AMD64 / Intel 64)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Memory (RAM)</span>
-                            <span class="spec-value">64 MB minimum (256 MB recommended)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Disk Footprint</span>
-                            <span class="spec-value">75 MB available disk space</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Runtime Prerequisites</span>
-                            <span class="spec-value">None (.NET 8 runtime bundled)</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 style="font-size: 14px; font-weight: 500; color: var(--sky-900); margin-bottom: 10px;">ENGINEERING SPECIFICATIONS</h3>
-                    <ul class="spec-list">
-                        <li>
-                            <span class="spec-name">Database Engine</span>
-                            <span class="spec-value">SQLite 3.45 (WAL Mode, Async Flushing)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Scanning Throughput</span>
-                            <span class="spec-value">50,000+ files / sec (Bounded Channels)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Visualizer Engine</span>
-                            <span class="spec-value">Squarified Treemap (Aspect Ratio ~1:1)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Deduplication</span>
-                            <span class="spec-value">3-Stage (Length + Header + SHA-256)</span>
-                        </li>
-                        <li>
-                            <span class="spec-name">Cleaner Protection</span>
-                            <span class="spec-value">Locked-file skip and path isolation</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Direct Feature Highlights -->
-        <section class="section-card">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                Core Capabilities
-            </h2>
-            <div class="features-direct">
-                <div class="feature-box">
-                    <h4>1. SQLite-Indexed File Ingestion</h4>
-                    <p>Scans multi-terabyte drives using bounded 20,000-item channels and deferred secondary indexing. Writes to an embedded SQLite WAL database without freezing the UI thread.</p>
-                </div>
-                <div class="feature-box">
-                    <h4>2. Squarified Space Treemap</h4>
-                    <p>Visualizes directory space consumption via the Bruls-Huizing-van Wijk algorithm. Supports interactive folder drilldown, breadcrumb navigation, and direct Explorer access.</p>
-                </div>
-                <div class="feature-box">
-                    <h4>3. Developer and System Junk Cleaner</h4>
-                    <p>Purges abandoned <code>node_modules</code>, <code>.gradle</code>, <code>.cargo</code>, browser caches, and Windows temp files with automatic locked-file skip protection.</p>
-                </div>
-                <div class="feature-box">
-                    <h4>4. Cryptographic Deduplication and Reports</h4>
-                    <p>Detects identical files with a zero-false-positive 3-tier hash pipeline. Exports dark-mode HTML reports, CSV files, and structured JSON.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Quick Terminal Run Section -->
-        <section class="section-card" id="terminal">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                Quick Command Line Launch
-            </h2>
-            <p style="font-size: 14px; font-weight: 300; color: var(--sky-800); margin-bottom: 10px;">
-                You can launch or test DiskScope directly using the included workspace scripts:
-            </p>
-            <div style="font-size: 12px; font-weight: 500; color: var(--sky-900);">Launch Executable Immediately (Windows CMD):</div>
-            <div class="terminal-block">
-                <span class="terminal-cmd" id="cmdLaunch">start.bat --fast</span>
-                <button class="btn-secondary copy-cmd-btn" data-target="cmdLaunch">Copy</button>
-            </div>
-
-            <div style="font-size: 12px; font-weight: 500; color: var(--sky-900); margin-top: 12px;">Run Automated Integration Suite:</div>
-            <div class="terminal-block">
-                <span class="terminal-cmd" id="cmdTest">start.bat --test</span>
-                <button class="btn-secondary copy-cmd-btn" data-target="cmdTest">Copy</button>
-            </div>
-        </section>
-
-        <!-- Changelog / Release Notes -->
-        <section class="section-card" id="changelog">
-            <h2 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                Release Notes: Version 1.0.0
-            </h2>
-            <div class="changelog-box">
-                <div style="font-weight: 500; color: var(--sky-950);">Version 1.0.0 (Release Date: September 29, 2026)</div>
-                <ul>
-                    <li><strong>Single-File Package:</strong> Self-contained x64 Windows executable with .NET 8 and WPF runtime bundled. Compressed from 164 MB to 72.7 MB.</li>
-                    <li><strong>Scanner Engine:</strong> Multi-threaded asynchronous traversal with bounded producer/consumer channels and atomic progress reporting.</li>
-                    <li><strong>Database Architecture:</strong> SQLite WAL mode with deferred secondary B-tree index rebuilds for 5x write throughput.</li>
-                    <li><strong>Interactive Treemap:</strong> Squarified aspect-ratio spatial mapping with recursive directory aggregation and breadcrumb zoom.</li>
-                    <li><strong>Junk Cleaner:</strong> Targeted cleanup for developer directories (node_modules, gradle, cargo) and system cache trees.</li>
-                    <li><strong>Deduplication:</strong> 3-stage cryptographic pipeline prevents false positives from size collisions.</li>
-                    <li><strong>Reporting:</strong> Offline HTML audit generator, precision CSV tables, and structured JSON output.</li>
-                </ul>
-            </div>
-        </section>
+        </main>
     </div>
 
-    <!-- Minimal Clean Footer -->
-    <footer class="portal-footer">
-        <div class="container footer-content">
-            <div>
-                <strong>DiskScope Pro</strong>: Windows Storage Analyzer and System Junk Cleaner
-            </div>
-            <div class="footer-links">
-                <a href="#installer">Back to Top</a>
-                <a href="#simulator">Simulator</a>
-                <a href="#downloads">Downloads</a>
-                <a href="#checksums">SHA-256</a>
-                <a href="https://github.com/12valor/C-file-scanner" target="_blank">Source Code (GitHub)</a>
-            </div>
-        </div>
-    </footer>
-
     <!-- Toast Notification for Dynamic Feedback -->
-    <div class="toast-msg" id="toastMsg">Action completed</div>
+    <div class="win-toast" id="toastMsg" role="alert" aria-live="polite">Action completed</div>
 
     <script src="app.js"></script>
 </body>

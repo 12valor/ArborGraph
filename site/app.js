@@ -1,35 +1,48 @@
-// DiskScope Pro: Installer & Download Portal Script
+// DiskScope Pro: Windows Disk Analysis & Setup Utility Script
 document.addEventListener('DOMContentLoaded', () => {
     const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
 
-    // 1. Mobile Navigation Menu Toggle
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = navLinks.classList.toggle('open');
-            mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    // =========================================================
+    // 1. APPLICATION TAB NAVIGATION & DEEP LINKING
+    // =========================================================
+    const tabButtons = document.querySelectorAll('.win-tab');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    function switchTab(tabId) {
+        tabButtons.forEach(btn => {
+            const matches = btn.getAttribute('data-tab') === tabId;
+            btn.classList.toggle('active', matches);
+            btn.setAttribute('aria-selected', matches ? 'true' : 'false');
         });
 
-        // Close menu on navigation link click
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('open');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            });
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!mobileMenuBtn.contains(e.target) && !navLinks.contains(e.target)) {
-                navLinks.classList.remove('open');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            }
+        tabPanes.forEach(pane => {
+            const matches = pane.id === `pane${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`;
+            pane.classList.toggle('active', matches);
         });
     }
 
-    // 2. Toast Notification Helper
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            if (tabId) {
+                switchTab(tabId);
+                history.replaceState(null, '', `#${tabId}`);
+            }
+        });
+    });
+
+    // Check initial URL hash
+    if (window.location.hash) {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        const validTabs = ['setup', 'scanner', 'verify', 'specs', 'changelog'];
+        if (validTabs.includes(hash)) {
+            switchTab(hash);
+        }
+    }
+
+    // =========================================================
+    // 2. TOAST NOTIFICATION HELPER
+    // =========================================================
     const toast = document.getElementById('toastMsg');
     let toastTimeout;
     function showToast(message) {
@@ -42,24 +55,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3200);
     }
 
-    // 3. Client OS & Architecture Detection
-    const detectedOSEl = document.getElementById('detectedOS');
-    if (detectedOSEl) {
+    // =========================================================
+    // 3. CLIENT OS & ARCHITECTURE DIAGNOSTICS
+    // =========================================================
+    const systemDiagStatus = document.getElementById('systemDiagStatus');
+    if (systemDiagStatus) {
         const userAgent = window.navigator.userAgent;
-        let osText = 'System Check: Windows (64-bit Architecture Verified) ✓';
+        let osText = 'SYSTEM READY: Windows 64-bit Architecture Verified';
         if (/Win64|x64|WOW64/i.test(userAgent)) {
-            osText = 'System Check: Windows 64-bit Architecture Verified ✓';
+            osText = 'SYSTEM READY: Windows 64-bit Architecture Verified';
         } else if (/Windows/i.test(userAgent)) {
-            osText = 'System Check: Windows OS Detected ✓';
+            osText = 'SYSTEM READY: Windows OS Architecture Detected';
         } else if (/Mac/i.test(userAgent)) {
-            osText = 'Note: macOS Detected. DiskScope runs natively on Windows 10/11 x64.';
+            osText = 'NOTICE: macOS Detected. DiskScope runs natively on Windows 10/11 x64.';
         } else if (/Linux/i.test(userAgent)) {
-            osText = 'Note: Linux Detected. DiskScope runs natively on Windows 10/11 x64.';
+            osText = 'NOTICE: Linux Detected. DiskScope runs natively on Windows 10/11 x64.';
         }
-        detectedOSEl.textContent = osText;
+        systemDiagStatus.textContent = osText;
     }
 
-    // 3. Dynamic Download Trigger & Live Progress Simulation
+    // =========================================================
+    // 4. INSTALLATION MODE SELECTOR INTERACTION
+    // =========================================================
+    const modeOptions = document.querySelectorAll('.mode-option');
+    modeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            modeOptions.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            const radio = opt.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    // =========================================================
+    // 5. DOWNLOAD TRIGGER & LIVE PROGRESS SIMULATION
+    // =========================================================
     const downloadBtns = document.querySelectorAll('a[download]');
     const progressBox = document.getElementById('downloadProgressBox');
     const progressBarFill = document.getElementById('progressBarFill');
@@ -68,40 +98,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            showToast('Starting download of DiskScope.exe (72.7 MB)...');
+            showToast('Starting transfer: DiskScope.exe (72.7 MB)...');
 
             if (progressBox && progressBarFill && progressStatusText && progressPercent) {
                 progressBox.style.display = 'block';
                 progressBarFill.style.width = '0%';
                 progressPercent.textContent = '0%';
-                progressStatusText.textContent = 'Transferring DiskScope.exe package...';
+                progressStatusText.textContent = 'Transferring DiskScope.exe binary...';
 
                 let progress = 0;
                 const interval = setInterval(() => {
-                    progress += 10;
+                    progress += 12;
                     if (progress > 100) progress = 100;
                     progressBarFill.style.width = `${progress}%`;
                     progressPercent.textContent = `${progress}%`;
 
                     if (progress >= 100) {
                         clearInterval(interval);
-                        progressStatusText.textContent = '✓ Download completed! Ready to run.';
-                        showToast('✓ DiskScope.exe ready. Follow Step 1-3 to launch.');
+                        progressStatusText.textContent = 'Transfer complete. Binary ready to launch.';
+                        showToast('DiskScope.exe ready. Follow Step 1-3 to launch.');
                     }
-                }, 110);
+                }, 100);
             }
         });
     });
 
-    // 4. Interactive Live Mini-Scanner Simulator
+    // =========================================================
+    // 6. DISK DIAGNOSTICS & SCANNER SIMULATOR
+    // =========================================================
     const btnStartSim = document.getElementById('btnStartSim');
     const simBtnText = document.getElementById('simBtnText');
     const simDriveSelect = document.getElementById('simDriveSelect');
+    const simProgressFill = document.getElementById('simProgressFill');
+    const scanStateBadge = document.getElementById('scanStateBadge');
+    const scanPctBadge = document.getElementById('scanPctBadge');
     const hudFiles = document.getElementById('hudFiles');
     const hudSpeed = document.getElementById('hudSpeed');
     const hudVolume = document.getElementById('hudVolume');
     const hudJunk = document.getElementById('hudJunk');
     const simTicker = document.getElementById('simTicker');
+    const simConsole = document.getElementById('simConsole');
+
+    const driveCapacityTitle = document.getElementById('driveCapacityTitle');
+    const gaugeUsedText = document.getElementById('gaugeUsedText');
+    const gaugeFreeText = document.getElementById('gaugeFreeText');
+    const gaugeJunkText = document.getElementById('gaugeJunkText');
+
+    const catVideoSize = document.getElementById('catVideoSize');
+    const catImagesSize = document.getElementById('catImagesSize');
+    const catPsdSize = document.getElementById('catPsdSize');
+    const catJunkSize = document.getElementById('catJunkSize');
+    const catCodeSize = document.getElementById('catCodeSize');
 
     const tiles = [
         document.getElementById('tileVideo'),
@@ -113,43 +160,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const samplePaths = [
         "C:\\Windows\\System32\\DriverStore\\FileRepository\\nv_dispi.inf_amd64",
-        "D:\\workspace\\project\\node_modules\\@babel\\core\\lib\\config\\files\\plugins.js",
-        "E:\\Media\\4K_Video_Render_Archive_Master.mp4",
-        "D:\\Design\\Branding\\hero_keyvisual_huge.psb",
         "C:\\Users\\admin\\AppData\\Local\\Temp\\scoped_dir_94812\\data.tmp",
-        "D:\\source\\rust_engine\\target\\release\\deps\\libtokio.rlib",
+        "C:\\Program Files\\Adobe\\Adobe Photoshop 2026\\Photoshop.exe",
         "C:\\Users\\admin\\.gradle\\caches\\modules-2\\files-2.1\\cache.bin",
-        "E:\\Photography\\2026_RAW\\IMG_4819_uncompressed.CR3",
+        "C:\\Users\\admin\\source\\repos\\DiskScope\\Services\\ScannerService.cs",
         "C:\\Users\\admin\\.cargo\\registry\\cache\\index.crates.io-6f17d22bba15001f",
-        "D:\\Games\\SteamLibrary\\steamapps\\common\\ShaderCache\\dx12_pso.bin"
+        "C:\\Users\\admin\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cache",
+        "C:\\Users\\admin\\Videos\\Captures\\Master_Render_4K_ProRes.mov",
+        "C:\\Users\\admin\\Documents\\Photoshop\\hero_keyvisual_master.psb",
+        "C:\\Windows\\assembly\\NativeImages_v4.0.30319_64\\mscorlib.dll"
     ];
+
+    // Drive configuration profiles
+    const driveProfiles = {
+        "C:": {
+            title: "C:\\ System NVMe SSD (512 GB Total Capacity)",
+            targetFiles: 148250,
+            targetVolume: 52.4,
+            targetJunk: 14.8,
+            maxSpeed: 58400,
+            used: "382.0 GB",
+            free: "130.0 GB",
+            junk: "14.8 GB",
+            cats: ["21.4 GB", "12.1 GB", "7.8 GB", "6.2 GB", "4.9 GB"]
+        },
+        "D:": {
+            title: "D:\\ Developer Repositories SSD (1.0 TB Total Capacity)",
+            targetFiles: 294100,
+            targetVolume: 114.2,
+            targetJunk: 28.6,
+            maxSpeed: 61200,
+            used: "680.0 GB",
+            free: "320.0 GB",
+            junk: "28.6 GB",
+            cats: ["14.2 GB", "18.5 GB", "12.4 GB", "28.6 GB", "42.8 GB"]
+        },
+        "E:": {
+            title: "E:\\ Photoshop & Media Archive HDD (4.0 TB Total Capacity)",
+            targetFiles: 86400,
+            targetVolume: 842.0,
+            targetJunk: 4.2,
+            maxSpeed: 49500,
+            used: "3,200.0 GB",
+            free: "800.0 GB",
+            junk: "4.2 GB",
+            cats: ["412.0 GB", "248.0 GB", "116.0 GB", "4.2 GB", "8.5 GB"]
+        }
+    };
+
+    function updateDriveDisplay(driveKey) {
+        const profile = driveProfiles[driveKey] || driveProfiles["C:"];
+        if (driveCapacityTitle) driveCapacityTitle.textContent = profile.title;
+        if (gaugeUsedText) gaugeUsedText.textContent = profile.used;
+        if (gaugeFreeText) gaugeFreeText.textContent = profile.free;
+        if (gaugeJunkText) gaugeJunkText.textContent = profile.junk;
+        if (catVideoSize) catVideoSize.textContent = profile.cats[0];
+        if (catImagesSize) catImagesSize.textContent = profile.cats[1];
+        if (catPsdSize) catPsdSize.textContent = profile.cats[2];
+        if (catJunkSize) catJunkSize.textContent = profile.cats[3];
+        if (catCodeSize) catCodeSize.textContent = profile.cats[4];
+    }
+
+    if (simDriveSelect) {
+        simDriveSelect.addEventListener('change', () => {
+            updateDriveDisplay(simDriveSelect.value);
+            if (simConsole) {
+                simConsole.textContent = `> Target switch: ${simDriveSelect.value} selected.\n> Initializing disk geometry...\n> Ready for scan execution.`;
+            }
+        });
+    }
 
     let isScanning = false;
 
-    if (btnStartSim && hudFiles && hudSpeed && hudVolume && hudJunk && simTicker) {
+    if (btnStartSim && hudFiles && hudSpeed && hudVolume && hudJunk && simTicker && simProgressFill) {
         btnStartSim.addEventListener('click', () => {
             if (isScanning) return;
             isScanning = true;
             btnStartSim.disabled = true;
             simBtnText.textContent = "Scanning...";
+            scanStateBadge.textContent = "Scanning filesystem...";
 
             const driveVal = simDriveSelect ? simDriveSelect.value : "C:";
-            let targetFiles = 148250;
-            let targetVolume = 52.4;
-            let targetJunk = 14.8;
-            let maxSpeed = 58400;
-
-            if (driveVal.startsWith("D")) {
-                targetFiles = 294100;
-                targetVolume = 114.2;
-                targetJunk = 28.6;
-                maxSpeed = 61200;
-            } else if (driveVal.startsWith("E")) {
-                targetFiles = 86400;
-                targetVolume = 842.0;
-                targetJunk = 4.2;
-                maxSpeed = 49500;
-            }
+            const profile = driveProfiles[driveVal] || driveProfiles["C:"];
 
             // Reset tiles
             tiles.forEach(t => t && t.classList.remove('active'));
@@ -159,28 +251,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const startTime = performance.now();
             let tickerIndex = 0;
 
+            if (simConsole) {
+                simConsole.textContent = `> Initializing traversal on ${driveVal}...\n> Threadpool allocated: 8 worker threads\n> Bounded channel: 20,000 slots\n> Ingestion streaming started.`;
+            }
+
             const simInterval = setInterval(() => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                // Ease out cubic
                 const ease = 1 - Math.pow(1 - progress, 3);
 
-                currentFiles = Math.floor(ease * targetFiles);
+                const pct = Math.floor(progress * 100);
+                simProgressFill.style.width = `${pct}%`;
+                scanPctBadge.textContent = `${pct}%`;
+
+                currentFiles = Math.floor(ease * profile.targetFiles);
                 hudFiles.textContent = currentFiles.toLocaleString();
 
                 const currentSpeed = progress < 1 
-                    ? Math.floor(ease * maxSpeed * (0.85 + Math.random() * 0.3)) 
-                    : maxSpeed;
+                    ? Math.floor(ease * profile.maxSpeed * (0.85 + Math.random() * 0.3)) 
+                    : profile.maxSpeed;
                 hudSpeed.textContent = currentSpeed.toLocaleString() + ' f/s';
 
-                hudVolume.textContent = (ease * targetVolume).toFixed(1) + ' GB';
-                hudJunk.textContent = (ease * targetJunk).toFixed(1) + ' GB';
+                hudVolume.textContent = (ease * profile.targetVolume).toFixed(1) + ' GB';
+                hudJunk.textContent = (ease * profile.targetJunk).toFixed(1) + ' GB';
 
-                // Path ticker
                 simTicker.textContent = `[WAL Batch] Indexed: ${samplePaths[tickerIndex % samplePaths.length]}`;
                 tickerIndex++;
 
-                // Activate tiles progressively
+                // Progressively activate treemap tiles
                 if (progress > 0.15 && tiles[0]) tiles[0].classList.add('active');
                 if (progress > 0.35 && tiles[1]) tiles[1].classList.add('active');
                 if (progress > 0.55 && tiles[2]) tiles[2].classList.add('active');
@@ -191,19 +289,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearInterval(simInterval);
                     isScanning = false;
                     btnStartSim.disabled = false;
-                    simBtnText.textContent = "Re-run Simulation";
-                    hudFiles.textContent = targetFiles.toLocaleString();
+                    simBtnText.textContent = "Re-run Scan";
+                    scanStateBadge.textContent = "Scan complete";
+                    scanPctBadge.textContent = "100%";
+                    hudFiles.textContent = profile.targetFiles.toLocaleString();
                     hudSpeed.textContent = "58,400 f/s (Peak)";
-                    hudVolume.textContent = targetVolume.toFixed(1) + ' GB';
-                    hudJunk.textContent = targetJunk.toFixed(1) + ' GB';
-                    simTicker.textContent = `✓ Scan complete: ${targetFiles.toLocaleString()} files indexed in 2.4s. Cleanable junk: ${targetJunk.toFixed(1)} GB across 5 categories.`;
-                    showToast(`✓ Simulated scan complete. ${targetJunk.toFixed(1)} GB cleanable junk identified.`);
+                    hudVolume.textContent = profile.targetVolume.toFixed(1) + ' GB';
+                    hudJunk.textContent = profile.targetJunk.toFixed(1) + ' GB';
+                    simTicker.textContent = `Scan complete: ${profile.targetFiles.toLocaleString()} files indexed in 2.4s. Cleanable junk: ${profile.targetJunk.toFixed(1)} GB.`;
+
+                    if (simConsole) {
+                        simConsole.textContent = `> Traversal completed on ${driveVal}\n> Indexed records: ${profile.targetFiles.toLocaleString()} files\n> Secondary B-tree indexes rebuilt in 0.18s\n> Passive WAL checkpoint executed\n> Reclaimable developer/system junk: ${profile.targetJunk.toFixed(1)} GB`;
+                    }
+                    showToast(`Scan complete: ${profile.targetFiles.toLocaleString()} files indexed on ${driveVal}.`);
                 }
             }, 60);
         });
     }
 
-    // 5. Interactive Checksum Comparator
+    // =========================================================
+    // 7. INTERACTIVE CHECKSUM COMPARATOR
+    // =========================================================
     const verifyInput = document.getElementById('verifyInput');
     const verifyBtn = document.getElementById('verifyBtn');
     const verifyResult = document.getElementById('verifyResult');
@@ -216,11 +322,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        verifyResult.style.display = 'block';
         if (inputVal === OFFICIAL_HASH) {
-            verifyResult.className = 'verify-result match';
-            verifyResult.textContent = '✓ Checksum Verified: Exact match with official DiskScope v1.0.0 release.';
+            verifyResult.className = 'verify-status-banner match';
+            verifyResult.textContent = '✓ Checksum Verified: Exact match with official release v1.0.0 (SHA-256 Validated).';
         } else {
-            verifyResult.className = 'verify-result mismatch';
+            verifyResult.className = 'verify-status-banner mismatch';
             verifyResult.textContent = '✕ Hash Mismatch: Checksum does not match official release (Length: ' + inputVal.length + ' chars).';
         }
     }
@@ -235,12 +342,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. Copy Official Digest
+    // =========================================================
+    // 8. 1-CLICK CLIPBOARD UTILITIES
+    // =========================================================
     const copyOfficialBtn = document.getElementById('copyOfficialHashBtn');
     if (copyOfficialBtn) {
         copyOfficialBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(OFFICIAL_HASH).then(() => {
-                showToast('✓ Copied SHA-256 digest to clipboard');
+                showToast('Copied official SHA-256 digest to clipboard');
                 const orig = copyOfficialBtn.textContent;
                 copyOfficialBtn.textContent = 'Copied!';
                 setTimeout(() => { copyOfficialBtn.textContent = orig; }, 2000);
@@ -248,13 +357,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 7. Copy Table Checksum Buttons
     const tableHashBtns = document.querySelectorAll('.copy-hash-btn');
     tableHashBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const hash = btn.getAttribute('data-hash') || OFFICIAL_HASH;
             navigator.clipboard.writeText(hash).then(() => {
-                showToast('✓ SHA-256 hash copied');
+                showToast('SHA-256 hash copied to clipboard');
                 const orig = btn.textContent;
                 btn.textContent = 'Copied!';
                 setTimeout(() => { btn.textContent = orig; }, 2000);
@@ -262,7 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 8. Copy Terminal Command Buttons
     const copyCmdBtns = document.querySelectorAll('.copy-cmd-btn');
     copyCmdBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -271,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetEl) {
                 const cmdText = targetEl.textContent.trim();
                 navigator.clipboard.writeText(cmdText).then(() => {
-                    showToast('✓ Command copied to clipboard');
+                    showToast('Command copied to clipboard');
                     const orig = btn.textContent;
                     btn.textContent = 'Copied!';
                     setTimeout(() => { btn.textContent = orig; }, 2000);

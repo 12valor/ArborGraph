@@ -2,8 +2,8 @@
 
 **Version:** 1.0  
 **Effective Date:** September 29, 2026  
-**Publisher:** [OWNER / PUBLISHER NAME]  
-**Contact:** [LEGAL / SUPPORT EMAIL]  
+**Publisher:** AG DIAZ EVANGELISTA
+**Contact:** evangelista.agdiaz@gmail.com
 
 ---
 

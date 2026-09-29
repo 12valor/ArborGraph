@@ -111,6 +111,49 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public void BeginBulkIngestion()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    PRAGMA synchronous = OFF;
+                    PRAGMA temp_store = MEMORY;
+                    PRAGMA cache_size = -64000;
+                ";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"BeginBulkIngestion error: {ex.Message}");
+            }
+        }
+    }
+
+    public void EndBulkIngestion()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    PRAGMA synchronous = NORMAL;
+                    PRAGMA wal_checkpoint(PASSIVE);
+                ";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"EndBulkIngestion error: {ex.Message}");
+            }
+        }
+    }
+
     public void InsertBatch(IReadOnlyList<FileRecord> records)
     {
         if (records.Count == 0) return;
@@ -119,41 +162,74 @@ public class DatabaseService : IDisposable
         {
             EnsureOpen();
             using var tx = _connection!.BeginTransaction();
-            using var cmd = _connection.CreateCommand();
-            cmd.Transaction = tx;
+            try
+            {
+                using var cmd = _connection.CreateCommand();
+                cmd.Transaction = tx;
+                cmd.CommandText = @"
+                    INSERT OR REPLACE INTO files 
+                    (path, name, parent, size, modified_time, created_time, extension, category, accessible)
+                    VALUES 
+                    ($path, $name, $parent, $size, $modified, $created, $extension, $category, $accessible);
+                ";
+
+                var pPath = cmd.Parameters.Add("$path", SqliteType.Text);
+                var pName = cmd.Parameters.Add("$name", SqliteType.Text);
+                var pParent = cmd.Parameters.Add("$parent", SqliteType.Text);
+                var pSize = cmd.Parameters.Add("$size", SqliteType.Integer);
+                var pModified = cmd.Parameters.Add("$modified", SqliteType.Real);
+                var pCreated = cmd.Parameters.Add("$created", SqliteType.Real);
+                var pExtension = cmd.Parameters.Add("$extension", SqliteType.Text);
+                var pCategory = cmd.Parameters.Add("$category", SqliteType.Text);
+                var pAccessible = cmd.Parameters.Add("$accessible", SqliteType.Integer);
+
+                foreach (var r in records)
+                {
+                    pPath.Value = r.Path;
+                    pName.Value = r.Name;
+                    pParent.Value = r.Parent;
+                    pSize.Value = r.Size;
+                    pModified.Value = r.ModifiedTime;
+                    pCreated.Value = r.CreatedTime;
+                    pExtension.Value = r.Extension;
+                    pCategory.Value = r.Category;
+                    pAccessible.Value = r.Accessible;
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+            }
+            catch
+            {
+                try { tx.Rollback(); } catch { }
+                throw;
+            }
+        }
+    }
+
+    public void InsertSingle(FileRecord r)
+    {
+        lock (_lock)
+        {
+            EnsureOpen();
+            using var cmd = _connection!.CreateCommand();
             cmd.CommandText = @"
                 INSERT OR REPLACE INTO files 
                 (path, name, parent, size, modified_time, created_time, extension, category, accessible)
                 VALUES 
                 ($path, $name, $parent, $size, $modified, $created, $extension, $category, $accessible);
             ";
-
-            var pPath = cmd.Parameters.Add("$path", SqliteType.Text);
-            var pName = cmd.Parameters.Add("$name", SqliteType.Text);
-            var pParent = cmd.Parameters.Add("$parent", SqliteType.Text);
-            var pSize = cmd.Parameters.Add("$size", SqliteType.Integer);
-            var pModified = cmd.Parameters.Add("$modified", SqliteType.Real);
-            var pCreated = cmd.Parameters.Add("$created", SqliteType.Real);
-            var pExtension = cmd.Parameters.Add("$extension", SqliteType.Text);
-            var pCategory = cmd.Parameters.Add("$category", SqliteType.Text);
-            var pAccessible = cmd.Parameters.Add("$accessible", SqliteType.Integer);
-
-            foreach (var r in records)
-            {
-                pPath.Value = r.Path;
-                pName.Value = r.Name;
-                pParent.Value = r.Parent;
-                pSize.Value = r.Size;
-                pModified.Value = r.ModifiedTime;
-                pCreated.Value = r.CreatedTime;
-                pExtension.Value = r.Extension;
-                pCategory.Value = r.Category;
-                pAccessible.Value = r.Accessible;
-
-                cmd.ExecuteNonQuery();
-            }
-
-            tx.Commit();
+            cmd.Parameters.AddWithValue("$path", r.Path);
+            cmd.Parameters.AddWithValue("$name", r.Name);
+            cmd.Parameters.AddWithValue("$parent", r.Parent);
+            cmd.Parameters.AddWithValue("$size", r.Size);
+            cmd.Parameters.AddWithValue("$modified", r.ModifiedTime);
+            cmd.Parameters.AddWithValue("$created", r.CreatedTime);
+            cmd.Parameters.AddWithValue("$extension", r.Extension);
+            cmd.Parameters.AddWithValue("$category", r.Category);
+            cmd.Parameters.AddWithValue("$accessible", r.Accessible);
+            cmd.ExecuteNonQuery();
         }
     }
 

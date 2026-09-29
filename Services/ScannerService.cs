@@ -76,6 +76,7 @@ public class ScannerService
         _skippedFiles.Clear();
 
         _dbService.ClearIndex();
+        _dbService.BeginBulkIngestion();
 
         var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
         {
@@ -95,47 +96,76 @@ public class ScannerService
             const int batchSize = 5000;
             var batch = new List<FileRecord>(batchSize);
             var reader = channel.Reader;
+            var lastFlush = Stopwatch.StartNew();
+
+            void PersistBatchSafe(List<FileRecord> records)
+            {
+                if (records.Count == 0) return;
+                try
+                {
+                    _dbService.InsertBatch(records);
+                }
+                catch (Exception dbEx)
+                {
+                    int saved = 0;
+                    foreach (var r in records)
+                    {
+                        try
+                        {
+                            _dbService.InsertSingle(r);
+                            saved++;
+                        }
+                        catch { }
+                    }
+                    if (_skippedFiles.Count < 500)
+                    {
+                        _skippedFiles.Add(("Batch Ingestion", $"{dbEx.Message} (Recovered {saved}/{records.Count} files)"));
+                    }
+                }
+            }
 
             try
             {
-                while (await reader.WaitToReadAsync(CancellationToken.None))
+                while (!cancellationToken.IsCancellationRequested)
                 {
+                    bool hasMore = await reader.WaitToReadAsync(cancellationToken);
+                    if (!hasMore) break;
+
                     while (reader.TryRead(out var item))
                     {
                         batch.Add(item);
-                        if (batch.Count >= batchSize)
+                        if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 500))
                         {
-                            try
-                            {
-                                _dbService.InsertBatch(batch);
-                            }
-                            catch (Exception dbEx)
-                            {
-                                _skippedFiles.Add(("Batch Ingestion", dbEx.Message));
-                            }
+                            PersistBatchSafe(batch);
                             batch.Clear();
+                            lastFlush.Restart();
                         }
                     }
                 }
-
-                if (batch.Count > 0)
-                {
-                    try
-                    {
-                        _dbService.InsertBatch(batch);
-                    }
-                    catch (Exception dbEx)
-                    {
-                        _skippedFiles.Add(("Final Batch Ingestion", dbEx.Message));
-                    }
-                    batch.Clear();
-                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancellation requested cleanly
             }
             catch (Exception ex)
             {
                 _skippedFiles.Add(("DB Worker", ex.Message));
             }
-        });
+            finally
+            {
+                // Drain any items remaining in the channel
+                while (reader.TryRead(out var item))
+                {
+                    batch.Add(item);
+                }
+
+                if (batch.Count > 0)
+                {
+                    PersistBatchSafe(batch);
+                    batch.Clear();
+                }
+            }
+        }, CancellationToken.None);
 
         ScanState finalState = ScanState.Completed;
 
@@ -174,25 +204,33 @@ public class ScannerService
                     bool dirEnumerationSucceeded = true;
                     try
                     {
-                        foreach (var filePath in Directory.EnumerateFiles(dir))
+                        var dirInfo = new DirectoryInfo(dir);
+                        foreach (var fi in dirInfo.EnumerateFiles())
                         {
                             if (cancellationToken.IsCancellationRequested) break;
+
+                            // Skip OneDrive / cloud-only placeholders that trigger network downloads
+                            const FileAttributes RecallOnDataAccess = (FileAttributes)0x00400000;
+                            const FileAttributes RecallOnOpen = (FileAttributes)0x00040000;
+                            if ((fi.Attributes & (RecallOnDataAccess | RecallOnOpen)) != 0)
+                            {
+                                continue;
+                            }
 
                             // File Discovered
                             Interlocked.Increment(ref _filesDiscovered);
 
                             try
                             {
-                                var fi = new FileInfo(filePath);
                                 long size = fi.Length;
                                 double modTime = new DateTimeOffset(fi.LastWriteTimeUtc).ToUnixTimeSeconds();
                                 double crtTime = new DateTimeOffset(fi.CreationTimeUtc).ToUnixTimeSeconds();
-                                string ext = Path.GetExtension(filePath);
+                                string ext = fi.Extension;
                                 string name = fi.Name;
 
                                 var record = new FileRecord
                                 {
-                                    Path = filePath,
+                                    Path = fi.FullName,
                                     Name = name,
                                     Parent = dir,
                                     Size = size,
@@ -220,7 +258,7 @@ public class ScannerService
                                 Interlocked.Increment(ref _filesSkipped);
                                 if (_skippedFiles.Count < 500)
                                 {
-                                    _skippedFiles.Add((filePath, ex.Message));
+                                    _skippedFiles.Add((fi.FullName, ex.Message));
                                 }
                             }
 
@@ -324,6 +362,7 @@ public class ScannerService
                 // Channel drain failure should never crash the scanner
             }
 
+            _dbService.EndBulkIngestion();
             stopwatch.Stop();
         }
 

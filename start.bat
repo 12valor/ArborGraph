@@ -40,21 +40,35 @@ if %ERRORLEVEL% equ 0 (
     )
 )
 
-:: 2. Launch the Debug executable if available
+:: 2. Launch root standalone executable if available
+if exist "DiskScope.exe" (
+    echo [*] Starting standalone DiskScope...
+    start "" "DiskScope.exe" %*
+    goto :Success
+)
+
+:: 3. Launch dist standalone executable if available
+if exist "dist\DiskScope.exe" (
+    echo [*] Starting standalone DiskScope...
+    start "" "dist\DiskScope.exe" %*
+    goto :Success
+)
+
+:: 4. Launch the Debug executable if available
 if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
     echo [*] Starting DiskScope...
     start "" "bin\Debug\net8.0-windows\DiskScope.exe" %*
     goto :Success
 )
 
-:: 3. Launch self-contained publish build if available
+:: 5. Launch self-contained publish build if available
 if exist "bin\publish\DiskScope.exe" (
     echo [*] Starting published standalone DiskScope...
     start "" "bin\publish\DiskScope.exe" %*
     goto :Success
 )
 
-:: 4. If neither binary exists, try dotnet run directly
+:: 6. If neither binary exists, try dotnet run directly
 where dotnet >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo [*] Launching with dotnet run...
@@ -72,6 +86,16 @@ if "%~1"=="" pause
 exit /b 1
 
 :RunFast
+if exist "DiskScope.exe" (
+    echo [*] Fast launch: starting DiskScope.exe...
+    start "" "DiskScope.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
+if exist "dist\DiskScope.exe" (
+    echo [*] Fast launch: starting dist\DiskScope.exe...
+    start "" "dist\DiskScope.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
 if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
     echo [*] Fast launch: starting DiskScope...
     start "" "bin\Debug\net8.0-windows\DiskScope.exe" %2 %3 %4 %5 %6
@@ -91,15 +115,26 @@ dotnet run --project DiskScope.csproj -- %2 %3 %4 %5 %6
 exit /b %ERRORLEVEL%
 
 :RunPublish
+if exist "DiskScope.exe" (
+    echo [*] Launching standalone build...
+    start "" "DiskScope.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
+if exist "dist\DiskScope.exe" (
+    echo [*] Launching standalone published build...
+    start "" "dist\DiskScope.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
 if exist "bin\publish\DiskScope.exe" (
     echo [*] Launching standalone published build...
     start "" "bin\publish\DiskScope.exe" %2 %3 %4 %5 %6
     goto :Success
 )
-echo [*] Standalone publish build not found. Publishing now (Release / win-x64)...
-dotnet publish DiskScope.csproj -c Release -o bin\publish --self-contained true -r win-x64
-if exist "bin\publish\DiskScope.exe" (
-    start "" "bin\publish\DiskScope.exe"
+echo [*] Standalone build not found. Publishing single-file executable now (Release / win-x64)...
+dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
+if exist "dist\DiskScope.exe" (
+    copy /y "dist\DiskScope.exe" "DiskScope.exe" >nul
+    start "" "DiskScope.exe"
     goto :Success
 )
 echo [ERROR] Publish failed.

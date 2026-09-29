@@ -65,20 +65,31 @@ if ($Test) {
     }
 }
 
+$rootExe = Join-Path $ScriptDir "DiskScope.exe"
+$distExe = Join-Path $ScriptDir "dist\DiskScope.exe"
 $debugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\DiskScope.exe"
 $publishExe = Join-Path $ScriptDir "bin\publish\DiskScope.exe"
 
 # 2. Publish Mode
 if ($Publish) {
-    if (Test-Path $publishExe) {
+    if (Test-Path $rootExe) {
+        Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+        Start-Process -FilePath $rootExe
+        return
+    } elseif (Test-Path $distExe) {
+        Write-Host "[*] Launching standalone published DiskScope..." -ForegroundColor Green
+        Start-Process -FilePath $distExe
+        return
+    } elseif (Test-Path $publishExe) {
         Write-Host "[*] Launching published standalone DiskScope..." -ForegroundColor Green
         Start-Process -FilePath $publishExe
         return
     } else {
-        Write-Host "[*] Building self-contained release package..." -ForegroundColor Yellow
-        & dotnet publish DiskScope.csproj -c Release -o bin\publish --self-contained true -r win-x64
-        if (Test-Path $publishExe) {
-            Start-Process -FilePath $publishExe
+        Write-Host "[*] Building single-file release package..." -ForegroundColor Yellow
+        & dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
+        if (Test-Path $distExe) {
+            Copy-Item $distExe -Destination $rootExe -Force
+            Start-Process -FilePath $rootExe
             return
         }
     }
@@ -86,7 +97,15 @@ if ($Publish) {
 
 # 3. Fast Mode
 if ($Fast) {
-    if (Test-Path $debugExe) {
+    if (Test-Path $rootExe) {
+        Write-Host "[*] Fast launch: starting $rootExe..." -ForegroundColor Green
+        Start-Process -FilePath $rootExe
+        return
+    } elseif (Test-Path $distExe) {
+        Write-Host "[*] Fast launch: starting $distExe..." -ForegroundColor Green
+        Start-Process -FilePath $distExe
+        return
+    } elseif (Test-Path $debugExe) {
         Write-Host "[*] Fast launch: starting $debugExe..." -ForegroundColor Green
         Start-Process -FilePath $debugExe
         return
@@ -126,6 +145,18 @@ if ($hasNet8) {
 }
 
 # 7. Fallback to existing binaries if SDK not found
+if (Test-Path $rootExe) {
+    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+    Start-Process -FilePath $rootExe
+    return
+}
+
+if (Test-Path $distExe) {
+    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+    Start-Process -FilePath $distExe
+    return
+}
+
 if (Test-Path $publishExe) {
     Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
     Start-Process -FilePath $publishExe

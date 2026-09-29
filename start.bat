@@ -25,6 +25,10 @@ if "%~1"=="--console" goto :RunDev
 if "%~1"=="console" goto :RunDev
 if "%~1"=="--publish" goto :RunPublish
 if "%~1"=="publish" goto :RunPublish
+if "%~1"=="--site" goto :OpenSite
+if "%~1"=="site" goto :OpenSite
+if "%~1"=="--web" goto :OpenSite
+if "%~1"=="web" goto :OpenSite
 
 :: Default launch flow:
 :: 1. If .NET 8 SDK is available, do a quick incremental build so latest changes are included
@@ -151,6 +155,11 @@ if exist "tests\DiskScope.Tests.csproj" (
 echo [!] Test project not found at tests\DiskScope.Tests.csproj
 exit /b 1
 
+:OpenSite
+echo [*] Opening DiskScope website in default browser...
+start "" "site\index.html"
+exit /b 0
+
 :ShowHelp
 echo ===================================================
 echo             DiskScope Storage Analyzer            
@@ -161,6 +170,7 @@ echo   start.bat            Build (if SDK available) and launch DiskScope GUI
 echo   start.bat --fast     Launch compiled executable immediately without build
 echo   start.bat --dev      Run attached to console with live output (dotnet run)
 echo   start.bat --publish  Launch standalone self-contained build (bin\publish)
+echo   start.bat --site     Open the product website and download page in browser
 echo   start.bat --test     Run the automated integration test suite
 echo   start.bat --help     Display this help message
 echo.

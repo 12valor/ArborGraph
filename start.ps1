@@ -18,6 +18,9 @@
 .PARAMETER Test
     Runs the integration test suite in tests\DiskScope.Tests.csproj.
 
+.PARAMETER Site
+    Opens the product website and download page in the default web browser.
+
 .PARAMETER Configuration
     Build configuration to use (Debug or Release). Defaults to Debug.
 
@@ -27,6 +30,7 @@
     .\start.ps1 -Dev
     .\start.ps1 -Test
     .\start.ps1 -Publish
+    .\start.ps1 -Site
 #>
 
 [CmdletBinding()]
@@ -35,6 +39,7 @@ param(
     [switch]$Dev,
     [switch]$Publish,
     [switch]$Test,
+    [switch]$Site,
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Debug"
 )
@@ -61,6 +66,19 @@ if ($Test) {
         return
     } else {
         Write-Error "Test project not found at: $testProj"
+        return
+    }
+}
+
+# 2. Site Mode
+if ($Site) {
+    $siteHtml = Join-Path $ScriptDir "site\index.html"
+    if (Test-Path $siteHtml) {
+        Write-Host "[*] Opening DiskScope website in default browser..." -ForegroundColor Green
+        Start-Process $siteHtml
+        return
+    } else {
+        Write-Error "Website file not found at: $siteHtml"
         return
     }
 }

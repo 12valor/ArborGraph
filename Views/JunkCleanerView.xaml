@@ -45,6 +45,9 @@
                 <Button Content="Scan Caches" Command="{Binding ScanCommand}" 
                         Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0" Padding="14,7"/>
 
+                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0" Padding="12,7"/>
+
                 <Button Content="{Binding FormattedPotentialBytes, StringFormat='Clean Selected ({0})'}" 
                         Command="{Binding CleanCommand}" 
                         Style="{StaticResource AccentButtonStyle}" Padding="16,7"/>

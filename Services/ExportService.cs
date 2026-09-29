@@ -62,10 +62,10 @@ public class ExportService
             {
                 try
                 {
-                    var rootsList = targetRoots.Split([';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    var junkTargets = await junkService.ScanJunkTargetsAsync(rootsList);
-                    report.JunkTargets = junkTargets;
-                    report.TotalCleanableJunkBytes = junkTargets.Sum(j => j.SizeBytes);
+                    var defaultTargets = junkService.GetDefaultTargets();
+                    await junkService.ScanAllAsync(defaultTargets);
+                    report.JunkTargets = defaultTargets.Where(t => t.SizeInBytes > 0).ToList();
+                    report.TotalCleanableJunkBytes = report.JunkTargets.Sum(j => j.SizeInBytes);
                 }
                 catch
                 {
@@ -414,22 +414,22 @@ public class ExportService
             sb.AppendLine("                <tr>");
             sb.AppendLine("                    <th>Category</th>");
             sb.AppendLine("                    <th>Target Name</th>");
-            sb.AppendLine("                    <th>Risk Level</th>");
+            sb.AppendLine("                    <th>Items</th>");
             sb.AppendLine("                    <th style=\"text-align: right;\">Reclaimable</th>");
-            sb.AppendLine("                    <th>Path</th>");
+            sb.AppendLine("                    <th>Path / Directories</th>");
             sb.AppendLine("                </tr>");
             sb.AppendLine("            </thead>");
             sb.AppendLine("            <tbody>");
 
             foreach (var junk in report.JunkTargets)
             {
-                string riskClass = junk.RiskLevel == JunkRiskLevel.Safe ? "risk-safe" : "risk-caution";
+                string targetPath = string.Join("; ", junk.TargetDirectories);
                 sb.AppendLine("                <tr>");
                 sb.AppendLine($"                    <td>{WebUtility.HtmlEncode(junk.Category.ToString())}</td>");
                 sb.AppendLine($"                    <td><strong>{WebUtility.HtmlEncode(junk.Name)}</strong></td>");
-                sb.AppendLine($"                    <td class=\"{riskClass}\">{WebUtility.HtmlEncode(junk.RiskLevel.ToString())}</td>");
+                sb.AppendLine($"                    <td>{junk.FileCount:N0} files</td>");
                 sb.AppendLine($"                    <td style=\"text-align: right; color: var(--success); font-weight: 600;\">{WebUtility.HtmlEncode(junk.FormattedSize)}</td>");
-                sb.AppendLine($"                    <td class=\"path-cell\">{WebUtility.HtmlEncode(junk.Path)}</td>");
+                sb.AppendLine($"                    <td class=\"path-cell\">{WebUtility.HtmlEncode(targetPath)}</td>");
                 sb.AppendLine("                </tr>");
             }
 
@@ -538,17 +538,18 @@ public class ExportService
     public async Task ExportJunkToCsvAsync(IEnumerable<JunkTarget> targets, string filePath)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("\"Category\",\"Name\",\"Path\",\"SizeBytes\",\"SizeFormatted\",\"RiskLevel\",\"ItemCount\"");
+        sb.AppendLine("\"Category\",\"Name\",\"Directories\",\"SizeBytes\",\"SizeFormatted\",\"FileCount\",\"Status\"");
 
         foreach (var j in targets)
         {
+            string dirsJoined = string.Join(" | ", j.TargetDirectories);
             sb.Append(CsvEscape(j.Category.ToString())).Append(',');
             sb.Append(CsvEscape(j.Name)).Append(',');
-            sb.Append(CsvEscape(j.Path)).Append(',');
-            sb.Append(j.SizeBytes).Append(',');
+            sb.Append(CsvEscape(dirsJoined)).Append(',');
+            sb.Append(j.SizeInBytes).Append(',');
             sb.Append(CsvEscape(j.FormattedSize)).Append(',');
-            sb.Append(CsvEscape(j.RiskLevel.ToString())).Append(',');
-            sb.AppendLine(j.ItemCount.ToString());
+            sb.Append(j.FileCount).Append(',');
+            sb.AppendLine(CsvEscape(j.Status));
         }
 
         await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8);

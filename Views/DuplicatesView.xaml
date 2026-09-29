@@ -26,17 +26,19 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="0" Content="Start Duplicate Analysis" Command="{Binding StartAnalysisCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
-                <Button Grid.Column="1" Content="Stop Analysis" Command="{Binding CancelAnalysisCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,16,0"/>
+                <Button Grid.Column="1" Content="Stop Analysis" Command="{Binding CancelAnalysisCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,16,0"/>
 
-                <TextBlock Grid.Column="2" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="3" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis"/>
 
                 <!-- Potential Wasted Space Metric -->
-                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Potential Recoverable Storage: " Foreground="{StaticResource BrushTextSecondary}" FontSize="13"/>
                     <TextBlock Text="{Binding FormattedTotalWasted}" Foreground="{StaticResource BrushWarning}" FontWeight="Bold" FontSize="14"/>
                 </StackPanel>

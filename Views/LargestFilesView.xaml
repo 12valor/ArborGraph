@@ -48,8 +48,11 @@
                 <TextBlock Grid.Column="6" Text="Search:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
                 <TextBox Grid.Column="7" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
 
-                <!-- Refresh Button -->
-                <Button Grid.Column="9" Content="Refresh Query" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                <!-- Actions -->
+                <StackPanel Grid.Column="9" Orientation="Horizontal">
+                    <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                </StackPanel>
             </Grid>
         </Border>
 

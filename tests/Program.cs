@@ -352,6 +352,62 @@ public class Program
             Assert(dbService.CheckIntegrity(), "Database integrity should remain valid after index drop and recreate");
             Console.WriteLine("  ✓ Deferred secondary index drop and rebuild verified with integrity check.");
 
+            // -----------------------------------------------------------------------------------------
+            // TEST 11: Export & Reporting Engine (HTML, CSV, JSON)
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 11] Testing Export & Reporting Engine...");
+            var exportService = new ExportService();
+
+            // 1. Re-populate database with a known test record
+            dbService.InsertBatch(new[] { recA, recB });
+
+            var auditReport = await exportService.BuildAuditReportAsync(
+                dbService,
+                junkService: null,
+                stats: stats,
+                targetRoots: testRoot,
+                duplicates: dupGroups);
+
+            Assert(auditReport.TotalFilesIndexed >= 2, $"Expected at least 2 files in report, got {auditReport.TotalFilesIndexed}");
+            Assert(auditReport.Categories.Count > 0, "Expected categories in report");
+
+            // 2. HTML Export
+            string htmlPath = Path.Combine(testDbFolder, "test_report.html");
+            await exportService.ExportToHtmlAsync(auditReport, htmlPath);
+            Assert(File.Exists(htmlPath), "HTML report was not created");
+            string htmlContent = await File.ReadAllTextAsync(htmlPath);
+            Assert(htmlContent.Contains("<!DOCTYPE html>"), "Missing HTML5 doctype");
+            Assert(htmlContent.Contains("DISKSCOPE PRO"), "Missing branding badge in HTML");
+            Assert(htmlContent.Contains("Storage Audit"), "Missing report title in HTML");
+            Assert(htmlContent.Contains("Storage Distribution by Category"), "Missing categories section in HTML");
+            Console.WriteLine($"  ✓ Standalone HTML executive report verified ({new FileInfo(htmlPath).Length:N0} bytes).");
+
+            // 3. CSV Exports
+            string filesCsvPath = Path.Combine(testDbFolder, "test_files.csv");
+            await exportService.ExportFilesToCsvAsync(new[] { recA, recB }, filesCsvPath);
+            Assert(File.Exists(filesCsvPath), "Files CSV was not created");
+            var csvLines = await File.ReadAllLinesAsync(filesCsvPath);
+            Assert(csvLines.Length == 3, $"Expected 3 lines (1 header + 2 records), got {csvLines.Length}");
+            Assert(csvLines[0].Contains("\"Path\",\"Name\""), "Invalid CSV header");
+            Console.WriteLine($"  ✓ Precision CSV files export verified ({csvLines.Length - 1} records).");
+
+            string dupsCsvPath = Path.Combine(testDbFolder, "test_dups.csv");
+            await exportService.ExportDuplicatesToCsvAsync(dupGroups, dupsCsvPath);
+            Assert(File.Exists(dupsCsvPath), "Duplicates CSV was not created");
+            var dupLines = await File.ReadAllLinesAsync(dupsCsvPath);
+            Assert(dupLines.Length >= 2, "Expected header and duplicate group records in CSV");
+            Console.WriteLine($"  ✓ Precision CSV duplicates export verified ({dupLines.Length - 1} groups).");
+
+            // 4. JSON Export & Deserialization Check
+            string jsonPath = Path.Combine(testDbFolder, "test_report.json");
+            await exportService.ExportToJsonAsync(auditReport, jsonPath);
+            Assert(File.Exists(jsonPath), "JSON dump was not created");
+            string jsonContent = await File.ReadAllTextAsync(jsonPath);
+            using var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonContent);
+            long jsonTotalFiles = jsonDoc.RootElement.GetProperty("TotalFilesIndexed").GetInt64();
+            Assert(jsonTotalFiles == auditReport.TotalFilesIndexed, "JSON deserialized count does not match report");
+            Console.WriteLine("  ✓ Machine-readable JSON structured dump verified.");
+
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");
             Console.WriteLine("=================================================");

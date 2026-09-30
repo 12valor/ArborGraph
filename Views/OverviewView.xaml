@@ -3,10 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:controls="clr-namespace:DiskScope.Controls"
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="1000">
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -14,13 +17,93 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
             <TextBlock Text="Storage Overview" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
             <TextBlock Text="Filesystem allocation and SQLite index scan accounting" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
         </StackPanel>
 
+        <!-- SYSTEM RESOURCE USAGE: Real-Time Process Monitoring -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="SYSTEM RESOURCE USAGE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,8"/>
+            
+            <Grid x:Name="ResourceGrid" SizeChanged="ResourceGrid_SizeChanged">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="Col0" Width="*"/>
+                    <ColumnDefinition x:Name="Col1" Width="14"/>
+                    <ColumnDefinition x:Name="Col2" Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition x:Name="RowGap" Height="0"/>
+                    <RowDefinition x:Name="Row1" Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- CPU Graph Card -->
+                <Border x:Name="CpuCard" Grid.Row="0" Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="48"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header: CPU label on left, value on right -->
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="CPU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentCpuText}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="13"/>
+                        </Grid>
+
+                        <!-- Live Line Graph -->
+                        <controls:RealtimeMetricGraph Grid.Row="1" Margin="0,6,0,4"
+                                                      Values="{Binding CpuHistory}"
+                                                      LineColor="#0067C0"
+                                                      MaxValue="100" MinValue="0"
+                                                      MaxPoints="60"
+                                                      StrokeThickness="1.3"/>
+
+                        <!-- Footer: 60 sec on left, peak on right -->
+                        <Grid Grid.Row="2">
+                            <TextBlock Text="60 sec" FontSize="10" Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding CpuPeakText}" FontSize="10" Foreground="{StaticResource BrushTextMuted}"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- RAM Graph Card -->
+                <Border x:Name="RamCard" Grid.Row="0" Grid.Column="2" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="48"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header: RAM label on left, value on right -->
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="RAM" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentRamText}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="13"/>
+                        </Grid>
+
+                        <!-- Live Line Graph -->
+                        <controls:RealtimeMetricGraph Grid.Row="1" Margin="0,6,0,4"
+                                                      Values="{Binding RamHistory}"
+                                                      LineColor="#16A34A"
+                                                      MaxValue="{Binding DynamicRamMaxCeiling}" MinValue="0"
+                                                      MaxPoints="60"
+                                                      StrokeThickness="1.3"/>
+
+                        <!-- Footer: 60 sec on left, dynamic headroom scale on right -->
+                        <Grid Grid.Row="2">
+                            <TextBlock Text="60 sec" FontSize="10" Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock HorizontalAlignment="Right" Text="{Binding RamCeilingText}" FontSize="10" Foreground="{StaticResource BrushTextMuted}"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </StackPanel>
+
         <!-- Top Overview Cards -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
+        <Grid Grid.Row="2" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="14"/>
@@ -149,7 +232,7 @@
         </Grid>
 
         <!-- Live Directory Rolling Feed -->
-        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14" MinHeight="180">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -172,6 +255,7 @@
                 <ListBox Grid.Row="1" ItemsSource="{Binding RecentDirectories}"
                          Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
                          FontFamily="Consolas" FontSize="11" Foreground="#334155"
+                         MinHeight="120"
                          VirtualizingStackPanel.IsVirtualizing="True"
                          VirtualizingStackPanel.VirtualizationMode="Recycling"
                          ScrollViewer.CanContentScroll="True"
@@ -186,7 +270,7 @@
         </Border>
 
         <!-- Scan Integrity Panel -->
-        <Border Grid.Row="3" Margin="0,14,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <Border Grid.Row="4" Margin="0,14,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -206,4 +290,5 @@
             </Grid>
         </Border>
     </Grid>
+    </ScrollViewer>
 </UserControl>

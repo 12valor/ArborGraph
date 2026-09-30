@@ -49,6 +49,14 @@ public partial class MainWindow : Window
     private void MainWindow_Closed(object? sender, EventArgs e)
     {
         Log("MainWindow Closed event fired.");
+        try
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.OverviewVM.Dispose();
+            }
+        }
+        catch { }
     }
 
     private static void Log(string message)

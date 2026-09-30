@@ -10,6 +10,7 @@ public class OverviewViewModel : ObservableObject
 {
     private readonly DatabaseService _dbService;
     private readonly DiskService _diskService;
+    private readonly ProcessMonitorService _monitorService;
     private ScanStats _stats = new();
 
     private long _totalDriveBytes;
@@ -19,13 +20,29 @@ public class OverviewViewModel : ObservableObject
     private bool _isIntegrityCheckPassed = true;
     private string _integrityStatus = "Ready for scan";
 
-    public OverviewViewModel(DatabaseService dbService, DiskService diskService)
+    private string _currentCpuText = "—";
+    private string _currentRamText = "—";
+    private string _cpuPeakText = "Peak: 0.0%";
+    private string _ramCeilingText = "Scale: 0–256 MB";
+    private double _dynamicRamMaxCeiling = 256.0;
+    private IReadOnlyList<double> _cpuHistory = Array.Empty<double>();
+    private IReadOnlyList<double> _ramHistory = Array.Empty<double>();
+    private bool _isViewActive = true;
+
+    public OverviewViewModel(DatabaseService dbService, DiskService diskService, ProcessMonitorService? monitorService = null)
     {
         _dbService = dbService;
         _diskService = diskService;
+        _monitorService = monitorService ?? new ProcessMonitorService(historyCapacity: 60, intervalMs: 1000);
+        _monitorService.SampleTaken += OnProcessSampleTaken;
+
         RecentDirectories = [];
         Drives = [];
         RefreshDrives();
+
+        // Initial sample
+        var initialSample = _monitorService.CaptureSample();
+        ApplySample(initialSample);
     }
 
     public ScanStats Stats
@@ -124,6 +141,109 @@ public class OverviewViewModel : ObservableObject
         catch { }
     }
 
+    public string CurrentCpuText
+    {
+        get => _currentCpuText;
+        private set => SetProperty(ref _currentCpuText, value);
+    }
+
+    public string CurrentRamText
+    {
+        get => _currentRamText;
+        private set => SetProperty(ref _currentRamText, value);
+    }
+
+    public string CpuPeakText
+    {
+        get => _cpuPeakText;
+        private set => SetProperty(ref _cpuPeakText, value);
+    }
+
+    public string RamCeilingText
+    {
+        get => _ramCeilingText;
+        private set => SetProperty(ref _ramCeilingText, value);
+    }
+
+    public double DynamicRamMaxCeiling
+    {
+        get => _dynamicRamMaxCeiling;
+        private set => SetProperty(ref _dynamicRamMaxCeiling, value);
+    }
+
+    public IReadOnlyList<double> CpuHistory
+    {
+        get => _cpuHistory;
+        private set => SetProperty(ref _cpuHistory, value);
+    }
+
+    public IReadOnlyList<double> RamHistory
+    {
+        get => _ramHistory;
+        private set => SetProperty(ref _ramHistory, value);
+    }
+
+    public void OnViewLoaded()
+    {
+        _isViewActive = true;
+        // Refresh with latest snapshot immediately
+        RefreshMetricViews();
+    }
+
+    public void OnViewUnloaded()
+    {
+        _isViewActive = false;
+    }
+
+    private void OnProcessSampleTaken(ProcessResourceSample sample)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.HasShutdownStarted)
+        {
+            dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+            {
+                ApplySample(sample);
+            });
+        }
+        else
+        {
+            ApplySample(sample);
+        }
+    }
+
+    private void ApplySample(ProcessResourceSample sample)
+    {
+        if (sample.IsValid)
+        {
+            CurrentCpuText = $"{sample.CpuPercentage:F1}%";
+            CurrentRamText = $"{sample.RamMegabytes:F0} MB";
+            double peak = _monitorService.GetCpuPeak();
+            CpuPeakText = $"Peak: {peak:F1}%";
+            double ceiling = _monitorService.DynamicRamCeiling;
+            DynamicRamMaxCeiling = ceiling;
+            RamCeilingText = $"Scale: 0–{ceiling:F0} MB";
+        }
+        else
+        {
+            CurrentCpuText = "—";
+            CurrentRamText = "—";
+            CpuPeakText = "Peak: —";
+            RamCeilingText = "Scale: —";
+        }
+
+        // Only trigger heavy visual graph updates if view is currently active/visible
+        if (_isViewActive)
+        {
+            RefreshMetricViews();
+        }
+    }
+
+    private void RefreshMetricViews()
+    {
+        CpuHistory = _monitorService.GetCpuHistory();
+        RamHistory = _monitorService.GetRamHistory();
+    }
+
     public void VerifyIntegrity()
     {
         try
@@ -139,5 +259,11 @@ public class OverviewViewModel : ObservableObject
             IsIntegrityCheckPassed = false;
             IntegrityStatus = "Integrity check could not complete.";
         }
+    }
+
+    public void Dispose()
+    {
+        _monitorService.SampleTaken -= OnProcessSampleTaken;
+        _monitorService.Dispose();
     }
 }

@@ -94,6 +94,9 @@
         </Setter>
     </Style>
 
+    <!-- Accent Button Style (Alias for PrimaryButtonStyle) -->
+    <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}"/>
+
     <!-- Danger Button -->
     <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
         <Setter Property="Background" Value="#FFFFFF"/>
@@ -238,7 +241,7 @@
     </Style>
 
     <!-- DataGridRow Style -->
-    <Style TargetType="DataGridRow">
+    <Style x:Key="DefaultDataGridRowStyle" TargetType="DataGridRow">
         <Setter Property="Padding" Value="0,2"/>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
@@ -250,6 +253,7 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}"/>
 
     <!-- Context Menu Style -->
     <Style TargetType="ContextMenu">

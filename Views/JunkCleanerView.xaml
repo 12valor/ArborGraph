@@ -50,7 +50,7 @@
 
                 <Button Content="{Binding FormattedPotentialBytes, StringFormat='Clean Selected ({0})'}" 
                         Command="{Binding CleanCommand}" 
-                        Style="{StaticResource AccentButtonStyle}" Padding="16,7"/>
+                        Style="{StaticResource PrimaryButtonStyle}" Padding="16,7"/>
 
                 <Button Content="Cancel" Command="{Binding CancelCommand}" 
                         Style="{StaticResource DangerButtonStyle}" Margin="8,0,0,0"

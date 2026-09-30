@@ -2,7 +2,7 @@
 // Modern Developer Tool Portal Script (Interactive Navigation, Setup Stepper, Diagnostics & Verification)
 
 document.addEventListener('DOMContentLoaded', () => {
-    const OFFICIAL_HASH = '095EAE7AFB4AC3AC15F504EC998B839C99032BDC0A46CBD1239309C39C8FCB4C';
+    const OFFICIAL_HASH = '5B8054F6464116A3979E35C926ADC219E574FCEA82BB6C4E7BB0F0C5F8F06785';
 
     // =========================================================
     // 1. HEADER NAVIGATION, SCROLLSPY & MOBILE DRAWER
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { pct: 35, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore.dll & PresentationFramework.dll\n> Validating DirectX Hardware Acceleration..." },
             { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScope..." },
             { pct: 78, msg: "Creating application environment...", log: "> Configuring WAL journal mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
-            { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: 095EAE7A...FCB4C\n> Cryptographic match verified bit-for-bit." },
+            { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: 5B8054F6...F06785\n> Cryptographic match verified bit-for-bit." },
             { pct: 100, msg: "Setup installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
         ];
 

@@ -43,11 +43,28 @@ public partial class App : Application
         Log($"Application Exiting with code {e.ApplicationExitCode}.");
     }
 
+    private bool _isHandlingException;
+
     private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Log($"DispatcherUnhandledException: {e.Exception}");
-        MessageBox.Show($"An unexpected UI error occurred:\n\n{e.Exception.Message}",
-            "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+        if (_isHandlingException)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        _isHandlingException = true;
+        try
+        {
+            MessageBox.Show($"An unexpected UI error occurred:\n\n{e.Exception.Message}",
+                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch { }
+        finally
+        {
+            _isHandlingException = false;
+        }
         e.Handled = true;
     }
 

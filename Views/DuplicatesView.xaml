@@ -108,7 +108,7 @@
                     <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedGroup.Files}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                               MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                                 <Setter Property="ContextMenu">
                                     <Setter.Value>
                                         <ContextMenu>

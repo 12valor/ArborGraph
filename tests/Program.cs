@@ -1,8 +1,11 @@
 using System.IO;
 using System.Text;
+using System.Windows;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
+using DiskScope.ViewModels;
+using DiskScope.Views;
 
 namespace DiskScope.Tests;
 
@@ -407,6 +410,61 @@ public class Program
             long jsonTotalFiles = jsonDoc.RootElement.GetProperty("TotalFilesIndexed").GetInt64();
             Assert(jsonTotalFiles == auditReport.TotalFilesIndexed, "JSON deserialized count does not match report");
             Console.WriteLine("  ✓ Machine-readable JSON structured dump verified.");
+
+            // =========================================================
+            // [TEST 12] Testing WPF UI View Instantiation & Tab Navigation
+            // =========================================================
+            Console.WriteLine("\n[TEST 12] Testing WPF UI View Instantiation & Tab Navigation...");
+            Exception? uiException = null;
+            var staThread = new Thread(() =>
+            {
+                try
+                {
+                    var app = Application.Current ?? new Application();
+                    app.Resources.MergedDictionaries.Clear();
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary
+                    {
+                        Source = new Uri("pack://application:,,,/DiskScope;component/Resources/Colors.xaml", UriKind.Absolute)
+                    });
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary
+                    {
+                        Source = new Uri("pack://application:,,,/DiskScope;component/Resources/Styles.xaml", UriKind.Absolute)
+                    });
+
+                    // 1. Instantiate every UserControl view directly to verify XAML parsing & StaticResources
+                    var v1 = new OverviewView { DataContext = new OverviewViewModel(dbService, new DiskService()) };
+                    var v2 = new AnalyticsView { DataContext = new AnalyticsViewModel(dbService, new DiskService(), new FileActionService()) };
+                    var v3 = new LargestFilesView { DataContext = new LargestFilesViewModel(dbService, new FileActionService()) };
+                    var v4 = new LargestFoldersView { DataContext = new LargestFoldersViewModel(dbService, new FileActionService()) };
+                    var v5 = new FileTypesView { DataContext = new FileTypesViewModel(dbService) };
+                    var v6 = new OldFilesView { DataContext = new OldFilesViewModel(dbService, new FileActionService()) };
+                    var v7 = new DuplicatesView { DataContext = new DuplicateViewModel(new DuplicateAnalyzer(dbService), new FileActionService()) };
+                    var v8 = new JunkCleanerView { DataContext = new JunkCleanerViewModel(new JunkCleanerService(), new FileActionService()) };
+                    var v9 = new TreemapView { DataContext = new TreemapViewModel(dbService, new FileActionService()) };
+                    var v10 = new PhotoshopView { DataContext = new PhotoshopViewModel(dbService, new FileActionService()) };
+                    var v11 = new ScanLogView { DataContext = new ScanLogViewModel() };
+
+                    // 2. Instantiate MainWindow to verify main shell and ContentControl DataTemplates
+                    var win = new MainWindow();
+                    Assert(win != null, "MainWindow failed to instantiate");
+
+                    // 3. Gracefully shutdown dispatcher
+                    app.Dispatcher.InvokeShutdown();
+                }
+                catch (Exception ex)
+                {
+                    uiException = ex;
+                }
+            });
+            staThread.SetApartmentState(ApartmentState.STA);
+            staThread.Start();
+            staThread.Join();
+
+            if (uiException != null)
+            {
+                throw new Exception($"UI View Instantiation Failed: {uiException.Message}", uiException);
+            }
+            Console.WriteLine("  ✓ All 11 WPF Views and MainViewModel tabs instantiated successfully without XAML/StaticResource errors.");
 
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");

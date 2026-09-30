@@ -262,7 +262,7 @@
                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" Padding="2,1"/>
+                            <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis" Padding="2,1"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

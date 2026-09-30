@@ -101,12 +101,11 @@ body {
 }
 
 .brand-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
+    width: 24px;
+    height: 24px;
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
 }
 
 .brand-title {

@@ -37,6 +37,9 @@ public class OverviewViewModel : ObservableObject
         _monitorService.SampleTaken += OnProcessSampleTaken;
 
         RecentDirectories = [];
+        System.Windows.Data.BindingOperations.EnableCollectionSynchronization(RecentDirectories, _recentDirsLock);
+        RecentDirectories.Add("Ready. Click 'Start Scan' to begin real-time filesystem traversal.");
+
         Drives = [];
         RefreshDrives();
 
@@ -122,21 +125,59 @@ public class OverviewViewModel : ObservableObject
         catch { }
     }
 
+    private readonly object _recentDirsLock = new();
     private DateTime _lastRecentDirTime = DateTime.MinValue;
 
-    public void AddRecentDirectory(string dir)
+    public void ClearRecentDirectories()
     {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.HasShutdownStarted && !dispatcher.CheckAccess())
+        {
+            try
+            {
+                dispatcher.Invoke(() => ClearRecentDirectories());
+                return;
+            }
+            catch { }
+        }
+
+        lock (_recentDirsLock)
+        {
+            RecentDirectories.Clear();
+        }
+    }
+
+    public void AddRecentDirectory(string dir, bool force = false)
+    {
+        if (string.IsNullOrWhiteSpace(dir)) return;
+
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.HasShutdownStarted && !dispatcher.CheckAccess())
+        {
+            try
+            {
+                dispatcher.BeginInvoke(DispatcherPriority.Normal, () => AddRecentDirectory(dir, force));
+                return;
+            }
+            catch { }
+        }
+
         try
         {
-            if (string.IsNullOrWhiteSpace(dir)) return;
-            if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 150) return;
-            _lastRecentDirTime = DateTime.UtcNow;
-
-            if (RecentDirectories.Count >= 50)
+            if (!force)
             {
-                RecentDirectories.RemoveAt(0);
+                if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 35) return;
+                _lastRecentDirTime = DateTime.UtcNow;
             }
-            RecentDirectories.Add(dir);
+
+            lock (_recentDirsLock)
+            {
+                if (RecentDirectories.Count >= 60)
+                {
+                    RecentDirectories.RemoveAt(RecentDirectories.Count - 1);
+                }
+                RecentDirectories.Insert(0, dir);
+            }
         }
         catch { }
     }

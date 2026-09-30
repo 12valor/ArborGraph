@@ -208,6 +208,13 @@ public class ScannerService
                     // Directory Visited: attempted to enter/read
                     Interlocked.Increment(ref _directoriesVisited);
 
+                    // Live feed emission on directory entry (throttled to 40ms for smooth UI streaming)
+                    if (lastReportStopwatch.ElapsedMilliseconds >= 40)
+                    {
+                        EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir);
+                        lastReportStopwatch.Restart();
+                    }
+
                     // 1. Enumerate files
                     bool dirEnumerationSucceeded = true;
                     try
@@ -271,7 +278,7 @@ public class ScannerService
                             }
 
                             // Throttled progress report
-                            if (lastReportStopwatch.ElapsedMilliseconds >= 75)
+                            if (lastReportStopwatch.ElapsedMilliseconds >= 40)
                             {
                                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir);
                                 lastReportStopwatch.Restart();
@@ -346,7 +353,7 @@ public class ScannerService
                     }
 
                     // Throttled progress report
-                    if (lastReportStopwatch.ElapsedMilliseconds >= 75)
+                    if (lastReportStopwatch.ElapsedMilliseconds >= 40)
                     {
                         EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir);
                         lastReportStopwatch.Restart();

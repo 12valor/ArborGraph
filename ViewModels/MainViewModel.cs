@@ -227,6 +227,8 @@ public class MainViewModel : ObservableObject
         _scanCts = new CancellationTokenSource();
         OverviewVM.Stats.Reset();
         OverviewVM.Stats.State = ScanState.Scanning;
+        OverviewVM.ClearRecentDirectories();
+        OverviewVM.AddRecentDirectory($"Starting scan on target: {string.Join(", ", rootsToScan)}...", force: true);
         ScanLogVM.ClearLogs();
         ScanLogVM.AddLog("INFO", $"Started scan for target: {string.Join(", ", rootsToScan)}");
 

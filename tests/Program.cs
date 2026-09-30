@@ -13,6 +13,26 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--live")
+        {
+            string realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DiskScope", "scan_index.db");
+            Console.WriteLine($"[LIVE TEST] Using DB: {realDb}");
+            var db = new DatabaseService(realDb);
+            db.Initialize();
+            var scanner = new ScannerService(db);
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var progress = new Progress<ScanProgressReport>(r =>
+            {
+                Console.WriteLine($"[PROGRESS] Elapsed: {r.Elapsed.TotalSeconds:F2}s | Indexed: {r.FilesIndexed} | Dirs: {r.DirectoriesProcessed} | RecentDir: {r.NewRecentDirectory} | CurDir: {r.CurrentDirectory}");
+            });
+            Console.WriteLine("[LIVE TEST] Starting ScanDrivesAsync on C:\\...");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var res = await scanner.ScanDrivesAsync(new[] { @"C:\" }, progress, cts.Token);
+            sw.Stop();
+            Console.WriteLine($"[LIVE TEST] Finished in {sw.ElapsedMilliseconds}ms. State: {res.State}, Files: {res.FilesIndexed}, Dirs: {res.DirectoriesProcessed}");
+            return 0;
+        }
+
         Console.WriteLine("=================================================");
         Console.WriteLine("  DISKSCOPE — AUTOMATED INTEGRATION TESTS");
         Console.WriteLine("=================================================");
@@ -676,6 +696,16 @@ public class Program
             // 4. CancelActiveOperations thread safety
             dbService.CancelActiveOperations();
             Console.WriteLine("  ✓ CancelActiveOperations executed without error.");
+
+            // 5. Test Live Directory Feed buffer behavior
+            Assert(testMainVm.OverviewVM.RecentDirectories.Count > 0, "RecentDirectories should have initial ready entry");
+            testMainVm.OverviewVM.ClearRecentDirectories();
+            Assert(testMainVm.OverviewVM.RecentDirectories.Count == 0, "ClearRecentDirectories should empty the feed");
+            testMainVm.OverviewVM.AddRecentDirectory(@"C:\FolderA", force: true);
+            testMainVm.OverviewVM.AddRecentDirectory(@"C:\FolderB", force: true);
+            Assert(testMainVm.OverviewVM.RecentDirectories.Count == 2, "Expected 2 entries in feed");
+            Assert(testMainVm.OverviewVM.RecentDirectories[0] == @"C:\FolderB", "Latest directory should be at index 0 (top of feed)");
+            Console.WriteLine("  ✓ Live directory feed top-insertion and buffer verified.");
 
             testMainVm.OverviewVM.Dispose();
 

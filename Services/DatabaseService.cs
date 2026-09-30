@@ -113,7 +113,18 @@ public class DatabaseService : IDisposable
                 using var tx = _connection!.BeginTransaction();
                 try
                 {
-                    if (roots == null || roots.Count == 0)
+                    bool isFullClear = roots == null || roots.Count == 0;
+                    if (!isFullClear && roots != null)
+                    {
+                        // Check if the target root is a drive root (e.g. C:\ or C:), meaning full drive clear
+                        isFullClear = roots.Any(r =>
+                        {
+                            string trimmed = r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                            return trimmed.Length <= 2 && trimmed.EndsWith(":");
+                        });
+                    }
+
+                    if (isFullClear)
                     {
                         using var cmd = _connection.CreateCommand();
                         cmd.Transaction = tx;
@@ -124,24 +135,26 @@ public class DatabaseService : IDisposable
                     {
                         using var cmd = _connection.CreateCommand();
                         cmd.Transaction = tx;
+                        // Use B-tree index range scan on path instead of full-table scan with substr
                         cmd.CommandText = @"
                             DELETE FROM files 
                             WHERE path = $root COLLATE NOCASE 
-                               OR substr(path, 1, $len) = $prefix COLLATE NOCASE;
+                               OR (path >= $prefix AND path < $prefixUpper);
                         ";
                         var pRoot = cmd.Parameters.Add("$root", SqliteType.Text);
                         var pPrefix = cmd.Parameters.Add("$prefix", SqliteType.Text);
-                        var pLen = cmd.Parameters.Add("$len", SqliteType.Integer);
+                        var pPrefixUpper = cmd.Parameters.Add("$prefixUpper", SqliteType.Text);
 
-                        foreach (var root in roots)
+                        foreach (var root in roots!)
                         {
                             if (string.IsNullOrWhiteSpace(root)) continue;
                             string cleanRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                             string prefix = cleanRoot + Path.DirectorySeparatorChar;
+                            string prefixUpper = cleanRoot + (char)(Path.DirectorySeparatorChar + 1);
 
                             pRoot.Value = cleanRoot;
                             pPrefix.Value = prefix;
-                            pLen.Value = prefix.Length;
+                            pPrefixUpper.Value = prefixUpper;
                             cmd.ExecuteNonQuery();
                         }
                     }
@@ -159,6 +172,17 @@ public class DatabaseService : IDisposable
                 System.Diagnostics.Debug.WriteLine($"ClearIndex exception: {ex.Message}");
             }
         }
+    }
+
+    private SqliteCommand? _activeCommand;
+
+    public void CancelActiveOperations()
+    {
+        try
+        {
+            _activeCommand?.Cancel();
+        }
+        catch { }
     }
 
     public void BeginBulkIngestion()
@@ -235,6 +259,7 @@ public class DatabaseService : IDisposable
             try
             {
                 using var cmd = _connection.CreateCommand();
+                _activeCommand = cmd;
                 cmd.Transaction = tx;
                 cmd.CommandText = @"
                     INSERT OR REPLACE INTO files 
@@ -274,6 +299,10 @@ public class DatabaseService : IDisposable
             {
                 try { tx.Rollback(); } catch { }
                 throw;
+            }
+            finally
+            {
+                _activeCommand = null;
             }
         }
     }

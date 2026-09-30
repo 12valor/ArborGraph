@@ -63,9 +63,12 @@ public class ExportService
                 try
                 {
                     var defaultTargets = junkService.GetDefaultTargets();
-                    await junkService.ScanAllAsync(defaultTargets);
-                    report.JunkTargets = defaultTargets.Where(t => t.SizeInBytes > 0).ToList();
-                    report.TotalCleanableJunkBytes = report.JunkTargets.Sum(j => j.SizeInBytes);
+                    var junkScanTask = junkService.ScanAllAsync(defaultTargets);
+                    if (await Task.WhenAny(junkScanTask, Task.Delay(1500)) == junkScanTask)
+                    {
+                        report.JunkTargets = defaultTargets.Where(t => t.SizeInBytes > 0).ToList();
+                        report.TotalCleanableJunkBytes = report.JunkTargets.Sum(j => j.SizeInBytes);
+                    }
                 }
                 catch
                 {

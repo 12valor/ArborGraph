@@ -75,8 +75,8 @@ public class ScannerService
         _skippedDirs.Clear();
         _skippedFiles.Clear();
 
-        _dbService.ClearIndex(roots);
         _dbService.BeginBulkIngestion();
+        _dbService.ClearIndex(roots);
 
         var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
         {
@@ -88,7 +88,10 @@ public class ScannerService
         var stopwatch = Stopwatch.StartNew();
         var lastReportStopwatch = Stopwatch.StartNew();
         var scanStartTime = DateTime.UtcNow;
-        string currentDirectory = string.Empty;
+        string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
+
+        // Immediate initial report so UI status updates without waiting
+        EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null);
 
         // Background SQLite Ingestion Task
         var dbWorker = Task.Run(async () =>

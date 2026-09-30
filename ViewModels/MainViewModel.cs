@@ -63,6 +63,8 @@ public class MainViewModel : ObservableObject
         ExportHtmlReportCommand = new RelayCommand(async _ => await ExportHtmlReportAsync(), _ => !IsScanning);
         ExportJsonReportCommand = new RelayCommand(async _ => await ExportJsonReportAsync(), _ => !IsScanning);
         ExportFilesCsvCommand = new RelayCommand(async _ => await ExportFilesCsvAsync(), _ => !IsScanning);
+        ExportDuplicatesCsvCommand = new RelayCommand(async _ => await ExportDuplicatesCsvAsync(), _ => !IsScanning);
+        ExportJunkCsvCommand = new RelayCommand(async _ => await ExportJunkCsvAsync(), _ => !IsScanning);
     }
 
     public OverviewViewModel OverviewVM { get; }
@@ -101,6 +103,8 @@ public class MainViewModel : ObservableObject
                 (ExportHtmlReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportJsonReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportFilesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ExportDuplicatesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ExportJunkCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -118,6 +122,8 @@ public class MainViewModel : ObservableObject
     public ICommand ExportHtmlReportCommand { get; }
     public ICommand ExportJsonReportCommand { get; }
     public ICommand ExportFilesCsvCommand { get; }
+    public ICommand ExportDuplicatesCsvCommand { get; }
+    public ICommand ExportJunkCsvCommand { get; }
 
     public void NavigateTo(string tabName)
     {
@@ -205,9 +211,16 @@ public class MainViewModel : ObservableObject
 
         if (rootsToScan.Count == 0)
         {
-            MessageBox.Show("Please select at least one drive or specify a valid directory to scan.",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
+            var defaultDrive = OverviewVM.Drives.FirstOrDefault(d => Directory.Exists(d.Name));
+            if (defaultDrive != null)
+            {
+                defaultDrive.IsSelected = true;
+                rootsToScan.Add(defaultDrive.Name);
+            }
+            else
+            {
+                rootsToScan.Add("C:\\");
+            }
         }
 
         IsScanning = true;
@@ -304,6 +317,7 @@ public class MainViewModel : ObservableObject
                 OverviewVM.Stats.State = ScanState.Stopping;
                 ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
                 _scanCts.Cancel();
+                _dbService.CancelActiveOperations();
             }
         }
         catch (ObjectDisposedException) { }
@@ -345,8 +359,10 @@ public class MainViewModel : ObservableObject
 
         if (sfd.ShowDialog() == true)
         {
+            var prevCursor = System.Windows.Input.Mouse.OverrideCursor;
             try
             {
+                System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
                 string targetRoots = !string.IsNullOrWhiteSpace(CustomScanPath)
                     ? CustomScanPath
                     : string.Join(", ", OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name));
@@ -359,6 +375,8 @@ public class MainViewModel : ObservableObject
                     DuplicatesVM.DuplicateGroups);
 
                 await _exportService.ExportToHtmlAsync(report, sfd.FileName);
+
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
 
                 var res = MessageBox.Show(
                     $"Executive HTML audit report saved successfully to:\n{sfd.FileName}\n\nWould you like to open it now in your browser?",
@@ -373,7 +391,12 @@ public class MainViewModel : ObservableObject
             }
             catch (Exception ex)
             {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
                 MessageBox.Show($"Failed to export HTML report: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
             }
         }
     }
@@ -390,8 +413,10 @@ public class MainViewModel : ObservableObject
 
         if (sfd.ShowDialog() == true)
         {
+            var prevCursor = System.Windows.Input.Mouse.OverrideCursor;
             try
             {
+                System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
                 string targetRoots = !string.IsNullOrWhiteSpace(CustomScanPath)
                     ? CustomScanPath
                     : string.Join(", ", OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name));
@@ -404,6 +429,8 @@ public class MainViewModel : ObservableObject
                     DuplicatesVM.DuplicateGroups);
 
                 await _exportService.ExportToJsonAsync(report, sfd.FileName);
+
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
 
                 var res = MessageBox.Show(
                     $"JSON audit dump saved successfully to:\n{sfd.FileName}\n\nWould you like to open it now?",
@@ -418,7 +445,12 @@ public class MainViewModel : ObservableObject
             }
             catch (Exception ex)
             {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
                 MessageBox.Show($"Failed to export JSON: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
             }
         }
     }
@@ -435,10 +467,14 @@ public class MainViewModel : ObservableObject
 
         if (sfd.ShowDialog() == true)
         {
+            var prevCursor = System.Windows.Input.Mouse.OverrideCursor;
             try
             {
+                System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
                 var files = _dbService.GetFilesPaged(0, 10000, sortBy: "size", sortDesc: true);
                 await _exportService.ExportFilesToCsvAsync(files, sfd.FileName);
+
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
 
                 var res = MessageBox.Show(
                     $"Exported {files.Count:N0} files to:\n{sfd.FileName}\n\nWould you like to open it now?",
@@ -453,8 +489,59 @@ public class MainViewModel : ObservableObject
             }
             catch (Exception ex)
             {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
                 MessageBox.Show($"Failed to export CSV: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                System.Windows.Input.Mouse.OverrideCursor = prevCursor;
+            }
         }
+    }
+
+    private async Task ExportDuplicatesCsvAsync()
+    {
+        if (IsScanning) return;
+
+        if (DuplicatesVM.DuplicateGroups.Count == 0)
+        {
+            var prompt = MessageBox.Show(
+                "Duplicate candidate groups have not been analyzed yet. Would you like to run duplicate analysis now?",
+                "Duplicate Analysis Required",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (prompt == MessageBoxResult.Yes)
+            {
+                var prevCursor = System.Windows.Input.Mouse.OverrideCursor;
+                try
+                {
+                    System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+                    await DuplicatesVM.RunAnalysisAsync();
+                }
+                finally
+                {
+                    System.Windows.Input.Mouse.OverrideCursor = prevCursor;
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        if (DuplicatesVM.DuplicateGroups.Count == 0)
+        {
+            MessageBox.Show("No duplicate files found in the current index.", "No Duplicates", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        await DuplicatesVM.ExportCsvAsync();
+    }
+
+    private async Task ExportJunkCsvAsync()
+    {
+        if (IsScanning) return;
+        await JunkCleanerVM.ExportCsvAsync();
     }
 }

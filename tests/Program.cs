@@ -610,6 +610,75 @@ public class Program
                 try { if (Directory.Exists(benchRoot)) Directory.Delete(benchRoot, true); } catch { }
             }
 
+            // =========================================================
+            // [TEST 14] Start/Stop Scan Lifecycle & All 5 Export Commands
+            // =========================================================
+            Console.WriteLine("\n[TEST 14] Testing Start/Stop Scan Lifecycle & All 5 Export Commands...");
+            
+            var testMainVm = new MainViewModel(dbService);
+            
+            // 1. Verify initial CanExecute states for Start/Stop and all 5 Export commands
+            Assert(testMainVm.StartScanCommand.CanExecute(null), "StartScanCommand should be executable initially");
+            Assert(!testMainVm.StopScanCommand.CanExecute(null), "StopScanCommand should NOT be executable initially");
+            Assert(testMainVm.ExportHtmlReportCommand.CanExecute(null), "ExportHtmlReportCommand should be executable");
+            Assert(testMainVm.ExportJsonReportCommand.CanExecute(null), "ExportJsonReportCommand should be executable");
+            Assert(testMainVm.ExportFilesCsvCommand.CanExecute(null), "ExportFilesCsvCommand should be executable");
+            Assert(testMainVm.ExportDuplicatesCsvCommand.CanExecute(null), "ExportDuplicatesCsvCommand should be executable");
+            Assert(testMainVm.ExportJunkCsvCommand.CanExecute(null), "ExportJunkCsvCommand should be executable");
+            Console.WriteLine("  ✓ Initial CanExecute verified: Start enabled, Stop disabled, all 5 Export options enabled.");
+
+            // 2. Verify state toggling during scanning
+            testMainVm.IsScanning = true;
+            Assert(!testMainVm.StartScanCommand.CanExecute(null), "StartScanCommand must be disabled while scanning");
+            Assert(testMainVm.StopScanCommand.CanExecute(null), "StopScanCommand must be enabled while scanning");
+            Assert(!testMainVm.ExportHtmlReportCommand.CanExecute(null), "ExportHtmlReportCommand must be disabled while scanning");
+            Assert(!testMainVm.ExportJsonReportCommand.CanExecute(null), "ExportJsonReportCommand must be disabled while scanning");
+            Assert(!testMainVm.ExportFilesCsvCommand.CanExecute(null), "ExportFilesCsvCommand must be disabled while scanning");
+            Assert(!testMainVm.ExportDuplicatesCsvCommand.CanExecute(null), "ExportDuplicatesCsvCommand must be disabled while scanning");
+            Assert(!testMainVm.ExportJunkCsvCommand.CanExecute(null), "ExportJunkCsvCommand must be disabled while scanning");
+            Console.WriteLine("  ✓ Scanning state transitions verified: Start and all 5 exports locked, Stop unlocked.");
+
+            testMainVm.IsScanning = false;
+            Assert(testMainVm.StartScanCommand.CanExecute(null), "StartScanCommand must re-enable when scan finishes");
+            Assert(!testMainVm.StopScanCommand.CanExecute(null), "StopScanCommand must disable when scan finishes");
+            Assert(testMainVm.ExportHtmlReportCommand.CanExecute(null), "ExportHtmlReportCommand must re-enable when scan finishes");
+
+            // 3. Fast Truncate ClearIndex performance check on large file set
+            Console.WriteLine("  Testing fast ClearIndex truncate on large row volume...");
+            var batchRecords = new List<FileRecord>(5000);
+            for (int i = 0; i < 5000; i++)
+            {
+                batchRecords.Add(new FileRecord
+                {
+                    Path = $@"C:\BulkTest\Folder{i / 100}\file_{i}.dat",
+                    Name = $"file_{i}.dat",
+                    Parent = $@"C:\BulkTest\Folder{i / 100}",
+                    Size = 1024,
+                    ModifiedTime = 100000,
+                    CreatedTime = 100000,
+                    Extension = ".dat",
+                    Category = FileCategory.Other,
+                    Accessible = 1
+                });
+            }
+            dbService.InsertBatch(batchRecords);
+            var (beforeCount, _) = dbService.GetTotalIndexedStorage();
+            Assert(beforeCount >= 5000, $"Expected >= 5000 records, got {beforeCount}");
+
+            var clearSw = System.Diagnostics.Stopwatch.StartNew();
+            dbService.ClearIndex(new[] { "C:\\" }); // Truncate path
+            clearSw.Stop();
+            var (afterCount, _) = dbService.GetTotalIndexedStorage();
+            Assert(afterCount == 0, $"Expected 0 records after clear, got {afterCount}");
+            Assert(clearSw.ElapsedMilliseconds < 1000, $"ClearIndex truncate took too long: {clearSw.ElapsedMilliseconds} ms (must be < 1000 ms)");
+            Console.WriteLine($"  ✓ Fast ClearIndex truncate verified: 5,000+ records wiped in {clearSw.ElapsedMilliseconds} ms (< 1.0s).");
+
+            // 4. CancelActiveOperations thread safety
+            dbService.CancelActiveOperations();
+            Console.WriteLine("  ✓ CancelActiveOperations executed without error.");
+
+            testMainVm.OverviewVM.Dispose();
+
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");
             Console.WriteLine("=================================================");

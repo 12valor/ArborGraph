@@ -223,8 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (wizardLaunchApp && wizardLaunchApp.checked) {
                     showToast('Launching DiskScope (Downloading binary)...');
                     const link = document.createElement('a');
-                    link.href = 'downloads/DiskScope.exe';
-                    link.download = 'DiskScope.exe';
+                    link.href = 'https://github.com/12valor/DiskScope/releases/latest/download/DiskScope.exe';
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);

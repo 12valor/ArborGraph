@@ -8,3 +8,4 @@ dist/
 DiskScope.exe
 PrismDrive.exe
 site/downloads/
+*.zip

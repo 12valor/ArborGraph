@@ -444,10 +444,14 @@ public class Program
                     var v10 = new PhotoshopView { DataContext = new PhotoshopViewModel(dbService, new FileActionService()) };
                     var v11 = new ScanLogView { DataContext = new ScanLogViewModel() };
 
-                    // 2. Instantiate MainWindow and test switching between every tab
+                    // 2. Instantiate MainWindow via parameterless constructor and with VM
+                    var defaultWin = new MainWindow();
+                    Assert(defaultWin != null, "Default MainWindow() parameterless constructor failed to instantiate");
+                    defaultWin.Close();
+
                     var mainVm = new MainViewModel(dbService);
                     var win = new MainWindow(mainVm);
-                    Assert(win != null, "MainWindow failed to instantiate");
+                    Assert(win != null, "MainWindow(mainVm) failed to instantiate");
 
                     string[] allTabs = [
                         "Overview", "Analytics", "LargestFiles", "LargestFolders",
@@ -455,35 +459,64 @@ public class Program
                         "Treemap", "Photoshop", "ScanLog"
                     ];
 
+                    // 2a. Visit every tab from main screen
                     foreach (var tab in allTabs)
                     {
-                        Console.WriteLine($"    [DEBUG] Starting tab navigation to: {tab}...");
-                        Console.WriteLine($"    [DEBUG] Calling NavigateCommand for {tab}...");
                         mainVm.NavigateCommand.Execute(tab);
-                        Console.WriteLine($"    [DEBUG] NavigateCommand completed for {tab}. Measuring window...");
                         win.Measure(new Size(1200, 800));
-                        Console.WriteLine($"    [DEBUG] Arranging window for {tab}...");
                         win.Arrange(new Rect(0, 0, 1200, 800));
-                        Console.WriteLine($"    [DEBUG] Updating layout for {tab}...");
                         win.UpdateLayout();
-                        Console.WriteLine($"    [DEBUG] Finished tab navigation to: {tab} successfully.");
                     }
 
-                    // Test repeated rapid switching
-                    for (int i = 0; i < 3; i++)
+                    // 2b. Specifically test problematic tabs at least 10 times each
+                    string[] heavyTabs = ["LargestFolders", "Treemap", "Analytics", "FileTypes", "OldFiles"];
+                    foreach (var tab in heavyTabs)
                     {
-                        foreach (var tab in allTabs)
+                        for (int k = 0; k < 12; k++)
                         {
                             mainVm.NavigateCommand.Execute(tab);
                             win.UpdateLayout();
+                            mainVm.NavigateCommand.Execute("Overview");
+                            win.UpdateLayout();
                         }
                     }
+
+                    // 2c. Back-and-forth switching between multiple tabs
+                    for (int i = 0; i < allTabs.Length - 1; i++)
+                    {
+                        mainVm.NavigateCommand.Execute(allTabs[i]);
+                        win.UpdateLayout();
+                        mainVm.NavigateCommand.Execute(allTabs[i + 1]);
+                        win.UpdateLayout();
+                        mainVm.NavigateCommand.Execute(allTabs[i]);
+                        win.UpdateLayout();
+                    }
+
+                    // 2d. Rapid switching stress test (50 iterations)
+                    for (int i = 0; i < 50; i++)
+                    {
+                        string tab = allTabs[i % allTabs.Length];
+                        mainVm.NavigateCommand.Execute(tab);
+                        win.UpdateLayout();
+                    }
+
+                    // 2e. Navigation while scanning is actively running
+                    mainVm.IsScanning = true;
+                    for (int i = 0; i < allTabs.Length; i++)
+                    {
+                        mainVm.NavigateCommand.Execute(allTabs[i]);
+                        win.UpdateLayout();
+                    }
+                    mainVm.IsScanning = false;
+                    mainVm.NavigateCommand.Execute("Overview");
+                    win.UpdateLayout();
 
                     // 3. Gracefully shutdown dispatcher
                     app.Dispatcher.InvokeShutdown();
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[UI EXCEPTION CAUGHT]: {ex}");
                     uiException = ex;
                 }
             });
@@ -493,7 +526,7 @@ public class Program
 
             if (uiException != null)
             {
-                throw new Exception($"UI View Instantiation Failed: {uiException.Message}", uiException);
+                throw new Exception($"UI View Instantiation Failed:\n{uiException}");
             }
             Console.WriteLine("  ✓ All 11 WPF Views and MainViewModel tabs instantiated successfully without XAML/StaticResource errors.");
 

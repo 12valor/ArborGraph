@@ -9,11 +9,7 @@
         Title="DiskScope — Windows Storage Analyzer" 
         Height="840" Width="1320" MinHeight="700" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BrushBgCanvas}">
-
-    <Window.DataContext>
-        <vm:MainViewModel/>
-    </Window.DataContext>
+        d:DataContext="{d:DesignInstance vm:MainViewModel}">
 
     <Grid>
         <Grid.RowDefinitions>

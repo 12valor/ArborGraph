@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using DiskScope.ViewModels;
 
 namespace DiskScope.Views;
 
@@ -10,14 +11,15 @@ public partial class MainWindow : Window
         "DiskScope",
         "app.log");
 
-    public MainWindow(MainViewModel? vm = null)
+    public MainWindow() : this(null)
+    {
+    }
+
+    public MainWindow(MainViewModel? vm)
     {
         Log("MainWindow constructor begin.");
         InitializeComponent();
-        if (vm != null)
-        {
-            DataContext = vm;
-        }
+        DataContext = vm ?? new MainViewModel();
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
         Closed += MainWindow_Closed;

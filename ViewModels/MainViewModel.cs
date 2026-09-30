@@ -25,7 +25,11 @@ public class MainViewModel : ObservableObject
     private CancellationTokenSource? _scanCts;
     private string _customScanPath = string.Empty;
 
-    public MainViewModel(DatabaseService? dbService = null)
+    public MainViewModel() : this(null)
+    {
+    }
+
+    public MainViewModel(DatabaseService? dbService)
     {
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();

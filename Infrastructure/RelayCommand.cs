@@ -30,6 +30,14 @@ public class RelayCommand : ICommand
 
     public void RaiseCanExecuteChanged()
     {
-        CommandManager.InvalidateRequerySuggested();
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher != null && !dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(new Action(CommandManager.InvalidateRequerySuggested));
+        }
+        else
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 }

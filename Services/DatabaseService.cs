@@ -76,9 +76,12 @@ public class DatabaseService : IDisposable
 
                 CREATE INDEX IF NOT EXISTS idx_files_size ON files(size DESC);
                 CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent);
+                CREATE INDEX IF NOT EXISTS idx_files_parent_size ON files(parent, size);
                 CREATE INDEX IF NOT EXISTS idx_files_modified ON files(modified_time DESC);
+                CREATE INDEX IF NOT EXISTS idx_files_modified_size ON files(modified_time, size);
                 CREATE INDEX IF NOT EXISTS idx_files_extension ON files(extension);
                 CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
+                CREATE INDEX IF NOT EXISTS idx_files_category_size ON files(category, size);
                 CREATE INDEX IF NOT EXISTS idx_files_name ON files(name);
 
                 CREATE TABLE IF NOT EXISTS scan_metadata (
@@ -173,9 +176,12 @@ public class DatabaseService : IDisposable
 
                     DROP INDEX IF EXISTS idx_files_size;
                     DROP INDEX IF EXISTS idx_files_parent;
+                    DROP INDEX IF EXISTS idx_files_parent_size;
                     DROP INDEX IF EXISTS idx_files_modified;
+                    DROP INDEX IF EXISTS idx_files_modified_size;
                     DROP INDEX IF EXISTS idx_files_extension;
                     DROP INDEX IF EXISTS idx_files_category;
+                    DROP INDEX IF EXISTS idx_files_category_size;
                     DROP INDEX IF EXISTS idx_files_name;
                 ";
                 cmd.ExecuteNonQuery();
@@ -198,9 +204,12 @@ public class DatabaseService : IDisposable
                 cmd.CommandText = @"
                     CREATE INDEX IF NOT EXISTS idx_files_size ON files(size DESC);
                     CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent);
+                    CREATE INDEX IF NOT EXISTS idx_files_parent_size ON files(parent, size);
                     CREATE INDEX IF NOT EXISTS idx_files_modified ON files(modified_time DESC);
+                    CREATE INDEX IF NOT EXISTS idx_files_modified_size ON files(modified_time, size);
                     CREATE INDEX IF NOT EXISTS idx_files_extension ON files(extension);
                     CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
+                    CREATE INDEX IF NOT EXISTS idx_files_category_size ON files(category, size);
                     CREATE INDEX IF NOT EXISTS idx_files_name ON files(name);
 
                     PRAGMA synchronous = NORMAL;

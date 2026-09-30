@@ -265,7 +265,7 @@ public class AnalyticsViewModel : ObservableObject
 
     public void RefreshData()
     {
-        Task.Run(async () => await RefreshDataAsync());
+        _ = RefreshDataAsync();
     }
 
     public async Task RefreshDataAsync()
@@ -275,7 +275,7 @@ public class AnalyticsViewModel : ObservableObject
 
         try
         {
-            await Task.Run(() =>
+            var data = await Task.Run(() =>
             {
                 // 1. Storage Usage
                 long totalD = 0, usedD = 0, freeD = 0;
@@ -297,14 +297,14 @@ public class AnalyticsViewModel : ObservableObject
                 long catSumBytes = catMap.Values.Sum(v => v.TotalSize);
                 foreach (var categoryName in FileCategory.AllCategories)
                 {
-                    if (catMap.TryGetValue(categoryName, out var data))
+                    if (catMap.TryGetValue(categoryName, out var d))
                     {
-                        double pct = catSumBytes > 0 ? (double)data.TotalSize / catSumBytes * 100.0 : 0.0;
+                        double pct = catSumBytes > 0 ? (double)d.TotalSize / catSumBytes * 100.0 : 0.0;
                         catList.Add(new FileTypeItem
                         {
                             Category = categoryName,
-                            FileCount = data.Count,
-                            LogicalBytes = data.TotalSize,
+                            FileCount = d.Count,
+                            LogicalBytes = d.TotalSize,
                             StoragePercentage = pct
                         });
                     }
@@ -343,83 +343,82 @@ public class AnalyticsViewModel : ObservableObject
                 // 8. Reclaimable Storage
                 var (reclaimItems, totalReclaim) = _dbService.GetReclaimableStorageBreakdown();
 
-                // Dispatch to UI Thread
-                Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    TotalDriveBytes = totalD;
-                    UsedDriveBytes = usedD;
-                    FreeDriveBytes = freeD;
-                    IndexedBytes = totalIndexedBytes;
-                    IndexedFilesCount = totalIndexedFiles;
-
-                    OverallPercentUsed = totalD > 0 ? (double)usedD / totalD * 100.0 : 0.0;
-                    IndexedPercentOfUsed = usedD > 0 ? (double)totalIndexedBytes / usedD * 100.0 : 0.0;
-
-                    OnPropertyChanged(nameof(FormattedTotalDrive));
-                    OnPropertyChanged(nameof(FormattedUsedDrive));
-                    OnPropertyChanged(nameof(FormattedFreeDrive));
-                    OnPropertyChanged(nameof(FormattedIndexedBytes));
-                    OnPropertyChanged(nameof(FormattedIndexedFiles));
-
-                    DuplicateGroupsCount = dupGroups;
-                    DuplicateFilesCount = dupFiles;
-                    DuplicateWastedBytes = dupWasted;
-
-                    PsdCount = psStats.PsdCount;
-                    PsbCount = psStats.PsbCount;
-                    OtherPhotoshopCount = psStats.OtherCount;
-                    PhotoshopTotalBytes = psStats.TotalBytes;
-                    AdobeCacheFilesCount = cacheFiles;
-                    AdobeCacheTotalBytes = cacheBytes;
-
-                    TotalReclaimableBytes = totalReclaim;
-                    ReclaimablePercentOfIndexed = totalIndexedBytes > 0
-                        ? Math.Min(100.0, (double)totalReclaim / totalIndexedBytes * 100.0)
-                        : 0.0;
-
-                    // Collections
-                    ScanHistory.Clear();
-                    foreach (var h in history.OrderByDescending(x => x.Id))
-                    {
-                        ScanHistory.Add(h);
-                    }
-
-                    CategoryBreakdown.Clear();
-                    foreach (var c in catList)
-                    {
-                        CategoryBreakdown.Add(c);
-                    }
-
-                    TopFolders.Clear();
-                    foreach (var f in rawFolders)
-                    {
-                        TopFolders.Add(f);
-                    }
-
-                    AgeBuckets.Clear();
-                    foreach (var a in ageList)
-                    {
-                        AgeBuckets.Add(a);
-                    }
-
-                    ReclaimableBreakdown.Clear();
-                    foreach (var r in reclaimItems)
-                    {
-                        ReclaimableBreakdown.Add(r);
-                    }
-
-                    LargestPhotoshopFiles.Clear();
-                    foreach (var p in largestPs)
-                    {
-                        LargestPhotoshopFiles.Add(p);
-                    }
-
-                    // Build Growth Points for Chart
-                    BuildGrowthChart(history, totalIndexedBytes, totalIndexedFiles);
-
-                    LastRefreshedText = $"Updated {DateTime.Now:HH:mm:ss}";
-                });
+                return (totalD, usedD, freeD, totalIndexedFiles, totalIndexedBytes, history, catList, rawFolders, ageList, dupGroups, dupFiles, dupWasted, psStats, cacheFiles, cacheBytes, largestPs, reclaimItems, totalReclaim);
             });
+
+            // Resumes safely on the UI thread
+            TotalDriveBytes = data.totalD;
+            UsedDriveBytes = data.usedD;
+            FreeDriveBytes = data.freeD;
+            IndexedBytes = data.totalIndexedBytes;
+            IndexedFilesCount = data.totalIndexedFiles;
+
+            OverallPercentUsed = data.totalD > 0 ? (double)data.usedD / data.totalD * 100.0 : 0.0;
+            IndexedPercentOfUsed = data.usedD > 0 ? (double)data.totalIndexedBytes / data.usedD * 100.0 : 0.0;
+
+            OnPropertyChanged(nameof(FormattedTotalDrive));
+            OnPropertyChanged(nameof(FormattedUsedDrive));
+            OnPropertyChanged(nameof(FormattedFreeDrive));
+            OnPropertyChanged(nameof(FormattedIndexedBytes));
+            OnPropertyChanged(nameof(FormattedIndexedFiles));
+
+            DuplicateGroupsCount = data.dupGroups;
+            DuplicateFilesCount = data.dupFiles;
+            DuplicateWastedBytes = data.dupWasted;
+
+            PsdCount = data.psStats.PsdCount;
+            PsbCount = data.psStats.PsbCount;
+            OtherPhotoshopCount = data.psStats.OtherCount;
+            PhotoshopTotalBytes = data.psStats.TotalBytes;
+            AdobeCacheFilesCount = data.cacheFiles;
+            AdobeCacheTotalBytes = data.cacheBytes;
+
+            TotalReclaimableBytes = data.totalReclaim;
+            ReclaimablePercentOfIndexed = data.totalIndexedBytes > 0
+                ? Math.Min(100.0, (double)data.totalReclaim / data.totalIndexedBytes * 100.0)
+                : 0.0;
+
+            // Collections
+            ScanHistory.Clear();
+            foreach (var h in data.history.OrderByDescending(x => x.Id))
+            {
+                ScanHistory.Add(h);
+            }
+
+            CategoryBreakdown.Clear();
+            foreach (var c in data.catList)
+            {
+                CategoryBreakdown.Add(c);
+            }
+
+            TopFolders.Clear();
+            foreach (var f in data.rawFolders)
+            {
+                TopFolders.Add(f);
+            }
+
+            AgeBuckets.Clear();
+            foreach (var a in data.ageList)
+            {
+                AgeBuckets.Add(a);
+            }
+
+            ReclaimableBreakdown.Clear();
+            foreach (var r in data.reclaimItems)
+            {
+                ReclaimableBreakdown.Add(r);
+            }
+
+            LargestPhotoshopFiles.Clear();
+            foreach (var p in data.largestPs)
+            {
+                LargestPhotoshopFiles.Add(p);
+            }
+
+            // Build Growth Points for Chart
+            BuildGrowthChart(data.history, data.totalIndexedBytes, data.totalIndexedFiles);
+
+            LastRefreshedText = $"Updated {DateTime.Now:HH:mm:ss}";
         }
         catch (Exception ex)
         {

@@ -23,6 +23,8 @@ public class FileTypesViewModel : ObservableObject
     private long _totalIndexedBytes;
     private long _totalIndexedFiles;
 
+    private bool _isLoading;
+
     public FileTypesViewModel(DatabaseService dbService)
     {
         _dbService = dbService;
@@ -30,6 +32,12 @@ public class FileTypesViewModel : ObservableObject
     }
 
     public ObservableCollection<FileTypeItem> Categories { get; }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
 
     public long TotalIndexedBytes
     {
@@ -48,9 +56,16 @@ public class FileTypesViewModel : ObservableObject
 
     public void RefreshData()
     {
+        _ = RefreshDataAsync();
+    }
+
+    public async Task RefreshDataAsync()
+    {
+        if (IsLoading) return;
+        IsLoading = true;
         try
         {
-            var breakdown = _dbService.GetCategoryBreakdown();
+            var breakdown = await Task.Run(() => _dbService.GetCategoryBreakdown());
             Categories.Clear();
 
             long sumBytes = breakdown.Values.Sum(v => v.TotalSize);
@@ -86,6 +101,13 @@ public class FileTypesViewModel : ObservableObject
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FileTypes RefreshData error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

@@ -19,6 +19,8 @@ public class PhotoshopViewModel : ObservableObject
     private long _psbBytes;
     private FileRecord? _selectedFile;
 
+    private bool _isLoading;
+
     public PhotoshopViewModel(DatabaseService dbService, FileActionService fileActionService)
     {
         _dbService = dbService;
@@ -29,10 +31,16 @@ public class PhotoshopViewModel : ObservableObject
         OpenFileLocationCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.OpenFileLocation(SelectedFile.Path); });
         CopyPathCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.CopyPath(SelectedFile.Path); });
         ShowPropertiesCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.ShowProperties(SelectedFile.Path); });
-        RefreshCommand = new RelayCommand(_ => RefreshData());
+        RefreshCommand = new RelayCommand(async _ => await RefreshDataAsync());
     }
 
     public ObservableCollection<FileRecord> PhotoshopFiles { get; }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
 
     public FileRecord? SelectedFile
     {
@@ -88,22 +96,33 @@ public class PhotoshopViewModel : ObservableObject
 
     public void RefreshData()
     {
+        _ = RefreshDataAsync();
+    }
+
+    public async Task RefreshDataAsync()
+    {
+        if (IsLoading) return;
+        IsLoading = true;
         try
         {
-            var (psdCnt, psbCnt, otherCnt, totalBytes, psdBytes, psbBytes) = _dbService.GetPhotoshopStats();
+            var (stats, files) = await Task.Run(() =>
+            {
+                var s = _dbService.GetPhotoshopStats();
+                var f = _dbService.GetPhotoshopFiles(300);
+                return (s, f);
+            });
 
-            PsdCount = psdCnt;
-            PsbCount = psbCnt;
-            OtherCount = otherCnt;
-            TotalPhotoshopBytes = totalBytes;
-            PsdBytes = psdBytes;
-            PsbBytes = psbBytes;
+            PsdCount = stats.PsdCount;
+            PsbCount = stats.PsbCount;
+            OtherCount = stats.OtherCount;
+            TotalPhotoshopBytes = stats.TotalBytes;
+            PsdBytes = stats.PsdBytes;
+            PsbBytes = stats.PsbBytes;
 
             OnPropertyChanged(nameof(FormattedTotalBytes));
             OnPropertyChanged(nameof(FormattedPsdBytes));
             OnPropertyChanged(nameof(FormattedPsbBytes));
 
-            var files = _dbService.GetPhotoshopFiles(300);
             PhotoshopFiles.Clear();
             foreach (var item in files)
             {
@@ -115,6 +134,13 @@ public class PhotoshopViewModel : ObservableObject
                 SelectedFile = PhotoshopFiles.FirstOrDefault();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Photoshop RefreshData error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

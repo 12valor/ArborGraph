@@ -10,10 +10,14 @@ public partial class MainWindow : Window
         "DiskScope",
         "app.log");
 
-    public MainWindow()
+    public MainWindow(MainViewModel? vm = null)
     {
         Log("MainWindow constructor begin.");
         InitializeComponent();
+        if (vm != null)
+        {
+            DataContext = vm;
+        }
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
         Closed += MainWindow_Closed;

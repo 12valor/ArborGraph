@@ -13,6 +13,8 @@ public class LargestFoldersViewModel : ObservableObject
     private DirectoryRecord? _selectedFolder;
     private long _totalIndexedBytes;
 
+    private bool _isLoading;
+
     public LargestFoldersViewModel(DatabaseService dbService, FileActionService fileActionService)
     {
         _dbService = dbService;
@@ -21,10 +23,16 @@ public class LargestFoldersViewModel : ObservableObject
 
         OpenFolderCommand = new RelayCommand(_ => { if (SelectedFolder != null) _fileActionService.OpenFileLocation(SelectedFolder.Path); });
         CopyFolderPathCommand = new RelayCommand(_ => { if (SelectedFolder != null) _fileActionService.CopyPath(SelectedFolder.Path); });
-        RefreshCommand = new RelayCommand(_ => RefreshData());
+        RefreshCommand = new RelayCommand(async _ => await RefreshDataAsync());
     }
 
     public ObservableCollection<DirectoryRecord> Folders { get; }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
 
     public DirectoryRecord? SelectedFolder
     {
@@ -44,6 +52,13 @@ public class LargestFoldersViewModel : ObservableObject
 
     public void RefreshData(long totalBytes = 0)
     {
+        _ = RefreshDataAsync(totalBytes);
+    }
+
+    public async Task RefreshDataAsync(long totalBytes = 0)
+    {
+        if (IsLoading) return;
+        IsLoading = true;
         try
         {
             if (totalBytes > 0)
@@ -51,7 +66,7 @@ public class LargestFoldersViewModel : ObservableObject
                 TotalIndexedBytes = totalBytes;
             }
 
-            var list = _dbService.GetLargestFolders(150);
+            var list = await Task.Run(() => _dbService.GetLargestFolders(150));
             Folders.Clear();
 
             long maxFolderSize = Math.Max(1L, list.Count > 0 ? list.Max(f => f.Size) : 1L);
@@ -67,6 +82,13 @@ public class LargestFoldersViewModel : ObservableObject
                 SelectedFolder = Folders.FirstOrDefault();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LargestFolders RefreshData error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

@@ -444,9 +444,40 @@ public class Program
                     var v10 = new PhotoshopView { DataContext = new PhotoshopViewModel(dbService, new FileActionService()) };
                     var v11 = new ScanLogView { DataContext = new ScanLogViewModel() };
 
-                    // 2. Instantiate MainWindow to verify main shell and ContentControl DataTemplates
-                    var win = new MainWindow();
+                    // 2. Instantiate MainWindow and test switching between every tab
+                    var mainVm = new MainViewModel(dbService);
+                    var win = new MainWindow(mainVm);
                     Assert(win != null, "MainWindow failed to instantiate");
+
+                    string[] allTabs = [
+                        "Overview", "Analytics", "LargestFiles", "LargestFolders",
+                        "FileTypes", "OldFiles", "Duplicates", "JunkCleaner",
+                        "Treemap", "Photoshop", "ScanLog"
+                    ];
+
+                    foreach (var tab in allTabs)
+                    {
+                        Console.WriteLine($"    [DEBUG] Starting tab navigation to: {tab}...");
+                        Console.WriteLine($"    [DEBUG] Calling NavigateCommand for {tab}...");
+                        mainVm.NavigateCommand.Execute(tab);
+                        Console.WriteLine($"    [DEBUG] NavigateCommand completed for {tab}. Measuring window...");
+                        win.Measure(new Size(1200, 800));
+                        Console.WriteLine($"    [DEBUG] Arranging window for {tab}...");
+                        win.Arrange(new Rect(0, 0, 1200, 800));
+                        Console.WriteLine($"    [DEBUG] Updating layout for {tab}...");
+                        win.UpdateLayout();
+                        Console.WriteLine($"    [DEBUG] Finished tab navigation to: {tab} successfully.");
+                    }
+
+                    // Test repeated rapid switching
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach (var tab in allTabs)
+                        {
+                            mainVm.NavigateCommand.Execute(tab);
+                            win.UpdateLayout();
+                        }
+                    }
 
                     // 3. Gracefully shutdown dispatcher
                     app.Dispatcher.InvokeShutdown();

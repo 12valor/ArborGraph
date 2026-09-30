@@ -36,7 +36,7 @@ public class TreemapViewModel : ObservableObject
         NavigateUpCommand = new RelayCommand(_ => NavigateUp(), _ => !string.IsNullOrEmpty(CurrentPath));
         OpenFileLocationCommand = new RelayCommand(_ => OpenFileLocation(), _ => SelectedNode != null);
         CopyPathCommand = new RelayCommand(_ => CopyPath(), _ => SelectedNode != null);
-        RefreshCommand = new RelayCommand(_ => LoadCurrentLevel());
+        RefreshCommand = new RelayCommand(async _ => await LoadCurrentLevelAsync());
 
         UpdateBreadcrumbs();
     }
@@ -142,7 +142,7 @@ public class TreemapViewModel : ObservableObject
 
     public void RefreshData()
     {
-        LoadCurrentLevel();
+        _ = LoadCurrentLevelAsync();
     }
 
     public void UpdateCanvasDimensions(double width, double height)
@@ -155,12 +155,15 @@ public class TreemapViewModel : ObservableObject
         }
     }
 
-    private void LoadCurrentLevel()
+    private async Task LoadCurrentLevelAsync()
     {
+        if (IsLoading) return;
         IsLoading = true;
         try
         {
-            _currentItems = _dbService.GetTreemapItems(string.IsNullOrEmpty(CurrentPath) ? null : CurrentPath, 150);
+            string? path = string.IsNullOrEmpty(CurrentPath) ? null : CurrentPath;
+            var items = await Task.Run(() => _dbService.GetTreemapItems(path, 150));
+            _currentItems = items;
             TotalVisibleBytes = _currentItems.Sum(i => i.Size);
             TotalVisibleItems = _currentItems.Count;
             RecomputeLayout();
@@ -202,7 +205,7 @@ public class TreemapViewModel : ObservableObject
         {
             CurrentPath = node.Item.Path;
             SelectedNode = null;
-            LoadCurrentLevel();
+            _ = LoadCurrentLevelAsync();
         }
         else
         {
@@ -220,7 +223,7 @@ public class TreemapViewModel : ObservableObject
         if (crumb == null) return;
         CurrentPath = crumb.FullPath;
         SelectedNode = null;
-        LoadCurrentLevel();
+        _ = LoadCurrentLevelAsync();
     }
 
     private void NavigateUp()
@@ -230,7 +233,7 @@ public class TreemapViewModel : ObservableObject
         string? parent = Path.GetDirectoryName(CurrentPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         CurrentPath = parent ?? string.Empty;
         SelectedNode = null;
-        LoadCurrentLevel();
+        _ = LoadCurrentLevelAsync();
     }
 
     private void UpdateBreadcrumbs()

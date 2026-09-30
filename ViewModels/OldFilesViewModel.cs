@@ -13,6 +13,8 @@ public class OldFilesViewModel : ObservableObject
     private FileRecord? _selectedFile;
     private int _selectedDays = 180;
 
+    private bool _isLoading;
+
     public OldFilesViewModel(DatabaseService dbService, FileActionService fileActionService)
     {
         _dbService = dbService;
@@ -23,10 +25,16 @@ public class OldFilesViewModel : ObservableObject
         OpenFileLocationCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.OpenFileLocation(SelectedFile.Path); });
         CopyPathCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.CopyPath(SelectedFile.Path); });
         ShowPropertiesCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.ShowProperties(SelectedFile.Path); });
-        RefreshCommand = new RelayCommand(_ => RefreshData());
+        RefreshCommand = new RelayCommand(async _ => await RefreshDataAsync());
     }
 
     public ObservableCollection<FileRecord> OldFiles { get; }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
 
     public FileRecord? SelectedFile
     {
@@ -54,9 +62,17 @@ public class OldFilesViewModel : ObservableObject
 
     public void RefreshData()
     {
+        _ = RefreshDataAsync();
+    }
+
+    public async Task RefreshDataAsync()
+    {
+        if (IsLoading) return;
+        IsLoading = true;
         try
         {
-            var list = _dbService.GetOldFiles(_selectedDays, 300);
+            int days = _selectedDays;
+            var list = await Task.Run(() => _dbService.GetOldFiles(days, 300));
             OldFiles.Clear();
             foreach (var item in list)
             {
@@ -68,6 +84,13 @@ public class OldFilesViewModel : ObservableObject
                 SelectedFile = OldFiles.FirstOrDefault();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"OldFiles RefreshData error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

@@ -145,25 +145,41 @@ public class LargestFilesViewModel : ObservableObject
     public ICommand PrevPageCommand { get; }
     public ICommand RefreshCommand { get; }
 
+    private bool _isLoading;
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
     public void RefreshData()
     {
+        _ = RefreshDataAsync();
+    }
+
+    public async Task RefreshDataAsync()
+    {
+        if (IsLoading) return;
+        IsLoading = true;
         try
         {
             long minBytes = ParseMinSize(_selectedMinSizeOption);
-            int offset = Math.Max(0, (CurrentPage - 1) * PageSize);
+            int page = CurrentPage;
+            int offset = Math.Max(0, (page - 1) * PageSize);
+            string cat = _selectedCategory;
+            string search = _searchText;
+            string sort = _sortBy;
+            bool desc = _sortDesc;
 
-            TotalMatchingFiles = _dbService.GetFilteredFileCount(minBytes, long.MaxValue, _selectedCategory, _searchText);
+            var (count, list) = await Task.Run(() =>
+            {
+                long c = _dbService.GetFilteredFileCount(minBytes, long.MaxValue, cat, search);
+                var l = _dbService.GetFilesPaged(offset, PageSize, minBytes, long.MaxValue, cat, search, sort, desc);
+                return (c, l);
+            });
 
-            var list = _dbService.GetFilesPaged(
-                offset,
-                PageSize,
-                minBytes,
-                long.MaxValue,
-                _selectedCategory,
-                _searchText,
-                _sortBy,
-                _sortDesc);
-
+            TotalMatchingFiles = count;
             Files.Clear();
             foreach (var item in list)
             {
@@ -179,7 +195,14 @@ public class LargestFilesViewModel : ObservableObject
             (PrevPageCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LargestFiles RefreshData error: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     public async Task ExportCsvAsync()

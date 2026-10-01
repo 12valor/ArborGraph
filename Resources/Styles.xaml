@@ -61,6 +61,9 @@
         </Setter>
     </Style>
 
+    <!-- Secondary Button (Alias for ActionButtonStyle) -->
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}"/>
+
     <!-- Primary Windows Accent Button -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
         <Setter Property="Background" Value="{StaticResource BrushAccent}"/>

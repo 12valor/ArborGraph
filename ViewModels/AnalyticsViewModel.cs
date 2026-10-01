@@ -68,6 +68,10 @@ public class AnalyticsViewModel : ObservableObject
         OpenFileLocationCommand = new RelayCommand(param => { if (param is string p) _fileActionService.OpenFileLocation(p); });
         CopyPathCommand = new RelayCommand(param => { if (param is string p) _fileActionService.CopyPath(p); });
         ShowPropertiesCommand = new RelayCommand(param => { if (param is string p) _fileActionService.ShowProperties(p); });
+
+        CompareScansCommand = new RelayCommand(_ => RunComparison(), _ => SelectedOlderScan != null && SelectedNewerScan != null);
+        ClearScanHistoryCommand = new RelayCommand(_ => ClearAllScanHistory(), _ => ScanHistory.Count > 0);
+        DeleteScanCommand = new RelayCommand(param => { if (param is ScanHistoryItem item) DeleteScan(item); });
     }
 
     public ObservableCollection<ScanHistoryItem> ScanHistory { get; }
@@ -77,6 +81,97 @@ public class AnalyticsViewModel : ObservableObject
     public ObservableCollection<FileAgeBucket> AgeBuckets { get; }
     public ObservableCollection<ReclaimableItem> ReclaimableBreakdown { get; }
     public ObservableCollection<FileRecord> LargestPhotoshopFiles { get; }
+
+    public ScanComparisonResult ComparisonResult { get; } = new();
+
+    private ScanHistoryItem? _selectedOlderScan;
+    private ScanHistoryItem? _selectedNewerScan;
+
+    public ScanHistoryItem? SelectedOlderScan
+    {
+        get => _selectedOlderScan;
+        set
+        {
+            if (SetProperty(ref _selectedOlderScan, value))
+            {
+                RunComparison();
+                (CompareScansCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public ScanHistoryItem? SelectedNewerScan
+    {
+        get => _selectedNewerScan;
+        set
+        {
+            if (SetProperty(ref _selectedNewerScan, value))
+            {
+                RunComparison();
+                (CompareScansCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public ICommand CompareScansCommand { get; }
+    public ICommand ClearScanHistoryCommand { get; }
+    public ICommand DeleteScanCommand { get; }
+
+    private void RunComparison()
+    {
+        if (SelectedOlderScan == null || SelectedNewerScan == null)
+        {
+            ComparisonResult.PreviousScan = null;
+            ComparisonResult.CurrentScan = null;
+            ComparisonResult.DeltaBytes = 0;
+            ComparisonResult.WhatGrew.Clear();
+            return;
+        }
+
+        var result = _dbService.CompareScans(SelectedOlderScan.Id, SelectedNewerScan.Id);
+        ComparisonResult.PreviousScan = result.PreviousScan;
+        ComparisonResult.CurrentScan = result.CurrentScan;
+        ComparisonResult.DeltaBytes = result.DeltaBytes;
+        ComparisonResult.WhatGrew.Clear();
+        foreach (var d in result.WhatGrew)
+        {
+            ComparisonResult.WhatGrew.Add(d);
+        }
+    }
+
+    private void ClearAllScanHistory()
+    {
+        var msgResult = MessageBox.Show(
+            "Are you sure you want to clear all recorded scan history? This does not delete any files on your disk.",
+            "Clear Scan History",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (msgResult == MessageBoxResult.Yes)
+        {
+            _dbService.DeleteScanHistory();
+            ScanHistory.Clear();
+            SelectedOlderScan = null;
+            SelectedNewerScan = null;
+            ComparisonResult.WhatGrew.Clear();
+            ComparisonResult.PreviousScan = null;
+            ComparisonResult.CurrentScan = null;
+            ComparisonResult.DeltaBytes = 0;
+            (ClearScanHistoryCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            BuildGrowthChart(new List<ScanHistoryItem>(), IndexedBytes, IndexedFilesCount);
+        }
+    }
+
+    private void DeleteScan(ScanHistoryItem item)
+    {
+        _dbService.DeleteScanHistory(item.Id);
+        ScanHistory.Remove(item);
+        if (SelectedOlderScan?.Id == item.Id) SelectedOlderScan = null;
+        if (SelectedNewerScan?.Id == item.Id) SelectedNewerScan = null;
+        RunComparison();
+        (ClearScanHistoryCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        BuildGrowthChart(ScanHistory.ToList(), IndexedBytes, IndexedFilesCount);
+    }
 
     public bool IsLoading
     {
@@ -378,12 +473,25 @@ public class AnalyticsViewModel : ObservableObject
                 ? Math.Min(100.0, (double)data.totalReclaim / data.totalIndexedBytes * 100.0)
                 : 0.0;
 
-            // Collections
             ScanHistory.Clear();
             foreach (var h in data.history.OrderByDescending(x => x.Id))
             {
                 ScanHistory.Add(h);
             }
+
+            if (ScanHistory.Count >= 2 && (_selectedOlderScan == null || _selectedNewerScan == null))
+            {
+                _selectedNewerScan = ScanHistory[0];
+                _selectedOlderScan = ScanHistory[1];
+                OnPropertyChanged(nameof(SelectedNewerScan));
+                OnPropertyChanged(nameof(SelectedOlderScan));
+                RunComparison();
+            }
+            else if (SelectedOlderScan != null && SelectedNewerScan != null)
+            {
+                RunComparison();
+            }
+            (ClearScanHistoryCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             CategoryBreakdown.Clear();
             foreach (var c in data.catList)

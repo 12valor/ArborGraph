@@ -18,6 +18,7 @@ public class MainViewModel : ObservableObject
     private readonly DuplicateAnalyzer _duplicateAnalyzer;
     private readonly JunkCleanerService _junkCleanerService;
     private readonly ExportService _exportService;
+    private readonly SettingsService _settingsService;
 
     private object _currentView;
     private string _currentTab = "Overview";
@@ -34,24 +35,29 @@ public class MainViewModel : ObservableObject
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();
 
-        _scannerService = new ScannerService(_dbService);
+        _settingsService = new SettingsService();
+        _scannerService = new ScannerService(_dbService, usnService: null, _settingsService);
         _diskService = new DiskService();
         _fileActionService = new FileActionService();
         _duplicateAnalyzer = new DuplicateAnalyzer(_dbService);
         _junkCleanerService = new JunkCleanerService();
         _exportService = new ExportService();
+        var developerStorageService = new DeveloperStorageService(_dbService);
 
         OverviewVM = new OverviewViewModel(_dbService, _diskService);
         AnalyticsVM = new AnalyticsViewModel(_dbService, _diskService, _fileActionService);
+        CleanupCenterVM = new CleanupCenterViewModel(_dbService, developerStorageService, _fileActionService, () => _ = StartScanAsync());
+        DeveloperStorageVM = new DeveloperStorageViewModel(developerStorageService, _fileActionService);
         LargestFilesVM = new LargestFilesViewModel(_dbService, _fileActionService);
         LargestFoldersVM = new LargestFoldersViewModel(_dbService, _fileActionService);
-        FileTypesVM = new FileTypesViewModel(_dbService);
+        FileTypesVM = new FileTypesViewModel(_dbService, _fileActionService);
         OldFilesVM = new OldFilesViewModel(_dbService, _fileActionService);
         DuplicatesVM = new DuplicateViewModel(_duplicateAnalyzer, _fileActionService);
         PhotoshopVM = new PhotoshopViewModel(_dbService, _fileActionService);
         JunkCleanerVM = new JunkCleanerViewModel(_junkCleanerService, _fileActionService);
         TreemapVM = new TreemapViewModel(_dbService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
+        SettingsVM = new SettingsViewModel(_settingsService, _dbService);
 
         _currentView = OverviewVM;
 
@@ -69,6 +75,8 @@ public class MainViewModel : ObservableObject
 
     public OverviewViewModel OverviewVM { get; }
     public AnalyticsViewModel AnalyticsVM { get; }
+    public CleanupCenterViewModel CleanupCenterVM { get; }
+    public DeveloperStorageViewModel DeveloperStorageVM { get; }
     public LargestFilesViewModel LargestFilesVM { get; }
     public LargestFoldersViewModel LargestFoldersVM { get; }
     public FileTypesViewModel FileTypesVM { get; }
@@ -78,6 +86,7 @@ public class MainViewModel : ObservableObject
     public JunkCleanerViewModel JunkCleanerVM { get; }
     public TreemapViewModel TreemapVM { get; }
     public ScanLogViewModel ScanLogVM { get; }
+    public SettingsViewModel SettingsVM { get; }
 
     public object CurrentView
     {
@@ -131,6 +140,8 @@ public class MainViewModel : ObservableObject
         CurrentView = tabName switch
         {
             "Analytics" => AnalyticsVM,
+            "CleanupCenter" => CleanupCenterVM,
+            "DeveloperStorage" => DeveloperStorageVM,
             "LargestFiles" => LargestFilesVM,
             "LargestFolders" => LargestFoldersVM,
             "FileTypes" => FileTypesVM,
@@ -140,6 +151,7 @@ public class MainViewModel : ObservableObject
             "JunkCleaner" => JunkCleanerVM,
             "Treemap" => TreemapVM,
             "ScanLog" => ScanLogVM,
+            "Settings" => SettingsVM,
             _ => OverviewVM
         };
 
@@ -158,6 +170,12 @@ public class MainViewModel : ObservableObject
             {
                 case "Analytics":
                     AnalyticsVM.RefreshData();
+                    break;
+                case "CleanupCenter":
+                    _ = CleanupCenterVM.LoadCleanupCategoriesAsync();
+                    break;
+                case "DeveloperStorage":
+                    _ = DeveloperStorageVM.ScanIndexedStorageAsync();
                     break;
                 case "LargestFiles":
                     LargestFilesVM.RefreshData();
@@ -179,6 +197,9 @@ public class MainViewModel : ObservableObject
                     break;
                 case "Treemap":
                     TreemapVM.RefreshData();
+                    break;
+                case "Settings":
+                    SettingsVM.LoadFromService();
                     break;
             }
         }
@@ -327,12 +348,15 @@ public class MainViewModel : ObservableObject
 
     private void RefreshAllViews()
     {
+        try { OverviewVM.GenerateStorageExplanation(); } catch { }
         try { AnalyticsVM.RefreshData(); } catch { }
+        try { _ = CleanupCenterVM.LoadCleanupCategoriesAsync(); } catch { }
         try { LargestFilesVM.RefreshData(); } catch { }
         try { LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed); } catch { }
         try { FileTypesVM.RefreshData(); } catch { }
         try { OldFilesVM.RefreshData(); } catch { }
         try { PhotoshopVM.RefreshData(); } catch { }
+        try { _ = DeveloperStorageVM.ScanIndexedStorageAsync(); } catch { }
     }
 
     private void BrowseCustomFolder()

@@ -128,6 +128,18 @@ public class Program
             Assert(stats.State == ScanState.Completed, "ScanState should be Completed");
             Console.WriteLine("  ✓ Exact accounting verified. All files and directories perfectly accounted for.");
 
+            // 3B. Verify Recursive Largest Folders
+            Console.WriteLine("\n[TEST 2B] Testing Mathematically Exact Recursive Folder Rollup...");
+            var largestFolders = dbService.GetLargestFolders(50, excludeDriveRoots: false);
+            Assert(largestFolders.Count > 0, "Expected largest folders from test tree");
+            var rootFolderRecord = largestFolders.FirstOrDefault(f => string.Equals(f.Path, testRoot, StringComparison.OrdinalIgnoreCase));
+            Assert(rootFolderRecord != null, "Test root folder should be present in rolled-up directories");
+            Assert(rootFolderRecord!.Size == expectedTotalBytes,
+                $"Root folder size ({rootFolderRecord.Size}) != expected recursive total ({expectedTotalBytes})");
+            Assert(rootFolderRecord.FileCount == expectedFileCount,
+                $"Root folder file count ({rootFolderRecord.FileCount}) != expected total ({expectedFileCount})");
+            Console.WriteLine($"  ✓ Recursive folder aggregation verified: {rootFolderRecord.Name} = {rootFolderRecord.FormattedSize}, {rootFolderRecord.FileCount} files.");
+
             // 4. Test Queries and Filtering
             Console.WriteLine("\n[TEST 3] Testing SQLite Query & Filtering Layer...");
             var pagedAll = dbService.GetFilesPaged(0, 100);
@@ -463,6 +475,9 @@ public class Program
                     var v9 = new TreemapView { DataContext = new TreemapViewModel(dbService, new FileActionService()) };
                     var v10 = new PhotoshopView { DataContext = new PhotoshopViewModel(dbService, new FileActionService()) };
                     var v11 = new ScanLogView { DataContext = new ScanLogViewModel() };
+                    var v12 = new CleanupCenterView { DataContext = new CleanupCenterViewModel(dbService, new DeveloperStorageService(dbService), new FileActionService()) };
+                    var v13 = new DeveloperStorageView { DataContext = new DeveloperStorageViewModel(new DeveloperStorageService(dbService), new FileActionService()) };
+                    var v14 = new SettingsView { DataContext = new SettingsViewModel(new SettingsService(Path.Combine(testDbFolder, "test_settings.json")), dbService) };
 
                     // 2. Instantiate MainWindow via parameterless constructor and with VM
                     var defaultWin = new MainWindow();
@@ -474,9 +489,9 @@ public class Program
                     Assert(win != null, "MainWindow(mainVm) failed to instantiate");
 
                     string[] allTabs = [
-                        "Overview", "Analytics", "LargestFiles", "LargestFolders",
+                        "Overview", "Analytics", "CleanupCenter", "DeveloperStorage", "LargestFiles", "LargestFolders",
                         "FileTypes", "OldFiles", "Duplicates", "JunkCleaner",
-                        "Treemap", "Photoshop", "ScanLog"
+                        "Treemap", "Photoshop", "ScanLog", "Settings"
                     ];
 
                     // 2a. Visit every tab from main screen and test resizing
@@ -557,7 +572,7 @@ public class Program
             {
                 throw new Exception($"UI View Instantiation Failed:\n{uiException}");
             }
-            Console.WriteLine("  ✓ All 11 WPF Views and MainViewModel tabs instantiated successfully without XAML/StaticResource errors.");
+            Console.WriteLine("  ✓ All 14 WPF Views and MainViewModel tabs instantiated successfully without XAML/StaticResource errors.");
 
             // =========================================================
             // [TEST 13] Real-Time CPU & RAM Graphs, Lifecycle & Scan Benchmark
@@ -708,6 +723,314 @@ public class Program
             Console.WriteLine("  ✓ Live directory feed top-insertion and buffer verified.");
 
             testMainVm.OverviewVM.Dispose();
+
+            // =========================================================
+            // [TEST 15] Contextual Developer Storage Detection
+            // =========================================================
+            Console.WriteLine("\n[TEST 15] Testing Contextual Developer Storage Detection...");
+            string devWorkspace = Path.Combine(Path.GetTempPath(), "DiskScope_Dev_" + Guid.NewGuid().ToString("N")[..8]);
+            Directory.CreateDirectory(devWorkspace);
+
+            try
+            {
+                // 1. Node.js project
+                string nodeDir = Path.Combine(devWorkspace, "my-web-app");
+                Directory.CreateDirectory(nodeDir);
+                File.WriteAllText(Path.Combine(nodeDir, "package.json"), "{}");
+                string nodeModules = Path.Combine(nodeDir, "node_modules");
+                Directory.CreateDirectory(nodeModules);
+                File.WriteAllBytes(Path.Combine(nodeModules, "dep.js"), new byte[50000]);
+
+                // 2. .NET project
+                string dotnetDir = Path.Combine(devWorkspace, "my-dotnet-app");
+                Directory.CreateDirectory(dotnetDir);
+                File.WriteAllText(Path.Combine(dotnetDir, "App.csproj"), "<Project />");
+                string binDir = Path.Combine(dotnetDir, "bin");
+                Directory.CreateDirectory(binDir);
+                File.WriteAllBytes(Path.Combine(binDir, "app.dll"), new byte[100000]);
+
+                // 3. Rust project
+                string rustDir = Path.Combine(devWorkspace, "my-rust-app");
+                Directory.CreateDirectory(rustDir);
+                File.WriteAllText(Path.Combine(rustDir, "Cargo.toml"), "[package]");
+                string rustTarget = Path.Combine(rustDir, "target");
+                Directory.CreateDirectory(rustTarget);
+                File.WriteAllBytes(Path.Combine(rustTarget, "app.exe"), new byte[200000]);
+
+                // 4. Non-Rust folder with "target" (MUST NOT be detected as Rust junk!)
+                string fakeRustDir = Path.Combine(devWorkspace, "customer-targets");
+                string fakeRustTarget = Path.Combine(fakeRustDir, "target");
+                Directory.CreateDirectory(fakeRustTarget);
+                File.WriteAllBytes(Path.Combine(fakeRustTarget, "report.pdf"), new byte[30000]);
+
+                // 5. Gradle project
+                string gradleDir = Path.Combine(devWorkspace, "my-gradle-app");
+                Directory.CreateDirectory(gradleDir);
+                File.WriteAllText(Path.Combine(gradleDir, "build.gradle"), "// gradle");
+                string gradleBuild = Path.Combine(gradleDir, "build");
+                Directory.CreateDirectory(gradleBuild);
+                File.WriteAllBytes(Path.Combine(gradleBuild, "app.jar"), new byte[80000]);
+
+                // 6. Non-Gradle folder with "build" (MUST NOT be detected as build artifact!)
+                string fakeBuildDir = Path.Combine(devWorkspace, "architectural-build");
+                string fakeBuild = Path.Combine(fakeBuildDir, "build");
+                Directory.CreateDirectory(fakeBuild);
+                File.WriteAllBytes(Path.Combine(fakeBuild, "blueprint.dwg"), new byte[60000]);
+
+                var devService = new DeveloperStorageService(dbService);
+                var summaries = await devService.ScanWorkspaceAsync(devWorkspace);
+
+                var nodeSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.NodeJs);
+                Assert(nodeSummary != null && nodeSummary.Items.Any(i => i.Name == "node_modules"), "Expected node_modules in Node.js ecosystem");
+                Console.WriteLine($"  ✓ Node.js detected: {nodeSummary!.Items.Count} item(s), {nodeSummary.FormattedTotal}");
+
+                var dotNetSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.DotNet);
+                Assert(dotNetSummary != null && dotNetSummary.Items.Any(i => i.Name == "bin"), "Expected bin in .NET ecosystem");
+                Console.WriteLine($"  ✓ .NET detected: {dotNetSummary!.Items.Count} item(s), {dotNetSummary.FormattedTotal}");
+
+                var rustSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.Rust);
+                Assert(rustSummary != null && rustSummary.Items.Any(i => i.Path == rustTarget), "Expected my-rust-app target in Rust ecosystem");
+                Assert(rustSummary.Items.All(i => i.Path != fakeRustTarget), "FALSE POSITIVE: Non-Rust target folder must NOT be detected as Rust junk!");
+                Console.WriteLine($"  ✓ Rust detected with contextual Cargo.toml check (prevented false positive on {fakeRustTarget}).");
+
+                var gradleSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.GradleJava);
+                Assert(gradleSummary != null && gradleSummary.Items.Any(i => i.Path == gradleBuild), "Expected my-gradle-app build folder in Gradle ecosystem");
+                Assert(gradleSummary.Items.All(i => i.Path != fakeBuild), "FALSE POSITIVE: Non-Gradle build folder must NOT be detected as Gradle junk!");
+                Console.WriteLine($"  ✓ Gradle detected with contextual build.gradle check (prevented false positive on {fakeBuild}).");
+
+                Console.WriteLine("  ✓ Developer storage detection is robust, contextual, and prevents accidental deletions.");
+            }
+            finally
+            {
+                try { Directory.Delete(devWorkspace, recursive: true); } catch { }
+            }
+
+            // -----------------------------------------------------------------------------------------
+            // TEST 16: Persistent Scan History Comparison & Deletion (Phase 4)
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 16] Testing Scan History Comparison & Retention Strategy...");
+            var scansBefore = dbService.GetScanHistory();
+            Assert(scansBefore.Count >= 2, $"Expected at least 2 scans for comparison, found {scansBefore.Count}");
+
+            long scan1Id = scansBefore[0].Id;
+            long scan2Id = scansBefore[1].Id;
+            var comp = dbService.CompareScans(scan1Id, scan2Id);
+            Assert(comp.PreviousScan != null, "PreviousScan must not be null in comparison");
+            Assert(comp.CurrentScan != null, "CurrentScan must not be null in comparison");
+            Assert(comp.WhatGrew != null && comp.WhatGrew.Count > 0, "Expected category growth deltas between scans");
+            Console.WriteLine($"  Scan Comparison: {comp.PreviousScan.FormattedDate} vs {comp.CurrentScan.FormattedDate} | Delta: {comp.FormattedDelta} across {comp.WhatGrew.Count} categories.");
+
+            // Test single scan deletion
+            bool deletedOne = dbService.DeleteScanHistory(scan1Id);
+            Assert(deletedOne, "Failed to delete individual scan history entry");
+            var scansAfterOne = dbService.GetScanHistory();
+            Assert(scansAfterOne.All(s => s.Id != scan1Id), "Deleted scan ID must no longer exist in scan history");
+            Console.WriteLine($"  ✓ Single scan deletion verified (Remaining: {scansAfterOne.Count} scans).");
+
+            // Test clear all scan history
+            bool clearedAll = dbService.DeleteScanHistory();
+            Assert(clearedAll, "Failed to clear all scan history");
+            var scansEmpty = dbService.GetScanHistory();
+            Assert(scansEmpty.Count == 0, $"Expected 0 scans after clear all, found {scansEmpty.Count}");
+            Console.WriteLine("  ✓ Clear all scan history and category snapshots verified.");
+
+            // -----------------------------------------------------------------------------------------
+            // TEST 17: NTFS USN Change Journal & Incremental Scanning Fallback (Phase 5)
+            // -----------------------------------------------------------------------------------------
+            Console.WriteLine("\n[TEST 17] Testing NTFS USN Change Journal & Safe Fallback Handling...");
+            var usnService = new UsnJournalService();
+
+            bool isNtfs = usnService.IsNtfsVolume("C:\\");
+            Console.WriteLine($"  C: Drive is NTFS: {isNtfs}");
+
+            var journalState = usnService.QueryJournalState("C:\\");
+            Console.WriteLine($"  USN Journal State: Available={journalState.IsAvailable}, ElevationNeeded={journalState.RequiresElevation}, Message={journalState.StatusMessage}");
+            Assert(!string.IsNullOrEmpty(journalState.StatusMessage), "Journal state must always provide informative status message");
+
+            // Test USN Checkpoint Persistence in SQLite
+            ulong testJournalId = 0xABCD1234EF567890;
+            long testNextUsn = 9876543210;
+            dbService.SaveUsnCheckpoint("C:", testJournalId, testNextUsn);
+
+            var loadedCheckpoint = dbService.GetUsnCheckpoint("C:");
+            Assert(loadedCheckpoint.HasValue, "Failed to retrieve saved USN checkpoint from database");
+            Assert(loadedCheckpoint.Value.JournalId == testJournalId, "Journal ID mismatch in checkpoint persistence");
+            Assert(loadedCheckpoint.Value.NextUsn == testNextUsn, "NextUsn mismatch in checkpoint persistence");
+            Console.WriteLine($"  ✓ USN Checkpoint SQLite persistence verified ({loadedCheckpoint.Value.JournalId:X16} @ USN {loadedCheckpoint.Value.NextUsn}).");
+
+            // Test Mismatched Journal ID Fallback Handling
+            ulong mismatchedId = 0x9999999999999999;
+            var fallbackResult = usnService.ReadChanges("C:\\", mismatchedId, testNextUsn);
+            Assert(!fallbackResult.Success, "ReadChanges must fail gracefully and signal fallback on mismatched Journal ID");
+            Assert(!string.IsNullOrEmpty(fallbackResult.Reason), "Fallback must include a descriptive reason");
+            Console.WriteLine($"  ✓ USN fallback trigger verified: \"{fallbackResult.Reason}\"");
+
+            // Cleanup test checkpoint
+            dbService.DeleteUsnCheckpoint("C:");
+            Assert(!dbService.GetUsnCheckpoint("C:").HasValue, "Checkpoint should be deleted cleanly");
+            // =========================================================
+            // [TEST 18] Testing Advanced Storage Search, Multi-Criteria Filters & Streamed CSV Export
+            // =========================================================
+            Console.WriteLine("\n[TEST 18] Testing Advanced Storage Search & Multi-Criteria Filtering...");
+            long nowSec = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long daySec = 86400L;
+
+            var searchFiles = new List<FileRecord>
+            {
+                new()
+                {
+                    Path = @"C:\TestSearch\Photos\ancient_artwork.psd",
+                    Name = "ancient_artwork.psd",
+                    Parent = @"C:\TestSearch\Photos",
+                    Size = 120_000_000, // ~120 MB
+                    Category = FileCategory.Photoshop,
+                    Extension = ".psd",
+                    ModifiedTime = (ulong)(nowSec - (200 * daySec)) // 200 days old
+                },
+                new()
+                {
+                    Path = @"C:\TestSearch\Photos\recent_artwork.psd",
+                    Name = "recent_artwork.psd",
+                    Parent = @"C:\TestSearch\Photos",
+                    Size = 150_000_000, // ~150 MB
+                    Category = FileCategory.Photoshop,
+                    Extension = ".psd",
+                    ModifiedTime = (ulong)(nowSec - (10 * daySec)) // 10 days old
+                },
+                new()
+                {
+                    Path = @"C:\TestSearch\Archives\ancient_backup.zip",
+                    Name = "ancient_backup.zip",
+                    Parent = @"C:\TestSearch\Archives",
+                    Size = 300_000_000, // ~300 MB
+                    Category = FileCategory.Archives,
+                    Extension = ".zip",
+                    ModifiedTime = (ulong)(nowSec - (300 * daySec)) // 300 days old
+                }
+            };
+            dbService.InsertBatch(searchFiles);
+
+            // 1. Multi-criteria count query: > 100MB, older than 180 days, extension .psd, location prefix C:\TestSearch\Photos
+            long matchCount = dbService.GetFilteredFileCount(
+                minSize: 100_000_000,
+                maxSize: long.MaxValue,
+                category: null,
+                search: null,
+                minDaysOld: 180,
+                extension: ".psd",
+                locationPrefix: @"C:\TestSearch\Photos");
+
+            Assert(matchCount == 1, $"Expected exactly 1 matching file for multi-criteria search, got {matchCount}");
+
+            // 2. Multi-criteria paged query
+            var pagedResults = dbService.GetFilesPaged(
+                offset: 0,
+                limit: 10,
+                minSize: 100_000_000,
+                maxSize: long.MaxValue,
+                category: null,
+                search: null,
+                sortBy: "path",
+                sortDesc: false,
+                minDaysOld: 180,
+                extension: "psd", // test without leading dot as well
+                locationPrefix: @"C:\TestSearch\Photos");
+
+            Assert(pagedResults.Count == 1, "Paged query must return 1 result");
+            Assert(pagedResults[0].Name == "ancient_artwork.psd", $"Expected ancient_artwork.psd, got {pagedResults[0].Name}");
+            Console.WriteLine("  ✓ Multi-criteria SQL search (Age > 180d, Ext = .psd, Location = C:\\TestSearch\\Photos) verified.");
+
+            // 3. Multi-criteria Streamed CSV Export
+            string multiCsvPath = Path.Combine(testDbFolder, "multicriteria_export.csv");
+            await exportService.StreamQueryToCsvAsync(
+                dbService,
+                multiCsvPath,
+                minSize: 100_000_000,
+                maxSize: long.MaxValue,
+                category: null,
+                search: null,
+                sortBy: "size",
+                sortDesc: true,
+                minDaysOld: 180,
+                extension: ".psd",
+                locationPrefix: @"C:\TestSearch\Photos");
+
+            Assert(File.Exists(multiCsvPath), "Multi-criteria CSV file was not created");
+            var multiCsvLines = await File.ReadAllLinesAsync(multiCsvPath);
+            Assert(multiCsvLines.Length == 2, $"Expected header + 1 matching row in streamed CSV, got {multiCsvLines.Length} lines");
+            Assert(multiCsvLines[1].Contains("ancient_artwork.psd"), "Streamed CSV did not contain the expected file record");
+            Console.WriteLine("  ✓ Streamed CSV export with multi-criteria filters verified.");
+
+            // =========================================================
+            // [TEST 19] Testing Developer Storage ViewModel & Ecosystem Subcategories
+            // =========================================================
+            Console.WriteLine("\n[TEST 19] Testing Developer Storage ViewModel & Subcategories...");
+            var devStorageService = new DeveloperStorageService(dbService);
+            var devVm = new DeveloperStorageViewModel(devStorageService, new FileActionService());
+
+            await devVm.ScanIndexedStorageAsync();
+            Assert(devVm.Ecosystems.Count == 5, $"Expected 5 developer ecosystems, got {devVm.Ecosystems.Count}");
+            Assert(!string.IsNullOrEmpty(devVm.FormattedTotalStorage), "Formatted total storage should be non-empty");
+
+            // Verify each ecosystem has its name and subcategories collection initialized
+            foreach (var eco in devVm.Ecosystems)
+            {
+                Assert(!string.IsNullOrEmpty(eco.Name), "Ecosystem title cannot be blank");
+                Assert(eco.Subcategories != null, "Subcategories collection must not be null");
+            }
+
+            // Test on-demand workspace scan
+            string customDevWs = Path.Combine(testRoot, "TestCustomWorkspace");
+            Directory.CreateDirectory(customDevWs);
+            string projA = Path.Combine(customDevWs, "AppA");
+            Directory.CreateDirectory(projA);
+            File.WriteAllText(Path.Combine(projA, "package.json"), "{}");
+            string nmDir = Path.Combine(projA, "node_modules");
+            Directory.CreateDirectory(nmDir);
+            File.WriteAllText(Path.Combine(nmDir, "index.js"), new string('x', 5000));
+
+            devVm.CustomWorkspacePath = customDevWs;
+            await devVm.ScanCustomWorkspaceAsync();
+            var nodeEco = devVm.Ecosystems.FirstOrDefault(e => e.Ecosystem == DeveloperEcosystem.NodeJs);
+            Assert(nodeEco != null, "Node.js ecosystem must be present");
+            Assert(nodeEco!.TotalBytes > 0, "Node.js ecosystem must have detected bytes in custom workspace");
+            Assert(nodeEco.Subcategories.Any(sc => sc.Name.Equals("node_modules", StringComparison.OrdinalIgnoreCase)),
+                "Node.js subcategories must include node_modules");
+            Console.WriteLine($"  ✓ Developer storage workspace analysis verified: {nodeEco.FormattedTotal} in {nodeEco.Items.Count} items.");
+
+            // =========================================================
+            // [TEST 20] Testing Settings Persistence, Exclusions & Scanner Exclusion Respect
+            // =========================================================
+            Console.WriteLine("\n[TEST 20] Testing Settings Persistence & Exclusions Enforcement...");
+            string testSettingsPath = Path.Combine(testDbFolder, "test_settings.json");
+            var settingsService = new SettingsService(testSettingsPath);
+
+            var settings = settingsService.CurrentSettings;
+            Assert(settings.DefaultToRecycleBin, "Recycle Bin must be default deletion method");
+            Assert(!settings.FollowJunctions, "Follow junctions should default to false");
+            Assert(settings.ExcludedPaths.Count >= 2, "Default exclusions must include Windows and Recycle Bin");
+
+            // Add custom exclusion
+            string exclusionDir = Path.Combine(testRoot, "ExcludedDirectory");
+            Directory.CreateDirectory(exclusionDir);
+            File.WriteAllText(Path.Combine(exclusionDir, "secret.txt"), "secret data");
+
+            bool added = settingsService.AddExclusion(exclusionDir);
+            Assert(added, "Failed to add custom exclusion");
+            Assert(settingsService.IsPathExcluded(exclusionDir), "Exclusion must be recognized");
+            Assert(settingsService.IsPathExcluded(Path.Combine(exclusionDir, "secret.txt")), "Descendant path must be recognized as excluded");
+            Assert(!settingsService.IsPathExcluded(Path.Combine(testRoot, "NormalDir")), "Unrelated path must not be excluded");
+
+            // Verify persistence
+            var reloadedService = new SettingsService(testSettingsPath);
+            Assert(reloadedService.IsPathExcluded(exclusionDir), "Exclusion must persist across reload");
+
+            // Test ScannerService respecting exclusion
+            var scannerWithExclusions = new ScannerService(dbService, usnService: null, settingsService);
+            var scanStats = await scannerWithExclusions.ScanDrivesAsync(new[] { testRoot }, progress: null, CancellationToken.None, enableIncremental: false);
+            Assert(scannerWithExclusions.SkippedDirectories.Any(sd => sd.Path.Equals(exclusionDir, StringComparison.OrdinalIgnoreCase)),
+                "Scanner must record excluded directory in SkippedDirectories");
+            Console.WriteLine("  ✓ Settings persistence, path exclusions, and scanner enforcement verified.");
 
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");

@@ -1,0 +1,187 @@
+<UserControl x:Class="DiskScope.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1050">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Header -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Settings &amp; Configuration" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <TextBlock Text="Configure scanning behavior, directory exclusions, deletion safety rules, and scan history retention." 
+                               FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Reset Defaults" Command="{Binding ResetDefaultsCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Padding="12,6"/>
+                    <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}" Style="{StaticResource PrimaryButtonStyle}" Padding="16,6"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Scrollable Settings Cards -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,10,0">
+
+                <!-- 1. Scanning Behavior Card -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="SCANNING ENGINE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,12"/>
+
+                        <CheckBox Content="Follow directory junctions and symbolic links (Off recommended to avoid infinite loops)" 
+                                  IsChecked="{Binding FollowJunctions}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <CheckBox Content="Include hidden files in scan index" 
+                                  IsChecked="{Binding IncludeHiddenFiles}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <CheckBox Content="Include system files in scan index" 
+                                  IsChecked="{Binding IncludeSystemFiles}" Margin="0,0,0,14" Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Worker Concurrency (0 = Auto):" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,12,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding WorkerCount, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Determines parallelism during file ingestion" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- 2. Exclusions Manager Card (Phase 14) -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="PATH EXCLUSIONS (SCANNING &amp; CLEANUP)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Directories listed here are completely skipped during disk scans and blocked from automatic cleanup operations." 
+                                   FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,14"/>
+
+                        <!-- Add Exclusion Row -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding NewExclusionPath, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" 
+                                     ToolTip="Enter folder path e.g. C:\MySecretProject"/>
+                            <Button Grid.Column="2" Content="Browse Folder..." Command="{Binding BrowseExclusionFolderCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                            <Button Grid.Column="4" Content="Add Exclusion" Command="{Binding AddExclusionCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                        </Grid>
+
+                        <!-- Exclusions List -->
+                        <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="4" MaxHeight="160">
+                            <ListBox ItemsSource="{Binding ExcludedPaths}" SelectedItem="{Binding SelectedExclusion, Mode=TwoWay}"
+                                     Background="Transparent" BorderThickness="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" Padding="4,2"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <Button Content="Remove Selected Exclusion" Command="{Binding RemoveExclusionCommand}" Style="{StaticResource ActionButtonStyle}" 
+                                HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 3. Cleanup & Safety Rules Card -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="CLEANUP &amp; DELETION SAFETY RULES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,12"/>
+
+                        <CheckBox Content="Default to Windows Recycle Bin for all cleanup actions (Recommended)" 
+                                  IsChecked="{Binding DefaultToRecycleBin}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <CheckBox Content="Require user confirmation before moving files to the Recycle Bin" 
+                                  IsChecked="{Binding RequireConfirmationForRecycleBin}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <CheckBox Content="Require explicit confirmation for permanent deletions (&quot;This cannot be undone&quot;)" 
+                                  IsChecked="{Binding RequireConfirmationForPermanent}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 4. History Retention Card -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="SCAN HISTORY RETENTION &amp; DATABASE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,12"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Retention Period (Days):" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBox Grid.Column="1" Text="{Binding RetentionDays, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="History snapshots older than this are pruned" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Max Scan Sessions to Keep:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBox Grid.Column="1" Text="{Binding MaxScanSessionsToKeep, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="Maximum past scan comparisons stored in SQLite" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </Grid>
+
+                        <Button Content="Clear All Scan History Database Records" Command="{Binding ClearAllHistoryCommand}" 
+                                Style="{StaticResource DangerButtonStyle}" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 5. Diagnostics Card -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="DIAGNOSTICS &amp; LOGGING" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,12"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Logging Level:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding LogLevelOptions}" SelectedItem="{Binding LogLevel, Mode=TwoWay}"/>
+                            <TextBlock Grid.Column="2" Text="Verbosity level for Scan Diagnostics &amp; Log" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Bottom Status Bar -->
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Local, Offline-First, Private" Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

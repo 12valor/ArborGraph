@@ -448,25 +448,30 @@
             </Grid>
 
             <!-- ROW 5: SCAN HISTORY (Full Width Table) -->
-            <Border Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18">
+            <Border Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,0,0,18">
                 <StackPanel>
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="HISTORICAL SCAN SESSIONS &amp; STORAGE GROWTH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                        <TextBlock Grid.Column="1" Text="Saved in SQLite metadata index" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
+                        <StackPanel>
+                            <TextBlock Text="HISTORICAL SCAN SESSIONS &amp; STORAGE GROWTH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                            <TextBlock Text="Saved in SQLite metadata index (retained up to 50 sessions)" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <Button Grid.Column="1" Content="Clear All History" Command="{Binding ClearScanHistoryCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" Height="28" Padding="10,0" FontSize="11"/>
                     </Grid>
 
-                    <DataGrid ItemsSource="{Binding ScanHistory}" AutoGenerateColumns="False" CanUserSortColumns="True" MaxHeight="240">
+                    <DataGrid ItemsSource="{Binding ScanHistory}" AutoGenerateColumns="False" CanUserSortColumns="True" MaxHeight="220">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Session ID" Binding="{Binding Id}" Width="80"/>
-                            <DataGridTextColumn Header="Scan Date / Time" Binding="{Binding FormattedDate}" Width="150"/>
+                            <DataGridTextColumn Header="Session ID" Binding="{Binding Id}" Width="75"/>
+                            <DataGridTextColumn Header="Scan Date / Time" Binding="{Binding FormattedDate}" Width="140"/>
                             <DataGridTextColumn Header="Scanned Target" Binding="{Binding Roots}" Width="*"/>
-                            <DataGridTextColumn Header="Files Indexed" Binding="{Binding FormattedFiles}" Width="110"/>
-                            <DataGridTextColumn Header="Storage Indexed" Binding="{Binding FormattedBytes}" Width="120"/>
-                            <DataGridTextColumn Header="Storage Delta" Binding="{Binding FormattedGrowth}" Width="110">
+                            <DataGridTextColumn Header="Files Indexed" Binding="{Binding FormattedFiles}" Width="100"/>
+                            <DataGridTextColumn Header="Storage Indexed" Binding="{Binding FormattedBytes}" Width="110"/>
+                            <DataGridTextColumn Header="Storage Delta" Binding="{Binding FormattedGrowth}" Width="100">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -474,8 +479,114 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Duration" Binding="{Binding FormattedDuration}" Width="90"/>
-                            <DataGridTextColumn Header="Status" Binding="{Binding ScanStatus}" Width="100"/>
+                            <DataGridTextColumn Header="Duration" Binding="{Binding FormattedDuration}" Width="85"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding ScanStatus}" Width="85"/>
+                            <DataGridTemplateColumn Header="Action" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Delete" FontSize="10" Padding="6,2" Height="22"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding DataContext.DeleteScanCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- ROW 6: WHAT GREW? (STORAGE COMPARISON) -->
+            <Border Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="WHAT GREW? — STORAGE COMPARISON ACROSS SESSIONS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
+                            <TextBlock Text="Compare storage category footprints between two scan checkpoints to pinpoint what expanded or contracted" 
+                                       FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <!-- Overall Change badge -->
+                        <Border Grid.Column="1" Background="{StaticResource BrushBgCardHover}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Total Net Growth: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ComparisonResult.FormattedDelta}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Scan Selector Controls -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Older (Baseline) Scan Selector -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Baseline (Older) Scan:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding ScanHistory}" SelectedItem="{Binding SelectedOlderScan}" Height="32">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding FormattedDate, Mode=OneWay}" FontWeight="SemiBold"/>
+                                            <Run Text=" — " Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding FormattedBytes, Mode=OneWay}" Foreground="{StaticResource BrushAccent}"/>
+                                            <Run Text=" (" Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding Roots, Mode=OneWay}" Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text=")" Foreground="{StaticResource BrushTextMuted}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Newer (Comparison) Scan Selector -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Comparison (Newer) Scan:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding ScanHistory}" SelectedItem="{Binding SelectedNewerScan}" Height="32">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding FormattedDate, Mode=OneWay}" FontWeight="SemiBold"/>
+                                            <Run Text=" — " Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding FormattedBytes, Mode=OneWay}" Foreground="{StaticResource BrushAccent}"/>
+                                            <Run Text=" (" Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text="{Binding Roots, Mode=OneWay}" Foreground="{StaticResource BrushTextMuted}"/>
+                                            <Run Text=")" Foreground="{StaticResource BrushTextMuted}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Category Delta Breakdown -->
+                    <DataGrid ItemsSource="{Binding ComparisonResult.WhatGrew}" AutoGenerateColumns="False" CanUserSortColumns="True" MaxHeight="260">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Baseline Scan Size" Binding="{Binding FormattedPrevious}" Width="140"/>
+                            <DataGridTextColumn Header="Comparison Scan Size" Binding="{Binding FormattedCurrent}" Width="140"/>
+                            <DataGridTextColumn Header="Growth Delta" Binding="{Binding FormattedDelta}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="File Count Delta" Binding="{Binding DeltaFiles, StringFormat='{}{0:+0;-0;0} files'}" Width="130"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>

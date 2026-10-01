@@ -44,6 +44,11 @@
                                           Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                 <MenuItem Header="Copy Folder Path" 
                                           Command="{Binding DataContext.CopyFolderPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
+                                          Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
+                                          Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
@@ -123,8 +128,11 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open in Explorer" Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
-                    <Button Content="Copy Path" Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                    <Button Content="Open in Explorer" Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Copy Path" Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource ActionButtonStyle}" 
+                            Foreground="{StaticResource BrushWarning}"/>
                 </StackPanel>
             </Grid>
         </Border>

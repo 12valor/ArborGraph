@@ -518,6 +518,54 @@ public class ExportService
         await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8);
     }
 
+    public async Task StreamQueryToCsvAsync(
+        DatabaseService dbService,
+        string filePath,
+        long minSize = 0,
+        long maxSize = long.MaxValue,
+        string? category = null,
+        string? search = null,
+        string sortBy = "size",
+        bool sortDesc = true,
+        int? minDaysOld = null,
+        string? extension = null,
+        string? locationPrefix = null,
+        CancellationToken ct = default)
+    {
+        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 65536, useAsync: true);
+        await using var writer = new StreamWriter(fs, Encoding.UTF8);
+
+        await writer.WriteLineAsync("\"Path\",\"Name\",\"Parent\",\"Size\",\"SizeFormatted\",\"Category\",\"Extension\",\"ModifiedTimeUtc\"");
+
+        long count = 0;
+        await Task.Run(() =>
+        {
+            dbService.StreamFilteredFiles(file =>
+            {
+                string modUtc = file.ModifiedTime > 0
+                    ? DateTimeOffset.FromUnixTimeSeconds((long)file.ModifiedTime).ToString("yyyy-MM-dd HH:mm:ss")
+                    : string.Empty;
+
+                writer.Write(CsvEscape(file.Path)); writer.Write(',');
+                writer.Write(CsvEscape(file.Name)); writer.Write(',');
+                writer.Write(CsvEscape(file.Parent)); writer.Write(',');
+                writer.Write(file.Size); writer.Write(',');
+                writer.Write(CsvEscape(file.FormattedSize)); writer.Write(',');
+                writer.Write(CsvEscape(file.Category)); writer.Write(',');
+                writer.Write(CsvEscape(file.Extension)); writer.Write(',');
+                writer.WriteLine(CsvEscape(modUtc));
+
+                count++;
+                if (count % 1000 == 0)
+                {
+                    writer.Flush();
+                }
+            }, minSize, maxSize, category, search, sortBy, sortDesc, minDaysOld, extension, locationPrefix, ct);
+
+            writer.Flush();
+        }, ct);
+    }
+
     public async Task ExportDuplicatesToCsvAsync(IEnumerable<DuplicateGroup> duplicates, string filePath)
     {
         var sb = new StringBuilder();

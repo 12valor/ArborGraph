@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using System.Windows.Threading;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
@@ -43,10 +44,29 @@ public class OverviewViewModel : ObservableObject
         Drives = [];
         RefreshDrives();
 
+        DrilldownCommand = new RelayCommand(param =>
+        {
+            if (param is StorageContributorItem item && !string.IsNullOrEmpty(item.Path))
+            {
+                DrillInto(item.Path);
+            }
+        });
+        DrillUpCommand = new RelayCommand(_ => DrillUp(), _ => Breadcrumbs.Count > 1);
+        ResetDrilldownCommand = new RelayCommand(_ => ResetDrilldown());
+
         // Initial sample
         var initialSample = _monitorService.CaptureSample();
         ApplySample(initialSample);
     }
+
+    public StorageExplanation Explanation { get; } = new();
+    public ObservableCollection<StorageContributorItem> DrilldownItems { get; } = [];
+    public ObservableCollection<string> Breadcrumbs { get; } = [];
+    public string CurrentDrilldownPath { get; private set; } = string.Empty;
+
+    public ICommand DrilldownCommand { get; }
+    public ICommand DrillUpCommand { get; }
+    public ICommand ResetDrilldownCommand { get; }
 
     public ScanStats Stats
     {
@@ -123,6 +143,157 @@ public class OverviewViewModel : ObservableObject
             OnPropertyChanged(nameof(FormattedFreeDrive));
         }
         catch { }
+    }
+
+    public void GenerateStorageExplanation()
+    {
+        try
+        {
+            var targetDrive = Drives.FirstOrDefault(d => d.IsSelected) ?? Drives.FirstOrDefault();
+            string driveLetter = targetDrive?.Name ?? "C:\\";
+            string rootClean = driveLetter.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar) + "\\";
+
+            Explanation.DriveName = rootClean;
+            Explanation.TotalBytes = targetDrive?.TotalBytes ?? TotalDriveBytes;
+            Explanation.UsedBytes = targetDrive?.UsedBytes ?? UsedDriveBytes;
+            Explanation.FreeBytes = targetDrive?.FreeBytes ?? FreeDriveBytes;
+
+            // Deterministic reclaimable total from actual scan data
+            var (_, totalReclaimable) = _dbService.GetReclaimableStorageBreakdown();
+            Explanation.PotentiallyReclaimableBytes = totalReclaimable;
+
+            Explanation.LargestContributors.Clear();
+            DrilldownItems.Clear();
+            Breadcrumbs.Clear();
+            Breadcrumbs.Add(rootClean);
+            CurrentDrilldownPath = rootClean;
+
+            // Top subdirectories under drive root
+            var topDirs = _dbService.GetSubdirectories(rootClean, limit: 10);
+            long usedB = Math.Max(1L, Explanation.UsedBytes);
+
+            if (topDirs.Count > 0)
+            {
+                foreach (var d in topDirs)
+                {
+                    var contrib = new StorageContributorItem
+                    {
+                        Name = d.Name,
+                        Path = d.Path,
+                        SizeBytes = d.Size,
+                        PercentageOfUsed = (double)d.Size / usedB * 100.0,
+                        CategoryOrType = "Folder",
+                        CanDrillDown = d.SubfolderCount > 0 || d.FileCount > 0
+                    };
+                    Explanation.LargestContributors.Add(contrib);
+                    DrilldownItems.Add(contrib);
+                }
+                Explanation.HasScanData = true;
+            }
+            else
+            {
+                // Fall back to category distribution if no directory rollups
+                var catDict = _dbService.GetCategoryBreakdown();
+                foreach (var (cat, (cnt, sz)) in catDict.OrderByDescending(kv => kv.Value.TotalSize).Take(6))
+                {
+                    if (sz <= 0) continue;
+                    var contrib = new StorageContributorItem
+                    {
+                        Name = cat,
+                        Path = string.Empty,
+                        SizeBytes = sz,
+                        PercentageOfUsed = (double)sz / usedB * 100.0,
+                        CategoryOrType = "Category",
+                        CanDrillDown = false
+                    };
+                    Explanation.LargestContributors.Add(contrib);
+                    DrilldownItems.Add(contrib);
+                }
+                Explanation.HasScanData = Explanation.LargestContributors.Count > 0;
+            }
+
+            (DrillUpCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateStorageExplanation error: {ex.Message}");
+        }
+    }
+
+    public void DrillInto(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try
+        {
+            var subdirs = _dbService.GetSubdirectories(path, limit: 50);
+            DrilldownItems.Clear();
+            string folderName = System.IO.Path.GetFileName(path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
+            if (string.IsNullOrEmpty(folderName)) folderName = path;
+            Breadcrumbs.Add(folderName);
+            CurrentDrilldownPath = path;
+
+            long parentSize = subdirs.Sum(d => d.Size);
+            long baseSize = Math.Max(1L, parentSize > 0 ? parentSize : Explanation.UsedBytes);
+
+            foreach (var d in subdirs)
+            {
+                DrilldownItems.Add(new StorageContributorItem
+                {
+                    Name = d.Name,
+                    Path = d.Path,
+                    SizeBytes = d.Size,
+                    PercentageOfUsed = (double)d.Size / baseSize * 100.0,
+                    CategoryOrType = "Subfolder",
+                    CanDrillDown = d.SubfolderCount > 0
+                });
+            }
+
+            (DrillUpCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+        catch { }
+    }
+
+    public void DrillUp()
+    {
+        if (Breadcrumbs.Count <= 1) return;
+        try
+        {
+            string parentPath = System.IO.Path.GetDirectoryName(CurrentDrilldownPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar)) ?? string.Empty;
+            Breadcrumbs.RemoveAt(Breadcrumbs.Count - 1);
+
+            if (string.IsNullOrEmpty(parentPath) || Breadcrumbs.Count <= 1)
+            {
+                ResetDrilldown();
+            }
+            else
+            {
+                CurrentDrilldownPath = parentPath;
+                var subdirs = _dbService.GetSubdirectories(parentPath, limit: 50);
+                DrilldownItems.Clear();
+                long baseSize = Math.Max(1L, Explanation.UsedBytes);
+
+                foreach (var d in subdirs)
+                {
+                    DrilldownItems.Add(new StorageContributorItem
+                    {
+                        Name = d.Name,
+                        Path = d.Path,
+                        SizeBytes = d.Size,
+                        PercentageOfUsed = (double)d.Size / baseSize * 100.0,
+                        CategoryOrType = "Subfolder",
+                        CanDrillDown = d.SubfolderCount > 0
+                    });
+                }
+            }
+
+            (DrillUpCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+        catch { }
+    }
+
+    public void ResetDrilldown()
+    {
+        GenerateStorageExplanation();
     }
 
     private readonly object _recentDirsLock = new();

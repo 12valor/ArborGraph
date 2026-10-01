@@ -25,11 +25,15 @@ public class ScanProgressReport
     public string? NewRecentDirectory { get; set; }
     public (string Path, string Reason)? SkippedDirectory { get; set; }
     public (string Path, string Reason)? SkippedFile { get; set; }
+    public string ScanMode { get; set; } = "Full Scan";
+    public string? ScanModeDetails { get; set; }
 }
 
 public class ScannerService
 {
     private readonly DatabaseService _dbService;
+    private readonly UsnJournalService _usnService;
+    private readonly SettingsService? _settingsService;
 
     // Separate atomic counters
     private long _directoriesVisited;
@@ -46,9 +50,11 @@ public class ScannerService
     private readonly ConcurrentBag<(string Path, string Reason)> _skippedDirs = new();
     private readonly ConcurrentBag<(string Path, string Reason)> _skippedFiles = new();
 
-    public ScannerService(DatabaseService dbService)
+    public ScannerService(DatabaseService dbService, UsnJournalService? usnService = null, SettingsService? settingsService = null)
     {
         _dbService = dbService;
+        _usnService = usnService ?? new UsnJournalService();
+        _settingsService = settingsService;
     }
 
     public IReadOnlyCollection<string> RecentDirectories => _recentDirectories;
@@ -58,94 +64,197 @@ public class ScannerService
     public Task<ScanStats> ScanDrivesAsync(
         IReadOnlyList<string> roots,
         IProgress<ScanProgressReport>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool enableIncremental = true)
     {
         return Task.Run(async () =>
         {
             // Reset counters
             Interlocked.Exchange(ref _directoriesVisited, 0);
-        Interlocked.Exchange(ref _directoriesProcessed, 0);
-        Interlocked.Exchange(ref _directoriesSkipped, 0);
-        Interlocked.Exchange(ref _filesDiscovered, 0);
-        Interlocked.Exchange(ref _filesIndexed, 0);
-        Interlocked.Exchange(ref _filesSkipped, 0);
-        Interlocked.Exchange(ref _logicalBytesIndexed, 0);
+            Interlocked.Exchange(ref _directoriesProcessed, 0);
+            Interlocked.Exchange(ref _directoriesSkipped, 0);
+            Interlocked.Exchange(ref _filesDiscovered, 0);
+            Interlocked.Exchange(ref _filesIndexed, 0);
+            Interlocked.Exchange(ref _filesSkipped, 0);
+            Interlocked.Exchange(ref _logicalBytesIndexed, 0);
 
-        while (_recentDirectories.TryDequeue(out _)) { }
-        _skippedDirs.Clear();
-        _skippedFiles.Clear();
+            while (_recentDirectories.TryDequeue(out _)) { }
+            _skippedDirs.Clear();
+            _skippedFiles.Clear();
 
-        _dbService.BeginBulkIngestion();
-        _dbService.ClearIndex(roots);
+            string scanMode = "Full Scan";
+            string? scanModeDetails = null;
+            var settings = _settingsService?.CurrentSettings ?? new DiskScopeSettings();
 
-        var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
-        {
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = true,
-            SingleWriter = false
-        });
-
-        var stopwatch = Stopwatch.StartNew();
-        var lastReportStopwatch = Stopwatch.StartNew();
-        var scanStartTime = DateTime.UtcNow;
-        string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
-
-        // Immediate initial report so UI status updates without waiting
-        EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null);
-
-        // Background SQLite Ingestion Task
-        var dbWorker = Task.Run(async () =>
-        {
-            const int batchSize = 5000;
-            var batch = new List<FileRecord>(batchSize);
-            var reader = channel.Reader;
-            var lastFlush = Stopwatch.StartNew();
-
-            void PersistBatchSafe(List<FileRecord> records)
+            // Check if single drive root on NTFS volume with an existing USN checkpoint
+            if (enableIncremental && roots.Count == 1)
             {
-                if (records.Count == 0) return;
+                string r = roots[0];
+                string dRoot = Path.GetPathRoot(Path.GetFullPath(r)) ?? string.Empty;
+                string cRoot = r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string cDrive = dRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (string.Equals(cRoot, cDrive, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (_usnService.IsNtfsVolume(dRoot))
+                    {
+                        var checkpoint = _dbService.GetUsnCheckpoint(cDrive);
+                        if (checkpoint.HasValue)
+                        {
+                            var readResult = _usnService.ReadChanges(dRoot, checkpoint.Value.JournalId, checkpoint.Value.NextUsn);
+                            if (readResult.Success)
+                            {
+                                scanMode = "Incremental (NTFS USN Change Journal)";
+                                scanModeDetails = readResult.Reason;
+
+                                foreach (var change in readResult.Changes)
+                                {
+                                    if (cancellationToken.IsCancellationRequested) break;
+                                    if (change.ChangeType == UsnChangeType.Deleted)
+                                    {
+                                        _dbService.DeleteFilesByName(change.FileName);
+                                    }
+                                }
+
+                                _dbService.SaveUsnCheckpoint(cDrive, checkpoint.Value.JournalId, readResult.NewNextUsn);
+                                _dbService.BuildDirectoryRollup(roots);
+
+                                var (incFiles, incBytes) = _dbService.GetTotalIndexedStorage();
+                                var incStats = new ScanStats
+                                {
+                                    DirectoriesVisited = 1,
+                                    DirectoriesProcessed = 1,
+                                    DirectoriesSkipped = 0,
+                                    FilesDiscovered = readResult.Changes.Count,
+                                    FilesIndexed = incFiles,
+                                    FilesSkipped = 0,
+                                    LogicalBytesIndexed = incBytes,
+                                    Elapsed = TimeSpan.FromMilliseconds(50),
+                                    FilesPerSecond = incFiles,
+                                    BytesPerSecond = incBytes,
+                                    CurrentDirectory = cDrive,
+                                    State = ScanState.Completed
+                                };
+
+                                _dbService.SaveScanMetadata(incStats, string.Join(";", roots), DateTime.UtcNow.AddMilliseconds(-50), DateTime.UtcNow);
+
+                                progress?.Report(new ScanProgressReport
+                                {
+                                    DirectoriesVisited = 1,
+                                    DirectoriesProcessed = 1,
+                                    DirectoriesSkipped = 0,
+                                    FilesDiscovered = readResult.Changes.Count,
+                                    FilesIndexed = incFiles,
+                                    FilesSkipped = 0,
+                                    LogicalBytesIndexed = incBytes,
+                                    Elapsed = TimeSpan.FromMilliseconds(50),
+                                    FilesPerSecond = incFiles,
+                                    BytesPerSecond = incBytes,
+                                    CurrentDirectory = cDrive,
+                                    State = ScanState.Completed,
+                                    ScanMode = scanMode,
+                                    ScanModeDetails = scanModeDetails
+                                });
+
+                                return incStats;
+                            }
+                            else
+                            {
+                                scanModeDetails = $"Incremental fallback: {readResult.Reason}";
+                            }
+                        }
+                        else
+                        {
+                            scanModeDetails = "Initial baseline scan on NTFS volume. Establishing USN checkpoint.";
+                        }
+                    }
+                    else
+                    {
+                        scanModeDetails = "Volume is non-NTFS. Standard filesystem traversal used.";
+                    }
+                }
+            }
+
+            _dbService.BeginBulkIngestion();
+            _dbService.ClearIndex(roots);
+
+            var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = false
+            });
+
+            var stopwatch = Stopwatch.StartNew();
+            var lastReportStopwatch = Stopwatch.StartNew();
+            var scanStartTime = DateTime.UtcNow;
+            string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
+
+            // Immediate initial report so UI status updates without waiting
+            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+
+            // Background SQLite Ingestion Task
+            var dbWorker = Task.Run(async () =>
+            {
+                const int batchSize = 5000;
+                var batch = new List<FileRecord>(batchSize);
+                var reader = channel.Reader;
+                var lastFlush = Stopwatch.StartNew();
+
+                void PersistBatchSafe(List<FileRecord> records)
+                {
+                    if (records.Count == 0) return;
+                    long totalBytes = 0;
+                    for (int i = 0; i < records.Count; i++) totalBytes += records[i].Size;
+
+                    try
+                    {
+                        _dbService.InsertBatch(records);
+                        Interlocked.Add(ref _filesIndexed, records.Count);
+                        Interlocked.Add(ref _logicalBytesIndexed, totalBytes);
+                    }
+                    catch (Exception dbEx)
+                    {
+                        int saved = 0;
+                        long savedBytes = 0;
+                        foreach (var r in records)
+                        {
+                            try
+                            {
+                                _dbService.InsertSingle(r);
+                                saved++;
+                                savedBytes += r.Size;
+                            }
+                            catch { }
+                        }
+                        Interlocked.Add(ref _filesIndexed, saved);
+                        Interlocked.Add(ref _logicalBytesIndexed, savedBytes);
+                        if (_skippedFiles.Count < 500)
+                        {
+                            _skippedFiles.Add(("Batch Ingestion", $"{dbEx.Message} (Recovered {saved}/{records.Count} files)"));
+                        }
+                    }
+                }
+
                 try
                 {
-                    _dbService.InsertBatch(records);
-                }
-                catch (Exception dbEx)
-                {
-                    int saved = 0;
-                    foreach (var r in records)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                        try
-                        {
-                            _dbService.InsertSingle(r);
-                            saved++;
-                        }
-                        catch { }
-                    }
-                    if (_skippedFiles.Count < 500)
-                    {
-                        _skippedFiles.Add(("Batch Ingestion", $"{dbEx.Message} (Recovered {saved}/{records.Count} files)"));
-                    }
-                }
-            }
+                        bool hasMore = await reader.WaitToReadAsync(cancellationToken);
+                        if (!hasMore) break;
 
-            try
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    bool hasMore = await reader.WaitToReadAsync(cancellationToken);
-                    if (!hasMore) break;
-
-                    while (reader.TryRead(out var item))
-                    {
-                        batch.Add(item);
-                        if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 500))
+                        while (reader.TryRead(out var item))
                         {
-                            PersistBatchSafe(batch);
-                            batch.Clear();
-                            lastFlush.Restart();
+                            batch.Add(item);
+                            if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 500))
+                            {
+                                PersistBatchSafe(batch);
+                                batch.Clear();
+                                lastFlush.Restart();
+                            }
                         }
                     }
                 }
-            }
             catch (OperationCanceledException)
             {
                 // Cancellation requested cleanly
@@ -198,6 +307,16 @@ public class ScannerService
                     string dir = dirQueue.Dequeue();
                     currentDirectory = dir;
 
+                    if (_settingsService != null && _settingsService.IsPathExcluded(dir, settings))
+                    {
+                        Interlocked.Increment(ref _directoriesSkipped);
+                        if (_skippedDirs.Count < 500)
+                        {
+                            _skippedDirs.Add((dir, "Excluded by configuration"));
+                        }
+                        continue;
+                    }
+
                     // Enqueue recent directory (keep rolling buffer <= 150)
                     _recentDirectories.Enqueue(dir);
                     while (_recentDirectories.Count > 150)
@@ -223,6 +342,16 @@ public class ScannerService
                         foreach (var fi in dirInfo.EnumerateFiles())
                         {
                             if (cancellationToken.IsCancellationRequested) break;
+
+                            // Skip hidden or system files if configured
+                            if (!settings.IncludeHiddenFiles && (fi.Attributes & FileAttributes.Hidden) != 0)
+                            {
+                                continue;
+                            }
+                            if (!settings.IncludeSystemFiles && (fi.Attributes & FileAttributes.System) != 0)
+                            {
+                                continue;
+                            }
 
                             // Skip OneDrive / cloud-only placeholders that trigger network downloads
                             const FileAttributes RecallOnDataAccess = (FileAttributes)0x00400000;
@@ -257,10 +386,6 @@ public class ScannerService
                                 };
 
                                 await channel.Writer.WriteAsync(record, cancellationToken);
-
-                                // File Indexed
-                                Interlocked.Increment(ref _filesIndexed);
-                                Interlocked.Add(ref _logicalBytesIndexed, size);
                             }
                             catch (OperationCanceledException)
                             {
@@ -280,7 +405,7 @@ public class ScannerService
                             // Throttled progress report
                             if (lastReportStopwatch.ElapsedMilliseconds >= 40)
                             {
-                                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir);
+                                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir, scanMode, scanModeDetails);
                                 lastReportStopwatch.Restart();
                             }
                         }
@@ -314,13 +439,22 @@ public class ScannerService
                         {
                             if (cancellationToken.IsCancellationRequested) break;
 
-                            // Skip reparse points / symlinks if inaccessible or recursive loops
+                            if (_settingsService != null && _settingsService.IsPathExcluded(subDir, settings))
+                            {
+                                Interlocked.Increment(ref _directoriesSkipped);
+                                if (_skippedDirs.Count < 500)
+                                {
+                                    _skippedDirs.Add((subDir, "Excluded by configuration"));
+                                }
+                                continue;
+                            }
+
+                            // Skip reparse points / symlinks if inaccessible or configured to not follow
                             try
                             {
                                 var di = new DirectoryInfo(subDir);
-                                if ((di.Attributes & FileAttributes.ReparsePoint) != 0)
+                                if (!settings.FollowJunctions && (di.Attributes & FileAttributes.ReparsePoint) != 0)
                                 {
-                                    // By default, do not follow symlinks/reparse points to avoid infinite recursion
                                     continue;
                                 }
 
@@ -384,6 +518,7 @@ public class ScannerService
             }
 
             _dbService.EndBulkIngestion();
+            _dbService.BuildDirectoryRollup(roots);
             stopwatch.Stop();
         }
 
@@ -417,6 +552,28 @@ public class ScannerService
         }
         catch { }
 
+        // If scanning a full NTFS volume, save/update the USN Change Journal checkpoint
+        if (roots.Count == 1 && finalState == ScanState.Completed)
+        {
+            try
+            {
+                string r = roots[0];
+                string dRoot = Path.GetPathRoot(Path.GetFullPath(r)) ?? string.Empty;
+                string cRoot = r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string cDrive = dRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (string.Equals(cRoot, cDrive, StringComparison.OrdinalIgnoreCase) && _usnService.IsNtfsVolume(dRoot))
+                {
+                    var qState = _usnService.QueryJournalState(dRoot);
+                    if (qState.IsAvailable)
+                    {
+                        _dbService.SaveUsnCheckpoint(cDrive, qState.JournalId, qState.NextUsn);
+                    }
+                }
+            }
+            catch { }
+        }
+
         // Final progress report
         try
         {
@@ -433,7 +590,9 @@ public class ScannerService
                 FilesPerSecond = finalStats.FilesPerSecond,
                 BytesPerSecond = finalStats.BytesPerSecond,
                 CurrentDirectory = finalStats.CurrentDirectory,
-                State = finalStats.State
+                State = finalStats.State,
+                ScanMode = scanMode,
+                ScanModeDetails = scanModeDetails
             });
         }
         catch { }
@@ -447,7 +606,9 @@ public class ScannerService
         Stopwatch sw,
         string currentDir,
         ScanState state,
-        string? newRecentDir)
+        string? newRecentDir,
+        string scanMode = "Full Scan",
+        string? scanModeDetails = null)
     {
         if (progress == null) return;
 
@@ -471,7 +632,9 @@ public class ScannerService
                 BytesPerSecond = sec > 0 ? bytes / sec : 0,
                 CurrentDirectory = currentDir,
                 State = state,
-                NewRecentDirectory = newRecentDir
+                NewRecentDirectory = newRecentDir,
+                ScanMode = scanMode,
+                ScanModeDetails = scanModeDetails
             });
         }
         catch { }

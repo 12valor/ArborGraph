@@ -26,6 +26,9 @@ public class OldFilesViewModel : ObservableObject
         CopyPathCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.CopyPath(SelectedFile.Path); });
         ShowPropertiesCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.ShowProperties(SelectedFile.Path); });
         RefreshCommand = new RelayCommand(async _ => await RefreshDataAsync());
+
+        MoveToRecycleBinCommand = new RelayCommand(_ => MoveSelectedToRecycleBin(), _ => SelectedFile != null);
+        DeletePermanentlyCommand = new RelayCommand(_ => DeleteSelectedPermanently(), _ => SelectedFile != null);
     }
 
     public ObservableCollection<FileRecord> OldFiles { get; }
@@ -39,7 +42,14 @@ public class OldFilesViewModel : ObservableObject
     public FileRecord? SelectedFile
     {
         get => _selectedFile;
-        set => SetProperty(ref _selectedFile, value);
+        set
+        {
+            if (SetProperty(ref _selectedFile, value))
+            {
+                (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public int SelectedDays
@@ -59,6 +69,44 @@ public class OldFilesViewModel : ObservableObject
     public ICommand CopyPathCommand { get; }
     public ICommand ShowPropertiesCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand MoveToRecycleBinCommand { get; }
+    public ICommand DeletePermanentlyCommand { get; }
+
+    private void MoveSelectedToRecycleBin()
+    {
+        if (SelectedFile == null) return;
+        string targetPath = SelectedFile.Path;
+        var fileToRemove = SelectedFile;
+
+        if (_fileActionService.MoveToRecycleBin(targetPath, out string? err))
+        {
+            _dbService.RemoveFileFromIndex(targetPath);
+            OldFiles.Remove(fileToRemove);
+            SelectedFile = OldFiles.FirstOrDefault();
+        }
+        else if (!string.IsNullOrEmpty(err))
+        {
+            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        }
+    }
+
+    private void DeleteSelectedPermanently()
+    {
+        if (SelectedFile == null) return;
+        string targetPath = SelectedFile.Path;
+        var fileToRemove = SelectedFile;
+
+        if (_fileActionService.DeletePermanently(targetPath, out string? err))
+        {
+            _dbService.RemoveFileFromIndex(targetPath);
+            OldFiles.Remove(fileToRemove);
+            SelectedFile = OldFiles.FirstOrDefault();
+        }
+        else if (!string.IsNullOrEmpty(err))
+        {
+            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        }
+    }
 
     public void RefreshData()
     {

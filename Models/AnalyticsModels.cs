@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using DiskScope.Infrastructure;
 
 namespace DiskScope.Models;
@@ -72,3 +73,68 @@ public class GrowthPoint
     public double X { get; set; }
     public double Y { get; set; }
 }
+
+public class CategoryGrowthComparison
+{
+    public string Category { get; set; } = string.Empty;
+    public long PreviousSizeBytes { get; set; }
+    public long CurrentSizeBytes { get; set; }
+    public long DeltaBytes => CurrentSizeBytes - PreviousSizeBytes;
+    public long DeltaFiles { get; set; }
+    public string FormattedPrevious => SizeFormatter.Format(PreviousSizeBytes);
+    public string FormattedCurrent => SizeFormatter.Format(CurrentSizeBytes);
+    public string FormattedDelta
+    {
+        get
+        {
+            if (DeltaBytes == 0) return "0 B";
+            string sign = DeltaBytes > 0 ? "+" : "-";
+            return $"{sign}{SizeFormatter.Format(Math.Abs(DeltaBytes))}";
+        }
+    }
+    public bool IsGrowth => DeltaBytes > 0;
+}
+
+public class ScanComparisonResult : ObservableObject
+{
+    private ScanHistoryItem? _previousScan;
+    private ScanHistoryItem? _currentScan;
+    private long _deltaBytes;
+
+    public ScanHistoryItem? PreviousScan
+    {
+        get => _previousScan;
+        set => SetProperty(ref _previousScan, value);
+    }
+
+    public ScanHistoryItem? CurrentScan
+    {
+        get => _currentScan;
+        set => SetProperty(ref _currentScan, value);
+    }
+
+    public long DeltaBytes
+    {
+        get => _deltaBytes;
+        set
+        {
+            if (SetProperty(ref _deltaBytes, value))
+            {
+                OnPropertyChanged(nameof(FormattedDelta));
+            }
+        }
+    }
+
+    public string FormattedDelta
+    {
+        get
+        {
+            if (DeltaBytes == 0) return "0 B";
+            string sign = DeltaBytes > 0 ? "+" : "-";
+            return $"{sign}{SizeFormatter.Format(Math.Abs(DeltaBytes))}";
+        }
+    }
+
+    public ObservableCollection<CategoryGrowthComparison> WhatGrew { get; } = [];
+}
+

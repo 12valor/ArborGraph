@@ -100,12 +100,35 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="FILES IN SELECTED DUPLICATE GROUP" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,8"/>
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="FILES IN SELECTED DUPLICATE GROUP" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" Content="Apply Selection to All Groups" IsChecked="{Binding ApplyToAllGroups, Mode=TwoWay}"
+                                  Foreground="{StaticResource BrushTextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                    </Grid>
 
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedGroup.Files}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                    <!-- Smart Selection Tools -->
+                    <Border Grid.Row="1" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,10">
+                        <WrapPanel VerticalAlignment="Center">
+                            <TextBlock Text="Select copies to remove:" Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Content="Keep Newest" Command="{Binding KeepNewestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,4" Margin="0,0,6,0" ToolTip="Keep only the newest copy and select all older copies for removal"/>
+                            <Button Content="Keep Oldest" Command="{Binding KeepOldestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,4" Margin="0,0,6,0" ToolTip="Keep only the oldest copy and select all newer copies for removal"/>
+                            <Button Content="Keep Shortest Path" Command="{Binding KeepShortestPathCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,4" Margin="0,0,6,0" ToolTip="Keep the copy with the shortest directory path"/>
+                            <Button Content="Deselect All" Command="{Binding DeselectAllCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,4" Margin="0,0,12,0"/>
+                            
+                            <Button Content="🗑 Move Selected to Recycle Bin" Command="{Binding MoveSelectedToRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="10,4" Margin="0,0,6,0"/>
+                            <Button Content="⚠ Permanently Delete Selected" Command="{Binding DeleteSelectedPermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,4"/>
+                        </WrapPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding SelectedGroup.Files}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                               MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
@@ -121,6 +144,11 @@
                                                       Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                             <MenuItem Header="Properties" 
                                                       Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <Separator Background="{StaticResource BrushBorder}"/>
+                                            <MenuItem Header="Move to Recycle Bin" 
+                                                      Command="{Binding DataContext.MoveFileToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Delete Permanently" 
+                                                      Command="{Binding DataContext.DeleteFilePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>
@@ -128,6 +156,8 @@
                         </DataGrid.RowStyle>
 
                         <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Remove" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="65"/>
+
                             <DataGridTextColumn Header="File Name" Binding="{Binding Name}" Width="200">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -175,7 +205,9 @@
                     <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+                    <Button Content="Recycle Bin" Command="{Binding MoveFileToRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Delete Permanently" Command="{Binding DeleteFilePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}"/>
                 </StackPanel>
             </Grid>
         </Border>

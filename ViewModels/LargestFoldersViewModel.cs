@@ -24,6 +24,9 @@ public class LargestFoldersViewModel : ObservableObject
         OpenFolderCommand = new RelayCommand(_ => { if (SelectedFolder != null) _fileActionService.OpenFileLocation(SelectedFolder.Path); });
         CopyFolderPathCommand = new RelayCommand(_ => { if (SelectedFolder != null) _fileActionService.CopyPath(SelectedFolder.Path); });
         RefreshCommand = new RelayCommand(async _ => await RefreshDataAsync());
+
+        MoveToRecycleBinCommand = new RelayCommand(_ => MoveSelectedToRecycleBin(), _ => SelectedFolder != null);
+        DeletePermanentlyCommand = new RelayCommand(_ => DeleteSelectedPermanently(), _ => SelectedFolder != null);
     }
 
     public ObservableCollection<DirectoryRecord> Folders { get; }
@@ -37,7 +40,14 @@ public class LargestFoldersViewModel : ObservableObject
     public DirectoryRecord? SelectedFolder
     {
         get => _selectedFolder;
-        set => SetProperty(ref _selectedFolder, value);
+        set
+        {
+            if (SetProperty(ref _selectedFolder, value))
+            {
+                (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public long TotalIndexedBytes
@@ -49,6 +59,44 @@ public class LargestFoldersViewModel : ObservableObject
     public ICommand OpenFolderCommand { get; }
     public ICommand CopyFolderPathCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand MoveToRecycleBinCommand { get; }
+    public ICommand DeletePermanentlyCommand { get; }
+
+    private void MoveSelectedToRecycleBin()
+    {
+        if (SelectedFolder == null) return;
+        string targetPath = SelectedFolder.Path;
+        var folderToRemove = SelectedFolder;
+
+        if (_fileActionService.MoveToRecycleBin(targetPath, out string? err))
+        {
+            _dbService.RemoveDirectoryFromIndex(targetPath);
+            Folders.Remove(folderToRemove);
+            SelectedFolder = Folders.FirstOrDefault();
+        }
+        else if (!string.IsNullOrEmpty(err))
+        {
+            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        }
+    }
+
+    private void DeleteSelectedPermanently()
+    {
+        if (SelectedFolder == null) return;
+        string targetPath = SelectedFolder.Path;
+        var folderToRemove = SelectedFolder;
+
+        if (_fileActionService.DeletePermanently(targetPath, out string? err))
+        {
+            _dbService.RemoveDirectoryFromIndex(targetPath);
+            Folders.Remove(folderToRemove);
+            SelectedFolder = Folders.FirstOrDefault();
+        }
+        else if (!string.IsNullOrEmpty(err))
+        {
+            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        }
+    }
 
     public void RefreshData(long totalBytes = 0)
     {

@@ -101,6 +101,12 @@
                     <Button Content="Analytics" Command="{Binding NavigateCommand}" CommandParameter="Analytics" 
                             Style="{StaticResource NavButtonStyle}"/>
 
+                    <Button Content="Cleanup Center" Command="{Binding NavigateCommand}" CommandParameter="CleanupCenter" 
+                            Style="{StaticResource NavButtonStyle}"/>
+
+                    <Button Content="Developer Storage" Command="{Binding NavigateCommand}" CommandParameter="DeveloperStorage" 
+                            Style="{StaticResource NavButtonStyle}"/>
+
                     <Button Content="Largest Files" Command="{Binding NavigateCommand}" CommandParameter="LargestFiles" 
                             Style="{StaticResource NavButtonStyle}"/>
 
@@ -129,6 +135,9 @@
 
                     <Button Content="Scan Diagnostics &amp; Log" Command="{Binding NavigateCommand}" CommandParameter="ScanLog" 
                             Style="{StaticResource NavButtonStyle}"/>
+
+                    <Button Content="Settings &amp; Rules" Command="{Binding NavigateCommand}" CommandParameter="Settings" 
+                            Style="{StaticResource NavButtonStyle}"/>
                 </StackPanel>
             </Border>
 
@@ -140,6 +149,12 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:AnalyticsViewModel}">
                         <views:AnalyticsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:CleanupCenterViewModel}">
+                        <views:CleanupCenterView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:DeveloperStorageViewModel}">
+                        <views:DeveloperStorageView/>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:LargestFilesViewModel}">
                         <views:LargestFilesView/>
@@ -167,6 +182,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type vm:ScanLogViewModel}">
                         <views:ScanLogView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                        <views:SettingsView/>
                     </DataTemplate>
                 </ContentControl.Resources>
             </ContentControl>

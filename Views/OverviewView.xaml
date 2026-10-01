@@ -12,6 +12,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -231,8 +232,103 @@
             </Border>
         </Grid>
 
+        <!-- Row 3: "WHY IS MY DISK FULL?" Storage Explanation & Interactive Breakdown -->
+        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header with Drive and Reclaimable Summary -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Explanation.DriveName, StringFormat='WHY IS {0} FULL?'}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="{Binding Explanation.UsedBytes, Converter={StaticResource BytesToStringConverter}, StringFormat='Used: {0}'}" 
+                                   FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Potentially reclaimable: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Explanation.FormattedReclaimable}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushWarning}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Drilldown Navigation Bar (Breadcrumbs & Back button) -->
+                <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="⮤ Up One Level" Command="{Binding DrillUpCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,3" Margin="0,0,10,0"/>
+                        
+                        <!-- Breadcrumbs -->
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Breadcrumbs}" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                                        <TextBlock Text=" ➔ " Foreground="{StaticResource BrushTextMuted}" FontSize="10" Margin="4,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button Grid.Column="2" Content="Reset to Root" Command="{Binding ResetDrilldownCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,3"/>
+                    </Grid>
+                </Border>
+
+                <!-- Contributors / Subdirectories List -->
+                <ItemsControl Grid.Row="2" ItemsSource="{Binding DrilldownItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="📁" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
+                                        <TextBlock Text="{Binding Path}" FontSize="10" FontFamily="Consolas" Foreground="{StaticResource BrushTextMuted}" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" FontWeight="Bold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding FormattedPercentage}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                    <Button Grid.Column="4" Content="Drill Down ➔" 
+                                            Command="{Binding DataContext.DrilldownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding CanDrillDown}"
+                                            Style="{StaticResource ActionButtonStyle}" FontSize="10" Padding="8,3"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+
         <!-- Live Directory Rolling Feed -->
-        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14" MinHeight="180">
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14" MinHeight="180">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -270,7 +366,7 @@
         </Border>
 
         <!-- Scan Integrity Panel -->
-        <Border Grid.Row="4" Margin="0,14,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <Border Grid.Row="5" Margin="0,14,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

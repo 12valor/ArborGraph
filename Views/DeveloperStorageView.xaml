@@ -1,0 +1,232 @@
+<UserControl x:Class="DiskScope.Views.DeveloperStorageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1050">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Header & Actions -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Developer Storage Intelligence" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <TextBlock Text="Contextual detection of project build outputs, dependencies (node_modules, bin, obj, target), and package caches." 
+                               FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Column="1" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="16,8">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                            <TextBlock Text="DETECTED DEV STORAGE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding FormattedTotalStorage}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Scan Storage" Command="{Binding ScanIndexedCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Padding="12,6"/>
+                            <Button Content="Browse Folder..." Command="{Binding BrowseWorkspaceCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Status / Workspace Notification Bar -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding TotalItemsCount, StringFormat='{}{0:N0} candidate directories'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Master-Detail Split View -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Ecosystems Breakdown List -->
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="ECOSYSTEMS &amp; CACHES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="4,0,0,10"/>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Ecosystems}" SelectedItem="{Binding SelectedEcosystem, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource BrushBgCard}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" 
+                                        CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Header: Name & Total Size -->
+                                        <Grid Grid.Row="0">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                            <TextBlock Text="{Binding FormattedTotal}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Subcategory breakdown pills -->
+                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Subcategories}" Margin="0,6,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,2">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding FormattedTotal}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextMuted}"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Item count info -->
+                                        <TextBlock Grid.Row="2" Text="{Binding ItemCount, StringFormat='{}{0} location(s) detected'}" 
+                                                   FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,6,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Safe Clean Button for selected ecosystem -->
+                    <Button Grid.Row="2" Content="Clean Safe Build Artifacts" Command="{Binding CleanEcosystemSafeCommand}"
+                            Style="{StaticResource ActionButtonStyle}" HorizontalAlignment="Stretch" Margin="0,8,0,0"
+                            ToolTip="Safely moves build outputs (bin, obj, target, build) for this ecosystem to Windows Recycle Bin"/>
+                </Grid>
+            </Border>
+
+            <!-- Right: Detected Directories DataGrid -->
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="4,0,4,8">
+                        <TextBlock Text="{Binding SelectedEcosystem.Name, FallbackValue='Detected Directories'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="{Binding DetailedItems.Count, StringFormat='{}{0:N0} items'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding DetailedItems}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column" SelectionMode="Single"
+                              Background="Transparent" BorderThickness="0">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Header="Open Location in Explorer" Command="{Binding DataContext.OpenLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Copy Absolute Path" Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <Separator Background="{StaticResource BrushBorder}"/>
+                                            <MenuItem Header="Move to Recycle Bin" InputGestureText="Del" Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del" Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Project / Name" Binding="{Binding ProjectName}" Width="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Folder" Binding="{Binding Name}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Type" Binding="{Binding TypeDisplay}" Width="110"/>
+                            
+                            <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                                        <Setter Property="TextAlignment" Value="Right"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Files" Binding="{Binding FileCount, StringFormat='{}{0:N0}'}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Right"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Detection Reason" Binding="{Binding ContextReason}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Bottom Action Strip for Selected Directory -->
+        <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SelectedItem.Path, FallbackValue='Select a developer directory above to inspect or recover space'}" 
+                               FontSize="12" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding SelectedItem.ContextReason, FallbackValue='Contextual project validation ensures only developer artifacts are targeted'}" 
+                               FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Open in Explorer" Command="{Binding OpenLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

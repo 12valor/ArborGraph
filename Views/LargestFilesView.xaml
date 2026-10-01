@@ -23,36 +23,80 @@
         <!-- Filters Toolbar -->
         <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="140"/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="140"/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="220"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- Min Size -->
-                <TextBlock Grid.Column="0" Text="Min Size:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
-                <ComboBox Grid.Column="1" ItemsSource="{Binding MinSizeOptions}" SelectedItem="{Binding SelectedMinSizeOption, Mode=TwoWay}"/>
+                <!-- Row 1: Size, Category, Age, Sort By -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- Category -->
-                <TextBlock Grid.Column="3" Text="Category:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
-                <ComboBox Grid.Column="4" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"/>
+                    <!-- Min Size -->
+                    <TextBlock Grid.Column="0" Text="Min Size:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding MinSizeOptions}" SelectedItem="{Binding SelectedMinSizeOption, Mode=TwoWay}"/>
 
-                <!-- Search -->
-                <TextBlock Grid.Column="6" Text="Search:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
-                <TextBox Grid.Column="7" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                    <!-- Category -->
+                    <TextBlock Grid.Column="3" Text="Category:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="4" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"/>
 
-                <!-- Actions -->
-                <StackPanel Grid.Column="9" Orientation="Horizontal">
-                    <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
-                    <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}"/>
-                </StackPanel>
+                    <!-- Age Cutoff -->
+                    <TextBlock Grid.Column="6" Text="Age:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="7" ItemsSource="{Binding AgeOptions}" SelectedItem="{Binding SelectedAgeOption, Mode=TwoWay}"/>
+
+                    <!-- Sort By -->
+                    <TextBlock Grid.Column="9" Text="Sort By:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="10" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"/>
+                </Grid>
+
+                <!-- Row 2: Extension, Location Prefix, Search Query, Buttons -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Extension -->
+                    <TextBlock Grid.Column="0" Text="Ext (.psd):" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding ExtensionFilter, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="e.g. .psd, .zip, .mp4"/>
+
+                    <!-- Location Prefix -->
+                    <TextBlock Grid.Column="3" Text="Folder Prefix:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="4" Text="{Binding LocationPrefix, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="e.g. C:\Users, C:\Projects"/>
+
+                    <!-- Name Search -->
+                    <TextBlock Grid.Column="6" Text="Search Name:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="7" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Column="9" Orientation="Horizontal">
+                        <Button Content="Clear Filters" Command="{Binding ClearFiltersCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0" ToolTip="Reset all filters to defaults"/>
+                        <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 
@@ -73,6 +117,11 @@
                                           Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                 <MenuItem Header="Properties" 
                                           Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
+                                          Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
+                                          Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
@@ -161,7 +210,10 @@
                     <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource ActionButtonStyle}" 
+                            Foreground="{StaticResource BrushWarning}"/>
                 </StackPanel>
 
                 <!-- Metadata Row -->

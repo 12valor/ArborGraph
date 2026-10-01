@@ -15,8 +15,8 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Old Files Analysis" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-            <TextBlock Text="Identify large files unwritten for long periods (analysis only; read-only inspection)" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+            <TextBlock Text="Old Files Analysis &amp; Cleanup" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+            <TextBlock Text="Identify large dormant files and safely recover storage via the Windows Recycle Bin" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
         </StackPanel>
 
         <!-- Age Filter Bar -->
@@ -59,6 +59,11 @@
                                           Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                 <MenuItem Header="Properties" 
                                           Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator Background="{StaticResource BrushBorder}"/>
+                                <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
+                                          Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
+                                          Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
@@ -122,7 +127,10 @@
                     <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource ActionButtonStyle}" 
+                            Foreground="{StaticResource BrushWarning}"/>
                 </StackPanel>
             </Grid>
         </Border>

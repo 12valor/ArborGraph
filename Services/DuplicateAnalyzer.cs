@@ -97,7 +97,7 @@ public class DuplicateAnalyzer
                         {
                             ExactSize = size,
                             Sha256 = hash,
-                            Files = verifiedList
+                            Files = new System.Collections.ObjectModel.ObservableCollection<FileRecord>(verifiedList)
                         });
                     }
                 }

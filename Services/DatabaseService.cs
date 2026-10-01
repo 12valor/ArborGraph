@@ -98,6 +98,54 @@ public class DatabaseService : IDisposable
                     logical_bytes_indexed INTEGER,
                     scan_status TEXT
                 );
+
+                CREATE TABLE IF NOT EXISTS directories (
+                    path TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    parent TEXT NOT NULL,
+                    total_size INTEGER NOT NULL,
+                    direct_size INTEGER NOT NULL,
+                    total_files INTEGER NOT NULL,
+                    direct_files INTEGER NOT NULL,
+                    subfolder_count INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE INDEX IF NOT EXISTS idx_directories_total_size ON directories(total_size DESC);
+                CREATE INDEX IF NOT EXISTS idx_directories_parent ON directories(parent);
+                CREATE INDEX IF NOT EXISTS idx_directories_name ON directories(name);
+
+                CREATE TABLE IF NOT EXISTS scan_history_categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    scan_id INTEGER NOT NULL,
+                    category TEXT NOT NULL,
+                    total_size INTEGER NOT NULL,
+                    file_count INTEGER NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_scan_hist_cat ON scan_history_categories(scan_id);
+
+                CREATE TABLE IF NOT EXISTS duplicate_groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    exact_size INTEGER NOT NULL,
+                    file_count INTEGER NOT NULL,
+                    wasted_bytes INTEGER NOT NULL,
+                    sha256 TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS duplicate_files (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    group_id INTEGER NOT NULL,
+                    path TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    modified_time REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_dup_files_group ON duplicate_files(group_id);
+
+                CREATE TABLE IF NOT EXISTS drive_usn_checkpoints (
+                    drive_letter TEXT PRIMARY KEY,
+                    journal_id INTEGER NOT NULL,
+                    next_usn INTEGER NOT NULL,
+                    last_scan_time REAL NOT NULL
+                );
             ";
             cmd.ExecuteNonQuery();
         }
@@ -128,7 +176,7 @@ public class DatabaseService : IDisposable
                     {
                         using var cmd = _connection.CreateCommand();
                         cmd.Transaction = tx;
-                        cmd.CommandText = "DELETE FROM files;";
+                        cmd.CommandText = "DELETE FROM files; DELETE FROM directories;";
                         cmd.ExecuteNonQuery();
                     }
                     else
@@ -138,6 +186,9 @@ public class DatabaseService : IDisposable
                         // Use B-tree index range scan on path instead of full-table scan with substr
                         cmd.CommandText = @"
                             DELETE FROM files 
+                            WHERE path = $root COLLATE NOCASE 
+                               OR (path >= $prefix AND path < $prefixUpper);
+                            DELETE FROM directories 
                             WHERE path = $root COLLATE NOCASE 
                                OR (path >= $prefix AND path < $prefixUpper);
                         ";
@@ -332,6 +383,44 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public void DeleteSingle(string path)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "DELETE FROM files WHERE path = $path;";
+                cmd.Parameters.AddWithValue("$path", path);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteSingle error: {ex.Message}");
+            }
+        }
+    }
+
+    public void DeleteFilesByName(string fileName)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "DELETE FROM files WHERE name = $name;";
+                cmd.Parameters.AddWithValue("$name", fileName);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteFilesByName error: {ex.Message}");
+            }
+        }
+    }
+
     public void SaveScanMetadata(ScanStats stats, string roots, DateTime start, DateTime finish)
     {
         lock (_lock)
@@ -359,8 +448,36 @@ public class DatabaseService : IDisposable
                 cmd.Parameters.AddWithValue("$fs", stats.FilesSkipped);
                 cmd.Parameters.AddWithValue("$bytes", stats.LogicalBytesIndexed);
                 cmd.Parameters.AddWithValue("$status", stats.State.ToString());
-
                 cmd.ExecuteNonQuery();
+
+                // Get scanId and snapshot category distribution
+                using var idCmd = _connection!.CreateCommand();
+                idCmd.CommandText = "SELECT last_insert_rowid();";
+                long scanId = Convert.ToInt64(idCmd.ExecuteScalar());
+
+                if (scanId > 0)
+                {
+                    using var catCmd = _connection!.CreateCommand();
+                    catCmd.CommandText = @"
+                        INSERT INTO scan_history_categories (scan_id, category, total_size, file_count)
+                        SELECT $scanId, category, SUM(size), COUNT(id)
+                        FROM files
+                        GROUP BY category;
+                    ";
+                    catCmd.Parameters.AddWithValue("$scanId", scanId);
+                    catCmd.ExecuteNonQuery();
+
+                    // Prune scan history beyond 50 sessions (retention strategy)
+                    using var pruneCmd = _connection!.CreateCommand();
+                    pruneCmd.CommandText = @"
+                        DELETE FROM scan_history_categories 
+                        WHERE scan_id NOT IN (SELECT id FROM scan_metadata ORDER BY id DESC LIMIT 50);
+
+                        DELETE FROM scan_metadata 
+                        WHERE id NOT IN (SELECT id FROM scan_metadata ORDER BY id DESC LIMIT 50);
+                    ";
+                    pruneCmd.ExecuteNonQuery();
+                }
             }
             catch (Exception ex)
             {
@@ -377,7 +494,10 @@ public class DatabaseService : IDisposable
         string? category = null,
         string? search = null,
         string sortBy = "size",
-        bool sortDesc = true)
+        bool sortDesc = true,
+        int? minDaysOld = null,
+        string? extension = null,
+        string? locationPrefix = null)
     {
         lock (_lock)
         {
@@ -408,9 +528,31 @@ public class DatabaseService : IDisposable
                     cmd.Parameters.AddWithValue("$search", $"%{search}%");
                 }
 
+                if (minDaysOld.HasValue && minDaysOld.Value > 0)
+                {
+                    double cutoff = DateTimeOffset.UtcNow.AddDays(-minDaysOld.Value).ToUnixTimeSeconds();
+                    whereClause += " AND modified_time <= $modCutoff";
+                    cmd.Parameters.AddWithValue("$modCutoff", cutoff);
+                }
+
+                if (!string.IsNullOrWhiteSpace(extension))
+                {
+                    string ext = extension.Trim();
+                    if (!ext.StartsWith(".")) ext = "." + ext;
+                    whereClause += " AND LOWER(extension) = $ext";
+                    cmd.Parameters.AddWithValue("$ext", ext.ToLowerInvariant());
+                }
+
+                if (!string.IsNullOrWhiteSpace(locationPrefix))
+                {
+                    whereClause += " AND path LIKE $loc";
+                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                }
+
                 string validSort = sortBy.ToLowerInvariant() switch
                 {
                     "name" => "name",
+                    "path" => "path",
                     "modified_time" or "modified" or "date" => "modified_time",
                     "category" => "category",
                     "extension" or "ext" => "extension",
@@ -449,7 +591,10 @@ public class DatabaseService : IDisposable
         long minSize = 0,
         long maxSize = long.MaxValue,
         string? category = null,
-        string? search = null)
+        string? search = null,
+        int? minDaysOld = null,
+        string? extension = null,
+        string? locationPrefix = null)
     {
         lock (_lock)
         {
@@ -479,6 +624,27 @@ public class DatabaseService : IDisposable
                     cmd.Parameters.AddWithValue("$search", $"%{search}%");
                 }
 
+                if (minDaysOld.HasValue && minDaysOld.Value > 0)
+                {
+                    double cutoff = DateTimeOffset.UtcNow.AddDays(-minDaysOld.Value).ToUnixTimeSeconds();
+                    whereClause += " AND modified_time <= $modCutoff";
+                    cmd.Parameters.AddWithValue("$modCutoff", cutoff);
+                }
+
+                if (!string.IsNullOrWhiteSpace(extension))
+                {
+                    string ext = extension.Trim();
+                    if (!ext.StartsWith(".")) ext = "." + ext;
+                    whereClause += " AND LOWER(extension) = $ext";
+                    cmd.Parameters.AddWithValue("$ext", ext.ToLowerInvariant());
+                }
+
+                if (!string.IsNullOrWhiteSpace(locationPrefix))
+                {
+                    whereClause += " AND path LIKE $loc";
+                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                }
+
                 cmd.CommandText = $"SELECT COUNT(*) FROM files {whereClause};";
                 object? result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt64(result) : 0;
@@ -491,7 +657,180 @@ public class DatabaseService : IDisposable
         }
     }
 
-    public List<DirectoryRecord> GetLargestFolders(int limit = 100)
+    private class FolderRollupNode
+    {
+        public string Path { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Parent { get; set; } = string.Empty;
+        public long DirectSize { get; set; }
+        public long DirectFiles { get; set; }
+        public long TotalSize { get; set; }
+        public long TotalFiles { get; set; }
+        public long SubfolderCount { get; set; }
+    }
+
+    private static string NormalizeDirPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+        string trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (trimmed.Length == 2 && char.IsLetter(trimmed[0]) && trimmed[1] == ':')
+        {
+            return trimmed + Path.DirectorySeparatorChar;
+        }
+        return trimmed;
+    }
+
+    private static string GetParentDirPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+        string normalized = NormalizeDirPath(path);
+        if (normalized.Length <= 3 && normalized.EndsWith(":\\"))
+        {
+            return string.Empty;
+        }
+        string? parent = Path.GetDirectoryName(normalized);
+        return parent != null ? NormalizeDirPath(parent) : string.Empty;
+    }
+
+    public void BuildDirectoryRollup(IReadOnlyList<string>? roots = null)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+
+                using var fetchCmd = _connection!.CreateCommand();
+                fetchCmd.CommandText = "SELECT parent, SUM(size) as d_size, COUNT(id) as d_count FROM files GROUP BY parent;";
+
+                var nodes = new Dictionary<string, FolderRollupNode>(StringComparer.OrdinalIgnoreCase);
+
+                using (var reader = fetchCmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string rawParent = reader.GetString(0);
+                        long dSize = reader.GetInt64(1);
+                        long dCount = reader.GetInt64(2);
+
+                        string norm = NormalizeDirPath(rawParent);
+                        if (string.IsNullOrEmpty(norm)) continue;
+
+                        if (!nodes.TryGetValue(norm, out var node))
+                        {
+                            string name = Path.GetFileName(norm);
+                            if (string.IsNullOrEmpty(name)) name = norm;
+                            node = new FolderRollupNode
+                            {
+                                Path = norm,
+                                Name = name,
+                                Parent = GetParentDirPath(norm),
+                                DirectSize = dSize,
+                                DirectFiles = dCount
+                            };
+                            nodes[norm] = node;
+                        }
+                        else
+                        {
+                            node.DirectSize += dSize;
+                            node.DirectFiles += dCount;
+                        }
+
+                        // Ensure all ancestor paths are in dictionary
+                        string curr = norm;
+                        while (true)
+                        {
+                            string p = GetParentDirPath(curr);
+                            if (string.IsNullOrEmpty(p)) break;
+
+                            if (!nodes.TryGetValue(p, out var pNode))
+                            {
+                                string ancestorName = Path.GetFileName(p);
+                                if (string.IsNullOrEmpty(ancestorName)) ancestorName = p;
+                                pNode = new FolderRollupNode
+                                {
+                                    Path = p,
+                                    Name = ancestorName,
+                                    Parent = GetParentDirPath(p),
+                                    DirectSize = 0,
+                                    DirectFiles = 0
+                                };
+                                nodes[p] = pNode;
+                            }
+                            curr = p;
+                        }
+                    }
+                }
+
+                // Initialize totals with direct files
+                foreach (var node in nodes.Values)
+                {
+                    node.TotalSize = node.DirectSize;
+                    node.TotalFiles = node.DirectFiles;
+                }
+
+                // Bottom-up rollup: sort by directory depth descending (leaves first)
+                var sorted = nodes.Values
+                    .OrderByDescending(n => n.Path.Count(c => c == '\\' || c == '/'))
+                    .ThenByDescending(n => n.Path.Length)
+                    .ToList();
+
+                foreach (var node in sorted)
+                {
+                    if (!string.IsNullOrEmpty(node.Parent) && nodes.TryGetValue(node.Parent, out var parentNode))
+                    {
+                        parentNode.TotalSize += node.TotalSize;
+                        parentNode.TotalFiles += node.TotalFiles;
+                        parentNode.SubfolderCount++;
+                    }
+                }
+
+                // Persist rolled up hierarchy to directories table
+                using var tx = _connection.BeginTransaction();
+                using var clearCmd = _connection.CreateCommand();
+                clearCmd.Transaction = tx;
+                clearCmd.CommandText = "DELETE FROM directories;";
+                clearCmd.ExecuteNonQuery();
+
+                using var insertCmd = _connection.CreateCommand();
+                insertCmd.Transaction = tx;
+                insertCmd.CommandText = @"
+                    INSERT INTO directories (path, name, parent, total_size, direct_size, total_files, direct_files, subfolder_count)
+                    VALUES ($path, $name, $parent, $total_size, $direct_size, $total_files, $direct_files, $subfolder_count);
+                ";
+
+                var pPath = insertCmd.Parameters.Add("$path", SqliteType.Text);
+                var pName = insertCmd.Parameters.Add("$name", SqliteType.Text);
+                var pParent = insertCmd.Parameters.Add("$parent", SqliteType.Text);
+                var pTotalSize = insertCmd.Parameters.Add("$total_size", SqliteType.Integer);
+                var pDirectSize = insertCmd.Parameters.Add("$direct_size", SqliteType.Integer);
+                var pTotalFiles = insertCmd.Parameters.Add("$total_files", SqliteType.Integer);
+                var pDirectFiles = insertCmd.Parameters.Add("$direct_files", SqliteType.Integer);
+                var pSubfolders = insertCmd.Parameters.Add("$subfolder_count", SqliteType.Integer);
+
+                foreach (var node in nodes.Values)
+                {
+                    pPath.Value = node.Path;
+                    pName.Value = node.Name;
+                    pParent.Value = node.Parent;
+                    pTotalSize.Value = node.TotalSize;
+                    pDirectSize.Value = node.DirectSize;
+                    pTotalFiles.Value = node.TotalFiles;
+                    pDirectFiles.Value = node.DirectFiles;
+                    pSubfolders.Value = node.SubfolderCount;
+                    insertCmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"BuildDirectoryRollup error: {ex.Message}");
+            }
+        }
+    }
+
+    public List<DirectoryRecord> GetLargestFolders(int limit = 100, bool excludeDriveRoots = true)
     {
         lock (_lock)
         {
@@ -499,35 +838,57 @@ public class DatabaseService : IDisposable
             try
             {
                 EnsureOpen();
-                using var cmd = _connection!.CreateCommand();
 
-                cmd.CommandText = @"
-                    SELECT parent, SUM(size) as total_size, COUNT(id) as file_count
-                    FROM files
-                    GROUP BY parent
+                // If directories table is not yet populated, compute rollup automatically
+                using (var countCmd = _connection!.CreateCommand())
+                {
+                    countCmd.CommandText = "SELECT COUNT(path) FROM directories;";
+                    long count = Convert.ToInt64(countCmd.ExecuteScalar());
+                    if (count == 0)
+                    {
+                        BuildDirectoryRollup();
+                    }
+                }
+
+                string filterClause = excludeDriveRoots ? "WHERE NOT (length(path) <= 3 AND path LIKE '_:\\')" : "";
+
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = $@"
+                    SELECT path, name, parent, total_size, total_files, subfolder_count
+                    FROM directories
+                    {filterClause}
                     ORDER BY total_size DESC
                     LIMIT $limit;
                 ";
                 cmd.Parameters.AddWithValue("$limit", limit);
 
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using (var reader = cmd.ExecuteReader())
                 {
-                    string path = reader.GetString(0);
-                    long size = reader.GetInt64(1);
-                    long count = reader.GetInt64(2);
-
-                    string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-                    if (string.IsNullOrEmpty(name)) name = path;
-
-                    list.Add(new DirectoryRecord
+                    while (reader.Read())
                     {
-                        Path = path,
-                        Name = name,
-                        Parent = Path.GetDirectoryName(path) ?? string.Empty,
-                        Size = size,
-                        FileCount = count
-                    });
+                        string path = reader.GetString(0);
+                        string name = reader.GetString(1);
+                        string parent = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                        long totalSize = reader.GetInt64(3);
+                        long totalFiles = reader.GetInt64(4);
+                        long subfolders = reader.IsDBNull(5) ? 0 : reader.GetInt64(5);
+
+                        list.Add(new DirectoryRecord
+                        {
+                            Path = path,
+                            Name = name,
+                            Parent = parent,
+                            Size = totalSize,
+                            FileCount = totalFiles,
+                            SubfolderCount = subfolders
+                        });
+                    }
+                }
+
+                // If filtering drive roots resulted in empty list, fall back to returning all directories
+                if (list.Count == 0 && excludeDriveRoots)
+                {
+                    return GetLargestFolders(limit, excludeDriveRoots: false);
                 }
             }
             catch (Exception ex)
@@ -536,6 +897,250 @@ public class DatabaseService : IDisposable
             }
 
             return list;
+        }
+    }
+
+    public List<DirectoryRecord> GetDirectoriesByNames(IEnumerable<string> names)
+    {
+        lock (_lock)
+        {
+            var list = new List<DirectoryRecord>();
+            var nameList = names.ToList();
+            if (nameList.Count == 0) return list;
+
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                var paramNames = new List<string>();
+                for (int i = 0; i < nameList.Count; i++)
+                {
+                    string p = $"$n{i}";
+                    paramNames.Add(p);
+                    cmd.Parameters.AddWithValue(p, nameList[i]);
+                }
+
+                cmd.CommandText = $@"
+                    SELECT path, name, parent, total_size, total_files, subfolder_count
+                    FROM directories
+                    WHERE name IN ({string.Join(",", paramNames)})
+                    ORDER BY total_size DESC;
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(new DirectoryRecord
+                    {
+                        Path = reader.GetString(0),
+                        Name = reader.GetString(1),
+                        Parent = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                        Size = reader.GetInt64(3),
+                        FileCount = reader.GetInt64(4),
+                        SubfolderCount = reader.IsDBNull(5) ? 0 : reader.GetInt64(5)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetDirectoriesByNames error: {ex.Message}");
+            }
+
+            return list;
+        }
+    }
+
+    public List<DirectoryRecord> GetSubdirectories(string parentPath, int limit = 50)
+    {
+        lock (_lock)
+        {
+            var list = new List<DirectoryRecord>();
+            try
+            {
+                EnsureOpen();
+                string cleanParent = parentPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT path, name, parent, total_size, total_files, subfolder_count
+                    FROM directories
+                    WHERE parent = $parent OR parent = $parentClean
+                    ORDER BY total_size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$parent", parentPath);
+                cmd.Parameters.AddWithValue("$parentClean", cleanParent);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(new DirectoryRecord
+                    {
+                        Path = reader.GetString(0),
+                        Name = reader.GetString(1),
+                        Parent = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                        Size = reader.GetInt64(3),
+                        FileCount = reader.GetInt64(4),
+                        SubfolderCount = reader.IsDBNull(5) ? 0 : reader.GetInt64(5)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSubdirectories error: {ex.Message}");
+            }
+
+            return list;
+        }
+    }
+
+    public bool RemoveFileFromIndex(string filePath)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "DELETE FROM files WHERE path = $path COLLATE NOCASE;";
+                cmd.Parameters.AddWithValue("$path", filePath);
+                int rows = cmd.ExecuteNonQuery();
+                return rows > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RemoveFileFromIndex error: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    public bool RemoveDirectoryFromIndex(string dirPath)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                string clean = NormalizeDirPath(dirPath);
+                string prefix = clean + Path.DirectorySeparatorChar;
+                string prefixUpper = clean + (char)(Path.DirectorySeparatorChar + 1);
+
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    DELETE FROM files 
+                    WHERE path = $dir COLLATE NOCASE 
+                       OR parent = $dir COLLATE NOCASE 
+                       OR (path >= $prefix AND path < $prefixUpper);
+                    DELETE FROM directories 
+                    WHERE path = $dir COLLATE NOCASE 
+                       OR (path >= $prefix AND path < $prefixUpper);
+                ";
+                cmd.Parameters.AddWithValue("$dir", clean);
+                cmd.Parameters.AddWithValue("$prefix", prefix);
+                cmd.Parameters.AddWithValue("$prefixUpper", prefixUpper);
+                int rows = cmd.ExecuteNonQuery();
+                return rows > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RemoveDirectoryFromIndex error: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    public void StreamFilteredFiles(
+        Action<FileRecord> onRecord,
+        long minSize = 0,
+        long maxSize = long.MaxValue,
+        string? category = null,
+        string? search = null,
+        string sortBy = "size",
+        bool sortDesc = true,
+        int? minDaysOld = null,
+        string? extension = null,
+        string? locationPrefix = null,
+        CancellationToken ct = default)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+
+                string whereClause = "WHERE size >= $minSize";
+                cmd.Parameters.AddWithValue("$minSize", minSize);
+
+                if (maxSize < long.MaxValue && maxSize > 0)
+                {
+                    whereClause += " AND size <= $maxSize";
+                    cmd.Parameters.AddWithValue("$maxSize", maxSize);
+                }
+
+                if (!string.IsNullOrWhiteSpace(category) && category != "All")
+                {
+                    whereClause += " AND category = $category";
+                    cmd.Parameters.AddWithValue("$category", category);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    whereClause += " AND (name LIKE $search OR path LIKE $search)";
+                    cmd.Parameters.AddWithValue("$search", $"%{search}%");
+                }
+
+                if (minDaysOld.HasValue && minDaysOld.Value > 0)
+                {
+                    double cutoff = DateTimeOffset.UtcNow.AddDays(-minDaysOld.Value).ToUnixTimeSeconds();
+                    whereClause += " AND modified_time <= $modCutoff";
+                    cmd.Parameters.AddWithValue("$modCutoff", cutoff);
+                }
+
+                if (!string.IsNullOrWhiteSpace(extension))
+                {
+                    string ext = extension.Trim();
+                    if (!ext.StartsWith(".")) ext = "." + ext;
+                    whereClause += " AND LOWER(extension) = $ext";
+                    cmd.Parameters.AddWithValue("$ext", ext.ToLowerInvariant());
+                }
+
+                if (!string.IsNullOrWhiteSpace(locationPrefix))
+                {
+                    whereClause += " AND path LIKE $loc";
+                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                }
+
+                string validSort = sortBy.ToLowerInvariant() switch
+                {
+                    "name" => "name",
+                    "path" => "path",
+                    "modified_time" or "modified" or "date" => "modified_time",
+                    "category" => "category",
+                    "extension" or "ext" => "extension",
+                    _ => "size"
+                };
+
+                string direction = sortDesc ? "DESC" : "ASC";
+
+                cmd.CommandText = $@"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    {whereClause}
+                    ORDER BY {validSort} {direction};
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (ct.IsCancellationRequested) break;
+                    onRecord(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"StreamFilteredFiles error: {ex.Message}");
+            }
         }
     }
 
@@ -788,6 +1393,80 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public List<PhotoshopItem> GetPhotoshopDetailedItems(int limit = 500)
+    {
+        lock (_lock)
+        {
+            var list = new List<PhotoshopItem>();
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE category = 'Photoshop' 
+                       OR extension IN ('.psd', '.psb', '.pdd', '.abr', '.asl', '.atn', '.pat', '.grd')
+                       OR path LIKE '%Adobe%Photoshop%'
+                       OR path LIKE '%Photoshop%Temp%'
+                       OR path LIKE '%Photoshop%Scratch%'
+                       OR path LIKE '%Adobe%CameraRaw%'
+                       OR path LIKE '%Adobe%Media Cache%'
+                    ORDER BY size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$limit", limit);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    var file = ReadRecord(reader);
+                    string ext = (file.Extension ?? string.Empty).ToLowerInvariant();
+                    string path = file.Path;
+
+                    PhotoshopItemType type;
+                    if (ext == ".psd" || ext == ".psb" || ext == ".pdd")
+                    {
+                        type = PhotoshopItemType.UserDocument;
+                    }
+                    else if (path.Contains("Temp", StringComparison.OrdinalIgnoreCase) || 
+                             path.Contains("Scratch", StringComparison.OrdinalIgnoreCase) || 
+                             ext == ".tmp" || ext == ".dmp")
+                    {
+                        type = PhotoshopItemType.ScratchAndTemp;
+                    }
+                    else if (path.Contains("CameraRaw", StringComparison.OrdinalIgnoreCase) || 
+                             path.Contains("Media Cache", StringComparison.OrdinalIgnoreCase) || 
+                             path.Contains("AutoRecover", StringComparison.OrdinalIgnoreCase) ||
+                             path.Contains("Cache", StringComparison.OrdinalIgnoreCase))
+                    {
+                        type = PhotoshopItemType.AdobeCache;
+                    }
+                    else if (ext == ".abr" || ext == ".asl" || ext == ".atn" || ext == ".pat" || ext == ".grd")
+                    {
+                        type = PhotoshopItemType.PresetOrAsset;
+                    }
+                    else
+                    {
+                        type = PhotoshopItemType.UserDocument;
+                    }
+
+                    list.Add(new PhotoshopItem
+                    {
+                        File = file,
+                        ItemType = type
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetPhotoshopDetailedItems error: {ex.Message}");
+            }
+
+            return list;
+        }
+    }
+
     public (long PsdCount, long PsbCount, long OtherCount, long TotalBytes, long PsdBytes, long PsbBytes) GetPhotoshopStats()
     {
         lock (_lock)
@@ -963,6 +1642,190 @@ public class DatabaseService : IDisposable
             }
 
             return list;
+        }
+    }
+
+    public Dictionary<string, (long Size, long Count)> GetScanCategories(long scanId)
+    {
+        lock (_lock)
+        {
+            var dict = new Dictionary<string, (long Size, long Count)>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "SELECT category, total_size, file_count FROM scan_history_categories WHERE scan_id = $id;";
+                cmd.Parameters.AddWithValue("$id", scanId);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    string cat = reader.GetString(0);
+                    long size = reader.GetInt64(1);
+                    long count = reader.GetInt64(2);
+                    dict[cat] = (size, count);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetScanCategories error: {ex.Message}");
+            }
+            return dict;
+        }
+    }
+
+    public ScanComparisonResult CompareScans(long olderScanId, long newerScanId)
+    {
+        var result = new ScanComparisonResult();
+        var history = GetScanHistory(100);
+        result.PreviousScan = history.FirstOrDefault(h => h.Id == olderScanId);
+        result.CurrentScan = history.FirstOrDefault(h => h.Id == newerScanId);
+
+        if (result.PreviousScan != null && result.CurrentScan != null)
+        {
+            result.DeltaBytes = result.CurrentScan.LogicalBytesIndexed - result.PreviousScan.LogicalBytesIndexed;
+
+            var olderCats = GetScanCategories(olderScanId);
+            var newerCats = GetScanCategories(newerScanId);
+
+            var allCategories = olderCats.Keys.Union(newerCats.Keys).ToList();
+            var diffs = new List<CategoryGrowthComparison>();
+
+            foreach (var cat in allCategories)
+            {
+                olderCats.TryGetValue(cat, out var oldVal);
+                newerCats.TryGetValue(cat, out var newVal);
+
+                diffs.Add(new CategoryGrowthComparison
+                {
+                    Category = cat,
+                    PreviousSizeBytes = oldVal.Size,
+                    CurrentSizeBytes = newVal.Size,
+                    DeltaFiles = newVal.Count - oldVal.Count
+                });
+            }
+
+            foreach (var d in diffs.OrderByDescending(d => d.DeltaBytes))
+            {
+                result.WhatGrew.Add(d);
+            }
+        }
+
+        return result;
+    }
+
+    public bool DeleteScanHistory(long? scanId = null)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                if (scanId.HasValue)
+                {
+                    cmd.CommandText = @"
+                        DELETE FROM scan_history_categories WHERE scan_id = $id;
+                        DELETE FROM scan_metadata WHERE id = $id;
+                    ";
+                    cmd.Parameters.AddWithValue("$id", scanId.Value);
+                }
+                else
+                {
+                    cmd.CommandText = @"
+                        DELETE FROM scan_history_categories;
+                        DELETE FROM scan_metadata;
+                    ";
+                }
+                cmd.ExecuteNonQuery();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteScanHistory error: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    public (ulong JournalId, long NextUsn)? GetUsnCheckpoint(string driveLetter)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "SELECT journal_id, next_usn FROM drive_usn_checkpoints WHERE drive_letter = $drive;";
+                cmd.Parameters.AddWithValue("$drive", driveLetter.ToUpperInvariant().TrimEnd('\\'));
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    ulong jId = (ulong)reader.GetInt64(0);
+                    long nextUsn = reader.GetInt64(1);
+                    return (jId, nextUsn);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetUsnCheckpoint error: {ex.Message}");
+            }
+            return null;
+        }
+    }
+
+    public void SaveUsnCheckpoint(string driveLetter, ulong journalId, long nextUsn)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    INSERT INTO drive_usn_checkpoints (drive_letter, journal_id, next_usn, last_scan_time)
+                    VALUES ($drive, $jid, $usn, $time)
+                    ON CONFLICT(drive_letter) DO UPDATE SET
+                        journal_id = excluded.journal_id,
+                        next_usn = excluded.next_usn,
+                        last_scan_time = excluded.last_scan_time;
+                ";
+                cmd.Parameters.AddWithValue("$drive", driveLetter.ToUpperInvariant().TrimEnd('\\'));
+                cmd.Parameters.AddWithValue("$jid", (long)journalId);
+                cmd.Parameters.AddWithValue("$usn", nextUsn);
+                cmd.Parameters.AddWithValue("$time", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SaveUsnCheckpoint error: {ex.Message}");
+            }
+        }
+    }
+
+    public void DeleteUsnCheckpoint(string? driveLetter = null)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                if (!string.IsNullOrEmpty(driveLetter))
+                {
+                    cmd.CommandText = "DELETE FROM drive_usn_checkpoints WHERE drive_letter = $drive;";
+                    cmd.Parameters.AddWithValue("$drive", driveLetter.ToUpperInvariant().TrimEnd('\\'));
+                }
+                else
+                {
+                    cmd.CommandText = "DELETE FROM drive_usn_checkpoints;";
+                }
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteUsnCheckpoint error: {ex.Message}");
+            }
         }
     }
 

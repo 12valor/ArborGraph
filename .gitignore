@@ -9,3 +9,5 @@ DiskScope.exe
 PrismDrive.exe
 site/downloads/
 *.zip
+scratch/
+*.pdb

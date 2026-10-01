@@ -7,6 +7,7 @@
         xmlns:views="clr-namespace:DiskScope.Views"
         mc:Ignorable="d"
         Title="DiskScope — Windows Storage Analyzer" 
+        Icon="pack://application:,,,/DiskScope;component/Resources/DiskScope.ico"
         Height="840" Width="1320" MinHeight="700" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance vm:MainViewModel}">

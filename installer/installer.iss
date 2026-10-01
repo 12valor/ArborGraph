@@ -22,6 +22,7 @@ DefaultDirName={autopf}\DiskScope
 DisableProgramGroupPage=yes
 ; Strict EULA consent enforcement: User must accept license before installation continues
 LicenseFile=eula.txt
+SetupIconFile=..\Resources\DiskScope.ico
 OutputDir=..\dist\setup
 OutputBaseFilename=DiskScopeSetup-{#MyAppVersion}-x64
 Compression=lzma2/ultra64

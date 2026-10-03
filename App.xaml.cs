@@ -23,6 +23,32 @@ public partial class App : Application
 
         try
         {
+            // Prevent premature shutdown during pre-MainWindow dialogs
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            var settingsService = new Services.SettingsService();
+            var settings = settingsService.CurrentSettings;
+
+            if (!settings.HasAcceptedEula)
+            {
+                Log("EULA has not been accepted yet. Showing EulaDialog...");
+                var eulaDialog = new Views.EulaDialog(isReviewMode: false);
+                bool? accepted = eulaDialog.ShowDialog();
+
+                if (accepted != true)
+                {
+                    Log("User declined or dismissed EULA. Terminating application.");
+                    Shutdown(0);
+                    return;
+                }
+
+                settings.HasAcceptedEula = true;
+                settings.EulaAcceptedVersion = "1.0";
+                settings.EulaAcceptedDate = DateTime.UtcNow;
+                settingsService.SaveSettings(settings);
+                Log("User accepted EULA v1.0. Consent recorded locally in settings.");
+            }
+
             Log("Creating MainWindow...");
             var win = new Views.MainWindow();
             MainWindow = win;

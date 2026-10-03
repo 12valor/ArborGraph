@@ -478,6 +478,17 @@ public class Program
                     var v12 = new CleanupCenterView { DataContext = new CleanupCenterViewModel(dbService, new DeveloperStorageService(dbService), new FileActionService()) };
                     var v13 = new DeveloperStorageView { DataContext = new DeveloperStorageViewModel(new DeveloperStorageService(dbService), new FileActionService()) };
                     var v14 = new SettingsView { DataContext = new SettingsViewModel(new SettingsService(Path.Combine(testDbFolder, "test_settings.json")), dbService) };
+                    // 1b. Test EulaDialog in First-Run and Review mode
+                    var eulaDlg = new EulaDialog(isReviewMode: false);
+                    Assert(!eulaDlg.IsAcceptButtonEnabled, "AcceptButton must be disabled initially before checking agreement box");
+                    eulaDlg.IsAgreementChecked = true;
+                    Assert(eulaDlg.IsAcceptButtonEnabled, "AcceptButton must be enabled after checking agreement box");
+                    eulaDlg.Close();
+
+                    var reviewDlg = new EulaDialog(isReviewMode: true);
+                    Assert(reviewDlg.IsAcceptButtonEnabled, "AcceptButton must be enabled in review mode");
+                    Assert(!reviewDlg.IsAgreeCheckBoxVisible, "AgreeCheckBox should be hidden in review mode");
+                    reviewDlg.Close();
 
                     // 2. Instantiate MainWindow via parameterless constructor and with VM
                     var defaultWin = new MainWindow();
@@ -1038,7 +1049,19 @@ public class Program
             var scanStats = await scannerWithExclusions.ScanDrivesAsync(new[] { testRoot }, progress: null, CancellationToken.None, enableIncremental: false);
             Assert(scannerWithExclusions.SkippedDirectories.Any(sd => sd.Path.Equals(exclusionDir, StringComparison.OrdinalIgnoreCase)),
                 "Scanner must record excluded directory in SkippedDirectories");
-            Console.WriteLine("  ✓ Settings persistence, path exclusions, and scanner enforcement verified.");
+
+            // Verify EULA acceptance persistence
+            settings.HasAcceptedEula = true;
+            settings.EulaAcceptedVersion = "1.0";
+            settings.EulaAcceptedDate = DateTime.UtcNow;
+            settingsService.SaveSettings(settings);
+
+            var eulaReloadedService = new SettingsService(testSettingsPath);
+            Assert(eulaReloadedService.CurrentSettings.HasAcceptedEula, "HasAcceptedEula must persist across reload");
+            Assert(eulaReloadedService.CurrentSettings.EulaAcceptedVersion == "1.0", "EulaAcceptedVersion must persist");
+            Assert(eulaReloadedService.CurrentSettings.EulaAcceptedDate != null, "EulaAcceptedDate must persist");
+
+            Console.WriteLine("  ✓ Settings persistence, EULA consent recording, path exclusions, and scanner enforcement verified.");
 
             Console.WriteLine("\n=================================================");
             Console.WriteLine("  ALL INTEGRATION TESTS PASSED SUCCESSFULLY! ✓");

@@ -44,7 +44,10 @@ public class SettingsViewModel : ObservableObject
         SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
         ResetDefaultsCommand = new RelayCommand(_ => ResetDefaults());
         ClearAllHistoryCommand = new RelayCommand(_ => ClearAllHistory());
+        ViewEulaCommand = new RelayCommand(_ => ViewEula());
     }
+
+    public ICommand ViewEulaCommand { get; }
 
     public ObservableCollection<string> ExcludedPaths { get; }
     public IReadOnlyList<string> LogLevelOptions { get; }
@@ -271,5 +274,14 @@ public class SettingsViewModel : ObservableObject
             StatusMessage = "All scan history cleared.";
             MessageBox.Show("All scan history sessions were successfully removed.", "History Cleared", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+    }
+
+    public void ViewEula()
+    {
+        var dlg = new Views.EulaDialog(isReviewMode: true)
+        {
+            Owner = Application.Current?.MainWindow
+        };
+        dlg.ShowDialog();
     }
 }

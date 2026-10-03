@@ -169,6 +169,22 @@
                         </Grid>
                     </StackPanel>
                 </Border>
+
+                <!-- 6. Legal & License Agreement Card -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="LEGAL &amp; LICENSE AGREEMENT" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,0,0,8"/>
+                        <TextBlock Text="DiskScope is licensed under the DiskScope End User License Agreement. It operates 100% offline with zero telemetry." 
+                                   FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,14"/>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="📜 View License Agreement (EULA)..." 
+                                    Command="{Binding ViewEulaCommand}" 
+                                    Style="{StaticResource ActionButtonStyle}" 
+                                    Padding="14,7"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 

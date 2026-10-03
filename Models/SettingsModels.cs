@@ -88,4 +88,27 @@ public class DiskScopeSettings : ObservableObject
         get => _logLevel;
         set => SetProperty(ref _logLevel, value);
     }
+
+    // Legal & Consent
+    private bool _hasAcceptedEula = false;
+    private string _eulaAcceptedVersion = string.Empty;
+    private DateTime? _eulaAcceptedDate;
+
+    public bool HasAcceptedEula
+    {
+        get => _hasAcceptedEula;
+        set => SetProperty(ref _hasAcceptedEula, value);
+    }
+
+    public string EulaAcceptedVersion
+    {
+        get => _eulaAcceptedVersion;
+        set => SetProperty(ref _eulaAcceptedVersion, value);
+    }
+
+    public DateTime? EulaAcceptedDate
+    {
+        get => _eulaAcceptedDate;
+        set => SetProperty(ref _eulaAcceptedDate, value);
+    }
 }

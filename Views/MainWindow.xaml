@@ -6,8 +6,8 @@
         xmlns:vm="clr-namespace:DiskScope.ViewModels"
         xmlns:views="clr-namespace:DiskScope.Views"
         mc:Ignorable="d"
-        Title="DiskScope — Windows Storage Analyzer" 
-        Icon="pack://application:,,,/DiskScope;component/Resources/DiskScope.ico"
+        Title="ArborGraph — Filesystem Analytics &amp; Visualization" 
+        Icon="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico"
         Height="840" Width="1320" MinHeight="700" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance vm:MainViewModel}">
@@ -96,6 +96,13 @@
             <!-- STREAMLINED SIDEBAR (9 Clear Items) -->
             <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0" Padding="6,12">
                 <StackPanel>
+                    <!-- Brand Header -->
+                    <StackPanel Margin="10,2,10,12">
+                        <TextBlock Text="ArborGraph" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource BrushTextPrimary}" LetterSpacing="0.2"/>
+                        <TextBlock Text="Filesystem Analytics" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0"/>
+                    </StackPanel>
+                    <Separator Background="{StaticResource BrushBorderLight}" Margin="6,0,6,10"/>
+
                     <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
                             Style="{StaticResource NavButtonStyle}"/>
 

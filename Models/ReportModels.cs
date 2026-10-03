@@ -25,6 +25,9 @@ public class CategoryDistributionItem
 
 public class AuditReport
 {
+    public string Product { get; set; } = "ArborGraph";
+    public string Generator { get; set; } = "ArborGraph Filesystem Analytics & Visualization";
+    public string Version { get; set; } = "1.0.0";
     public string GeneratedAtUtc { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'");
     public string TargetRoots { get; set; } = string.Empty;
     public long TotalFilesIndexed { get; set; }

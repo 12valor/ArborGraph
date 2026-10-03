@@ -383,7 +383,7 @@ public class JunkCleanerViewModel : ObservableObject
         var sfd = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-            FileName = $"diskscope_junk_targets_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            FileName = $"arborgraph_junk_targets_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
             Title = "Export Junk Targets to CSV"
         };
 

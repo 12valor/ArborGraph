@@ -7,7 +7,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Typography Families -->
-    <FontFamily x:Key="AppFont">pack://application:,,,/DiskScope;component/Resources/Fonts/#IBM Plex Sans, Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="AppFont">pack://application:,,,/ArborGraph;component/Resources/Fonts/#IBM Plex Sans, pack://application:,,,/DiskScope;component/Resources/Fonts/#IBM Plex Sans, Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Code, Consolas, Courier New</FontFamily>
 
     <!-- Converters -->

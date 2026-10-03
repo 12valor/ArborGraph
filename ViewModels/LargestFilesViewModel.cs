@@ -382,8 +382,8 @@ public class LargestFilesViewModel : ObservableObject
         }
 
         string defaultName = exportAll
-            ? $"diskscope_all_matching_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-            : $"diskscope_largest_files_page{CurrentPage}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            ? $"arborgraph_all_matching_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+            : $"arborgraph_largest_files_page{CurrentPage}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
         var sfd = new Microsoft.Win32.SaveFileDialog
         {

@@ -1,14 +1,14 @@
-# DiskScope
+# ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
 [![Runtime: .NET 8.0](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Privacy: 100% Offline](https://img.shields.io/badge/Privacy-100%25%20Offline%20%2F%20Zero%20Telemetry-107C41)](LICENSE.md#3-local-architecture--privacy-commitment)
-[![License: EULA](https://img.shields.io/badge/License-DiskScope%20EULA-gray)](LICENSE.md)
+[![License: EULA](https://img.shields.io/badge/License-ArborGraph%20EULA-gray)](LICENSE.md)
 
-DiskScope is a high-performance Windows desktop storage analyzer and disk cleanup utility built with C# and WPF on .NET 8. It catalogs drives and directories into an embedded SQLite database in WAL mode, visualizes disk usage with interactive treemaps, flags duplicate files via SHA-256 hashing, and cleans system, browser, and developer cache stores.
+**ArborGraph** (previously known as *DiskScope Pro*) is a high-performance Windows desktop filesystem analytics and storage visualization utility built with C# and WPF on .NET 8. It combines hierarchical filesystem analysis with data visualization and storage intelligence—cataloging drives and directories into an embedded SQLite database in WAL mode, visualizing disk usage with interactive treemaps, flagging duplicate files via SHA-256 hashing, and cleaning system, browser, and developer cache stores.
 
-DiskScope runs completely offline with zero telemetry, zero cloud dependencies, and zero background services.
+ArborGraph runs completely offline with zero telemetry, zero cloud dependencies, and zero background services.
 
 ---
 
@@ -78,7 +78,7 @@ Both launchers support instant launch modes, live developer consoles, integratio
   - Multi-threaded traversal engine using `System.Threading.Channels` producer-consumer pipeline.
   - Optional NTFS USN Journal reader for rapid MFT indexing on supported volumes.
 - **Interactive Visual Treemap:**
-  - Squarified, color-coded space map of folders and files.
+  - Squarified, color-coded space map of folders and files using a calm tonal slate palette.
   - Interactive drill-down navigation with breadcrumb trail and instant parent back-tracking.
 - **Duplicate File Detection:**
   - Multi-tier detection: byte size match &rarr; 4 KB header verification &rarr; full SHA-256 chunked hash.
@@ -143,15 +143,15 @@ Both launchers support instant launch modes, live developer consoles, integratio
 ## Repository Structure
 
 ```
-diskscope/
+arborgraph/
 ├── App.xaml / App.xaml.cs       # Application entry point, global exception handlers
-├── DiskScope.csproj             # .NET 8 project definition and assembly metadata
-├── DiskScope.exe                # Precompiled standalone executable
+├── DiskScope.csproj             # .NET 8 project definition (Produces ArborGraph.exe)
+├── ArborGraph.exe               # Precompiled standalone executable
 ├── start.bat / start.ps1        # Universal CLI and GUI launchers
 ├── Controls/                    # Custom WPF controls (Treemap canvas, metric cards)
 ├── Infrastructure/              # Base classes (RelayCommand, ObservableObject)
 ├── Models/                      # File records, drive metrics, duplicate groups
-├── Resources/                   # Application icons and vector assets
+├── Resources/                   # Application icons (ArborGraph.ico) and vector assets
 ├── Services/                    # Core business logic:
 │   ├── DatabaseService.cs       # SQLite schema, indexing, and query engine
 │   ├── DeveloperStorageService.cs# Dev package cache discovery and purge
@@ -187,7 +187,7 @@ dotnet build DiskScope.csproj -c Release
 
 The output binary will be located at:
 ```
-bin\Release\net8.0-windows\DiskScope.exe
+bin\Release\net8.0-windows\ArborGraph.exe
 ```
 
 ---
@@ -205,13 +205,13 @@ Or via launcher:
 start.bat --publish
 ```
 
-The resulting standalone executable is generated at `dist\DiskScope.exe`.
+The resulting standalone executable is generated at `dist\ArborGraph.exe`.
 
 ---
 
 ## Building the Windows Installer
 
-DiskScope includes an Inno Setup script configured for standard Windows installation:
+ArborGraph includes an Inno Setup script configured for standard Windows installation:
 
 1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php).
 2. Generate the published binary into `dist/` or `bin\publish\`:
@@ -222,7 +222,7 @@ DiskScope includes an Inno Setup script configured for standard Windows installa
    ```cmd
    iscc installer\installer.iss
    ```
-4. The signed installer output will be created in `installer\Output\DiskScope_Setup.exe`.
+4. The signed installer output will be created in `dist\setup\ArborGraph-Setup-1.0.0-x64.exe`.
 
 ---
 
@@ -244,13 +244,14 @@ dotnet run --project tests\DiskScope.Tests.csproj
 
 ## Data & Configuration Locations
 
-DiskScope stores its runtime files inside the user profile directory:
+ArborGraph stores its runtime files inside the user profile directory:
 
-- **Database:** `%LOCALAPPDATA%\DiskScope\scan_index.db`
-- **Application Log:** `%LOCALAPPDATA%\DiskScope\app.log`
-- **Settings:** Stored alongside the local SQLite catalog
+- **Database:** `%LOCALAPPDATA%\ArborGraph\scan_index.db`
+- **Application Log:** `%LOCALAPPDATA%\ArborGraph\app.log`
+- **Settings:** Stored alongside the local SQLite catalog in `%LOCALAPPDATA%\ArborGraph\settings.json`
 
-To reset all scanned data, close DiskScope and delete `%LOCALAPPDATA%\DiskScope\scan_index.db`.
+> [!NOTE]
+> **Automatic Migration:** On first launch, ArborGraph automatically detects and migrates existing databases and settings from `%LOCALAPPDATA%\DiskScope` or `%LOCALAPPDATA%\DiskScopePro`, preserving all scan history, exclusions, and user preferences without duplicating storage or discarding historical scans.
 
 ---
 
@@ -266,7 +267,7 @@ dotnet run --project DiskScope.csproj
 ```
 
 ### Locked Files During Cleanup
-Certain Windows temporary files or browser lockfiles (`lock`, `LOG`) cannot be deleted while their host processes (e.g., Chrome, Edge) are running. DiskScope automatically skips locked files without halting the cleanup process. For maximum space recovery, close web browsers before running the Junk Cleaner.
+Certain Windows temporary files or browser lockfiles (`lock`, `LOG`) cannot be deleted while their host processes (e.g., Chrome, Edge) are running. ArborGraph automatically skips locked files without halting the cleanup process. For maximum space recovery, close web browsers before running the Junk Cleaner.
 
 ---
 

@@ -468,7 +468,7 @@ public class MainViewModel : ObservableObject
         var sfd = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "HTML Files (*.html)|*.html|All Files (*.*)|*.*",
-            FileName = $"diskscope_audit_{DateTime.Now:yyyyMMdd_HHmmss}.html",
+            FileName = $"arborgraph_audit_{DateTime.Now:yyyyMMdd_HHmmss}.html",
             Title = "Export Executive HTML Audit Report"
         };
 
@@ -522,7 +522,7 @@ public class MainViewModel : ObservableObject
         var sfd = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
-            FileName = $"diskscope_audit_{DateTime.Now:yyyyMMdd_HHmmss}.json",
+            FileName = $"arborgraph_audit_{DateTime.Now:yyyyMMdd_HHmmss}.json",
             Title = "Export Structured JSON Audit Dump"
         };
 
@@ -576,7 +576,7 @@ public class MainViewModel : ObservableObject
         var sfd = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-            FileName = $"diskscope_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            FileName = $"arborgraph_files_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
             Title = "Export Indexed Files to CSV"
         };
 

@@ -431,7 +431,7 @@ public class DuplicateViewModel : ObservableObject
         var sfd = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-            FileName = $"diskscope_duplicates_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
+            FileName = $"arborgraph_duplicates_{DateTime.Now:yyyyMMdd_HHmmss}.csv",
             Title = "Export Duplicates to CSV"
         };
 

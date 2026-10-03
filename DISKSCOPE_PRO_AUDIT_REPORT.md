@@ -1,9 +1,9 @@
-# TECHNICAL & FUNCTIONAL AUDIT REPORT: DISKSCOPE PRO
+# TECHNICAL & FUNCTIONAL AUDIT REPORT: ARBORGRAPH (PREVIOUSLY DISKSCOPE PRO)
 
 **Audit Date:** October 2026  
-**Target Codebase:** DiskScope Desktop Application (WPF / .NET 8.0)  
+**Target Codebase:** ArborGraph Desktop Application (WPF / .NET 8.0)  
 **Corpus / Repository:** `12valor/C-file-scanner`  
-**Application Title:** DiskScope — Windows Storage Analyzer (v1.0.0)  
+**Application Title:** ArborGraph — Filesystem Analytics & Visualization (v1.0.0)  
 **Execution Environment:** Windows x64  
 **Audit Type:** Objective Technical & Functional Verification (Codebase-Verified Only)
 
@@ -13,14 +13,14 @@
 
 | Property | Verified Value in Codebase |
 | :--- | :--- |
-| **Product / Assembly Title** | `DiskScope` (Product: `DiskScope Windows Storage Analyzer`) |
+| **Product / Assembly Title** | `ArborGraph` (Product: `ArborGraph Filesystem Analytics & Visualization`, previously `DiskScope`) |
 | **Version** | `1.0.0` (Defined in `DiskScope.csproj`) |
 | **Target Framework** | `.NET 8.0 Windows` (`net8.0-windows`), Platform Target `x64` |
 | **UI Framework** | Windows Presentation Foundation (WPF) with XAML |
 | **Architecture Pattern** | MVVM (Model-View-ViewModel) using custom `ObservableObject` and `RelayCommand` |
 | **Primary Storage Engine** | Embedded SQLite via `Microsoft.Data.Sqlite` (v8.0.10) in Write-Ahead Logging (WAL) mode |
-| **Database File Location** | `%LOCALAPPDATA%\DiskScope\scan_index.db` (Fallback check to `DiskScopePro` folder) |
-| **Process Model** | Single process (`DiskScope.exe`, x64) with background worker tasks for traversal, database batch insertion, and telemetry |
+| **Database File Location** | `%LOCALAPPDATA%\ArborGraph\scan_index.db` (with automatic migration from `%LOCALAPPDATA%\DiskScope`) |
+| **Process Model** | Single process (`ArborGraph.exe`, x64) with background worker tasks for traversal, database batch insertion, and telemetry |
 | **Network & Cloud Surface** | **Zero.** 100% offline desktop application. No HTTP endpoints, no cloud APIs, no telemetry |
 | **Installer** | Inno Setup 6 script (`installer/installer.iss`) targeting Windows 10/11 x64 (`PrivilegesRequired=lowest`) |
 

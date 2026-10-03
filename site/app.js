@@ -1,4 +1,4 @@
-// DiskScope: Windows Disk Analysis & Setup Utility Script
+// ArborGraph: Filesystem Analytics & Visualization Script
 // Modern Developer Tool Portal Script (Interactive Navigation, Setup Stepper, Diagnostics & Verification)
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -84,9 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (/Windows/i.test(userAgent)) {
             osText = 'SYSTEM READY: Windows OS Architecture Detected';
         } else if (/Mac/i.test(userAgent)) {
-            osText = 'NOTICE: macOS Detected. DiskScope runs natively on Windows 10/11 x64.';
+            osText = 'NOTICE: macOS Detected. ArborGraph runs natively on Windows 10/11 x64.';
         } else if (/Linux/i.test(userAgent)) {
-            osText = 'NOTICE: Linux Detected. DiskScope runs natively on Windows 10/11 x64.';
+            osText = 'NOTICE: Linux Detected. ArborGraph runs natively on Windows 10/11 x64.';
         }
         systemDiagStatus.textContent = osText;
     }
@@ -221,16 +221,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wizardCurrentStep === 7) {
                 // Finish button clicked
                 if (wizardLaunchApp && wizardLaunchApp.checked) {
-                    showToast('Launching DiskScope (Downloading binary)...');
+                    showToast('Launching ArborGraph (Downloading binary)...');
                     const link = document.createElement('a');
-                    link.href = 'https://github.com/12valor/DiskScope/releases/latest/download/DiskScope.exe';
+                    link.href = 'https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe';
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                 } else {
-                    showToast('DiskScope Setup successfully completed.');
+                    showToast('ArborGraph Setup successfully completed.');
                 }
                 // Reset wizard back to Step 1
                 wizardCurrentStep = 1;
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cancel button listener
     if (btnWizardCancel) {
         btnWizardCancel.addEventListener('click', () => {
-            if (confirm('Are you sure you want to cancel DiskScope Setup?')) {
+            if (confirm('Are you sure you want to cancel ArborGraph Setup?')) {
                 wizardCurrentStep = 1;
                 if (wizardEulaCheck) wizardEulaCheck.checked = false;
                 updateWizardUI();
@@ -280,10 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let isDefaultProgFiles = true;
         btnTogglePortablePath.addEventListener('click', () => {
             if (isDefaultProgFiles) {
-                wizardInstallPath.value = "%LocalAppData%\\DiskScope";
+                wizardInstallPath.value = "%LocalAppData%\\ArborGraph";
                 btnTogglePortablePath.textContent = "Use Program Files";
             } else {
-                wizardInstallPath.value = "C:\\Program Files\\DiskScope";
+                wizardInstallPath.value = "C:\\Program Files\\ArborGraph";
                 btnTogglePortablePath.textContent = "Use Portable Dir";
             }
             isDefaultProgFiles = !isDefaultProgFiles;
@@ -296,13 +296,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!wizardProgressFill || !wizardLogText || !wizardExtractStatus) return;
 
         wizardProgressFill.style.width = '0%';
-        wizardExtractStatus.textContent = 'Extracting DiskScope.exe package...';
+        wizardExtractStatus.textContent = 'Extracting ArborGraph.exe package...';
         wizardLogText.textContent = '> Initializing Windows Installer engine...\n> Verifying local NTFS volume permissions...\n> Bounded staging buffer created.';
 
         const steps = [
-            { pct: 15, msg: "Extracting core binary: DiskScope.exe (73.3 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
+            { pct: 15, msg: "Extracting core binary: ArborGraph.exe (73.3 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
             { pct: 35, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore.dll & PresentationFramework.dll\n> Validating DirectX Hardware Acceleration..." },
-            { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScope..." },
+            { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\ArborGraph..." },
             { pct: 78, msg: "Creating application environment...", log: "> Configuring WAL journal mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
             { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: BCBF7FFF...CD750A\n> Cryptographic match verified bit-for-bit." },
             { pct: 100, msg: "Setup installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
@@ -336,11 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
             applicationVersion: "1.0.0",
             architecture: "win-x64",
             publisher: "AG DIAZ EVANGELISTA",
-            offlineStorage: "%LocalAppData%\\DiskScope"
+            offlineStorage: "%LocalAppData%\\ArborGraph"
         };
 
         try {
-            localStorage.setItem('diskscope_installer_consent', JSON.stringify(consentRecord));
+            localStorage.setItem('arborgraph_installer_consent', JSON.stringify(consentRecord));
         } catch (e) {
             // LocalStorage fallback for file:// protocol if restricted
         }
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "C:\\Users\\admin\\AppData\\Local\\Temp\\scoped_dir_94812\\data.tmp",
         "C:\\Program Files\\Adobe\\Adobe Photoshop 2026\\Photoshop.exe",
         "C:\\Users\\admin\\.gradle\\caches\\modules-2\\files-2.1\\cache.bin",
-        "C:\\Users\\admin\\source\\repos\\DiskScope\\Services\\ScannerService.cs",
+        "C:\\Users\\admin\\source\\repos\\ArborGraph\\Services\\ScannerService.cs",
         "C:\\Users\\admin\\.cargo\\registry\\cache\\index.crates.io-6f17d22bba15001f",
         "C:\\Users\\admin\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cache",
         "C:\\Users\\admin\\Videos\\Captures\\Master_Render_4K_ProRes.mov",
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let tickerIndex = 0;
 
             if (simConsole) {
-                simConsole.textContent = `> Initiating DiskScope multi-threaded traversal on ${driveVal}...\n> Threadpool spawned: 8 worker threads.\n> SQLite WAL ingestion active.`;
+                simConsole.textContent = `> Initiating ArborGraph multi-threaded traversal on ${driveVal}...\n> Threadpool spawned: 8 worker threads.\n> SQLite WAL ingestion active.`;
             }
 
             const simInterval = setInterval(() => {

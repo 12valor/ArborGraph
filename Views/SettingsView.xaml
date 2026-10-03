@@ -69,14 +69,20 @@
                     <StackPanel MaxWidth="680" HorizontalAlignment="Left">
                         <TextBlock Text="GENERAL PREFERENCES" Style="{StaticResource SectionHeadingStyle}"/>
 
-                        <TextBlock Text="DiskScope operates 100% locally and offline with zero background telemetry or cloud connections." 
+                        <TextBlock Text="ArborGraph operates 100% locally and offline with zero background telemetry or cloud connections." 
                                    FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,16"/>
 
                         <TextBlock Text="LEGAL &amp; LICENSE" Style="{StaticResource SectionHeadingStyle}" Margin="0,12,0,8"/>
-                        <TextBlock Text="Licensed under the DiskScope End User License Agreement." 
+                        <TextBlock Text="Licensed under the ArborGraph End User License Agreement." 
                                    FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,10"/>
                         <Button Content="View License Agreement (EULA)..." Command="{Binding ViewEulaCommand}" 
-                                Style="{StaticResource ActionButtonStyle}" HorizontalAlignment="Left" Padding="12,5"/>
+                                Style="{StaticResource ActionButtonStyle}" HorizontalAlignment="Left" Padding="12,5" Margin="0,0,0,16"/>
+
+                        <TextBlock Text="ABOUT ARBORGRAPH" Style="{StaticResource SectionHeadingStyle}" Margin="0,12,0,8"/>
+                        <TextBlock Text="ArborGraph" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                        <TextBlock Text="Filesystem Analytics &amp; Visualization" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,4"/>
+                        <TextBlock Text="A local Windows utility for understanding storage through hierarchical analysis, file intelligence, and visual reporting. (Previously known as DiskScope Pro)" 
+                                   FontSize="11.5" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
                     </StackPanel>
                 </ScrollViewer>
 

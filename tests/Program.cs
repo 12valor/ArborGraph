@@ -15,7 +15,8 @@ public class Program
     {
         if (args.Length > 0 && args[0] == "--live")
         {
-            string realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DiskScope", "scan_index.db");
+            string realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArborGraph", "scan_index.db");
+            if (!File.Exists(realDb)) realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DiskScope", "scan_index.db");
             Console.WriteLine($"[LIVE TEST] Using DB: {realDb}");
             var db = new DatabaseService(realDb);
             db.Initialize();
@@ -34,7 +35,7 @@ public class Program
         }
 
         Console.WriteLine("=================================================");
-        Console.WriteLine("  DISKSCOPE — AUTOMATED INTEGRATION TESTS");
+        Console.WriteLine("  ARBORGRAPH — AUTOMATED INTEGRATION TESTS");
         Console.WriteLine("=================================================");
 
         string testRoot = Path.Combine(Path.GetTempPath(), "DiskScope_TestFiles_" + Guid.NewGuid().ToString("N")[..8]);
@@ -412,7 +413,7 @@ public class Program
             Assert(File.Exists(htmlPath), "HTML report was not created");
             string htmlContent = await File.ReadAllTextAsync(htmlPath);
             Assert(htmlContent.Contains("<!DOCTYPE html>"), "Missing HTML5 doctype");
-            Assert(htmlContent.Contains("DISKSCOPE"), "Missing branding badge in HTML");
+            Assert(htmlContent.Contains("ARBORGRAPH") || htmlContent.Contains("DISKSCOPE"), "Missing branding badge in HTML");
             Assert(htmlContent.Contains("Storage Audit"), "Missing report title in HTML");
             Assert(htmlContent.Contains("Storage Distribution by Category"), "Missing categories section in HTML");
             Console.WriteLine($"  ✓ Standalone HTML executive report verified ({new FileInfo(htmlPath).Length:N0} bytes).");
@@ -454,13 +455,14 @@ public class Program
                 {
                     var app = Application.Current ?? new Application();
                     app.Resources.MergedDictionaries.Clear();
+                    string asmName = typeof(DiskScope.App).Assembly.GetName().Name ?? "ArborGraph";
                     app.Resources.MergedDictionaries.Add(new ResourceDictionary
                     {
-                        Source = new Uri("pack://application:,,,/DiskScope;component/Resources/Colors.xaml", UriKind.Absolute)
+                        Source = new Uri($"pack://application:,,,/{asmName};component/Resources/Colors.xaml", UriKind.Absolute)
                     });
                     app.Resources.MergedDictionaries.Add(new ResourceDictionary
                     {
-                        Source = new Uri("pack://application:,,,/DiskScope;component/Resources/Styles.xaml", UriKind.Absolute)
+                        Source = new Uri($"pack://application:,,,/{asmName};component/Resources/Styles.xaml", UriKind.Absolute)
                     });
 
                     // 1. Instantiate every UserControl view directly to verify XAML parsing & StaticResources

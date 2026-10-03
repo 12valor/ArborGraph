@@ -98,7 +98,7 @@
                 <StackPanel>
                     <!-- Brand Header -->
                     <StackPanel Margin="10,2,10,12">
-                        <TextBlock Text="ArborGraph" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource BrushTextPrimary}" LetterSpacing="0.2"/>
+                        <TextBlock Text="ArborGraph" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource BrushTextPrimary}"/>
                         <TextBlock Text="Filesystem Analytics" FontSize="10.5" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0"/>
                     </StackPanel>
                     <Separator Background="{StaticResource BrushBorderLight}" Margin="6,0,6,10"/>

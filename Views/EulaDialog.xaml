@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="DiskScope — End User License Agreement (EULA)" 
-        Icon="pack://application:,,,/DiskScope;component/Resources/DiskScope.ico"
+        Title="ArborGraph — End User License Agreement (EULA)" 
+        Icon="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico"
         Height="660" Width="740" MinHeight="520" MinWidth="620"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BrushBgCanvas}">
@@ -26,12 +26,12 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Image Grid.Column="0" Source="pack://application:,,,/DiskScope;component/Resources/DiskScope.ico" 
+                <Image Grid.Column="0" Source="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" 
                        Width="40" Height="40" Margin="0,0,14,0" VerticalAlignment="Center"/>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="End User License Agreement (EULA)" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-                    <TextBlock Text="Please read the terms below carefully. You must accept these terms to run DiskScope." 
+                    <TextBlock Text="Please read the terms below carefully. You must accept these terms to run ArborGraph." 
                                FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Grid>

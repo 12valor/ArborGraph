@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Launcher script for DiskScope Windows Storage Analyzer.
+    Launcher script for ArborGraph Filesystem Analytics & Visualization.
 
 .DESCRIPTION
-    Builds and starts the DiskScope desktop application. Automatically configures
+    Builds and starts the ArborGraph desktop application. Automatically configures
     the .NET 8 SDK environment or falls back to precompiled standalone executables.
 
 .PARAMETER Fast
@@ -13,13 +13,13 @@
     Runs the application attached to the console with live logging (dotnet run).
 
 .PARAMETER Publish
-    Runs the standalone self-contained publish build in bin\publish\DiskScope.exe.
+    Runs the standalone self-contained publish build in bin\publish\ArborGraph.exe or dist\ArborGraph.exe.
 
 .PARAMETER Test
     Runs the integration test suite in tests\DiskScope.Tests.csproj.
 
 .PARAMETER Site
-    Opens the product website and download page in the default web browser.
+    Opens the product website and documentation portal in the default web browser.
 
 .PARAMETER Configuration
     Build configuration to use (Debug or Release). Defaults to Debug.
@@ -58,7 +58,7 @@ if (Test-Path (Join-Path $UserDotnet "dotnet.exe")) {
 # 1. Test Mode
 if ($Test) {
     Write-Host "===================================================" -ForegroundColor Cyan
-    Write-Host "         Running DiskScope Integration Tests       " -ForegroundColor White
+    Write-Host "        Running ArborGraph Integration Tests       " -ForegroundColor White
     Write-Host "===================================================" -ForegroundColor Cyan
     $testProj = Join-Path $ScriptDir "tests\DiskScope.Tests.csproj"
     if (Test-Path $testProj) {
@@ -74,7 +74,7 @@ if ($Test) {
 if ($Site) {
     $siteHtml = Join-Path $ScriptDir "site\index.html"
     if (Test-Path $siteHtml) {
-        Write-Host "[*] Opening DiskScope website in default browser..." -ForegroundColor Green
+        Write-Host "[*] Opening ArborGraph documentation in default browser..." -ForegroundColor Green
         Start-Process $siteHtml
         return
     } else {
@@ -83,31 +83,29 @@ if ($Site) {
     }
 }
 
-$rootExe = Join-Path $ScriptDir "DiskScope.exe"
-$distExe = Join-Path $ScriptDir "dist\DiskScope.exe"
-$debugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\DiskScope.exe"
-$publishExe = Join-Path $ScriptDir "bin\publish\DiskScope.exe"
+$rootExe = Join-Path $ScriptDir "ArborGraph.exe"
+$distExe = Join-Path $ScriptDir "dist\ArborGraph.exe"
+$debugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\ArborGraph.exe"
+$publishExe = Join-Path $ScriptDir "bin\publish\ArborGraph.exe"
 
+# Legacy backwards-compatibility fallbacks
+$legacyRootExe = Join-Path $ScriptDir "DiskScope.exe"
+$legacyDistExe = Join-Path $ScriptDir "dist\DiskScope.exe"
+$legacyDebugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\DiskScope.exe"
 $fallbackRootExe = Join-Path $ScriptDir "PrismDrive.exe"
-$fallbackDistExe = Join-Path $ScriptDir "dist\PrismDrive.exe"
-$fallbackDebugExe = Join-Path $ScriptDir "bin\Debug\net8.0-windows\PrismDrive.exe"
 
 # 2. Publish Mode
 if ($Publish) {
     if (Test-Path $rootExe) {
-        Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
+        Write-Host "[*] Launching standalone ArborGraph..." -ForegroundColor Green
         Start-Process -FilePath $rootExe
         return
     } elseif (Test-Path $distExe) {
-        Write-Host "[*] Launching standalone published DiskScope..." -ForegroundColor Green
+        Write-Host "[*] Launching standalone published ArborGraph..." -ForegroundColor Green
         Start-Process -FilePath $distExe
         return
-    } elseif (Test-Path $fallbackRootExe) {
-        Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
-        Start-Process -FilePath $fallbackRootExe
-        return
     } else {
-        Write-Host "[*] Building single-file release package (DiskScope)..." -ForegroundColor Yellow
+        Write-Host "[*] Building single-file release package (ArborGraph)..." -ForegroundColor Yellow
         & dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
         if (Test-Path $distExe) {
             Copy-Item $distExe -Destination $rootExe -Force
@@ -119,22 +117,12 @@ if ($Publish) {
 
 # 3. Fast Mode
 if ($Fast) {
-    if (Test-Path $rootExe) {
-        Write-Host "[*] Fast launch: starting $rootExe..." -ForegroundColor Green
-        Start-Process -FilePath $rootExe
-        return
-    } elseif (Test-Path $distExe) {
-        Write-Host "[*] Fast launch: starting $distExe..." -ForegroundColor Green
-        Start-Process -FilePath $distExe
-        return
-    } elseif (Test-Path $debugExe) {
-        Write-Host "[*] Fast launch: starting $debugExe..." -ForegroundColor Green
-        Start-Process -FilePath $debugExe
-        return
-    } elseif (Test-Path $publishExe) {
-        Write-Host "[*] Fast launch: starting $publishExe..." -ForegroundColor Green
-        Start-Process -FilePath $publishExe
-        return
+    foreach ($exe in @($rootExe, $distExe, $debugExe, $publishExe, $legacyRootExe, $legacyDistExe, $legacyDebugExe, $fallbackRootExe)) {
+        if (Test-Path $exe) {
+            Write-Host "[*] Fast launch: starting $exe..." -ForegroundColor Green
+            Start-Process -FilePath $exe
+            return
+        }
     }
     Write-Host "[!] Precompiled binary not found. Proceeding with standard build..." -ForegroundColor Yellow
 }
@@ -150,57 +138,31 @@ try {
 
 # 5. Dev Mode (Attached to console)
 if ($Dev) {
-    Write-Host "[*] Starting DiskScope in attached console mode..." -ForegroundColor Cyan
+    Write-Host "[*] Starting ArborGraph in attached console mode..." -ForegroundColor Cyan
     & dotnet run -c $Configuration --project (Join-Path $ScriptDir "DiskScope.csproj")
     return
 }
 
 # 6. Standard Launch: Incremental build + detached GUI launch
 if ($hasNet8) {
-    Write-Host "[*] Building DiskScope ($Configuration)..." -ForegroundColor Cyan
+    Write-Host "[*] Building ArborGraph ($Configuration)..." -ForegroundColor Cyan
     & dotnet build DiskScope.csproj -c $Configuration --nologo -v quiet
-    if (Test-Path $debugExe) {
-        Write-Host "[*] Starting DiskScope..." -ForegroundColor Green
-        Start-Process -FilePath $debugExe
-        return
-    } elseif (Test-Path $fallbackDebugExe) {
-        Write-Host "[*] Starting DiskScope..." -ForegroundColor Green
-        Start-Process -FilePath $fallbackDebugExe
-        return
+    foreach ($exe in @($debugExe, $rootExe, $distExe, $legacyDebugExe, $legacyRootExe)) {
+        if (Test-Path $exe) {
+            Write-Host "[*] Starting ArborGraph..." -ForegroundColor Green
+            Start-Process -FilePath $exe
+            return
+        }
     }
 }
 
 # 7. Fallback to existing binaries if SDK not found
-if (Test-Path $rootExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
-    Start-Process -FilePath $rootExe
-    return
+foreach ($exe in @($rootExe, $distExe, $debugExe, $publishExe, $legacyRootExe, $legacyDistExe, $legacyDebugExe, $fallbackRootExe)) {
+    if (Test-Path $exe) {
+        Write-Host "[*] Launching ArborGraph executable: $exe..." -ForegroundColor Green
+        Start-Process -FilePath $exe
+        return
+    }
 }
 
-if (Test-Path $distExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
-    Start-Process -FilePath $distExe
-    return
-}
-
-if (Test-Path $fallbackRootExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
-    Start-Process -FilePath $fallbackRootExe
-    return
-}
-
-if (Test-Path $publishExe) {
-    Write-Host "[*] Launching standalone DiskScope..." -ForegroundColor Green
-    Start-Process -FilePath $publishExe
-    return
-}
-
-if (Test-Path $debugExe) {
-    Write-Host "[*] Launching existing DiskScope binary..." -ForegroundColor Green
-    Start-Process -FilePath $debugExe
-    return
-}
-
-Write-Error "Could not start DiskScope. Please ensure .NET 8 SDK is installed (https://dotnet.microsoft.com/download/dotnet/8.0)."
-
-
+Write-Error "Could not start ArborGraph. Please ensure .NET 8 SDK is installed (https://dotnet.microsoft.com/download/dotnet/8.0)."

@@ -1,16 +1,16 @@
 ; =====================================================================
-; DiskScope - Official Inno Setup 6 Installer Script
+; ArborGraph - Official Inno Setup 6 Installer Script
 ; Target: Windows 10 / 11 (64-bit x64)
 ; =====================================================================
 
-#define MyAppName "DiskScope"
+#define MyAppName "ArborGraph"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "AG DIAZ EVANGELISTA"
 #define MyAppURL "https://github.com/12valor/C-file-scanner"
-#define MyAppExeName "DiskScope.exe"
+#define MyAppExeName "ArborGraph.exe"
 
 [Setup]
-; Unique AppId generated for DiskScope
+; AppId preserved for seamless in-place upgrade from legacy installations
 AppId={{D37F7E1A-85F4-4BC3-9C1D-72810C24A59E}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
@@ -18,13 +18,13 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autopf}\DiskScope
+DefaultDirName={autopf}\ArborGraph
 DisableProgramGroupPage=yes
 ; Strict EULA consent enforcement: User must accept license before installation continues
 LicenseFile=eula.txt
-SetupIconFile=..\Resources\DiskScope.ico
+SetupIconFile=..\Resources\ArborGraph.ico
 OutputDir=..\dist\setup
-OutputBaseFilename=DiskScopeSetup-{#MyAppVersion}-x64
+OutputBaseFilename=ArborGraph-Setup-{#MyAppVersion}-x64
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -41,7 +41,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-Source: "..\DiskScope.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\ArborGraph.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "eula.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -52,17 +52,23 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Clean up runtime files if any
-Type: files; Name: "{app}\DiskScope.exe"
+; Clean up runtime files
+Type: files; Name: "{app}\ArborGraph.exe"
 Type: files; Name: "{app}\eula.txt"
 
 [Code]
-// Custom code to log acceptance if needed locally
+// Detect and migrate previous DiskScope installation settings if present
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  LegacyDir: String;
 begin
   if CurStep = ssPostInstall then
   begin
-    // Local acceptance recorded on disk
-    Log('DiskScope EULA accepted at: ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':'));
+    Log('ArborGraph EULA accepted and installation completed at: ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':'));
+    LegacyDir := ExpandConstant('{autopf}\DiskScope');
+    if DirExists(LegacyDir) then
+    begin
+      Log('Detected previous DiskScope installation directory at: ' + LegacyDir);
+    end;
   end;
 end;

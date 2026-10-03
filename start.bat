@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: Set window title and current directory
-title DiskScope Launcher
+title ArborGraph Launcher
 cd /d "%~dp0"
 
 :: Ensure user .dotnet SDK directory is prioritized if present
@@ -36,7 +36,7 @@ where dotnet >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     dotnet --list-sdks 2>nul | findstr /R "^8\." >nul 2>&1
     if !ERRORLEVEL! equ 0 (
-        echo [*] Building DiskScope...
+        echo [*] Building ArborGraph...
         dotnet build DiskScope.csproj -c Debug --nologo -v quiet
         if !ERRORLEVEL! neq 0 (
             echo [!] Build warning: falling back to existing executable...
@@ -45,45 +45,50 @@ if %ERRORLEVEL% equ 0 (
 )
 
 :: 2. Launch root standalone executable if available
+if exist "ArborGraph.exe" (
+    echo [*] Starting standalone ArborGraph...
+    start "" "ArborGraph.exe" %*
+    goto :Success
+)
 if exist "DiskScope.exe" (
-    echo [*] Starting standalone DiskScope...
+    echo [*] Starting standalone ArborGraph (legacy binary)...
     start "" "DiskScope.exe" %*
     goto :Success
 )
 if exist "PrismDrive.exe" (
-    echo [*] Starting standalone DiskScope...
+    echo [*] Starting standalone ArborGraph...
     start "" "PrismDrive.exe" %*
     goto :Success
 )
 
 :: 3. Launch dist standalone executable if available
-if exist "dist\DiskScope.exe" (
-    echo [*] Starting standalone DiskScope...
-    start "" "dist\DiskScope.exe" %*
+if exist "dist\ArborGraph.exe" (
+    echo [*] Starting standalone ArborGraph...
+    start "" "dist\ArborGraph.exe" %*
     goto :Success
 )
-if exist "dist\PrismDrive.exe" (
-    echo [*] Starting standalone DiskScope...
-    start "" "dist\PrismDrive.exe" %*
+if exist "dist\DiskScope.exe" (
+    echo [*] Starting standalone ArborGraph (legacy binary)...
+    start "" "dist\DiskScope.exe" %*
     goto :Success
 )
 
 :: 4. Launch the Debug executable if available
-if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
-    echo [*] Starting DiskScope...
-    start "" "bin\Debug\net8.0-windows\DiskScope.exe" %*
+if exist "bin\Debug\net8.0-windows\ArborGraph.exe" (
+    echo [*] Starting ArborGraph...
+    start "" "bin\Debug\net8.0-windows\ArborGraph.exe" %*
     goto :Success
 )
-if exist "bin\Debug\net8.0-windows\PrismDrive.exe" (
-    echo [*] Starting DiskScope...
-    start "" "bin\Debug\net8.0-windows\PrismDrive.exe" %*
+if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
+    echo [*] Starting ArborGraph (legacy binary)...
+    start "" "bin\Debug\net8.0-windows\DiskScope.exe" %*
     goto :Success
 )
 
 :: 5. Launch self-contained publish build if available
-if exist "bin\publish\DiskScope.exe" (
-    echo [*] Starting published standalone DiskScope...
-    start "" "bin\publish\DiskScope.exe" %*
+if exist "bin\publish\ArborGraph.exe" (
+    echo [*] Starting published standalone ArborGraph...
+    start "" "bin\publish\ArborGraph.exe" %*
     goto :Success
 )
 
@@ -97,7 +102,7 @@ if %ERRORLEVEL% equ 0 (
 
 :: Error state
 echo.
-echo [ERROR] Could not start DiskScope!
+echo [ERROR] Could not start ArborGraph!
 echo Neither a precompiled executable nor a compatible .NET 8 SDK was found.
 echo Please install the .NET 8 SDK from: https://dotnet.microsoft.com/download/dotnet/8.0
 echo.
@@ -105,50 +110,50 @@ if "%~1"=="" pause
 exit /b 1
 
 :RunFast
+if exist "ArborGraph.exe" (
+    echo [*] Fast launch: starting ArborGraph.exe...
+    start "" "ArborGraph.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
+if exist "dist\ArborGraph.exe" (
+    echo [*] Fast launch: starting dist\ArborGraph.exe...
+    start "" "dist\ArborGraph.exe" %2 %3 %4 %5 %6
+    goto :Success
+)
 if exist "DiskScope.exe" (
     echo [*] Fast launch: starting DiskScope.exe...
     start "" "DiskScope.exe" %2 %3 %4 %5 %6
     goto :Success
 )
-if exist "dist\DiskScope.exe" (
-    echo [*] Fast launch: starting dist\DiskScope.exe...
-    start "" "dist\DiskScope.exe" %2 %3 %4 %5 %6
-    goto :Success
-)
-if exist "PrismDrive.exe" (
-    echo [*] Fast launch: starting PrismDrive.exe...
-    start "" "PrismDrive.exe" %2 %3 %4 %5 %6
-    goto :Success
-)
-if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
-    echo [*] Fast launch: starting DiskScope...
-    start "" "bin\Debug\net8.0-windows\DiskScope.exe" %2 %3 %4 %5 %6
+if exist "bin\Debug\net8.0-windows\ArborGraph.exe" (
+    echo [*] Fast launch: starting ArborGraph...
+    start "" "bin\Debug\net8.0-windows\ArborGraph.exe" %2 %3 %4 %5 %6
     goto :Success
 )
 echo [!] Precompiled binary not found. Running normal startup...
 goto :EOF
 
 :RunDev
-echo [*] Starting DiskScope in attached console mode...
+echo [*] Starting ArborGraph in attached console mode...
 dotnet run --project DiskScope.csproj -- %2 %3 %4 %5 %6
 exit /b %ERRORLEVEL%
 
 :RunPublish
-if exist "DiskScope.exe" (
+if exist "ArborGraph.exe" (
     echo [*] Launching standalone build...
-    start "" "DiskScope.exe" %2 %3 %4 %5 %6
+    start "" "ArborGraph.exe" %2 %3 %4 %5 %6
     goto :Success
 )
-if exist "dist\DiskScope.exe" (
+if exist "dist\ArborGraph.exe" (
     echo [*] Launching standalone published build...
-    start "" "dist\DiskScope.exe" %2 %3 %4 %5 %6
+    start "" "dist\ArborGraph.exe" %2 %3 %4 %5 %6
     goto :Success
 )
 echo [*] Standalone build not found. Publishing single-file executable now (Release / win-x64)...
 dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
-if exist "dist\DiskScope.exe" (
-    copy /y "dist\DiskScope.exe" "DiskScope.exe" >nul
-    start "" "DiskScope.exe"
+if exist "dist\ArborGraph.exe" (
+    copy /y "dist\ArborGraph.exe" "ArborGraph.exe" >nul
+    start "" "ArborGraph.exe"
     goto :Success
 )
 echo [ERROR] Publish failed.
@@ -156,7 +161,7 @@ if "%~1"=="" pause
 exit /b 1
 
 :RunTests
-echo [*] Running DiskScope Integration Tests...
+echo [*] Running ArborGraph Integration Tests...
 echo.
 if exist "tests\DiskScope.Tests.csproj" (
     dotnet run --project tests\DiskScope.Tests.csproj
@@ -166,21 +171,21 @@ echo [!] Test project not found at tests\DiskScope.Tests.csproj
 exit /b 1
 
 :OpenSite
-echo [*] Opening DiskScope website in default browser...
+echo [*] Opening ArborGraph documentation in default browser...
 start "" "site\index.html"
 exit /b 0
 
 :ShowHelp
 echo ===================================================
-echo             DiskScope Storage Analyzer            
+echo     ArborGraph Filesystem Analytics & Visualization
 echo ===================================================
 echo.
 echo Usage:
-echo   start.bat            Build (if SDK available) and launch DiskScope GUI
+echo   start.bat            Build (if SDK available) and launch ArborGraph GUI
 echo   start.bat --fast     Launch compiled executable immediately without build
 echo   start.bat --dev      Run attached to console with live output (dotnet run)
-echo   start.bat --publish  Launch standalone self-contained build (bin\publish)
-echo   start.bat --site     Open the product website and download page in browser
+echo   start.bat --publish  Launch standalone self-contained build
+echo   start.bat --site     Open the product website and documentation portal
 echo   start.bat --test     Run the automated integration test suite
 echo   start.bat --help     Display this help message
 echo.

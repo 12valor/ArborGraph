@@ -15,6 +15,30 @@ public class ScannerViewModel : ObservableObject
         _mainVm = mainVm;
         ExploreFilesCommand = new RelayCommand(_ => _mainVm.NavigateTo("Files"));
         ReviewCleanupCommand = new RelayCommand(_ => _mainVm.NavigateTo("CleanupCenter"));
+
+        // Propagate changes from MainViewModel and OverviewVM so ScannerView updates immediately
+        _mainVm.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsScanning))
+            {
+                OnPropertyChanged(nameof(IsScanning));
+                OnPropertyChanged(nameof(Stats));
+                OnPropertyChanged(nameof(CurrentTargetDescription));
+                CommandManager.InvalidateRequerySuggested();
+            }
+            else if (e.PropertyName == nameof(MainViewModel.CustomScanPath))
+            {
+                OnPropertyChanged(nameof(CurrentTargetDescription));
+            }
+        };
+
+        _mainVm.OverviewVM.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(OverviewViewModel.Stats))
+            {
+                OnPropertyChanged(nameof(Stats));
+            }
+        };
     }
 
     public OverviewViewModel OverviewVM => _mainVm.OverviewVM;

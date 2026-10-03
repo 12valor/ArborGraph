@@ -324,12 +324,18 @@ public class OverviewViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(dir)) return;
 
+        if (!force)
+        {
+            if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 35) return;
+            _lastRecentDirTime = DateTime.UtcNow;
+        }
+
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher != null && !dispatcher.HasShutdownStarted && !dispatcher.CheckAccess())
         {
             try
             {
-                dispatcher.BeginInvoke(DispatcherPriority.Normal, () => AddRecentDirectory(dir, force));
+                dispatcher.BeginInvoke(DispatcherPriority.Background, () => AddRecentDirectory(dir, true));
                 return;
             }
             catch { }
@@ -337,12 +343,6 @@ public class OverviewViewModel : ObservableObject
 
         try
         {
-            if (!force)
-            {
-                if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 35) return;
-                _lastRecentDirTime = DateTime.UtcNow;
-            }
-
             lock (_recentDirsLock)
             {
                 if (RecentDirectories.Count >= 60)

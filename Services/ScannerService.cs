@@ -190,8 +190,8 @@ public class ScannerService
             var scanStartTime = DateTime.UtcNow;
             string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
 
-            // Immediate initial report so UI status updates without waiting
-            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+            // Immediate initial report so UI status and directory feed update without waiting
+            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, currentDirectory, scanMode, scanModeDetails);
 
             // Background SQLite Ingestion Task
             var dbWorker = Task.Run(async () =>
@@ -518,7 +518,10 @@ public class ScannerService
             }
 
             _dbService.EndBulkIngestion();
-            _dbService.BuildDirectoryRollup(roots);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _dbService.BuildDirectoryRollup(roots);
+            }
             stopwatch.Stop();
         }
 

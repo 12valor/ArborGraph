@@ -65,8 +65,10 @@
                 <!-- Universal Action Buttons -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                            Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
                             Style="{StaticResource PrimaryButtonStyle}" Height="28" Padding="14,0" Margin="0,0,8,0"/>
                     <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                            Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
                             Style="{StaticResource DangerButtonStyle}" Height="28" Padding="14,0" Margin="0,0,8,0"/>
                     <Button Content="Export Report ▾" Click="ExportButton_Click" 
                             Style="{StaticResource ActionButtonStyle}" Height="28" Padding="10,0">

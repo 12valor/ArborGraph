@@ -342,6 +342,12 @@ public class MainViewModel : ObservableObject
         ScanLogVM.ClearLogs();
         ScanLogVM.AddLog("INFO", $"Started scan for target: {string.Join(", ", rootsToScan)}");
 
+        // Immediately navigate to the active Scanner console so the user sees live streaming
+        if (CurrentTab == "Overview")
+        {
+            NavigateTo("Scanner");
+        }
+
         var progress = new Progress<ScanProgressReport>(report =>
         {
             OverviewVM.Stats.DirectoriesVisited = report.DirectoriesVisited;
@@ -428,6 +434,7 @@ public class MainViewModel : ObservableObject
             {
                 OverviewVM.Stats.State = ScanState.Stopping;
                 ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
+                OverviewVM.AddRecentDirectory("Stop requested by user. Terminating traversal safely...", force: true);
                 _scanCts.Cancel();
                 _dbService.CancelActiveOperations();
             }

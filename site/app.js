@@ -2,7 +2,7 @@
 // Modern Developer Tool Portal Script (Interactive Navigation, Setup Stepper, Diagnostics & Verification)
 
 document.addEventListener('DOMContentLoaded', () => {
-    const OFFICIAL_HASH = '5B8054F6464116A3979E35C926ADC219E574FCEA82BB6C4E7BB0F0C5F8F06785';
+    const OFFICIAL_HASH = 'BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A';
 
     // =========================================================
     // 1. HEADER NAVIGATION, SCROLLSPY & MOBILE DRAWER
@@ -300,11 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
         wizardLogText.textContent = '> Initializing Windows Installer engine...\n> Verifying local NTFS volume permissions...\n> Bounded staging buffer created.';
 
         const steps = [
-            { pct: 15, msg: "Extracting core binary: DiskScope.exe (72.7 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
+            { pct: 15, msg: "Extracting core binary: DiskScope.exe (73.3 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 runtime assemblies..." },
             { pct: 35, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore.dll & PresentationFramework.dll\n> Validating DirectX Hardware Acceleration..." },
             { pct: 58, msg: "Configuring SQLite database subsystem...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Registering local database schema in %LocalAppData%\\DiskScope..." },
             { pct: 78, msg: "Creating application environment...", log: "> Configuring WAL journal mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
-            { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: 5B8054F6...F06785\n> Cryptographic match verified bit-for-bit." },
+            { pct: 95, msg: "Verifying package cryptographic checksum...", log: "> Validating SHA-256 binary digest: BCBF7FFF...CD750A\n> Cryptographic match verified bit-for-bit." },
             { pct: 100, msg: "Setup installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
         ];
 

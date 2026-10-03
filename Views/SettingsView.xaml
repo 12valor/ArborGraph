@@ -79,8 +79,13 @@
                                 Style="{StaticResource ActionButtonStyle}" HorizontalAlignment="Left" Padding="12,5" Margin="0,0,0,16"/>
 
                         <TextBlock Text="ABOUT ARBORGRAPH" Style="{StaticResource SectionHeadingStyle}" Margin="0,12,0,8"/>
-                        <TextBlock Text="ArborGraph" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                        <TextBlock Text="Filesystem Analytics &amp; Visualization" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Image Source="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="ArborGraph" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="Filesystem Analytics &amp; Visualization" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,1,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
                         <TextBlock Text="A local Windows utility for understanding storage through hierarchical analysis, file intelligence, and visual reporting. (Previously known as DiskScope Pro)" 
                                    FontSize="11.5" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
                     </StackPanel>

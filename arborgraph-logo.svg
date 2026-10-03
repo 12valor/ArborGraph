@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <!-- ArborGraph Brand Mark (Filesystem Analytics & Visualization) -->
+  <g fill="none">
+    <!-- Hierarchical Vertical Stem / Root -->
+    <line x1="50" y1="84" x2="50" y2="56" stroke="#111827" stroke-width="3.5" stroke-linecap="round"/>
+    
+    <!-- Bilateral Branches -->
+    <path d="M 50 56 C 42 56 30 52 26 38" stroke="#111827" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 50 56 C 58 56 70 52 74 38" stroke="#111827" stroke-width="3.5" stroke-linecap="round"/>
+    
+    <!-- Central Vertical Hierarchy to Apex Node -->
+    <line x1="50" y1="56" x2="50" y2="24" stroke="#111827" stroke-width="3.5" stroke-linecap="round"/>
+    
+    <!-- Relational Graph Edge -->
+    <path d="M 26 38 Q 50 30 74 38" stroke="#005FB8" stroke-width="2.1" stroke-dasharray="3 3" stroke-linecap="round"/>
+    
+    <!-- Terminal Data Nodes -->
+    <circle cx="26" cy="38" r="5.5" fill="#111827"/>
+    <circle cx="74" cy="38" r="5.5" fill="#111827"/>
+    
+    <!-- Apex Storage Anchor Node -->
+    <circle cx="50" cy="22" r="7.5" fill="#005FB8"/>
+    <circle cx="50" cy="22" r="2.6" fill="#FFFFFF"/>
+  </g>
+</svg>

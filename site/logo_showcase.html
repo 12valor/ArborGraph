@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArborGraph — Logo Design Exploration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #FAFAFA;
+      color: #111827;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .logo-card {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .logo-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08);
+    }
+  </style>
+</head>
+<body class="py-12 px-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="text-center mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono uppercase tracking-wider mb-4">
+        Logo Generator Skill Workflow
+      </div>
+      <h1 class="text-4xl md:text-5xl font-light tracking-tight text-gray-900 mb-3">
+        ArborGraph
+      </h1>
+      <p class="text-sm font-mono text-gray-500 uppercase tracking-widest max-w-xl mx-auto">
+        Filesystem Analytics & Visualization — Brand Mark Exploration
+      </p>
+      <div class="w-12 h-0.5 bg-gray-200 mx-auto mt-6"></div>
+    </header>
+
+    <!-- 6 Concepts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+
+      <!-- Concept 1 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 logo-card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-gray-400">CONCEPT 01</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">Abstract Tree</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-1" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+              <!-- Geometric Root and Trunk -->
+              <line x1="50" y1="84" x2="50" y2="46" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Lower branches -->
+              <path d="M 50 64 L 30 46" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M 50 64 L 70 46" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Upper bifurcation -->
+              <path d="M 50 46 L 38 28" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M 50 46 L 62 28" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Center Terminal Node -->
+              <circle cx="50" cy="20" r="4.5" fill="#005FB8" stroke="#005FB8" stroke-width="1"/>
+              <!-- Terminal Data Leaves -->
+              <circle cx="30" cy="46" r="3.5" fill="currentColor"/>
+              <circle cx="70" cy="46" r="3.5" fill="currentColor"/>
+              <circle cx="38" cy="28" r="3.5" fill="currentColor"/>
+              <circle cx="62" cy="28" r="3.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Geometric Tree Hierarchy</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Architectural tree structure with 45° branching lines ending in data block leaves. Strict structural balance with steel blue focal root.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Readability: 9/10</span>
+          <span>Silhouette: Strong</span>
+        </div>
+      </div>
+
+      <!-- Concept 2 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 logo-card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-gray-400">CONCEPT 02</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">Relational Graph</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-2" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <!-- Edge Links -->
+              <line x1="42" y1="50" x2="68" y2="28" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="42" y1="50" x2="72" y2="70" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="42" y1="50" x2="24" y2="30" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="42" y1="50" x2="26" y2="72" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="68" y1="28" x2="72" y2="70" stroke="#94A3B8" stroke-width="2" stroke-dasharray="3 3"/>
+              <!-- Nodes -->
+              <circle cx="42" cy="50" r="7.5" fill="#005FB8"/>
+              <circle cx="68" cy="28" r="5" fill="currentColor"/>
+              <circle cx="72" cy="70" r="5.5" fill="currentColor"/>
+              <circle cx="24" cy="30" r="4" fill="currentColor"/>
+              <circle cx="26" cy="72" r="4" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Topological Data Graph</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Asymmetric directed graph depicting file relational clusters and volume links. High visual tension with prominent primary volume hub.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Readability: 8/10</span>
+          <span>Silhouette: Dynamic</span>
+        </div>
+      </div>
+
+      <!-- Concept 3 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 logo-card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-gray-400">CONCEPT 03</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">Orthogonal Dendrogram</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-3" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <!-- Vertical spine -->
+              <line x1="28" y1="22" x2="28" y2="78" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Orthogonal branches -->
+              <path d="M 28 22 H 62" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 28 41 H 78" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 28 60 H 68" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 28 78 H 50" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Terminal Data Blocks -->
+              <circle cx="28" cy="22" r="5" fill="#005FB8"/>
+              <circle cx="62" cy="22" r="4" fill="currentColor"/>
+              <circle cx="78" cy="41" r="4.5" fill="currentColor"/>
+              <circle cx="68" cy="60" r="4" fill="currentColor"/>
+              <circle cx="50" cy="78" r="3.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Filesystem Dendrogram</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Directly echoes terminal `tree` directory structures and indexers. Pure technical utility feel with orthogonal bus lines and data terminals.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Readability: 9/10</span>
+          <span>Silhouette: Distinct</span>
+        </div>
+      </div>
+
+      <!-- Concept 4 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 logo-card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-gray-400">CONCEPT 04</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">Treemap Partition</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-4" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <!-- Outer Container -->
+              <rect x="18" y="18" width="64" height="64" rx="12" stroke="currentColor" stroke-width="3.5"/>
+              <!-- Internal Hierarchical Partitions -->
+              <line x1="52" y1="18" x2="52" y2="82" stroke="currentColor" stroke-width="3.5"/>
+              <line x1="52" y1="50" x2="82" y2="50" stroke="currentColor" stroke-width="3.5"/>
+              <line x1="18" y1="58" x2="52" y2="58" stroke="currentColor" stroke-width="3"/>
+              <!-- Accent Anchor -->
+              <circle cx="52" cy="50" r="4.5" fill="#005FB8"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Nested Storage Treemap</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Represents squarified disk treemaps and nested directory containerization. Extremely compact, solid footprint for small taskbar icons.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Readability: 8.5/10</span>
+          <span>Silhouette: Compact</span>
+        </div>
+      </div>
+
+      <!-- Concept 5 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 logo-card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-gray-400">CONCEPT 05</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">Polar Sunburst</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-5" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <!-- Origin Core -->
+              <circle cx="50" cy="50" r="6" fill="#005FB8"/>
+              <!-- Inner ring sectors -->
+              <path d="M 50 32 A 18 18 0 0 1 68 50" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 50 68 A 18 18 0 0 1 32 50" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Outer ring sectors -->
+              <path d="M 50 18 A 32 32 0 0 1 82 50" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 72 72 A 32 32 0 0 1 36 80" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 18 50 A 32 32 0 0 1 34 26" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Radial Storage Sunburst</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Concentric orbital arcs reflecting multi-tier storage depth and hierarchical volume distribution. Dynamic circular boundary.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 font-mono">
+          <span>Readability: 8/10</span>
+          <span>Silhouette: Radial</span>
+        </div>
+      </div>
+
+      <!-- Concept 6 (Recommended / Synthesis) -->
+      <div class="bg-white rounded-xl border-2 border-blue-500 p-6 logo-card flex flex-col justify-between relative shadow-sm">
+        <div class="absolute -top-3 right-6 bg-blue-600 text-white text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full font-semibold">
+          Selected Design
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono font-medium text-blue-600">CONCEPT 06</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">Tree + Graph Hybrid</span>
+          </div>
+          <div class="w-full aspect-square bg-[#F8FAFC] rounded-lg flex items-center justify-center p-8 mb-6 border border-gray-100">
+            <svg id="svg-concept-6" class="w-32 h-32 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <!-- Central Stem / Root -->
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Graceful Bifurcation Branches -->
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Central Vertical Trunk to Focal Apex Node -->
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- Cross Graph Edge (Synthesizing Hierarchy into Relational Graph) -->
+              <path d="M 26 40 Q 50 32, 74 40" stroke="#005FB8" stroke-width="2" stroke-dasharray="3 3"/>
+              <!-- Terminal Data Nodes -->
+              <circle cx="26" cy="40" r="5" fill="currentColor"/>
+              <circle cx="74" cy="40" r="5" fill="currentColor"/>
+              <!-- Apex Storage Anchor Node -->
+              <circle cx="50" cy="22" r="7" fill="#005FB8"/>
+              <circle cx="50" cy="22" r="2.5" fill="#FFFFFF"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">Arbor-Graph Synthesis</h3>
+          <p class="text-xs text-gray-500 leading-relaxed mb-4">
+            Directly embodies the name: rising hierarchy (Arbor) branching into relational telemetry nodes and edges (Graph). Apex anchor node anchors the visual hierarchy.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-blue-600 font-mono font-medium">
+          <span>Readability: 10/10</span>
+          <span>Scalability: 16px–512px</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scalability & Icon Size Test Matrix -->
+    <section class="bg-white rounded-xl border border-gray-200 p-8 mb-12">
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">Windows Icon Size Test Matrix (Concept 06)</h2>
+      <p class="text-xs text-gray-500 font-mono mb-8 uppercase tracking-wider">
+        Verifying recognizability across standard Windows display scales (256px down to 16px favicon)
+      </p>
+
+      <div class="flex flex-wrap items-end gap-10 p-6 bg-[#F8FAFC] rounded-lg border border-gray-100">
+        <!-- 64px -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-16 h-16 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center p-2">
+            <svg class="w-12 h-12 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 26 40 Q 50 32, 74 40" stroke="#005FB8" stroke-width="2.5" stroke-dasharray="3 3"/>
+              <circle cx="26" cy="40" r="5" fill="currentColor"/>
+              <circle cx="74" cy="40" r="5" fill="currentColor"/>
+              <circle cx="50" cy="22" r="7.5" fill="#005FB8"/>
+              <circle cx="50" cy="22" r="2.5" fill="#FFFFFF"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">64×64</span>
+        </div>
+
+        <!-- 48px -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center p-1.5">
+            <svg class="w-9 h-9 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+              <circle cx="26" cy="40" r="5.5" fill="currentColor"/>
+              <circle cx="74" cy="40" r="5.5" fill="currentColor"/>
+              <circle cx="50" cy="22" r="8" fill="#005FB8"/>
+              <circle cx="50" cy="22" r="2.5" fill="#FFFFFF"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">48×48 (Desktop)</span>
+        </div>
+
+        <!-- 32px -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-9 h-9 bg-white rounded-md shadow-sm border border-gray-200 flex items-center justify-center p-1">
+            <svg class="w-7 h-7 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="26" cy="40" r="6" fill="currentColor"/>
+              <circle cx="74" cy="40" r="6" fill="currentColor"/>
+              <circle cx="50" cy="22" r="8.5" fill="#005FB8"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">32×32 (Taskbar)</span>
+        </div>
+
+        <!-- 24px -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-7 h-7 bg-white rounded shadow-sm border border-gray-200 flex items-center justify-center p-0.5">
+            <svg class="w-5 h-5 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="26" cy="40" r="7" fill="currentColor"/>
+              <circle cx="74" cy="40" r="7" fill="currentColor"/>
+              <circle cx="50" cy="22" r="9" fill="#005FB8"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">24×24</span>
+        </div>
+
+        <!-- 16px -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-5 h-5 bg-white rounded shadow-sm border border-gray-200 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-gray-900" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+              <circle cx="26" cy="40" r="8" fill="currentColor"/>
+              <circle cx="74" cy="40" r="8" fill="currentColor"/>
+              <circle cx="50" cy="22" r="10" fill="#005FB8"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">16×16 (Title bar)</span>
+        </div>
+
+        <!-- Dark Mode Tile Preview -->
+        <div class="flex flex-col items-center gap-2 ml-auto">
+          <div class="w-16 h-16 bg-[#111827] rounded-lg shadow-sm border border-gray-800 flex items-center justify-center p-2">
+            <svg class="w-12 h-12 text-white" viewBox="0 0 100 100" fill="none">
+              <line x1="50" y1="84" x2="50" y2="56" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 50 56 Q 36 56, 26 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 50 56 Q 64 56, 74 40" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <line x1="50" y1="56" x2="50" y2="24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M 26 40 Q 50 32, 74 40" stroke="#60A5FA" stroke-width="2.5" stroke-dasharray="3 3"/>
+              <circle cx="26" cy="40" r="5" fill="currentColor"/>
+              <circle cx="74" cy="40" r="5" fill="currentColor"/>
+              <circle cx="50" cy="22" r="7.5" fill="#3B82F6"/>
+              <circle cx="50" cy="22" r="2.5" fill="#111827"/>
+            </svg>
+          </div>
+          <span class="text-[11px] font-mono text-gray-500">Dark Mode</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs font-mono text-gray-400">
+      ArborGraph Brand Identity &bull; Generated via logo-generator-skill &bull; Production Ready
+    </footer>
+  </div>
+</body>
+</html>

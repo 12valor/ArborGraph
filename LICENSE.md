@@ -1,19 +1,19 @@
-# DiskScope End User License Agreement (EULA)
+# ArborGraph End User License Agreement (EULA)
 
 **Version:** 1.0  
-**Effective Date:** September 29, 2026  
+**Effective Date:** September 29, 2026 (Updated for ArborGraph, previously known as DiskScope Pro)  
 **Publisher:** AG DIAZ EVANGELISTA  
 **Contact:** evangelista.agdiaz@gmail.com  
 
 ---
 
 ### IMPORTANT NOTICE
-PLEASE READ THIS END USER LICENSE AGREEMENT ("EULA" OR "AGREEMENT") CAREFULLY BEFORE DOWNLOADING, INSTALLING, COPYING, OR USING DISKSCOPE ("SOFTWARE"). BY DOWNLOADING, INSTALLING, COPYING, OR USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL, COPY, OR USE THE SOFTWARE.
+PLEASE READ THIS END USER LICENSE AGREEMENT ("EULA" OR "AGREEMENT") CAREFULLY BEFORE DOWNLOADING, INSTALLING, COPYING, OR USING ARBORGRAPH ("SOFTWARE"). BY DOWNLOADING, INSTALLING, COPYING, OR USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL, COPY, OR USE THE SOFTWARE.
 
 ---
 
 ### 1. License Grant
-Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute DiskScope in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
+Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
 
 ### 2. Permitted and Restricted Uses
 - **(a) Permitted Use:** You may install and execute an unlimited number of copies of the Software on hardware you own, lease, or manage.
@@ -22,10 +22,10 @@ Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Lic
 - **(d) Automated Abuse:** You may not bundle the Software with third-party software, malware, adware, or unwanted software distributors.
 
 ### 3. Local Architecture & Privacy Commitment
-DiskScope operates exclusively as a local, on-device utility:
+ArborGraph operates exclusively as a local, on-device utility:
 - **(a)** Does not collect, transmit, or synchronize personal data, filenames, or filesystem metadata with remote servers.
 - **(b)** Contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services.
-- **(c)** Stores scan catalog data exclusively on the local host within the user profile directory (`%LocalAppData%\DiskScope`).
+- **(c)** Stores scan catalog data exclusively on the local host within the user profile directory (`%LocalAppData%\ArborGraph`).
 
 ### 4. File Deletion, System Access & User Responsibility
 - **(a) Deletion Capabilities:** The Software includes tools (such as the Junk Cleaner and duplicate file manager) capable of permanently deleting files and directories from your system storage upon your explicit command.
@@ -39,7 +39,7 @@ The Software, including its graphical interface, binary code, design layouts, ic
 The Software incorporates certain third-party libraries and runtime components, including `Microsoft.Data.Sqlite`, `SQLitePCLRaw`, `SQLite`, and the `Microsoft .NET Runtime`. These components are distributed pursuant to their respective open-source licenses (MIT, Apache 2.0, and Public Domain). A complete schedule of third-party licenses and notices is available in the Software documentation and the accompanying `THIRD_PARTY_LICENSES.md` file.
 
 ### 7. Disclaimer of Warranties ("AS IS")
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, DISKSCOPE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, AND NON-INFRINGEMENT.
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ARBORGRAPH IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, AND NON-INFRINGEMENT.
 
 ### 8. Limitation of Liability
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR, ITS CONTRIBUTORS, OR SUPPLIERS BE LIABLE FOR ANY DIRECT, INDIRECT, PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES (INCLUDING DAMAGES FOR LOSS OF DATA, LOSS OF PROFITS, LOSS OF REVENUE, BUSINESS INTERRUPTION, LOSS OF GOODWILL, OR HARDWARE FAILURE) ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.

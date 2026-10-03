@@ -17,6 +17,12 @@
     --color-text-secondary: #4B5563;
     --color-text-muted:     #9CA3AF;
 
+    /* Classic Windows Developer Blue Navbar (High Contrast Product Identity) */
+    --win-blue-navbar:        #005A9E;
+    --win-blue-navbar-border: #004578;
+    --win-blue-navbar-hover:  rgba(255, 255, 255, 0.12);
+    --win-blue-navbar-active: rgba(0, 0, 0, 0.18);
+
     /* Single Restrained Accent: Windows Precision Steel Blue */
     --color-accent:         #005FB8;
     --color-accent-hover:   #004C99;
@@ -38,9 +44,9 @@
     --tone-docs:            #4B5563;
     --tone-code:            #334155;
 
-    /* Desktop Typography Stack */
-    --font-sans: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Tahoma, Arial, sans-serif;
-    --font-mono: "Cascadia Code", "Consolas", "Courier New", monospace;
+    /* Dynamic Developer Typography Stack */
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
 
     /* Crisp Precision Radii */
     --radius-sm: 3px;
@@ -68,8 +74,9 @@ html {
 
 body {
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
     background-color: var(--color-bg-canvas);
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
@@ -88,7 +95,7 @@ a:hover {
 
 code, pre, .mono-text {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 12.5px;
 }
 
 .site-container {
@@ -97,28 +104,28 @@ code, pre, .mono-text {
     padding: 0 24px;
 }
 
-/* =====================================================================
-   Desktop Application Top Navigation Bar
-   (Clean white surface, thin 1px border, understated desktop tabs)
-   ===================================================================== */
+/* =========================================================
+   Solid Classic Developer Blue Navigation Bar (#005A9E)
+   High-contrast product identity with clean translucent link states
+   ========================================================= */
 .site-header {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background-color: var(--color-bg-surface);
-    border-bottom: 1px solid var(--color-border);
+    background-color: var(--win-blue-navbar);
+    border-bottom: 1px solid var(--win-blue-navbar-border);
     transition: box-shadow 0.15s ease;
 }
 
 .site-header.scrolled {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 3px 10px rgba(0, 54, 96, 0.22);
 }
 
 .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 48px;
+    height: 52px;
     gap: 16px;
 }
 
@@ -126,16 +133,17 @@ code, pre, .mono-text {
 .brand-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     text-decoration: none;
     flex-shrink: 0;
 }
 
 .brand-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     display: block;
     flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
 }
 
 .brand-text-block {
@@ -144,16 +152,17 @@ code, pre, .mono-text {
 }
 
 .brand-title {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--color-text-primary);
+    font-size: 15.5px;
+    font-weight: 500;
+    color: #FFFFFF;
     line-height: 1.15;
     letter-spacing: -0.01em;
 }
 
 .brand-subtitle {
-    font-size: 10px;
-    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1.1;
 }
 
@@ -161,65 +170,67 @@ code, pre, .mono-text {
 .site-nav {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
 }
 
 .nav-link {
-    color: var(--color-text-secondary);
+    color: rgba(255, 255, 255, 0.88);
     text-decoration: none;
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 400;
-    padding: 6px 10px;
+    padding: 6px 11px;
     border-radius: var(--radius-md);
     transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .nav-link:hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-bg-card-hover);
+    color: #FFFFFF;
+    background-color: var(--win-blue-navbar-hover);
 }
 
 .nav-link.active {
-    color: var(--color-accent);
-    font-weight: 600;
-    background-color: var(--color-accent-tint);
+    color: #FFFFFF;
+    font-weight: 500;
+    background-color: var(--win-blue-navbar-active);
+    box-shadow: inset 0 -2px 0 #FFFFFF;
 }
 
 /* Header Right Actions */
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .header-download-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: var(--color-accent);
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 5px 12px;
+    background-color: #FFFFFF;
+    color: #005A9E;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 6px 14px;
     border-radius: var(--radius-md);
-    border: 1px solid var(--color-accent);
+    border: 1px solid rgba(255, 255, 255, 0.95);
     cursor: pointer;
-    transition: background-color 0.12s ease;
+    transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
     white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .header-download-btn:hover {
-    background-color: var(--color-accent-hover);
-    color: #FFFFFF;
+    background-color: #F0F7FF;
+    color: #004578;
 }
 
 .mobile-nav-toggle {
     display: none;
-    background: transparent;
-    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: var(--radius-md);
-    color: var(--color-text-primary);
-    padding: 5px 8px;
+    color: #FFFFFF;
+    padding: 6px 9px;
     cursor: pointer;
 }
 
@@ -227,9 +238,9 @@ code, pre, .mono-text {
 .mobile-nav-drawer {
     display: none;
     flex-direction: column;
-    background-color: var(--color-bg-surface);
-    border-bottom: 1px solid var(--color-border);
-    padding: 8px 16px 16px 16px;
+    background-color: #004E8C;
+    border-bottom: 1px solid #003660;
+    padding: 10px 16px 18px 16px;
     gap: 4px;
 }
 
@@ -238,18 +249,22 @@ code, pre, .mono-text {
 }
 
 .mobile-nav-link {
-    padding: 8px 12px;
-    font-size: 13px;
-    color: var(--color-text-secondary);
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
     border-radius: var(--radius-md);
 }
 
 .mobile-nav-link:hover, .mobile-nav-link.active {
-    background-color: var(--color-accent-tint);
-    color: var(--color-accent);
-    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    font-weight: 500;
 }
 
+/* =========================================================
+   Standard Button Styles (Matches Styles.xaml)
+   ========================================================= */
 /* =========================================================
    Standard Button Styles (Matches Styles.xaml)
    ========================================================= */
@@ -261,8 +276,8 @@ code, pre, .mono-text {
     background-color: var(--color-accent);
     color: #FFFFFF;
     font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     padding: 7px 16px;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-accent);
@@ -291,9 +306,9 @@ code, pre, .mono-text {
     background-color: var(--color-bg-surface);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 500;
-    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 400;
+    padding: 7px 15px;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
     cursor: pointer;
@@ -318,8 +333,8 @@ code, pre, .mono-text {
     background-color: var(--color-bg-surface);
     color: var(--color-danger);
     font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 12.5px;
+    font-weight: 500;
     padding: 7px 14px;
     border-radius: var(--radius-md);
     border: 1px solid #FECACA;
@@ -336,7 +351,7 @@ code, pre, .mono-text {
     background: transparent;
     border: none;
     color: var(--color-text-secondary);
-    font-size: 12px;
+    font-size: 12.5px;
     padding: 5px 8px;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -347,8 +362,9 @@ code, pre, .mono-text {
 }
 
 .btn-mini {
-    font-size: 11px;
-    padding: 3px 8px;
+    font-size: 11.5px;
+    font-weight: 400;
+    padding: 4px 9px;
     border-radius: var(--radius-sm);
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border);
@@ -367,9 +383,10 @@ code, pre, .mono-text {
     color: var(--color-text-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 5px 8px;
+    padding: 6px 10px;
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 400;
     outline: none;
     transition: border-color 0.12s ease;
 }
@@ -378,19 +395,29 @@ code, pre, .mono-text {
 }
 .win-input.mono {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 12px;
 }
 
 /* =========================================================
-   Section Layout & Headings
+   Section Layout & Headings (Stacked Monospace Rhythm)
    ========================================================= */
 .site-section {
-    padding: 40px 0;
+    padding: 48px 0;
     border-bottom: 1px solid var(--color-border);
 }
 
 .section-header {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+}
+
+.section-num-lead {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--win-blue-navbar);
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    display: inline-block;
 }
 
 .section-label {
@@ -412,34 +439,38 @@ code, pre, .mono-text {
 }
 
 .section-title {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 27px;
+    font-weight: 400;
     color: var(--color-text-primary);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
 }
 
 .section-desc {
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 300;
     color: var(--color-text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
+    line-height: 1.55;
+    max-width: 780px;
 }
 
 /* =========================================================
-   Hero Section: Clean & Technical
+   Hero Section: Clean & Technical with Prominent Typography
    ========================================================= */
 .hero-section {
-    padding: 48px 0 36px 0;
+    padding: 52px 0 40px 0;
 }
 
 .hero-box {
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: 32px 36px;
+    padding: 38px 42px;
 }
 
 .hero-headline-group {
-    max-width: 780px;
+    max-width: 820px;
 }
 
 .hero-tag {
@@ -449,53 +480,66 @@ code, pre, .mono-text {
     background-color: var(--color-accent-tint);
     border: 1px solid var(--color-accent-border);
     color: var(--color-accent);
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
     padding: 3px 8px;
     border-radius: var(--radius-sm);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
 }
 
 .hero-title {
-    font-size: 26px;
-    font-weight: 600;
+    font-size: 46px;
+    font-weight: 300;
     color: var(--color-text-primary);
-    letter-spacing: -0.015em;
-    margin-bottom: 6px;
+    letter-spacing: -0.025em;
+    line-height: 1.12;
+    margin-bottom: 8px;
 }
 
 .hero-subtitle {
-    font-size: 14.5px;
-    font-weight: 500;
+    font-size: 21px;
+    font-weight: 300;
     color: var(--color-text-secondary);
-    margin-bottom: 12px;
+    line-height: 1.35;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
 }
 
 .hero-desc {
-    font-size: 13px;
+    font-size: 14.5px;
     color: var(--color-text-secondary);
-    line-height: 1.6;
-    margin-bottom: 22px;
-    max-width: 720px;
+    line-height: 1.65;
+    margin-bottom: 24px;
+    max-width: 760px;
+    font-weight: 300;
 }
 
 .hero-cta-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.hero-cta-bar .btn-primary,
+.hero-cta-bar .btn-secondary {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 18px;
 }
 
 .hero-meta-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    padding-top: 16px;
+    gap: 20px;
+    padding-top: 18px;
     border-top: 1px solid var(--color-border-light);
-    font-size: 11.5px;
-    color: var(--color-text-muted);
+    font-size: 12.5px;
+    color: var(--color-text-secondary);
 }
 
 .hero-meta-item {
@@ -555,25 +599,28 @@ code, pre, .mono-text {
 .win-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 13.5px;
     text-align: left;
 }
 
 .win-table th {
     background-color: var(--color-bg-canvas);
     color: var(--color-text-secondary);
-    font-weight: 600;
-    font-size: 11px;
-    padding: 8px 12px;
+    font-weight: 500;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 11px 16px;
     border-bottom: 1px solid var(--color-border);
     white-space: nowrap;
 }
 
 .win-table td {
-    padding: 9px 12px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--color-border);
     color: var(--color-text-primary);
     vertical-align: middle;
+    line-height: 1.45;
 }
 
 .win-table tbody tr:last-child td {
@@ -586,8 +633,8 @@ code, pre, .mono-text {
 
 .file-name-cell {
     font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 13px;
     color: var(--color-text-primary);
 }
 
@@ -621,13 +668,14 @@ code, pre, .mono-text {
 }
 
 .wizard-banner-title {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 500;
     color: var(--color-text-primary);
 }
 
 .wizard-banner-subtitle {
-    font-size: 11.5px;
+    font-size: 12px;
+    font-weight: 300;
     color: var(--color-text-secondary);
     margin-top: 2px;
 }
@@ -651,7 +699,8 @@ code, pre, .mono-text {
     align-items: center;
     gap: 6px;
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 400;
     color: var(--color-text-muted);
     border-right: 1px solid var(--color-border-light);
     white-space: nowrap;
@@ -662,7 +711,7 @@ code, pre, .mono-text {
 .wizard-step-node.active {
     background-color: var(--color-accent-tint);
     color: var(--color-accent);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .wizard-step-node.completed {
@@ -696,17 +745,18 @@ code, pre, .mono-text {
 }
 
 .wizard-pane-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     margin-bottom: 8px;
     color: var(--color-text-primary);
 }
 
 .wizard-pane-text {
-    font-size: 12.5px;
+    font-size: 13px;
+    font-weight: 300;
     color: var(--color-text-secondary);
     margin-bottom: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 /* EULA scroll container */
@@ -718,13 +768,15 @@ code, pre, .mono-text {
     background-color: var(--color-bg-canvas);
     padding: 12px;
     font-family: var(--font-sans);
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: 11.5px;
+    font-weight: 300;
+    line-height: 1.55;
     color: var(--color-text-secondary);
     margin-bottom: 12px;
 }
 .wizard-eula-container h4 {
-    font-size: 11.5px;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--color-text-primary);
     margin: 8px 0 4px 0;
 }
@@ -736,14 +788,15 @@ code, pre, .mono-text {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
+    font-size: 12.5px;
+    font-weight: 400;
     color: var(--color-text-primary);
     cursor: pointer;
     user-select: none;
 }
 
 .wizard-gate-warning {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--color-danger);
     margin-top: 6px;
     display: flex;
@@ -767,7 +820,8 @@ code, pre, .mono-text {
 .wizard-disk-stats {
     display: flex;
     gap: 24px;
-    font-size: 11.5px;
+    font-size: 12px;
+    font-weight: 300;
     color: var(--color-text-secondary);
     margin-bottom: 12px;
 }
@@ -783,7 +837,7 @@ code, pre, .mono-text {
 }
 
 .wizard-step-indicator {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--color-text-muted);
 }
 
@@ -800,8 +854,8 @@ code, pre, .mono-text {
 }
 
 .setup-specs-heading {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -812,12 +866,13 @@ code, pre, .mono-text {
     margin-bottom: 10px;
 }
 .setup-spec-label {
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 300;
     color: var(--color-text-muted);
 }
 .setup-spec-value {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 12.5px;
+    font-weight: 400;
     color: var(--color-text-primary);
 }
 
@@ -888,14 +943,14 @@ code, pre, .mono-text {
 }
 
 .resource-title {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
     color: var(--color-text-secondary);
 }
 
 .resource-val {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 12.5px;
+    font-weight: 500;
     font-family: var(--font-mono);
     color: var(--color-text-primary);
 }
@@ -911,7 +966,7 @@ code, pre, .mono-text {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 10px;
+    font-size: 10.5px;
     color: var(--color-text-muted);
 }
 
@@ -935,24 +990,24 @@ code, pre, .mono-text {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-size: 11.5px;
 }
 .target-desc-label {
     color: var(--color-text-secondary);
-    font-weight: 600;
+    font-weight: 500;
 }
 .target-desc-val {
     color: var(--color-text-primary);
     font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 12.5px;
 }
 
 .state-badge {
     background-color: var(--color-accent-tint);
     color: var(--color-accent);
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: 500;
+    font-size: 11.5px;
     padding: 2px 8px;
     border-radius: 3px;
 }
@@ -994,12 +1049,13 @@ code, pre, .mono-text {
     flex-direction: column;
 }
 .hud-label {
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 400;
     color: var(--color-text-secondary);
 }
 .hud-num {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 500;
     color: var(--color-text-primary);
     margin-top: 2px;
     font-family: var(--font-mono);
@@ -1011,11 +1067,13 @@ code, pre, .mono-text {
     gap: 20px;
     padding-top: 10px;
     border-top: 1px solid var(--color-border-light);
-    font-size: 11.5px;
+    font-size: 12px;
+    font-weight: 300;
     color: var(--color-text-secondary);
 }
 .secondary-metrics-line strong {
     color: var(--color-accent);
+    font-weight: 500;
 }
 
 /* Live Directory Feed */
@@ -1034,8 +1092,8 @@ code, pre, .mono-text {
     margin-bottom: 8px;
 }
 .live-feed-title {
-    font-size: 11.5px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--color-text-primary);
     display: flex;
     align-items: center;
@@ -1259,8 +1317,8 @@ code, pre, .mono-text {
 }
 
 .verify-label {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1279,7 +1337,7 @@ code, pre, .mono-text {
 
 .hash-text {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--color-text-primary);
     word-break: break-all;
     flex-grow: 1;
@@ -1298,7 +1356,8 @@ code, pre, .mono-text {
     margin-top: 10px;
     padding: 10px 14px;
     border-radius: var(--radius-md);
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 400;
     display: none;
 }
 .verify-result-banner.match {
@@ -1323,7 +1382,7 @@ code, pre, .mono-text {
     border-radius: var(--radius-md);
     padding: 8px 12px;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 12.5px;
     margin-top: 6px;
 }
 
@@ -1345,8 +1404,8 @@ code, pre, .mono-text {
 }
 
 .specs-title {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 500;
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1355,7 +1414,7 @@ code, pre, .mono-text {
 
 .specs-table {
     width: 100%;
-    font-size: 12px;
+    font-size: 12.5px;
     border-collapse: collapse;
 }
 .specs-table td {
@@ -1367,11 +1426,12 @@ code, pre, .mono-text {
 }
 .specs-key {
     color: var(--color-text-secondary);
+    font-weight: 300;
     width: 45%;
 }
 .specs-val {
     color: var(--color-text-primary);
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .cli-grid {
@@ -1431,9 +1491,10 @@ code, pre, .mono-text {
     background: transparent;
     border: none;
     border-radius: var(--radius-md);
-    padding: 7px 12px;
+    padding: 8px 12px;
     font-family: var(--font-sans);
-    font-size: 12.5px;
+    font-size: 13px;
+    font-weight: 400;
     color: var(--color-text-secondary);
     cursor: pointer;
     transition: background-color 0.1s ease, color 0.1s ease;
@@ -1448,12 +1509,12 @@ code, pre, .mono-text {
     background-color: var(--color-accent-tint);
     border-left: 3px solid var(--color-accent);
     color: var(--color-accent);
-    font-weight: 600;
+    font-weight: 500;
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 .explorer-content-pane {
-    padding: 28px 32px;
+    padding: 28px 34px;
     min-height: 480px;
 }
 
@@ -1466,54 +1527,59 @@ code, pre, .mono-text {
 
 .article-header {
     border-bottom: 1px solid var(--color-border);
-    padding-bottom: 12px;
-    margin-bottom: 20px;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
 }
 
 .article-title {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 23px;
+    font-weight: 400;
     color: var(--color-text-primary);
+    letter-spacing: -0.015em;
+    line-height: 1.25;
 }
 
 .article-meta {
-    font-size: 11px;
+    font-size: 12px;
     font-family: var(--font-mono);
     color: var(--color-text-muted);
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .article-body h3 {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 500;
     color: var(--color-text-primary);
-    margin: 20px 0 8px 0;
+    margin: 24px 0 8px 0;
 }
 
 .article-body p {
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 300;
     color: var(--color-text-secondary);
-    line-height: 1.6;
-    margin-bottom: 12px;
+    line-height: 1.68;
+    margin-bottom: 14px;
 }
 
 .article-body ul, .article-body ol {
     margin: 8px 0 16px 20px;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 300;
     color: var(--color-text-secondary);
-    line-height: 1.6;
+    line-height: 1.68;
 }
 
 .article-body li {
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .note-box {
     background-color: var(--color-accent-tint);
     border: 1px solid var(--color-accent-border);
     border-radius: var(--radius-md);
-    padding: 12px 14px;
-    font-size: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.55;
     color: var(--color-text-primary);
     margin: 16px 0;
 }

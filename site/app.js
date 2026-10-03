@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (wizardLaunchApp && wizardLaunchApp.checked) {
                     showToast('Downloading ArborGraph.exe...');
                     const link = document.createElement('a');
-                    link.href = 'https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe';
+                    link.href = 'https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.exe';
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
                     document.body.appendChild(link);

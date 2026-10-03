@@ -8,7 +8,7 @@ public partial class App : Application
 {
     private static readonly string LogFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DiskScope",
+        "ArborGraph",
         "app.log");
 
     protected override void OnStartup(StartupEventArgs e)
@@ -60,7 +60,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log($"FATAL: Exception creating/showing MainWindow: {ex}");
-            MessageBox.Show($"Startup failure:\n\n{ex}", "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Startup failure:\n\n{ex}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -84,7 +84,7 @@ public partial class App : Application
         try
         {
             MessageBox.Show($"An unexpected UI error occurred:\n\n{e.Exception.Message}",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+                "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch { }
         finally
@@ -100,7 +100,7 @@ public partial class App : Application
         if (e.ExceptionObject is Exception ex)
         {
             MessageBox.Show($"A critical error occurred:\n\n{ex.Message}",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+                "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

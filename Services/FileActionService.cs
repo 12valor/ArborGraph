@@ -55,13 +55,13 @@ public class FileActionService
             else
             {
                 MessageBox.Show($"The file or directory does not exist on disk:\n\n{path}",
-                    "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to open file:\n\n{ex.Message}",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+                "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -104,14 +104,14 @@ public class FileActionService
                 else
                 {
                     MessageBox.Show($"File or parent directory does not exist:\n\n{path}",
-                        "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to reveal file in Windows Explorer:\n\n{ex.Message}",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+                "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -134,7 +134,7 @@ public class FileActionService
             catch (Exception ex)
             {
                 MessageBox.Show($"Could not copy path to clipboard:\n\n{ex.Message}",
-                    "DiskScope", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
         }
@@ -351,7 +351,7 @@ public class FileActionService
         catch (Exception ex)
         {
             MessageBox.Show($"Unable to open file properties:\n\n{ex.Message}",
-                "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+                "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

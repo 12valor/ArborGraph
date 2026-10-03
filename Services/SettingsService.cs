@@ -19,9 +19,29 @@ public class SettingsService
         else
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string appDir = Path.Combine(appData, "DiskScope");
+            string appDir = Path.Combine(appData, "ArborGraph");
             Directory.CreateDirectory(appDir);
             _settingsFilePath = Path.Combine(appDir, "settings.json");
+
+            // Migration from legacy DiskScope if ArborGraph settings do not exist yet
+            if (!File.Exists(_settingsFilePath))
+            {
+                string legacyDir = Path.Combine(appData, "DiskScope");
+                if (!Directory.Exists(legacyDir) && Directory.Exists(Path.Combine(appData, "DiskScopePro")))
+                {
+                    legacyDir = Path.Combine(appData, "DiskScopePro");
+                }
+
+                string legacySettings = Path.Combine(legacyDir, "settings.json");
+                if (File.Exists(legacySettings))
+                {
+                    try
+                    {
+                        File.Copy(legacySettings, _settingsFilePath, overwrite: false);
+                    }
+                    catch { }
+                }
+            }
         }
 
         _cachedSettings = LoadSettings();

@@ -16,16 +16,33 @@ public class DatabaseService : IDisposable
         if (string.IsNullOrWhiteSpace(customDbPath))
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string folder = Path.Combine(appData, "DiskScope");
-            if (!Directory.Exists(folder) && Directory.Exists(Path.Combine(appData, "DiskScopePro")))
-            {
-                folder = Path.Combine(appData, "DiskScopePro");
-            }
-            else
-            {
-                Directory.CreateDirectory(folder);
-            }
+            string folder = Path.Combine(appData, "ArborGraph");
+            Directory.CreateDirectory(folder);
             _dbPath = Path.Combine(folder, "scan_index.db");
+
+            // Migration from legacy DiskScope / DiskScopePro if ArborGraph database does not exist yet
+            if (!File.Exists(_dbPath))
+            {
+                string legacyFolder = Path.Combine(appData, "DiskScope");
+                if (!Directory.Exists(legacyFolder) && Directory.Exists(Path.Combine(appData, "DiskScopePro")))
+                {
+                    legacyFolder = Path.Combine(appData, "DiskScopePro");
+                }
+
+                string legacyDb = Path.Combine(legacyFolder, "scan_index.db");
+                if (File.Exists(legacyDb))
+                {
+                    try
+                    {
+                        File.Copy(legacyDb, _dbPath, overwrite: false);
+                        string legacyWal = legacyDb + "-wal";
+                        string legacyShm = legacyDb + "-shm";
+                        if (File.Exists(legacyWal)) File.Copy(legacyWal, _dbPath + "-wal", overwrite: false);
+                        if (File.Exists(legacyShm)) File.Copy(legacyShm, _dbPath + "-shm", overwrite: false);
+                    }
+                    catch { }
+                }
+            }
         }
         else
         {

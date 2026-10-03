@@ -8,7 +8,7 @@ public partial class MainWindow : Window
 {
     private static readonly string LogFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DiskScope",
+        "ArborGraph",
         "app.log");
 
     public MainWindow() : this(null)

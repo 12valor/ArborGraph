@@ -410,7 +410,7 @@ public class MainViewModel : ObservableObject
         {
             OverviewVM.Stats.State = ScanState.Failed;
             ScanLogVM.AddLog("ERROR", "Scan encountered an unhandled error", ex.Message);
-            MessageBox.Show($"Scan failed: {ex.Message}", "DiskScope", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Scan failed: {ex.Message}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {

@@ -24,7 +24,7 @@ public class ScanLogViewModel : ObservableObject
     {
         Logs = [];
         SkippedItems = [];
-        AddLog("INFO", "DiskScope initialized. Ready for scan.");
+        AddLog("INFO", "ArborGraph initialized. Ready for scan.");
     }
 
     public ObservableCollection<LogItem> Logs { get; }

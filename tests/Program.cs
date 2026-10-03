@@ -503,6 +503,14 @@ public class Program
                         win.UpdateLayout();
                     }
 
+                    // 2a-1. Await NavigateToAsync across all tabs to verify async loading state & error-free completion
+                    foreach (var tab in allTabs)
+                    {
+                        mainVm.NavigateToAsync(tab).GetAwaiter().GetResult();
+                        win.UpdateLayout();
+                        Assert(!mainVm.IsTabLoading, $"IsTabLoading should be false after {tab} finishes loading");
+                    }
+
                     // Test responsive resizing on OverviewView (narrow stacked vs desktop side-by-side)
                     mainVm.NavigateCommand.Execute("Overview");
                     win.Measure(new Size(450, 700));

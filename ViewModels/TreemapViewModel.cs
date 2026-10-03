@@ -155,7 +155,7 @@ public class TreemapViewModel : ObservableObject
         }
     }
 
-    private async Task LoadCurrentLevelAsync()
+    public async Task LoadCurrentLevelAsync()
     {
         if (IsLoading) return;
         IsLoading = true;
@@ -166,7 +166,21 @@ public class TreemapViewModel : ObservableObject
             _currentItems = items;
             TotalVisibleBytes = _currentItems.Sum(i => i.Size);
             TotalVisibleItems = _currentItems.Count;
-            RecomputeLayout();
+
+            double w = _canvasWidth > 50 ? _canvasWidth : 1000;
+            double h = _canvasHeight > 50 ? _canvasHeight : 600;
+            var computed = await Task.Run(() => TreemapLayoutEngine.ComputeLayout(_currentItems, w, h));
+
+            Rectangles.Clear();
+            foreach (var rect in computed)
+            {
+                Rectangles.Add(rect);
+            }
+
+            if (SelectedNode != null)
+            {
+                SelectedNode = Rectangles.FirstOrDefault(r => r.Item.Path == SelectedNode.Item.Path);
+            }
         }
         catch (Exception ex)
         {
@@ -182,18 +196,25 @@ public class TreemapViewModel : ObservableObject
     {
         if (_canvasWidth <= 0 || _canvasHeight <= 0) return;
 
-        var computed = TreemapLayoutEngine.ComputeLayout(_currentItems, _canvasWidth, _canvasHeight);
-
-        Rectangles.Clear();
-        foreach (var rect in computed)
+        try
         {
-            Rectangles.Add(rect);
+            var computed = TreemapLayoutEngine.ComputeLayout(_currentItems, _canvasWidth, _canvasHeight);
+
+            Rectangles.Clear();
+            foreach (var rect in computed)
+            {
+                Rectangles.Add(rect);
+            }
+
+            // Restore or clear selected node
+            if (SelectedNode != null)
+            {
+                SelectedNode = Rectangles.FirstOrDefault(r => r.Item.Path == SelectedNode.Item.Path);
+            }
         }
-
-        // Restore or clear selected node
-        if (SelectedNode != null)
+        catch (Exception ex)
         {
-            SelectedNode = Rectangles.FirstOrDefault(r => r.Item.Path == SelectedNode.Item.Path);
+            System.Diagnostics.Debug.WriteLine($"RecomputeLayout error: {ex.Message}");
         }
     }
 

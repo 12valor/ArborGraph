@@ -134,80 +134,159 @@ public class MainViewModel : ObservableObject
     public ICommand ExportDuplicatesCsvCommand { get; }
     public ICommand ExportJunkCsvCommand { get; }
 
-    public void NavigateTo(string tabName)
-    {
-        CurrentTab = tabName;
-        CurrentView = tabName switch
-        {
-            "Analytics" => AnalyticsVM,
-            "CleanupCenter" => CleanupCenterVM,
-            "DeveloperStorage" => DeveloperStorageVM,
-            "LargestFiles" => LargestFilesVM,
-            "LargestFolders" => LargestFoldersVM,
-            "FileTypes" => FileTypesVM,
-            "OldFiles" => OldFilesVM,
-            "Duplicates" => DuplicatesVM,
-            "Photoshop" => PhotoshopVM,
-            "JunkCleaner" => JunkCleanerVM,
-            "Treemap" => TreemapVM,
-            "ScanLog" => ScanLogVM,
-            "Settings" => SettingsVM,
-            _ => OverviewVM
-        };
+    private bool _isTabLoading;
+    private string _tabLoadingTitle = string.Empty;
+    private string _tabLoadingMessage = string.Empty;
+    private long _navSequence = 0;
 
-        // Auto-refresh target view if not scanning
-        if (!IsScanning)
-        {
-            RefreshCurrentView(tabName);
-        }
+    public bool IsTabLoading
+    {
+        get => _isTabLoading;
+        set => SetProperty(ref _isTabLoading, value);
     }
 
-    private void RefreshCurrentView(string tabName)
+    public string TabLoadingTitle
     {
+        get => _tabLoadingTitle;
+        set => SetProperty(ref _tabLoadingTitle, value);
+    }
+
+    public string TabLoadingMessage
+    {
+        get => _tabLoadingMessage;
+        set => SetProperty(ref _tabLoadingMessage, value);
+    }
+
+    public void NavigateTo(string tabName)
+    {
+        _ = NavigateToAsync(tabName);
+    }
+
+    public async Task NavigateToAsync(string tabName)
+    {
+        long seq = Interlocked.Increment(ref _navSequence);
+
         try
         {
-            switch (tabName)
+            CurrentTab = tabName;
+            CurrentView = tabName switch
             {
-                case "Analytics":
-                    AnalyticsVM.RefreshData();
-                    break;
-                case "CleanupCenter":
-                    _ = CleanupCenterVM.LoadCleanupCategoriesAsync();
-                    break;
-                case "DeveloperStorage":
-                    _ = DeveloperStorageVM.ScanIndexedStorageAsync();
-                    break;
-                case "LargestFiles":
-                    LargestFilesVM.RefreshData();
-                    break;
-                case "LargestFolders":
-                    LargestFoldersVM.RefreshData(OverviewVM.Stats.LogicalBytesIndexed);
-                    break;
-                case "FileTypes":
-                    FileTypesVM.RefreshData();
-                    break;
-                case "OldFiles":
-                    OldFilesVM.RefreshData();
-                    break;
-                case "Photoshop":
-                    PhotoshopVM.RefreshData();
-                    break;
-                case "JunkCleaner":
-                    JunkCleanerVM.RefreshData();
-                    break;
-                case "Treemap":
-                    TreemapVM.RefreshData();
-                    break;
-                case "Settings":
-                    SettingsVM.LoadFromService();
-                    break;
+                "Analytics" => AnalyticsVM,
+                "CleanupCenter" => CleanupCenterVM,
+                "DeveloperStorage" => DeveloperStorageVM,
+                "LargestFiles" => LargestFilesVM,
+                "LargestFolders" => LargestFoldersVM,
+                "FileTypes" => FileTypesVM,
+                "OldFiles" => OldFilesVM,
+                "Duplicates" => DuplicatesVM,
+                "Photoshop" => PhotoshopVM,
+                "JunkCleaner" => JunkCleanerVM,
+                "Treemap" => TreemapVM,
+                "ScanLog" => ScanLogVM,
+                "Settings" => SettingsVM,
+                _ => OverviewVM
+            };
+
+            // Lightweight, instant, or active-scanning states do not block with full loading card
+            if (IsScanning || tabName == "ScanLog" || tabName == "Duplicates")
+            {
+                IsTabLoading = false;
+                return;
+            }
+
+            if (tabName == "Settings")
+            {
+                SettingsVM.LoadFromService();
+                IsTabLoading = false;
+                return;
+            }
+
+            if (tabName == "Overview")
+            {
+                OverviewVM.OnViewLoaded();
+                IsTabLoading = false;
+                return;
+            }
+
+            // Heavy data tabs: Activate loading state first
+            TabLoadingTitle = GetTabFriendlyTitle(tabName);
+            TabLoadingMessage = GetTabLoadingMessage(tabName);
+            IsTabLoading = true;
+
+            // Allow the UI thread to immediately paint the loading indicator
+            await Task.Yield();
+
+            Task? refreshTask = tabName switch
+            {
+                "Analytics" => AnalyticsVM.RefreshDataAsync(),
+                "CleanupCenter" => CleanupCenterVM.LoadCleanupCategoriesAsync(),
+                "DeveloperStorage" => DeveloperStorageVM.ScanIndexedStorageAsync(),
+                "LargestFiles" => LargestFilesVM.RefreshDataAsync(),
+                "LargestFolders" => LargestFoldersVM.RefreshDataAsync(OverviewVM.Stats.LogicalBytesIndexed),
+                "FileTypes" => FileTypesVM.RefreshDataAsync(),
+                "OldFiles" => OldFilesVM.RefreshDataAsync(),
+                "Photoshop" => PhotoshopVM.RefreshDataAsync(),
+                "JunkCleaner" => Task.Run(() => JunkCleanerVM.RefreshData()),
+                "Treemap" => TreemapVM.LoadCurrentLevelAsync(),
+                _ => Task.CompletedTask
+            };
+
+            if (refreshTask != null)
+            {
+                // 10-second safety timeout guard against any deadlock or hanging I/O
+                var completed = await Task.WhenAny(refreshTask, Task.Delay(10000));
+                if (completed != refreshTask)
+                {
+                    ScanLogVM.AddLog("WARN", $"Loading view '{tabName}' timed out after 10 seconds.");
+                }
             }
         }
         catch (Exception ex)
         {
             ScanLogVM.AddLog("WARN", $"Failed refreshing view {tabName}: {ex.Message}");
         }
+        finally
+        {
+            if (seq == Volatile.Read(ref _navSequence))
+            {
+                IsTabLoading = false;
+            }
+        }
     }
+
+    private static string GetTabFriendlyTitle(string tabName) => tabName switch
+    {
+        "Analytics" => "Storage Analytics",
+        "CleanupCenter" => "Cleanup Center",
+        "DeveloperStorage" => "Developer Storage Hub",
+        "LargestFiles" => "Largest Files",
+        "LargestFolders" => "Largest Folders",
+        "FileTypes" => "File Types & Categories",
+        "OldFiles" => "Old & Dormant Files",
+        "Duplicates" => "Duplicate Files",
+        "Photoshop" => "Photoshop & Media Assets",
+        "JunkCleaner" => "Junk & Cache Cleaner",
+        "Treemap" => "Interactive Space Treemap",
+        "ScanLog" => "Scan Diagnostics",
+        "Settings" => "Settings & Rules",
+        _ => "Storage Overview"
+    };
+
+    private static string GetTabLoadingMessage(string tabName) => tabName switch
+    {
+        "Analytics" => "Analyzing storage trends, age buckets, and reclaimable space...",
+        "CleanupCenter" => "Scanning developer caches and potential cleanup opportunities...",
+        "DeveloperStorage" => "Inspecting package caches, build targets, and container storage...",
+        "LargestFiles" => "Querying top storage-consuming files from SQLite index...",
+        "LargestFolders" => "Aggregating directory sizes and hierarchy metrics...",
+        "FileTypes" => "Calculating category breakdowns and file type distribution...",
+        "OldFiles" => "Identifying files untouched for 180+ days...",
+        "Duplicates" => "Preparing duplicate file detection engine...",
+        "Photoshop" => "Inspecting PSD/PSB files and Adobe cache trees...",
+        "JunkCleaner" => "Checking system temp folders and browser caches...",
+        "Treemap" => "Computing squarified layout for proportional visualization...",
+        _ => "Loading view data..."
+    };
 
     public async Task StartScanAsync()
     {

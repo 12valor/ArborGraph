@@ -142,53 +142,81 @@
                 </StackPanel>
             </Border>
 
-            <!-- ACTIVE VIEW CONTAINER -->
-            <ContentControl Grid.Column="1" Content="{Binding CurrentView}">
-                <ContentControl.Resources>
-                    <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
-                        <views:OverviewView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:AnalyticsViewModel}">
-                        <views:AnalyticsView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:CleanupCenterViewModel}">
-                        <views:CleanupCenterView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:DeveloperStorageViewModel}">
-                        <views:DeveloperStorageView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:LargestFilesViewModel}">
-                        <views:LargestFilesView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:LargestFoldersViewModel}">
-                        <views:LargestFoldersView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:FileTypesViewModel}">
-                        <views:FileTypesView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:OldFilesViewModel}">
-                        <views:OldFilesView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:DuplicateViewModel}">
-                        <views:DuplicatesView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:PhotoshopViewModel}">
-                        <views:PhotoshopView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:JunkCleanerViewModel}">
-                        <views:JunkCleanerView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:TreemapViewModel}">
-                        <views:TreemapView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:ScanLogViewModel}">
-                        <views:ScanLogView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-                        <views:SettingsView/>
-                    </DataTemplate>
-                </ContentControl.Resources>
-            </ContentControl>
+            <!-- ACTIVE VIEW CONTAINER & LOADING OVERLAY -->
+            <Grid Grid.Column="1">
+                <ContentControl Content="{Binding CurrentView}">
+                    <ContentControl.Resources>
+                        <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
+                            <views:OverviewView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:AnalyticsViewModel}">
+                            <views:AnalyticsView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:CleanupCenterViewModel}">
+                            <views:CleanupCenterView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:DeveloperStorageViewModel}">
+                            <views:DeveloperStorageView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:LargestFilesViewModel}">
+                            <views:LargestFilesView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:LargestFoldersViewModel}">
+                            <views:LargestFoldersView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:FileTypesViewModel}">
+                            <views:FileTypesView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:OldFilesViewModel}">
+                            <views:OldFilesView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:DuplicateViewModel}">
+                            <views:DuplicatesView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:PhotoshopViewModel}">
+                            <views:PhotoshopView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:JunkCleanerViewModel}">
+                            <views:JunkCleanerView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:TreemapViewModel}">
+                            <views:TreemapView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:ScanLogViewModel}">
+                            <views:ScanLogView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                            <views:SettingsView/>
+                        </DataTemplate>
+                    </ContentControl.Resources>
+                </ContentControl>
+
+                <!-- TAB LOADING OVERLAY -->
+                <Border Background="#A0F8FAFC" 
+                        Visibility="{Binding IsTabLoading, Converter={StaticResource BoolToVis}}"
+                        Panel.ZIndex="999">
+                    <Border Background="#FFFFFF" 
+                            BorderBrush="{StaticResource BrushBorderLight}" 
+                            BorderThickness="1" 
+                            CornerRadius="8" 
+                            Padding="32,24" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            MinWidth="360"
+                            MaxWidth="480">
+                        <StackPanel HorizontalAlignment="Center">
+                            <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,16" Foreground="{StaticResource BrushAccent}"/>
+                            <TextBlock Text="{Binding TabLoadingTitle}" 
+                                       FontWeight="SemiBold" FontSize="15" 
+                                       Foreground="{StaticResource BrushTextPrimary}" 
+                                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBlock Text="{Binding TabLoadingMessage}" 
+                                       FontSize="12" Foreground="{StaticResource BrushTextSecondary}" 
+                                       HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Border>
+            </Grid>
         </Grid>
 
         <!-- BOTTOM STATUS BAR -->

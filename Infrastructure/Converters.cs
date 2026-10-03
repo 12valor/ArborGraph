@@ -49,11 +49,28 @@ public class InverseBooleanToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        bool b = value is bool boolVal && boolVal;
+        bool b = false;
+        if (value is bool boolVal) b = boolVal;
+        else if (value is int intVal) b = intVal > 0;
+        else if (value is long longVal) b = longVal > 0;
         return b ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class TabActiveConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 && values[0] is string currentTab && values[1] is string tabParam)
+        {
+            return string.Equals(currentTab, tabParam, StringComparison.OrdinalIgnoreCase);
+        }
+        return false;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
 
 public class NullToVisibilityConverter : IValueConverter

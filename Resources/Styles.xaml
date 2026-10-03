@@ -13,6 +13,7 @@
     <infra:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
     <infra:NullToVisibilityConverter x:Key="NullToVis"/>
     <infra:PercentageConverter x:Key="PercentageConverter"/>
+    <infra:TabActiveConverter x:Key="TabActiveConverter"/>
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
     <!-- Default Text Block -->
@@ -158,6 +159,19 @@
                             <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                         </Trigger>
+                        <DataTrigger Value="True">
+                            <DataTrigger.Binding>
+                                <MultiBinding Converter="{StaticResource TabActiveConverter}">
+                                    <Binding Path="DataContext.CurrentTab" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                    <Binding Path="CommandParameter" RelativeSource="{RelativeSource Self}"/>
+                                </MultiBinding>
+                            </DataTrigger.Binding>
+                            <Setter TargetName="border" Property="Background" Value="#E0F2FE"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                            <Setter TargetName="border" Property="BorderThickness" Value="3,0,0,0"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -27,10 +27,14 @@ public partial class TreemapView : UserControl
 
     private void UpdateDimensions()
     {
-        if (DataContext is TreemapViewModel vm && TreemapContainer.ActualWidth > 50 && TreemapContainer.ActualHeight > 50)
+        try
         {
-            vm.UpdateCanvasDimensions(TreemapContainer.ActualWidth, TreemapContainer.ActualHeight);
+            if (TreemapContainer != null && DataContext is TreemapViewModel vm && TreemapContainer.ActualWidth > 50 && TreemapContainer.ActualHeight > 50)
+            {
+                vm.UpdateCanvasDimensions(TreemapContainer.ActualWidth, TreemapContainer.ActualHeight);
+            }
         }
+        catch { }
     }
 
     private void Node_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ArborGraph: Filesystem Analytics & Visualization for Windows 64-bit systems. 100% offline, zero-telemetry tool.">
+    <meta name="description" content="ArborGraph: Filesystem Analytics & Visualization for Windows 10 and 11. 100% offline, zero-telemetry disk storage intelligence utility.">
     <title>ArborGraph — Filesystem Analytics &amp; Visualization</title>
     <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
     <link rel="stylesheet" href="./style.css">
@@ -11,17 +11,21 @@
 <body>
 
     <!-- =========================================================
-         1. SOLID BLUE WEBSITE HEADER
+         TOP UTILITY NAVIGATION BAR
+         (Matches ArborGraph desktop toolbar & surface styling)
          ========================================================= -->
     <header class="site-header" id="siteHeader">
         <div class="site-container header-inner">
             <!-- Brand Identity -->
             <a href="#overview" class="brand-group">
-                <img src="./assets/logo.svg" alt="ArborGraph Logo" class="brand-icon" width="24" height="24">
-                <span class="brand-title">ArborGraph</span>
+                <img src="./assets/logo.svg" alt="ArborGraph Logo" class="brand-icon" width="22" height="22">
+                <div class="brand-text-block">
+                    <span class="brand-title">ArborGraph</span>
+                    <span class="brand-subtitle">Filesystem Analytics</span>
+                </div>
             </a>
 
-            <!-- Desktop Navigation Links -->
+            <!-- Desktop Navigation Tabs -->
             <nav class="site-nav" aria-label="Main Navigation">
                 <a href="#overview" class="nav-link active">Overview</a>
                 <a href="#downloads" class="nav-link">Downloads</a>
@@ -35,8 +39,16 @@
 
             <!-- Header Actions -->
             <div class="header-actions">
+                <a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe" class="header-download-btn" target="_blank" rel="noopener noreferrer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download v1.0.0</span>
+                </a>
                 <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -59,37 +71,54 @@
         </div>
     </header>
 
-
     <!-- =========================================================
-         3. MAIN CONTENT
+         MAIN CONTENT
          ========================================================= -->
     <main class="site-main">
 
         <!-- =========================================================
-             HERO: CLEAN & WHITESPACE-FOCUSED
+             HERO: CLEAN, TECHNICAL & UNDERSTATED
              ========================================================= -->
         <section id="overview" class="site-section hero-section">
             <div class="site-container">
-                <div class="hero-simple">
-                    <h1 class="hero-title">ArborGraph</h1>
-                    <p class="hero-subtitle">Windows disk analysis and filesystem utility.</p>
-                    <p class="hero-description">
-                        Analyze storage usage, locate large files, visualize directories, and identify potentially reclaimable files.
-                    </p>
-                    <div class="hero-cta-group">
-                        <a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe" class="btn-primary" target="_blank" rel="noopener noreferrer">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            <span>Download ArborGraph.exe</span>
-                        </a>
-                        <a href="#installation" class="btn-secondary">Installation Walkthrough</a>
-                        <a href="#docs" class="btn-secondary">Documentation</a>
+                <div class="hero-box">
+                    <div class="hero-headline-group">
+                        <div class="hero-tag">WINDOWS 64-BIT SYSTEM UTILITY</div>
+                        <h1 class="hero-title">ArborGraph</h1>
+                        <div class="hero-subtitle">High-Performance Filesystem Analytics &amp; Storage Intelligence</div>
+                        <p class="hero-desc">
+                            Analyze storage allocation, inspect directory hierarchies, locate oversized working files, identify duplicates with cryptographic SHA-256 precision, and safely clean developer caches. Built for Windows 10 and 11. Operates 100% offline with zero telemetry and zero background services.
+                        </p>
+                        <div class="hero-cta-bar">
+                            <a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe" class="btn-primary" target="_blank" rel="noopener noreferrer">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Download Standalone (73.3 MB)</span>
+                            </a>
+                            <a href="#diagnostics" class="btn-secondary">Run Diagnostics Demo</a>
+                            <a href="#installation" class="btn-secondary">Installation Walkthrough</a>
+                        </div>
                     </div>
-                    <div class="hero-meta-line">
-                        Version 1.0.0 &bull; Windows x64 &bull; 73.3 MB
+                    <div class="hero-meta-bar">
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            <span>Windows 10 / 11 (x64)</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            <span>Self-Contained Single File</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            <span>Local SQLite WAL Index</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="hero-meta-dot"></span>
+                            <span>100% Offline • Zero Telemetry</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,55 +130,58 @@
         <section id="downloads" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">01</div>
-                    <h2 class="section-title">Official Distribution Packages</h2>
-                    <p class="section-desc">Download links and cryptographic checksum hashes for release v1.0.0.</p>
+                    <div class="section-label">
+                        <span class="section-num">01</span>
+                        <span>Distribution Packages</span>
+                    </div>
+                    <h2 class="section-title">Official Download Packages</h2>
+                    <p class="section-desc">Download standalone single-file executables, portable archives, and setup compilers for v1.0.0.</p>
                 </div>
 
                 <div class="downloads-table-container">
-                    <table class="win-data-table">
+                    <table class="win-table">
                         <thead>
                             <tr>
                                 <th>Package</th>
                                 <th>Format</th>
                                 <th>Architecture</th>
                                 <th>Size</th>
-                                <th>Digest</th>
+                                <th>Cryptographic Digest</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span class="file-name">ArborGraph.exe</span></td>
+                                <td><span class="file-name-cell">ArborGraph.exe</span></td>
                                 <td>Single-File Standalone</td>
                                 <td>Windows 10 / 11 (x64)</td>
                                 <td>73.3 MB</td>
-                                <td><button class="btn-win-mini copy-hash-btn" data-hash="BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A">Copy SHA-256</button></td>
-                                <td><a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe" class="btn-win-table-action" target="_blank" rel="noopener noreferrer">Download</a></td>
+                                <td><button class="btn-mini copy-hash-btn" data-hash="BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A">Copy SHA-256</button></td>
+                                <td><a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.exe" class="btn-primary" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
                             </tr>
                             <tr>
-                                <td><span class="file-name">ArborGraph.zip</span></td>
+                                <td><span class="file-name-cell">ArborGraph.zip</span></td>
                                 <td>Portable Zip Archive</td>
                                 <td>Windows 10 / 11 (x64)</td>
                                 <td>67.7 MB</td>
-                                <td><button class="btn-win-mini copy-hash-btn" data-hash="80A525711DF8FC5BD495CC47B8C4DCEEA1F8D93EB74E36758029237C167B9420">Copy SHA-256</button></td>
-                                <td><a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.zip" class="btn-win-table-action" target="_blank" rel="noopener noreferrer">Download</a></td>
+                                <td><button class="btn-mini copy-hash-btn" data-hash="80A525711DF8FC5BD495CC47B8C4DCEEA1F8D93EB74E36758029237C167B9420">Copy SHA-256</button></td>
+                                <td><a href="https://github.com/12valor/C-file-scanner/releases/latest/download/ArborGraph.zip" class="btn-action" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
                             </tr>
                             <tr>
-                                <td><span class="file-name">installer.iss</span></td>
-                                <td>Inno Setup Script</td>
+                                <td><span class="file-name-cell">installer.iss</span></td>
+                                <td>Inno Setup 6 Script</td>
                                 <td>Windows Installer Compiler</td>
-                                <td>2.5 KB</td>
-                                <td><span class="mono-meta">Inno Setup 6</span></td>
-                                <td><a href="https://github.com/12valor/C-file-scanner/blob/main/installer/installer.iss" target="_blank" rel="noopener noreferrer" class="btn-win-table-action">View Script</a></td>
+                                <td>2.8 KB</td>
+                                <td><span class="mono-text" style="color: var(--color-text-muted);">Inno Setup 6.x</span></td>
+                                <td><a href="https://github.com/12valor/C-file-scanner/blob/main/installer/installer.iss" target="_blank" rel="noopener noreferrer" class="btn-action" style="padding: 4px 10px; font-size: 11px;">View Script</a></td>
                             </tr>
                             <tr>
-                                <td><span class="file-name">Source Code (.zip)</span></td>
-                                <td>C# / WPF Source Tree</td>
+                                <td><span class="file-name-cell">Source Code (.zip)</span></td>
+                                <td>C# / WPF (.NET 8)</td>
                                 <td>Any Platform</td>
                                 <td>1.2 MB</td>
-                                <td><span class="mono-meta">Git HEAD</span></td>
-                                <td><a href="https://github.com/12valor/C-file-scanner" target="_blank" rel="noopener noreferrer" class="btn-win-table-action">Repository</a></td>
+                                <td><span class="mono-text" style="color: var(--color-text-muted);">Git HEAD</span></td>
+                                <td><a href="https://github.com/12valor/C-file-scanner" target="_blank" rel="noopener noreferrer" class="btn-action" style="padding: 4px 10px; font-size: 11px;">Repository</a></td>
                             </tr>
                         </tbody>
                     </table>
@@ -158,457 +190,478 @@
         </section>
 
         <!-- =========================================================
-             SECTION 02: INSTALLATION PROCESS
+             SECTION 02: DEMO UI 02 — INSTALLATION WALKTHROUGH
+             (Designed around the actual Windows Inno Setup Wizard)
              ========================================================= -->
         <section id="installation" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">02</div>
-                    <h2 class="section-title">Installation Process</h2>
-                    <p class="section-desc">Interactive setup walkthrough, license agreement verification, and deployment configuration.</p>
+                    <div class="section-label">
+                        <span class="section-num">02</span>
+                        <span>Setup Deployment</span>
+                    </div>
+                    <h2 class="section-title">Installation Walkthrough</h2>
+                    <p class="section-desc">Interactive demonstration of the official Windows Setup wizard, EULA consent gate, and deployment tasks.</p>
                 </div>
 
-                <div class="installation-card" id="setupWizardWindow">
-                    <!-- Horizontal Stepper Header -->
-                    <div class="stepper-header">
-                        <ol class="stepper-list" id="wizardStepsList">
-                            <li class="stepper-item wizard-step-item active" data-step="1">
-                                <span class="step-num">1</span>
-                                <span class="step-name">Welcome</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="2">
-                                <span class="step-num">2</span>
-                                <span class="step-name">License Agreement</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="3">
-                                <span class="step-num">3</span>
-                                <span class="step-name">Location</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="4">
-                                <span class="step-num">4</span>
-                                <span class="step-name">Options</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="5">
-                                <span class="step-num">5</span>
-                                <span class="step-name">Ready</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="6">
-                                <span class="step-num">6</span>
-                                <span class="step-name">Progress</span>
-                            </li>
-                            <li class="stepper-item wizard-step-item" data-step="7">
-                                <span class="step-num">7</span>
-                                <span class="step-name">Complete</span>
-                            </li>
-                        </ol>
-                    </div>
-
-                    <!-- Setup Walkthrough Two-Column Layout -->
-                    <div class="setup-walkthrough-layout">
-                        <!-- Left: Active Wizard Stage Viewport -->
-                        <div class="setup-stage-column">
-                            <div class="wizard-stage-viewport">
-
-                                <!-- STEP 1: WELCOME -->
-                                <div class="wizard-pane active" id="wizardStep1">
-                                    <h3 class="wizard-heading">Welcome to ArborGraph Setup</h3>
-                                    <p class="wizard-para">
-                                        This setup wizard will configure and deploy <strong>ArborGraph v1.0.0</strong> on your computer.
-                                    </p>
-                                    <p class="wizard-para">
-                                        ArborGraph is a dedicated Windows disk space analyzer, SQLite-indexed filesystem scanner, and developer junk cleaner designed for 64-bit systems.
-                                    </p>
-                                    <div class="wizard-info-box">
-                                        <div><strong>Architecture:</strong> Windows 10 / 11 (64-bit x64)</div>
-                                        <div><strong>Packaging:</strong> Self-Contained Single-File Executable (Bundled .NET 8)</div>
-                                        <div><strong>Privacy &amp; Telemetry:</strong> 100% Offline execution. Zero network calls or external tracking.</div>
-                                    </div>
-                                    <p class="wizard-para" style="font-size: 12.5px; color: var(--win-text-muted);">
-                                        Click <strong>Next &gt;</strong> to review the End User License Agreement before deployment.
-                                    </p>
-                                </div>
-
-                                <!-- STEP 2: LICENSE AGREEMENT (STRICT GATE) -->
-                                <div class="wizard-pane" id="wizardStep2">
-                                    <h3 class="wizard-heading">End User License Agreement (EULA)</h3>
-                                    <p class="wizard-para">
-                                        Please review the license terms below. You must accept these terms to continue installation:
-                                    </p>
-                                    <div class="eula-scroll-box" id="wizardEulaBox">
-                                        <h4>ARBORGRAPH END USER LICENSE AGREEMENT</h4>
-                                        <p><strong>Publisher:</strong> AG DIAZ EVANGELISTA<br>
-                                        <strong>Contact:</strong> evangelista.agdiaz@gmail.com<br>
-                                        <strong>Version:</strong> 1.0 (Stable Release)</p>
-
-                                        <h4>1. LICENSE GRANT</h4>
-                                        <p>Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.</p>
-
-                                        <h4>2. LOCAL ARCHITECTURE &amp; ZERO TELEMETRY</h4>
-                                        <p>ArborGraph operates strictly on your local machine. The Software contains zero tracking SDKs, zero background network services, zero advertising cookies, and transmits zero file names or filesystem paths across any network.</p>
-
-                                        <h4>3. FILE DELETION &amp; USER RESPONSIBILITY</h4>
-                                        <p>ArborGraph provides utilities (such as the Junk Cleaner) capable of permanently deleting files and folders upon your direct command. YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES TARGETED FOR DELETION.</p>
-
-                                        <h4>4. DISCLAIMER OF WARRANTIES</h4>
-                                        <p>THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, OR STATUTORY.</p>
-
-                                        <h4>5. CONTACT</h4>
-                                        <p>For legal notices, licensing inquiries, or permissions, contact: evangelista.agdiaz@gmail.com</p>
-                                    </div>
-
-                                    <div class="wizard-consent-control">
-                                        <label class="wizard-checkbox-label" for="wizardEulaCheck">
-                                            <input type="checkbox" id="wizardEulaCheck">
-                                            <span>I accept the terms of the License Agreement</span>
-                                        </label>
-                                        <div class="wizard-gate-warning" id="wizardGateWarning">
-                                            <span>Acceptance required. The Next button is disabled until accepted.</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- STEP 3: INSTALLATION LOCATION -->
-                                <div class="wizard-pane" id="wizardStep3">
-                                    <h3 class="wizard-heading">Select Destination Location</h3>
-                                    <p class="wizard-para">Setup will install ArborGraph into the following directory:</p>
-                                    <div class="wizard-path-control">
-                                        <input type="text" class="win-input" id="wizardInstallPath" value="C:\Program Files\ArborGraph" readonly>
-                                        <button type="button" class="btn-win-secondary" id="btnTogglePortablePath">Use Portable Dir</button>
-                                    </div>
-                                    <div class="wizard-disk-reqs">
-                                        <span>Space required: <strong>75.0 MB</strong></span>
-                                        <span>Space available: <strong>142.4 GB</strong></span>
-                                    </div>
-                                    <div class="wizard-info-box">
-                                        <div><strong>Catalog Directory:</strong> %LocalAppData%\ArborGraph\scan_index.db</div>
-                                        <div><strong>Security Scope:</strong> Standard user privileges (Elevation not required)</div>
-                                    </div>
-                                </div>
-
-                                <!-- STEP 4: INSTALLATION OPTIONS -->
-                                <div class="wizard-pane" id="wizardStep4">
-                                    <h3 class="wizard-heading">Select Additional Tasks</h3>
-                                    <p class="wizard-para">Select the additional tasks you would like Setup to perform:</p>
-                                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
-                                        <label class="wizard-checkbox-label">
-                                            <input type="checkbox" id="optDesktopShortcut" checked>
-                                            <span>Create a desktop shortcut</span>
-                                        </label>
-                                        <label class="wizard-checkbox-label">
-                                            <input type="checkbox" id="optStartMenu" checked>
-                                            <span>Create Start Menu program group</span>
-                                        </label>
-                                        <label class="wizard-checkbox-label">
-                                            <input type="checkbox" id="optPreInitDb" checked>
-                                            <span>Pre-initialize local SQLite database in WAL journal mode</span>
-                                        </label>
-                                        <label class="wizard-checkbox-label">
-                                            <input type="checkbox" id="optVerifyHash" checked>
-                                            <span>Verify SHA-256 package cryptographic digest after extraction</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- STEP 5: READY TO INSTALL -->
-                                <div class="wizard-pane" id="wizardStep5">
-                                    <h3 class="wizard-heading">Ready to Install</h3>
-                                    <p class="wizard-para">Setup is now ready to begin installing ArborGraph on your computer.</p>
-                                    <div class="wizard-info-box">
-                                        <div><strong>Destination:</strong> <span id="summaryLocation">C:\Program Files\ArborGraph</span></div>
-                                        <div><strong>Components:</strong> ArborGraph x64 Engine + Bundled .NET 8 Runtime</div>
-                                        <div><strong>Tasks:</strong> Desktop Shortcut, Start Menu, SQLite WAL Initialization</div>
-                                        <div><strong>EULA Status:</strong> <span style="color: #1a7f37; font-weight: 600;">Accepted (Offline Consent Recorded)</span></div>
-                                    </div>
-                                    <p class="wizard-para" style="font-size: 12.5px;">Click <strong>Install</strong> to execute file deployment.</p>
-                                </div>
-
-                                <!-- STEP 6: INSTALLATION PROGRESS -->
-                                <div class="wizard-pane" id="wizardStep6">
-                                    <h3 class="wizard-heading">Installing ArborGraph</h3>
-                                    <p class="wizard-para" id="wizardExtractStatus">Extracting single-file package and configuring runtime...</p>
-                                    <div class="extraction-sim-box">
-                                        <div class="win-progress-track">
-                                            <div class="win-progress-fill" id="wizardProgressFill" style="width: 0%;"></div>
-                                        </div>
-                                        <pre class="terminal-log-body" id="wizardLogText">&gt; Initializing setup engine...</pre>
-                                    </div>
-                                </div>
-
-                                <!-- STEP 7: COMPLETE -->
-                                <div class="wizard-pane" id="wizardStep7">
-                                    <h3 class="wizard-heading">Completing ArborGraph Setup</h3>
-                                    <p class="wizard-para">
-                                        Setup has finished installing ArborGraph on your computer. The application may be launched by selecting the installed shortcuts.
-                                    </p>
-                                    <div class="wizard-info-box" id="consentSummaryBox">
-                                        <div><strong>Installation State:</strong> Successfully Configured (Exit Code 0)</div>
-                                        <div id="consentSummaryDetails">Offline Consent Record: Saved in local client storage</div>
-                                    </div>
-                                    <label class="wizard-checkbox-label" style="margin-top: 6px;">
-                                        <input type="checkbox" id="wizardLaunchApp" checked>
-                                        <span>Download / Launch ArborGraph executable</span>
-                                    </label>
-                                    <p class="wizard-para" style="font-size: 12.5px; color: var(--win-text-muted);">
-                                        Click <strong>Finish</strong> to exit Setup.
-                                    </p>
-                                </div>
-
+                <div class="setup-wizard-shell">
+                    <div class="setup-wizard-main">
+                        <!-- Setup Wizard Header Banner -->
+                        <div class="wizard-banner-header">
+                            <div>
+                                <div class="wizard-banner-title" id="wizardBannerTitle">Setup — ArborGraph</div>
+                                <div class="wizard-banner-subtitle" id="wizardBannerSubtitle">Welcome to the ArborGraph Setup Wizard</div>
                             </div>
+                            <img src="./assets/logo.svg" alt="Setup Icon" class="wizard-banner-icon">
+                        </div>
 
-                            <!-- Stepper Action Bar -->
-                            <div class="wizard-actionbar">
-                                <div class="wizard-actionbar-left">
-                                    <span id="wizardStepBadge">Step 1 of 7: Welcome</span>
-                                </div>
-                                <div class="wizard-actionbar-right">
-                                    <button type="button" class="btn-win-secondary" id="btnWizardBack" disabled>&lt; Back</button>
-                                    <button type="button" class="btn-win-primary" id="btnWizardNext">Next &gt;</button>
-                                    <button type="button" class="btn-win-secondary" id="btnWizardCancel">Cancel</button>
-                                </div>
+                        <!-- Step Strip -->
+                        <div class="wizard-stepper-strip" id="wizardStepsList">
+                            <div class="wizard-step-node active" data-step="1">
+                                <span class="wizard-step-num">1</span>
+                                <span>Welcome</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="2">
+                                <span class="wizard-step-num">2</span>
+                                <span>License Agreement</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="3">
+                                <span class="wizard-step-num">3</span>
+                                <span>Location</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="4">
+                                <span class="wizard-step-num">4</span>
+                                <span>Options</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="5">
+                                <span class="wizard-step-num">5</span>
+                                <span>Ready</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="6">
+                                <span class="wizard-step-num">6</span>
+                                <span>Progress</span>
+                            </div>
+                            <div class="wizard-step-node" data-step="7">
+                                <span class="wizard-step-num">7</span>
+                                <span>Complete</span>
                             </div>
                         </div>
 
-                        <!-- Right: Technical System Information -->
-                        <aside class="setup-specs-sidebar">
-                            <div class="sidebar-heading">Deployment Specifications</div>
-                            <div class="sidebar-spec-list">
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Target Architecture</span>
-                                    <span class="sidebar-spec-value">Windows 10 / 11 (64-bit x64)</span>
+                        <!-- Wizard Body Viewport -->
+                        <div class="wizard-body-viewport">
+
+                            <!-- Step 1: Welcome -->
+                            <div class="wizard-pane active" id="wizardStep1">
+                                <div class="wizard-pane-title">Welcome to the ArborGraph Setup Wizard</div>
+                                <p class="wizard-pane-text">
+                                    This wizard will install <strong>ArborGraph v1.0.0</strong> on your computer.
+                                </p>
+                                <p class="wizard-pane-text">
+                                    ArborGraph is a dedicated Windows disk analysis, SQLite-indexed filesystem scanner, and developer cache cleaner designed for 64-bit Windows devices.
+                                </p>
+                                <div class="note-box" style="margin-top: 14px;">
+                                    <div><strong>Architecture:</strong> Windows 10 / 11 (64-bit x64)</div>
+                                    <div><strong>Packaging:</strong> Self-Contained Single-File Executable (Bundled .NET 8 Runtime)</div>
+                                    <div><strong>Privacy:</strong> 100% Offline execution. Zero network calls or telemetry SDKs.</div>
                                 </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Packaging Model</span>
-                                    <span class="sidebar-spec-value">Self-Contained Single-File Binary</span>
+                                <p class="wizard-pane-text" style="color: var(--color-text-muted); font-size: 11.5px; margin-top: 12px;">
+                                    Click <strong>Next &gt;</strong> to review the End User License Agreement before installation.
+                                </p>
+                            </div>
+
+                            <!-- Step 2: License Agreement (Strict Gate) -->
+                            <div class="wizard-pane" id="wizardStep2">
+                                <div class="wizard-pane-title">License Agreement</div>
+                                <p class="wizard-pane-text">
+                                    Please read the following License Agreement. You must accept the terms of this agreement before continuing with the installation:
+                                </p>
+                                <div class="wizard-eula-container" id="wizardEulaBox">
+                                    <h4>ARBORGRAPH END USER LICENSE AGREEMENT</h4>
+                                    <p><strong>Publisher:</strong> AG DIAZ EVANGELISTA &bull; <strong>Contact:</strong> evangelista.agdiaz@gmail.com &bull; <strong>Version:</strong> 1.0</p>
+                                    <h4>1. LICENSE GRANT</h4>
+                                    <p>Subject to the terms of this Agreement, Licensor grants you a non-exclusive, non-transferable, revocable license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices.</p>
+                                    <h4>2. LOCAL ARCHITECTURE &amp; PRIVACY</h4>
+                                    <p>ArborGraph operates strictly on your local machine. The Software contains zero tracking SDKs, zero background network services, and transmits zero file paths or filenames across any network.</p>
+                                    <h4>3. FILE OPERATIONS &amp; RESPONSIBILITY</h4>
+                                    <p>ArborGraph provides utilities capable of deleting files upon direct user command. You acknowledge and agree that you are solely responsible for selecting and confirming any files targeted for deletion.</p>
+                                    <h4>4. DISCLAIMER OF WARRANTIES</h4>
+                                    <p>THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND.</p>
                                 </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Bundled Runtimes</span>
-                                    <span class="sidebar-spec-value">.NET 8.0 &bull; WPF &bull; DirectX</span>
-                                </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Database Subsystem</span>
-                                    <span class="sidebar-spec-value">SQLite 3.45 (WAL Mode)</span>
-                                </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Local Data Directory</span>
-                                    <span class="sidebar-spec-value">%LocalAppData%\ArborGraph</span>
-                                </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Telemetry &amp; Cloud</span>
-                                    <span class="sidebar-spec-value" style="color: #1a7f37; font-weight: 600;">100% Offline (Zero Calls)</span>
-                                </div>
-                                <div class="sidebar-spec-item">
-                                    <span class="sidebar-spec-label">Security &amp; UAC Scope</span>
-                                    <span class="sidebar-spec-value">Standard User (No Elevation Needed)</span>
+                                <label class="wizard-checkbox-label" for="wizardEulaCheck">
+                                    <input type="checkbox" id="wizardEulaCheck">
+                                    <span>I accept the terms of the License Agreement</span>
+                                </label>
+                                <div class="wizard-gate-warning" id="wizardGateWarning">
+                                    <span>Acceptance required. The Next button is disabled until accepted.</span>
                                 </div>
                             </div>
-                        </aside>
+
+                            <!-- Step 3: Location -->
+                            <div class="wizard-pane" id="wizardStep3">
+                                <div class="wizard-pane-title">Select Destination Location</div>
+                                <p class="wizard-pane-text">Setup will install ArborGraph into the following folder:</p>
+                                <div class="wizard-location-group">
+                                    <input type="text" class="win-input mono" id="wizardInstallPath" value="C:\Program Files\ArborGraph" readonly>
+                                    <button type="button" class="btn-secondary" id="btnTogglePortablePath">Use Portable Dir</button>
+                                </div>
+                                <div class="wizard-disk-stats">
+                                    <span>At least <strong>75.0 MB</strong> of free disk space is required.</span>
+                                    <span>Available space: <strong>142.4 GB</strong></span>
+                                </div>
+                                <div class="note-box">
+                                    <div><strong>Catalog Directory:</strong> %LocalAppData%\ArborGraph\scan_index.db</div>
+                                    <div><strong>Privilege Scope:</strong> Standard user privileges (No UAC elevation required)</div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Options -->
+                            <div class="wizard-pane" id="wizardStep4">
+                                <div class="wizard-pane-title">Select Additional Tasks</div>
+                                <p class="wizard-pane-text">Select the additional tasks you would like Setup to perform while installing ArborGraph:</p>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="wizard-checkbox-label">
+                                        <input type="checkbox" id="optDesktopShortcut" checked>
+                                        <span>Create a desktop shortcut</span>
+                                    </label>
+                                    <label class="wizard-checkbox-label">
+                                        <input type="checkbox" id="optStartMenu" checked>
+                                        <span>Create Start Menu program group</span>
+                                    </label>
+                                    <label class="wizard-checkbox-label">
+                                        <input type="checkbox" id="optPreInitDb" checked>
+                                        <span>Pre-initialize local SQLite database in WAL journal mode</span>
+                                    </label>
+                                    <label class="wizard-checkbox-label">
+                                        <input type="checkbox" id="optVerifyHash" checked>
+                                        <span>Verify SHA-256 package cryptographic digest after extraction</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Step 5: Ready to Install -->
+                            <div class="wizard-pane" id="wizardStep5">
+                                <div class="wizard-pane-title">Ready to Install</div>
+                                <p class="wizard-pane-text">Setup is now ready to begin installing ArborGraph on your computer.</p>
+                                <div class="note-box">
+                                    <div><strong>Destination:</strong> <span id="summaryLocation">C:\Program Files\ArborGraph</span></div>
+                                    <div><strong>Components:</strong> ArborGraph x64 Engine + Bundled .NET 8 Runtime</div>
+                                    <div><strong>Tasks:</strong> Desktop Shortcut, Start Menu, SQLite WAL Initialization</div>
+                                    <div><strong>EULA Consent:</strong> <span style="color: var(--color-success); font-weight: 600;">Accepted (Recorded Locally)</span></div>
+                                </div>
+                                <p class="wizard-pane-text" style="margin-top: 10px; font-size: 11.5px;">Click <strong>Install</strong> to execute file deployment.</p>
+                            </div>
+
+                            <!-- Step 6: Progress -->
+                            <div class="wizard-pane" id="wizardStep6">
+                                <div class="wizard-pane-title">Installing</div>
+                                <p class="wizard-pane-text" id="wizardExtractStatus">Extracting single-file package and configuring runtime...</p>
+                                <div class="progress-track" style="margin-bottom: 10px; height: 6px;">
+                                    <div class="progress-bar" id="wizardProgressFill" style="width: 0%;"></div>
+                                </div>
+                                <pre class="license-block" id="wizardLogText" style="height: 110px; margin: 0;">&gt; Initializing setup engine...</pre>
+                            </div>
+
+                            <!-- Step 7: Complete -->
+                            <div class="wizard-pane" id="wizardStep7">
+                                <div class="wizard-pane-title">Completing the ArborGraph Setup Wizard</div>
+                                <p class="wizard-pane-text">
+                                    Setup has finished installing ArborGraph on your computer. The application may be launched by selecting the installed shortcuts.
+                                </p>
+                                <div class="note-box" id="consentSummaryBox">
+                                    <div><strong>Installation State:</strong> Configured Successfully (Exit Code 0)</div>
+                                    <div id="consentSummaryDetails">Offline Consent Record: Saved in local client storage</div>
+                                </div>
+                                <label class="wizard-checkbox-label" style="margin-top: 8px;">
+                                    <input type="checkbox" id="wizardLaunchApp" checked>
+                                    <span>Download / Launch ArborGraph executable</span>
+                                </label>
+                                <p class="wizard-pane-text" style="font-size: 11.5px; color: var(--color-text-muted); margin-top: 10px;">
+                                    Click <strong>Finish</strong> to exit Setup.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <!-- Wizard Bottom Command Bar -->
+                        <div class="wizard-command-bar">
+                            <span class="wizard-step-indicator" id="wizardStepBadge">Step 1 of 7: Welcome</span>
+                            <div class="wizard-button-group">
+                                <button type="button" class="btn-secondary" id="btnWizardBack" disabled>&lt; Back</button>
+                                <button type="button" class="btn-primary" id="btnWizardNext">Next &gt;</button>
+                                <button type="button" class="btn-secondary" id="btnWizardCancel">Cancel</button>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Right Specs Column -->
+                    <aside class="setup-sidebar-specs">
+                        <div class="setup-specs-heading">Deployment Specifications</div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Target Architecture</div>
+                            <div class="setup-spec-value">Windows 10 / 11 (64-bit x64)</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Packaging Model</div>
+                            <div class="setup-spec-value">Self-Contained Single File</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Bundled Runtimes</div>
+                            <div class="setup-spec-value">.NET 8.0 &bull; WPF &bull; DirectX</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Database Subsystem</div>
+                            <div class="setup-spec-value">SQLite 3.45 (WAL Mode)</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Local Data Directory</div>
+                            <div class="setup-spec-value">%LocalAppData%\ArborGraph</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Network &amp; Telemetry</div>
+                            <div class="setup-spec-value" style="color: var(--color-success); font-weight: 600;">100% Offline (Zero Calls)</div>
+                        </div>
+                        <div class="setup-spec-row">
+                            <div class="setup-spec-label">Execution Scope</div>
+                            <div class="setup-spec-value">Standard User (No UAC needed)</div>
+                        </div>
+                    </aside>
                 </div>
             </div>
         </section>
 
         <!-- =========================================================
-             SECTION 03: DISK DIAGNOSTICS & SCANNER
+             SECTION 03: DEMO UI 03 — DISK DIAGNOSTICS & SCANNER
+             (Centerpiece demo translating the actual Desktop UI)
              ========================================================= -->
         <section id="diagnostics" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">03</div>
+                    <div class="section-label">
+                        <span class="section-num">03</span>
+                        <span>Interactive Diagnostics</span>
+                    </div>
                     <h2 class="section-title">Disk Diagnostics &amp; Scanner</h2>
-                    <p class="section-desc">Inspect filesystem performance, analyze volume capacity, and preview treemap geometry.</p>
+                    <p class="section-desc">Experience ArborGraph's real-time traversal engine, CPU/RAM telemetry, live directory feed, and squarified treemap.</p>
                 </div>
 
-                <div class="scanner-split-layout">
-                    <!-- Left: Scanner Engine Controls & Telemetry -->
-                    <div class="scanner-left-panel">
-                        <div class="panel-section-header">
-                            <h3 style="font-size: 14px; font-weight: 600;">Filesystem Scanner Control</h3>
-                            <span class="mono-meta">Multi-threaded traversal engine with bounded SQLite ingestion</span>
-                        </div>
-
-                        <!-- Drive Select & Action Bar -->
-                        <div class="scanner-toolbar">
-                            <div class="drive-select-group">
-                                <label for="simDriveSelect" class="toolbar-label">Target Drive:</label>
+                <!-- Complete Desktop Console Frame -->
+                <div class="diagnostics-console-shell">
+                    
+                    <!-- 1. Top Toolbar -->
+                    <div class="diagnostics-toolbar">
+                        <div class="toolbar-controls-left">
+                            <div class="toolbar-field-group">
+                                <span class="toolbar-field-label">Target Drive:</span>
                                 <select id="simDriveSelect" class="win-select">
                                     <option value="C:">C:\ [System NVMe SSD: 512 GB]</option>
-                                    <option value="D:">D:\ [Developer Repositories: 1 TB]</option>
-                                    <option value="E:">E:\ [Photoshop and Media: 4 TB]</option>
+                                    <option value="D:">D:\ [Developer Storage: 1 TB]</option>
+                                    <option value="E:">E:\ [Photoshop &amp; Media: 4 TB]</option>
                                 </select>
                             </div>
-                            <button class="btn-win-primary" id="btnStartSim">
-                                <span id="simBtnText">Start Simulated Scan</span>
+                            <div class="toolbar-field-group">
+                                <span class="toolbar-field-label">Folder:</span>
+                                <input type="text" id="simPathInput" class="win-input mono" value="C:\" style="width: 140px;">
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="btn-primary" id="btnStartSim">
+                                <span id="simBtnText">Start Scan</span>
                             </button>
-                        </div>
-
-                        <!-- Live Scan Progress Bar -->
-                        <div class="scan-status-panel">
-                            <div class="scan-status-header">
-                                <span class="scan-state-badge" id="scanStateBadge">Ready</span>
-                                <span class="scan-pct-badge" id="scanPctBadge">0%</span>
-                            </div>
-                            <div class="win-progress-track">
-                                <div class="win-progress-fill" id="simProgressFill" style="width: 0%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Telemetry HUD Counters -->
-                        <div class="telemetry-hud-grid">
-                            <div class="hud-stat-cell">
-                                <div class="hud-stat-label">Files Indexed</div>
-                                <div class="hud-stat-val" id="hudFiles">0</div>
-                            </div>
-                            <div class="hud-stat-cell">
-                                <div class="hud-stat-label">Ingestion Rate</div>
-                                <div class="hud-stat-val val-blue" id="hudSpeed">0 f/s</div>
-                            </div>
-                            <div class="hud-stat-cell">
-                                <div class="hud-stat-label">Volume Indexed</div>
-                                <div class="hud-stat-val" id="hudVolume">0.0 GB</div>
-                            </div>
-                            <div class="hud-stat-cell">
-                                <div class="hud-stat-label">Cleanable Junk</div>
-                                <div class="hud-stat-val val-cyan" id="hudJunk">0.0 GB</div>
-                            </div>
-                        </div>
-
-                        <!-- Streaming File Path Ticker -->
-                        <div class="path-ticker-box">
-                            <div class="path-ticker-label">CURRENT INGESTION PATH:</div>
-                            <div class="path-ticker-content" id="simTicker">Ready. Click "Start Simulated Scan" to execute multi-threaded SQLite indexer.</div>
-                        </div>
-
-                        <!-- Terminal Log Output -->
-                        <div class="terminal-log-widget">
-                            <div class="terminal-log-header">
-                                <span class="terminal-log-dot"></span>
-                                <span>ArborGraph Engine Diagnostics Log</span>
-                            </div>
-                            <pre class="terminal-log-body" id="simConsole">&gt; ArborGraph Scanner v1.0.0
-&gt; SQLite index initialized in WAL mode.
-&gt; Bounded channel capacity: 20,000 items.
-&gt; System architecture: win-x64 verified.
-&gt; Awaiting scan initiation...</pre>
+                            <button class="btn-danger" id="btnStopSim" style="display: none;">
+                                <span>Stop Scan</span>
+                            </button>
+                            <button class="btn-secondary" id="btnExportSim">Export Report ▾</button>
                         </div>
                     </div>
 
-                    <!-- Right: Disk Capacity Visualization & Categories -->
-                    <div class="scanner-right-panel">
-                        <div class="panel-section-header">
-                            <h3 style="font-size: 14px; font-weight: 600;">Storage Allocation Analysis</h3>
-                            <span class="mono-meta" id="driveCapacityTitle">C:\ System NVMe SSD (512 GB Total Capacity)</span>
-                        </div>
-
-                        <!-- Segmented Drive Capacity Gauge -->
-                        <div class="disk-gauge-container">
-                            <div class="disk-gauge-bar" id="diskGaugeBar">
-                                <div class="gauge-segment seg-used" style="width: 74.6%;" title="Used Storage (382 GB)"></div>
-                                <div class="gauge-segment seg-junk" style="width: 2.9%;" title="Cleanable Junk (14.8 GB)"></div>
-                                <div class="gauge-segment seg-free" style="width: 22.5%;" title="Free Storage (130 GB)"></div>
+                    <!-- 2. System Resource Monitoring (Real-time CPU & RAM Sparklines) -->
+                    <div class="resource-graphs-grid">
+                        <!-- CPU Card -->
+                        <div class="resource-card">
+                            <div class="resource-card-header">
+                                <span class="resource-title">CPU UTILIZATION</span>
+                                <span class="resource-val" id="cpuValText">12.4%</span>
                             </div>
-                            <div class="disk-gauge-legend">
-                                <div class="legend-item"><span class="legend-dot dot-used"></span><span>Used: <strong id="gaugeUsedText">382.0 GB</strong></span></div>
-                                <div class="legend-item"><span class="legend-dot dot-free"></span><span>Free: <strong id="gaugeFreeText">130.0 GB</strong></span></div>
-                                <div class="legend-item"><span class="legend-dot dot-junk"></span><span>Cleanable: <strong id="gaugeJunkText">14.8 GB</strong></span></div>
+                            <canvas class="metric-canvas-box" id="cpuCanvas" width="500" height="42"></canvas>
+                            <div class="resource-card-footer">
+                                <span>60 sec window</span>
+                                <span id="cpuPeakText">Peak: 24.8%</span>
                             </div>
                         </div>
 
-                        <!-- Storage Categories Breakdown Table -->
-                        <div class="category-breakdown-panel">
-                            <div class="breakdown-title">Filesystem Category Breakdown</div>
-                            <div class="category-rows-list">
-                                <div class="category-row">
-                                    <div class="cat-info"><span class="cat-name">Video &amp; Render Cache</span><span class="cat-size" id="catVideoSize">21.4 GB</span></div>
-                                    <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 41%;"></div></div>
-                                </div>
-                                <div class="category-row">
-                                    <div class="cat-info"><span class="cat-name">RAW Photos &amp; Image Assets</span><span class="cat-size" id="catImagesSize">12.1 GB</span></div>
-                                    <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 23%;"></div></div>
-                                </div>
-                                <div class="category-row">
-                                    <div class="cat-info"><span class="cat-name">Photoshop Projects (.psd / .psb)</span><span class="cat-size" id="catPsdSize">7.8 GB</span></div>
-                                    <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 15%;"></div></div>
-                                </div>
-                                <div class="category-row">
-                                    <div class="cat-info"><span class="cat-name">node_modules &amp; Build Caches</span><span class="cat-size" id="catJunkSize">6.2 GB</span></div>
-                                    <div class="cat-progress-track"><div class="cat-progress-fill fill-cyan" style="width: 12%;"></div></div>
-                                </div>
-                                <div class="category-row">
-                                    <div class="cat-info"><span class="cat-name">Source Code &amp; Repositories</span><span class="cat-size" id="catCodeSize">4.9 GB</span></div>
-                                    <div class="cat-progress-track"><div class="cat-progress-fill fill-blue" style="width: 9%;"></div></div>
-                                </div>
+                        <!-- RAM Card -->
+                        <div class="resource-card">
+                            <div class="resource-card-header">
+                                <span class="resource-title">RAM (PROCESS MEMORY)</span>
+                                <span class="resource-val" id="ramValText">184 MB</span>
                             </div>
-                        </div>
-
-                        <!-- Compact Squarified Treemap Representation -->
-                        <div class="treemap-preview-panel">
-                            <div class="breakdown-title">Squarified Spatial Geometry (Bruls-Huizing Layout)</div>
-                            <div class="treemap-preview-canvas" id="simTreemapCanvas">
-                                <div class="sim-tile tile-video" id="tileVideo">
-                                    <div>4K Video Renders</div>
-                                    <div class="mono-meta" style="color: inherit;">21.4 GB (41%)</div>
-                                </div>
-                                <div class="sim-tile tile-images" id="tileImages">
-                                    <div>RAW Photos</div>
-                                    <div class="mono-meta" style="color: inherit;">12.1 GB (23%)</div>
-                                </div>
-                                <div class="sim-tile tile-psd" id="tilePsd">
-                                    <div>Photoshop</div>
-                                    <div class="mono-meta" style="color: inherit;">7.8 GB (15%)</div>
-                                </div>
-                                <div class="sim-tile tile-junk" id="tileJunk">
-                                    <div>node_modules</div>
-                                    <div class="mono-meta" style="color: inherit;">6.2 GB (12%)</div>
-                                </div>
-                                <div class="sim-tile tile-code" id="tileCode">
-                                    <div>Source Code</div>
-                                    <div class="mono-meta" style="color: inherit;">4.9 GB (9%)</div>
-                                </div>
+                            <canvas class="metric-canvas-box" id="ramCanvas" width="500" height="42"></canvas>
+                            <div class="resource-card-footer">
+                                <span>60 sec window</span>
+                                <span id="ramCeilingText">Ceiling: 1024 MB</span>
                             </div>
                         </div>
                     </div>
+
+                    <!-- 3. Scanner Status Card & Primary Metrics -->
+                    <div class="scanner-status-card">
+                        <div class="scanner-target-state-line">
+                            <div class="target-desc-group">
+                                <span class="target-desc-label">TARGET:</span>
+                                <span class="target-desc-val" id="simTargetDesc">C:\</span>
+                            </div>
+                            <span class="state-badge" id="scanStateBadge">Ready</span>
+                        </div>
+
+                        <div class="progress-track">
+                            <div class="progress-bar" id="simProgressFill"></div>
+                        </div>
+
+                        <!-- 4 Plain-Language Primary Metrics -->
+                        <div class="metrics-hud-grid">
+                            <div class="hud-cell">
+                                <span class="hud-label">Files scanned</span>
+                                <span class="hud-num" id="hudFiles">0</span>
+                            </div>
+                            <div class="hud-cell">
+                                <span class="hud-label">Folders</span>
+                                <span class="hud-num" id="hudFolders">0</span>
+                            </div>
+                            <div class="hud-cell">
+                                <span class="hud-label">Speed</span>
+                                <span class="hud-num" id="hudSpeed">0 f/s</span>
+                            </div>
+                            <div class="hud-cell">
+                                <span class="hud-label">Elapsed</span>
+                                <span class="hud-num" id="hudElapsed">00:00.0</span>
+                            </div>
+                        </div>
+
+                        <div class="secondary-metrics-line">
+                            <span>Storage indexed: <strong id="hudStorage">0.0 GB</strong></span>
+                            <span>Cleanable: <span id="hudCleanable" style="color: #06B6D4; font-weight: 600;">0.0 GB</span></span>
+                            <span>Skipped: <span id="hudSkipped" style="color: var(--color-text-muted);">0 files</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Live Directory Feed (Real-Time Traversal Buffer) -->
+                    <div class="live-feed-card">
+                        <div class="live-feed-header">
+                            <div class="live-feed-title">
+                                <span>LIVE DIRECTORY FEED</span>
+                                <span class="live-feed-sub">(real-time traversal buffer)</span>
+                            </div>
+                            <span class="live-visited-badge" id="hudVisited">Visited: 0</span>
+                        </div>
+                        <div class="current-path-banner">
+                            <span class="current-path-tag">CURRENT:</span>
+                            <span class="current-path-text" id="simCurrentPath">Ready for scan execution</span>
+                        </div>
+                        <div class="rolling-buffer-box" id="simDirectoryBuffer">
+                            <div class="buffer-row">Awaiting scan initiation on selected target volume...</div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Split Analysis: Storage Capacity & Interactive Treemap -->
+                    <div class="analysis-split-grid">
+                        <!-- Storage Breakdown -->
+                        <div class="capacity-card">
+                            <div class="capacity-title" id="driveCapacityTitle">C:\ Storage Allocation</div>
+                            <div class="capacity-bar-track">
+                                <div class="cap-seg-used" id="barUsed" style="width: 74.6%;"></div>
+                                <div class="cap-seg-junk" id="barJunk" style="width: 2.9%;"></div>
+                                <div class="cap-seg-free" id="barFree" style="width: 22.5%;"></div>
+                            </div>
+                            <div class="capacity-legend-row">
+                                <span>Used: <strong id="txtUsed">382.0 GB</strong></span>
+                                <span>Cleanable: <strong id="txtJunk" style="color: #06B6D4;">14.8 GB</strong></span>
+                                <span>Free: <strong id="txtFree">130.0 GB</strong></span>
+                            </div>
+
+                            <table class="category-mini-table">
+                                <tbody>
+                                    <tr>
+                                        <td>Video &amp; Render Cache</td>
+                                        <td class="cat-val-col" id="catVideo">21.4 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>RAW Photos &amp; Images</td>
+                                        <td class="cat-val-col" id="catPhotos">12.1 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Photoshop (.psd / .psb)</td>
+                                        <td class="cat-val-col" id="catPhotoshop">7.8 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>node_modules &amp; Build Caches</td>
+                                        <td class="cat-val-col" id="catNode">6.2 GB</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Source Code &amp; Repositories</td>
+                                        <td class="cat-val-col" id="catCode">4.9 GB</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Squarified Treemap Visualization -->
+                        <div class="treemap-card">
+                            <div class="treemap-breadcrumbs" id="treemapBreadcrumbs">
+                                <span class="crumb-item" data-path="root">C:\</span>
+                                <span>&rsaquo;</span>
+                                <span class="crumb-item" data-path="users">Users</span>
+                                <span>&rsaquo;</span>
+                                <span class="crumb-item" data-path="ag">AG</span>
+                                <span>&rsaquo;</span>
+                                <span class="crumb-item current" data-path="projects">Projects</span>
+                            </div>
+                            <div class="treemap-canvas-container" id="treemapCanvas">
+                                <!-- Interactive squarified tiles populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
 
         <!-- =========================================================
-             SECTION 04: PACKAGE VERIFICATION
+             SECTION 04: DEMO UI 04 — PACKAGE VERIFICATION
              ========================================================= -->
         <section id="verification" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">04</div>
+                    <div class="section-label">
+                        <span class="section-num">04</span>
+                        <span>Integrity Verification</span>
+                    </div>
                     <h2 class="section-title">Cryptographic Package Verification</h2>
-                    <p class="section-desc">Validate binary authenticity before execution using official SHA-256 digests.</p>
+                    <p class="section-desc">Validate binary authenticity before execution using official SHA-256 cryptographic digests.</p>
                 </div>
 
-                <div class="verify-container-card">
-                    <!-- Official Hash Property Box -->
-                    <div class="verify-property-card">
-                        <div class="property-label">OFFICIAL SHA-256 CHECKSUM (ArborGraph.exe):</div>
-                        <div class="property-row">
-                            <div class="property-code-box" id="officialHash">BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A</div>
-                            <button class="btn-win-secondary" id="copyOfficialHashBtn">Copy SHA-256</button>
+                <div class="verify-grid">
+                    <div class="verify-panel">
+                        <div class="verify-label">OFFICIAL SHA-256 CHECKSUM (ArborGraph.exe):</div>
+                        <div class="hash-copy-bar">
+                            <span class="hash-text" id="officialHash">BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A</span>
+                            <button type="button" class="btn-secondary" id="copyOfficialHashBtn">Copy SHA-256</button>
                         </div>
-                    </div>
 
-                    <!-- Interactive Checksum Comparator -->
-                    <div class="verify-comparator-card">
-                        <div class="comparator-title">Interactive Hash Comparator</div>
-                        <p class="wizard-para" style="font-size: 13px;">Paste your locally computed SHA-256 hash below to verify exact bit-for-bit authenticity:</p>
-                        <div class="comparator-input-row">
-                            <input type="text" class="win-input" id="verifyInput" placeholder="Paste local SHA-256 checksum here..." spellcheck="false">
-                            <button class="btn-win-primary" id="verifyBtn">Verify Integrity</button>
+                        <div style="margin-top: 18px;">
+                            <div class="verify-label">LOCAL CHECKSUM COMPARATOR:</div>
+                            <div class="verify-input-group">
+                                <input type="text" class="win-input mono" id="verifyInput" placeholder="Paste local SHA-256 hash here..." spellcheck="false">
+                                <button type="button" class="btn-primary" id="verifyBtn">Verify</button>
+                            </div>
+                            <div class="verify-result-banner" id="verifyResult"></div>
                         </div>
-                        <div class="verify-status-banner" id="verifyResult" style="display: none;"></div>
-                    </div>
 
-                    <!-- PowerShell Command Snippet -->
-                    <div class="cli-snippet-panel">
-                        <div class="cli-snippet-title">Calculate Hash Locally via Windows PowerShell:</div>
-                        <div class="cli-command-box">
-                            <span id="psCommand">Get-FileHash .\ArborGraph.exe -Algorithm SHA256</span>
-                            <button class="btn-win-mini copy-cmd-btn" data-target="psCommand">Copy Command</button>
+                        <div style="margin-top: 18px;">
+                            <div class="verify-label">CALCULATE HASH VIA WINDOWS POWERSHELL:</div>
+                            <div class="code-snippet-box">
+                                <span id="psCommand">Get-FileHash .\ArborGraph.exe -Algorithm SHA256</span>
+                                <button type="button" class="btn-mini copy-cmd-btn" data-target="psCommand">Copy</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -621,94 +674,99 @@
         <section id="specs" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">05</div>
+                    <div class="section-label">
+                        <span class="section-num">05</span>
+                        <span>Technical Specs</span>
+                    </div>
                     <h2 class="section-title">Specifications &amp; CLI Automation</h2>
-                    <p class="section-desc">Hardware requirements, engineering architecture, and command-line execution parameters.</p>
+                    <p class="section-desc">Hardware requirements, engineering architecture, and launcher parameters.</p>
                 </div>
 
-                <!-- Specs Grid -->
-                <div class="specs-columns-grid">
-                    <div class="specs-column-card">
-                        <div class="column-card-title">SYSTEM REQUIREMENTS</div>
-                        <table class="win-prop-grid">
-                            <tr>
-                                <td class="prop-key">Operating System</td>
-                                <td class="prop-val">Windows 10 / 11 (64-bit)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">CPU Architecture</td>
-                                <td class="prop-val">x86-64 (AMD64 / Intel 64)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Memory (RAM)</td>
-                                <td class="prop-val">64 MB min (256 MB recommended)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Disk Space</td>
-                                <td class="prop-val">75 MB available storage</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Dependencies</td>
-                                <td class="prop-val">None (Self-contained .NET 8 runtime)</td>
-                            </tr>
+                <div class="specs-two-col">
+                    <div class="specs-card">
+                        <div class="specs-title">System Requirements</div>
+                        <table class="specs-table">
+                            <tbody>
+                                <tr>
+                                    <td class="specs-key">Operating System</td>
+                                    <td class="specs-val">Windows 10 / 11 (64-bit x64)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">CPU Architecture</td>
+                                    <td class="specs-val">x86-64 (Intel 64 / AMD64)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Memory (RAM)</td>
+                                    <td class="specs-val">64 MB baseline (256 MB recommended)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Disk Space</td>
+                                    <td class="specs-val">75 MB free storage</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Runtime Dependencies</td>
+                                    <td class="specs-val">None (Bundled .NET 8 runtime)</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
 
-                    <div class="specs-column-card">
-                        <div class="column-card-title">ENGINEERING SPECIFICATIONS</div>
-                        <table class="win-prop-grid">
-                            <tr>
-                                <td class="prop-key">Database Engine</td>
-                                <td class="prop-val">SQLite 3.45 (WAL Mode, Async Write)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Scan Traversal</td>
-                                <td class="prop-val">Multi-threaded bounded queue (50,000+ files/s)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Treemap Geometry</td>
-                                <td class="prop-val">Squarified aspect ratio (Bruls-Huizing)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Deduplication</td>
-                                <td class="prop-val">3-Stage (Length + Header + SHA-256)</td>
-                            </tr>
-                            <tr>
-                                <td class="prop-key">Privacy &amp; Security</td>
-                                <td class="prop-val">100% Offline execution, zero network telemetry</td>
-                            </tr>
+                    <div class="specs-card">
+                        <div class="specs-title">Engineering Architecture</div>
+                        <table class="specs-table">
+                            <tbody>
+                                <tr>
+                                    <td class="specs-key">Database Engine</td>
+                                    <td class="specs-val">SQLite 3.45 (WAL Mode, Async Bulk Flush)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Traversal Engine</td>
+                                    <td class="specs-val">Bounded Channel Queue (50,000+ files/s)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Treemap Geometry</td>
+                                    <td class="specs-val">Squarified (Bruls-Huizing-van Wijk)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Deduplication</td>
+                                    <td class="specs-val">3-Stage (Size + Header + SHA-256)</td>
+                                </tr>
+                                <tr>
+                                    <td class="specs-key">Privacy Guarantee</td>
+                                    <td class="specs-val">100% Offline, Zero Network Calls</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Command Line Execution Cards -->
-                <div class="cli-cards-grid">
-                    <div class="cli-card">
-                        <div class="cli-card-label">Launch Standalone Executable (Windows CMD):</div>
-                        <div class="cli-command-box">
-                            <span id="cmdLaunch">start.bat --fast</span>
-                            <button class="btn-win-mini copy-cmd-btn" data-target="cmdLaunch">Copy</button>
+                <div class="cli-grid">
+                    <div class="cli-cell">
+                        <div class="cli-cell-label">Launch Compiled Standalone (CMD / PowerShell):</div>
+                        <div class="code-snippet-box">
+                            <span id="cmdLaunch">.\start.ps1 -Fast</span>
+                            <button type="button" class="btn-mini copy-cmd-btn" data-target="cmdLaunch">Copy</button>
                         </div>
                     </div>
-                    <div class="cli-card">
-                        <div class="cli-card-label">Run Automated Integration Suite:</div>
-                        <div class="cli-command-box">
-                            <span id="cmdTest">start.bat --test</span>
-                            <button class="btn-win-mini copy-cmd-btn" data-target="cmdTest">Copy</button>
+                    <div class="cli-cell">
+                        <div class="cli-cell-label">Run 20-Stage Integration Suite:</div>
+                        <div class="code-snippet-box">
+                            <span id="cmdTest">.\start.ps1 -Test</span>
+                            <button type="button" class="btn-mini copy-cmd-btn" data-target="cmdTest">Copy</button>
                         </div>
                     </div>
-                    <div class="cli-card">
-                        <div class="cli-card-label">Launch with Attached Console:</div>
-                        <div class="cli-command-box">
-                            <span id="cmdDev">start.bat --dev</span>
-                            <button class="btn-win-mini copy-cmd-btn" data-target="cmdDev">Copy</button>
+                    <div class="cli-cell">
+                        <div class="cli-cell-label">Launch with Attached Console:</div>
+                        <div class="code-snippet-box">
+                            <span id="cmdDev">.\start.ps1 -Dev</span>
+                            <button type="button" class="btn-mini copy-cmd-btn" data-target="cmdDev">Copy</button>
                         </div>
                     </div>
-                    <div class="cli-card">
-                        <div class="cli-card-label">Open Local Utility Portal:</div>
-                        <div class="cli-command-box">
-                            <span id="cmdSite">start.bat --site</span>
-                            <button class="btn-win-mini copy-cmd-btn" data-target="cmdSite">Copy</button>
+                    <div class="cli-cell">
+                        <div class="cli-cell-label">Build Compressed Release:</div>
+                        <div class="code-snippet-box">
+                            <span id="cmdPublish">.\start.ps1 -Publish</span>
+                            <button type="button" class="btn-mini copy-cmd-btn" data-target="cmdPublish">Copy</button>
                         </div>
                     </div>
                 </div>
@@ -716,71 +774,69 @@
         </section>
 
         <!-- =========================================================
-             SECTION 06: DOCUMENTATION HUB
+             SECTION 06: TECHNICAL DOCUMENTATION
              ========================================================= -->
         <section id="docs" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">06</div>
+                    <div class="section-label">
+                        <span class="section-num">06</span>
+                        <span>Documentation</span>
+                    </div>
                     <h2 class="section-title">Technical Documentation</h2>
-                    <p class="section-desc">Architecture manuals, workflow guides, troubleshooting steps, and security permissions.</p>
+                    <p class="section-desc">Architecture manuals, user workflows, troubleshooting guides, and permissions.</p>
                 </div>
 
-                <div class="docs-explorer-layout">
-                    <!-- Left Subnav Sidebar -->
-                    <aside class="docs-subnav-sidebar" aria-label="Documentation articles">
-                        <div class="subnav-category-title">Core Manuals</div>
-                        <button class="subnav-btn active" data-target-doc="docGettingStarted">1. Getting Started</button>
-                        <button class="subnav-btn" data-target-doc="docInstallation">2. Installation Guide</button>
-                        <button class="subnav-btn" data-target-doc="docUserGuide">3. User Guide &amp; Features</button>
-                        <button class="subnav-btn" data-target-doc="docCli">4. CLI Automation</button>
+                <div class="explorer-layout">
+                    <aside class="explorer-sidebar" aria-label="Documentation articles">
+                        <div class="explorer-cat-title">Core Manuals</div>
+                        <button type="button" class="explorer-nav-btn active" data-target-doc="docGettingStarted">1. Getting Started</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docInstallation">2. Installation Guide</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docUserGuide">3. User Guide &amp; Features</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docCli">4. CLI Automation</button>
 
-                        <div class="subnav-category-title" style="margin-top: 8px;">Engineering &amp; Security</div>
-                        <button class="subnav-btn" data-target-doc="docRequirements">5. System Requirements</button>
-                        <button class="subnav-btn" data-target-doc="docSecurity">6. Security &amp; Permissions</button>
-                        <button class="subnav-btn" data-target-doc="docTroubleshooting">7. Troubleshooting</button>
-                        <button class="subnav-btn" data-target-doc="docUninstallation">8. Uninstallation &amp; Cleanup</button>
+                        <div class="explorer-cat-title" style="margin-top: 10px;">Engineering &amp; Security</div>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docRequirements">5. System Requirements</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docSecurity">6. Security &amp; Permissions</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docTroubleshooting">7. Troubleshooting</button>
+                        <button type="button" class="explorer-nav-btn" data-target-doc="docUninstallation">8. Uninstallation &amp; Cleanup</button>
                     </aside>
 
-                    <!-- Right Reading Viewport -->
-                    <article class="docs-reading-viewport" id="docReadingPane">
-
+                    <article class="explorer-content-pane" id="docReadingPane">
                         <!-- 1. Getting Started -->
-                        <div class="doc-section active" id="docGettingStarted">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Getting Started with ArborGraph</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-001 &bull; Version 1.0</span>
+                        <div class="article-section active" id="docGettingStarted">
+                            <div class="article-header">
+                                <h2 class="article-title">Getting Started with ArborGraph</h2>
+                                <div class="article-meta">Document ID: AG-DOC-001 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>What is ArborGraph?</h3>
-                                <p>
-                                    ArborGraph is an offline Windows desktop utility designed for rapid disk analysis, visual storage breakdown, and safe developer junk cleanup on 64-bit Windows machines.
-                                </p>
+                                <p>ArborGraph is an offline Windows desktop utility designed for rapid disk analysis, visual storage breakdown, and safe developer junk cleanup on 64-bit Windows machines.</p>
                                 <h3>First Scan Workflow</h3>
-                                <ol class="doc-ordered-list">
+                                <ol>
                                     <li><strong>Launch the Application:</strong> Double-click <code>ArborGraph.exe</code>. The executable runs natively without external runtime installers.</li>
                                     <li><strong>Select Target Volume:</strong> Choose your system drive (e.g., <code>C:\</code>) or secondary development volume from the top drive dropdown.</li>
                                     <li><strong>Execute Scan:</strong> Click <strong>Start Scan</strong>. The bounded multi-threaded traversal engine immediately crawls the directory hierarchy, indexing file attributes into a local SQLite database in WAL mode.</li>
                                     <li><strong>Review Disk Consumption:</strong> Inspect the Treemap view to locate oversized directories, video caches, RAW camera files, or large Photoshop assets.</li>
                                 </ol>
-                                <div class="doc-alert-box alert-verified">
+                                <div class="note-box">
                                     <strong>NOTE:</strong> The scan index is stored exclusively on your local computer at <code>%LocalAppData%\ArborGraph\scan_index.db</code>. No filesystem paths or file contents are ever transmitted across networks.
                                 </div>
                             </div>
                         </div>
 
                         <!-- 2. Installation Guide -->
-                        <div class="doc-section" id="docInstallation">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Installation Guide</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-002 &bull; Version 1.0</span>
+                        <div class="article-section" id="docInstallation">
+                            <div class="article-header">
+                                <h2 class="article-title">Installation Guide</h2>
+                                <div class="article-meta">Document ID: AG-DOC-002 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Standalone Portable Deployment</h3>
                                 <p>ArborGraph requires zero installation steps to execute. You can place <code>ArborGraph.exe</code> in any folder, USB flash drive, or desktop directory.</p>
                                 <h3>Windows Setup Wizard Deployment</h3>
                                 <p>To install ArborGraph as a registered Windows application:</p>
-                                <ul class="doc-bullet-list">
+                                <ul>
                                     <li>Download the official installer package or compile <code>installer/installer.iss</code> with Inno Setup 6.</li>
                                     <li>Launch the installer executable. You must accept the End User License Agreement (EULA) before proceeding.</li>
                                     <li>Target installation defaults to <code>C:\Program Files\ArborGraph</code> with optional desktop and Start Menu shortcuts.</li>
@@ -789,17 +845,17 @@
                         </div>
 
                         <!-- 3. User Guide & Features -->
-                        <div class="doc-section" id="docUserGuide">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">User Guide &amp; Core Features</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-003 &bull; Version 1.0</span>
+                        <div class="article-section" id="docUserGuide">
+                            <div class="article-header">
+                                <h2 class="article-title">User Guide &amp; Core Features</h2>
+                                <div class="article-meta">Document ID: AG-DOC-003 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Squarified Treemap Navigation</h3>
-                                <p>The Treemap visualizer renders filesystem directories as nested rectangles utilizing the Bruls-Huizing layout algorithm. Rectangle area is proportional to byte consumption. Double-clicking any directory card drills down into its subtree with a breadcrumb trail for navigation.</p>
+                                <p>The Treemap visualizer renders filesystem directories as nested rectangles utilizing the Bruls-Huizing layout algorithm. Rectangle area is proportional to byte consumption. Clicking any directory card drills down into its subtree with a breadcrumb trail for navigation.</p>
                                 <h3>Cryptographic Deduplication</h3>
                                 <p>ArborGraph employs a 3-stage validation pipeline to detect duplicate files without false positives:</p>
-                                <ul class="doc-bullet-list">
+                                <ul>
                                     <li><strong>Stage 1 (Length Grouping):</strong> Fast SQL grouping by identical byte sizes.</li>
                                     <li><strong>Stage 2 (Header Check):</strong> Reads initial 4 KB blocks to eliminate size collisions.</li>
                                     <li><strong>Stage 3 (SHA-256 Digest):</strong> Full cryptographic block hash computed via streaming memory channels.</li>
@@ -810,36 +866,36 @@
                         </div>
 
                         <!-- 4. CLI Automation -->
-                        <div class="doc-section" id="docCli">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">CLI Automation &amp; Scripting</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-004 &bull; Version 1.0</span>
+                        <div class="article-section" id="docCli">
+                            <div class="article-header">
+                                <h2 class="article-title">CLI Automation &amp; Scripting</h2>
+                                <div class="article-meta">Document ID: AG-DOC-004 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Command-Line Execution Flags</h3>
                                 <p>ArborGraph ships with launcher scripts for continuous integration and rapid execution:</p>
-                                <div class="cli-command-box">
-                                    <span>.\start.bat --fast</span>
+                                <div class="code-snippet-box">
+                                    <span>.\start.ps1 -Fast</span>
                                 </div>
                                 <p>Launches the compiled standalone executable without rebuilding.</p>
-                                <div class="cli-command-box">
-                                    <span>.\start.bat --test</span>
+                                <div class="code-snippet-box">
+                                    <span>.\start.ps1 -Test</span>
                                 </div>
-                                <p>Executes the 11-step automated integration test suite with exit code verification.</p>
+                                <p>Executes the 20-step automated integration test suite with exit code verification.</p>
                             </div>
                         </div>
 
                         <!-- 5. System Requirements -->
-                        <div class="doc-section" id="docRequirements">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">System Requirements &amp; Runtime Specifications</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-005 &bull; Version 1.0</span>
+                        <div class="article-section" id="docRequirements">
+                            <div class="article-header">
+                                <h2 class="article-title">System Requirements &amp; Runtime Specifications</h2>
+                                <div class="article-meta">Document ID: AG-DOC-005 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Operating System</h3>
                                 <p>Windows 10 (version 1809 or higher) or Windows 11 (64-bit x64 editions). ARM64 Windows is supported via x64 emulation.</p>
                                 <h3>Hardware Footprint</h3>
-                                <ul class="doc-bullet-list">
+                                <ul>
                                     <li><strong>Memory:</strong> 64 MB minimum baseline, 256 MB recommended for indexing 1,000,000+ file trees.</li>
                                     <li><strong>Disk:</strong> 75 MB free storage for the executable and bundled runtimes.</li>
                                     <li><strong>CPU:</strong> 1.0 GHz or faster 64-bit multi-core processor.</li>
@@ -848,31 +904,31 @@
                         </div>
 
                         <!-- 6. Security & Permissions -->
-                        <div class="doc-section" id="docSecurity">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Security &amp; Permissions</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-006 &bull; Version 1.0</span>
+                        <div class="article-section" id="docSecurity">
+                            <div class="article-header">
+                                <h2 class="article-title">Security &amp; Permissions</h2>
+                                <div class="article-meta">Document ID: AG-DOC-006 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Standard User Privileges</h3>
                                 <p>ArborGraph does not require administrative elevation (UAC prompt) for scanning standard user profiles, documents, code directories, and secondary drives.</p>
                                 <h3>Locked Files &amp; Access Control Lists</h3>
                                 <p>Files locked by other running processes or restricted by NTFS permissions are logged as skipped items without throwing unhandled exceptions.</p>
-                                <div class="doc-alert-box alert-verified">
+                                <div class="note-box">
                                     <strong>ZERO NETWORK TELEMETRY:</strong> ArborGraph has no outbound network communication, analytics endpoints, or cloud synchronizers.
                                 </div>
                             </div>
                         </div>
 
                         <!-- 7. Troubleshooting Guide -->
-                        <div class="doc-section" id="docTroubleshooting">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Troubleshooting Guide</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-007 &bull; Version 1.0</span>
+                        <div class="article-section" id="docTroubleshooting">
+                            <div class="article-header">
+                                <h2 class="article-title">Troubleshooting Guide</h2>
+                                <div class="article-meta">Document ID: AG-DOC-007 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Windows Defender SmartScreen Prompt</h3>
-                                <div class="doc-alert-box alert-smartscreen">
+                                <div class="note-box" style="border-color: #FED7AA; background-color: #FFF7ED; color: var(--color-warning);">
                                     <strong>Notice:</strong> When launching a freshly downloaded binary, Windows SmartScreen may display: <em>"Windows protected your PC"</em>.
                                 </div>
                                 <p>To proceed, click <strong>"More info"</strong> and select <strong>"Run anyway"</strong>. You can verify the official SHA-256 hash using the Package Verification tab to ensure the binary is unaltered.</p>
@@ -882,25 +938,24 @@
                         </div>
 
                         <!-- 8. Uninstallation & Data Removal -->
-                        <div class="doc-section" id="docUninstallation">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Uninstallation &amp; Data Removal</h2>
-                                <span class="doc-meta">Document ID: DS-DOC-008 &bull; Version 1.0</span>
+                        <div class="article-section" id="docUninstallation">
+                            <div class="article-header">
+                                <h2 class="article-title">Uninstallation &amp; Data Removal</h2>
+                                <div class="article-meta">Document ID: AG-DOC-008 &bull; Version 1.0</div>
                             </div>
-                            <div class="doc-body">
+                            <div class="article-body">
                                 <h3>Complete Application Removal</h3>
-                                <ol class="doc-ordered-list">
+                                <ol>
                                     <li><strong>Portable Binary:</strong> Delete <code>ArborGraph.exe</code> from your chosen folder.</li>
                                     <li><strong>Installed Version:</strong> Open <em>Windows Settings &gt; Apps &gt; Installed Apps</em>, locate <strong>ArborGraph</strong>, and select <strong>Uninstall</strong>.</li>
                                     <li><strong>Purge Local Catalog Data:</strong> Delete the local application directory:
-                                        <div class="cli-command-box" style="margin-top: 8px;">
+                                        <div class="code-snippet-box" style="margin-top: 8px;">
                                             <span>Remove-Item -Recurse "$env:LOCALAPPDATA\ArborGraph"</span>
                                         </div>
                                     </li>
                                 </ol>
                             </div>
                         </div>
-
                     </article>
                 </div>
             </div>
@@ -912,181 +967,124 @@
         <section id="legal" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">07</div>
+                    <div class="section-label">
+                        <span class="section-num">07</span>
+                        <span>Legal &amp; Policy</span>
+                    </div>
                     <h2 class="section-title">Legal &amp; Compliance Center</h2>
                     <p class="section-desc">Software licensing terms, web portal policies, privacy commitments, and open-source acknowledgements.</p>
                 </div>
 
-                <div class="docs-explorer-layout">
-                    <!-- Left Subnav Sidebar -->
-                    <aside class="docs-subnav-sidebar" aria-label="Legal documents">
-                        <div class="subnav-category-title">Agreements &amp; Policies</div>
-                        <button class="subnav-btn active" data-target-legal="legalEula">1. End User License (EULA)</button>
-                        <button class="subnav-btn" data-target-legal="legalTerms">2. Terms of Use</button>
-                        <button class="subnav-btn" data-target-legal="legalPrivacy">3. Privacy Policy</button>
-                        <button class="subnav-btn" data-target-legal="legalLicenses">4. Third-Party Licenses</button>
+                <div class="explorer-layout">
+                    <aside class="explorer-sidebar" aria-label="Legal documents">
+                        <div class="explorer-cat-title">Agreements &amp; Policies</div>
+                        <button type="button" class="explorer-nav-btn active" data-target-legal="legalEula">1. End User License (EULA)</button>
+                        <button type="button" class="explorer-nav-btn" data-target-legal="legalTerms">2. Terms of Use</button>
+                        <button type="button" class="explorer-nav-btn" data-target-legal="legalPrivacy">3. Privacy Policy</button>
+                        <button type="button" class="explorer-nav-btn" data-target-legal="legalLicenses">4. Third-Party Licenses</button>
                     </aside>
 
-                    <!-- Right Reading Viewport -->
-                    <article class="docs-reading-viewport" id="legalReadingPane">
-
+                    <article class="explorer-content-pane" id="legalReadingPane">
                         <!-- 1. EULA -->
-                        <div class="doc-section active" id="legalEula">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">End User License Agreement (EULA)</h2>
-                                <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                        <div class="article-section active" id="legalEula">
+                            <div class="article-header">
+                                <h2 class="article-title">End User License Agreement (EULA)</h2>
+                                <div class="article-meta">Version 1.0 &bull; Effective Date: September 29, 2026</div>
                             </div>
-                            <div class="doc-body">
-                                <div class="doc-alert-box alert-verified">
+                            <div class="article-body">
+                                <div class="note-box">
                                     <strong>Publisher:</strong> AG DIAZ EVANGELISTA<br>
                                     <strong>Contact:</strong> evangelista.agdiaz@gmail.com
                                 </div>
                                 <h3>1. License Grant</h3>
-                                <p>
-                                    Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
-                                </p>
+                                <p>Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA ("Licensor") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.</p>
                                 <h3>2. Permitted &amp; Restricted Uses</h3>
-                                <ul class="doc-bullet-list">
+                                <ul>
                                     <li><strong>Permitted Use:</strong> You may install and execute an unlimited number of copies of the Software on hardware you own, lease, or manage.</li>
                                     <li><strong>Reverse Engineering:</strong> Except to the extent that applicable law expressly permits despite this limitation, you may not decompile, disassemble, reverse engineer, decrypt, modify, or create derivative works of the compiled Software binary.</li>
                                     <li><strong>Redistribution:</strong> You may not sell, rent, lease, sub-license, host as a commercial cloud service, or redistribute the Software binaries for commercial financial gain without explicit prior written authorization from the Licensor.</li>
                                 </ul>
                                 <h3>3. Local Architecture &amp; Privacy</h3>
-                                <p>
-                                    ArborGraph operates exclusively as a local, on-device utility. The Software contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services. Scan catalog data is stored exclusively on the local host within <code>%LocalAppData%\ArborGraph</code>.
-                                </p>
+                                <p>ArborGraph operates exclusively as a local, on-device utility. The Software contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services. Scan catalog data is stored exclusively on the local host within <code>%LocalAppData%\ArborGraph</code>.</p>
                                 <h3>4. File Deletion Responsibility &amp; Disclaimers</h3>
-                                <p>
-                                    The Software includes utilities (such as the Junk Cleaner) capable of permanently deleting files from your system storage upon your explicit command. <strong>YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES TARGETED FOR DELETION.</strong> Licensor strongly recommends maintaining verified, independent system backups prior to executing disk cleanup operations.
-                                </p>
+                                <p>The Software includes utilities (such as the Junk Cleaner) capable of permanently deleting files from your system storage upon your explicit command. <strong>YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES TARGETED FOR DELETION.</strong></p>
                                 <h3>5. Disclaimer of Warranties ("AS IS")</h3>
-                                <p>
-                                    TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ARBORGRAPH IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE.
-                                </p>
-                                <h3>6. Limitation of Liability</h3>
-                                <p>
-                                    IN NO EVENT SHALL LICENSOR, ITS CONTRIBUTORS, OR SUPPLIERS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES (INCLUDING LOSS OF DATA, LOSS OF PROFITS, OR BUSINESS INTERRUPTION) ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE.
-                                </p>
+                                <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ARBORGRAPH IS PROVIDED "AS IS" AND "AS AVAILABLE", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND.</p>
                             </div>
                         </div>
 
                         <!-- 2. Terms of Use -->
-                        <div class="doc-section" id="legalTerms">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Website Terms of Use</h2>
-                                <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                        <div class="article-section" id="legalTerms">
+                            <div class="article-header">
+                                <h2 class="article-title">Website Terms of Use</h2>
+                                <div class="article-meta">Version 1.0 &bull; Effective Date: September 29, 2026</div>
                             </div>
-                            <div class="doc-body">
-                                <p>
-                                    These Terms of Use govern your access to and use of the ArborGraph website and distribution portal. This document applies to the web portal; usage of the desktop application is governed by the Software EULA.
-                                </p>
-                                <h3>1. Permitted Use of Distribution Portal</h3>
-                                <p>
-                                    You may access this website to inspect product documentation, review technical specifications, verify binary cryptographic checksums, and download official software releases.
-                                </p>
+                            <div class="article-body">
+                                <p>These Terms of Use govern your access to and use of the ArborGraph website and distribution portal. Usage of the desktop application is governed by the Software EULA.</p>
+                                <h3>1. Permitted Use</h3>
+                                <p>You may access this website to inspect product documentation, review technical specifications, verify binary cryptographic checksums, and download official software releases.</p>
                                 <h3>2. Intellectual Property Rights</h3>
-                                <p>
-                                    The text, diagrams, interface styling, icons, and layout of this portal are protected by copyright and intellectual property laws. You may copy code snippets and command lines for your personal or internal use.
-                                </p>
+                                <p>The text, diagrams, interface styling, icons, and layout of this portal are protected by copyright and intellectual property laws.</p>
                                 <h3>3. Disclaimers</h3>
                                 <p>The website materials and software download packages are provided on an "as is" and "as available" basis without warranties of any kind.</p>
-                                <h3>4. Contact</h3>
-                                <p>Inquiries regarding terms of use may be directed to: <code>evangelista.agdiaz@gmail.com</code>.</p>
                             </div>
                         </div>
 
                         <!-- 3. Privacy Policy -->
-                        <div class="doc-section" id="legalPrivacy">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Privacy Policy</h2>
-                                <span class="doc-meta">Version 1.0 &bull; Effective Date: September 29, 2026</span>
+                        <div class="article-section" id="legalPrivacy">
+                            <div class="article-header">
+                                <h2 class="article-title">Privacy Policy</h2>
+                                <div class="article-meta">Version 1.0 &bull; Effective Date: September 29, 2026</div>
                             </div>
-                            <div class="doc-body">
-                                <div class="doc-alert-box alert-verified">
-                                    <strong>TECHNICAL VERIFICATION:</strong> ArborGraph was architected from the ground up as a 100% offline, local Windows utility.
+                            <div class="article-body">
+                                <div class="note-box">
+                                    <strong>VERIFIED COMMITMENT:</strong> ArborGraph was architected from the ground up as a 100% offline, local Windows utility.
                                 </div>
                                 <h3>Part A: ArborGraph Desktop Application</h3>
-                                <ul class="doc-bullet-list">
-                                    <li><strong>No Telemetry or Analytics:</strong> The desktop executable contains zero tracking SDKs, zero analytics code, and zero telemetry listeners.</li>
+                                <ul>
+                                    <li><strong>No Telemetry:</strong> The desktop executable contains zero tracking SDKs, zero analytics code, and zero telemetry listeners.</li>
                                     <li><strong>No Cloud Sync:</strong> Scanned file paths, file sizes, categories, and duplicate records remain strictly within the local host computer.</li>
                                     <li><strong>Local Database:</strong> Scan indexes are stored exclusively in <code>%LocalAppData%\ArborGraph\scan_index.db</code>.</li>
                                     <li><strong>No File Uploads:</strong> ArborGraph never reads file contents into network sockets or uploads documents to remote servers.</li>
                                 </ul>
                                 <h3>Part B: ArborGraph Web Portal</h3>
-                                <ul class="doc-bullet-list">
+                                <ul>
                                     <li><strong>No Tracking Cookies:</strong> The website uses zero third-party tracking, advertising, or marketing cookies.</li>
-                                    <li><strong>Local Storage Consent:</strong> When you complete the Setup Wizard, your acceptance status (EULA version and timestamp) is stored strictly in your local browser <code>localStorage</code>. It is never transmitted to an external server.</li>
+                                    <li><strong>Local Consent Storage:</strong> When you complete the Setup Wizard, your acceptance status is stored strictly in your local browser <code>localStorage</code>.</li>
                                 </ul>
-                                <h3>Part C: Data Retention &amp; User Deletion</h3>
-                                <p>
-                                    You retain total control over your local data. Deleting the folder <code>%LocalAppData%\ArborGraph</code> permanently removes all local catalog records and indices.
-                                </p>
                             </div>
                         </div>
 
                         <!-- 4. Third-Party Licenses -->
-                        <div class="doc-section" id="legalLicenses">
-                            <div class="doc-header-banner">
-                                <h2 class="doc-title">Third-Party Licenses &amp; Open Source Acknowledgements</h2>
-                                <span class="doc-meta">Dependency Manifest &amp; License Texts</span>
+                        <div class="article-section" id="legalLicenses">
+                            <div class="article-header">
+                                <h2 class="article-title">Third-Party Licenses</h2>
+                                <div class="article-meta">Dependency Manifest &amp; License Notices</div>
                             </div>
-                            <div class="doc-body">
-                                <p>ArborGraph is built with high-quality open-source components. In accordance with license requirements, the relevant notices and license terms are reproduced below:</p>
+                            <div class="article-body">
+                                <p>ArborGraph is built with high-quality open-source components:</p>
 
-                                <!-- Component 1 -->
-                                <div class="license-entry-card">
-                                    <div class="license-entry-header">
-                                        <span class="license-pkg-name">Microsoft.Data.Sqlite (v8.0.10)</span>
-                                        <span class="license-badge">MIT License</span>
-                                    </div>
-                                    <div class="mono-meta">Copyright &copy; Microsoft Corporation. All rights reserved.</div>
-                                    <pre class="license-text-block">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+                                <h3>Microsoft.Data.Sqlite (v8.0.10) — MIT License</h3>
+                                <div class="license-block">Copyright (c) Microsoft Corporation. All rights reserved.
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.</pre>
-                                </div>
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</div>
 
-                                <!-- Component 2 -->
-                                <div class="license-entry-card">
-                                    <div class="license-entry-header">
-                                        <span class="license-pkg-name">SQLitePCLRaw.bundle_e_sqlite3 (v2.1.6)</span>
-                                        <span class="license-badge">Apache License 2.0</span>
-                                    </div>
-                                    <div class="mono-meta">Copyright &copy; 2014-2023 Eric Sink</div>
-                                    <pre class="license-text-block">Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+                                <h3>SQLitePCLRaw.bundle_e_sqlite3 (v2.1.6) — Apache 2.0</h3>
+                                <div class="license-block">Copyright 2014-2023 Eric Sink
+Licensed under the Apache License, Version 2.0 (the "License").</div>
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</pre>
-                                </div>
-
-                                <!-- Component 3 -->
-                                <div class="license-entry-card">
-                                    <div class="license-entry-header">
-                                        <span class="license-pkg-name">SQLite Database Engine (v3.45)</span>
-                                        <span class="license-badge">Public Domain</span>
-                                    </div>
-                                    <div class="mono-meta">SQLite is in the Public Domain (D. Richard Hipp)</div>
-                                    <pre class="license-text-block">The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:
-
+                                <h3>SQLite Database Engine (v3.45) — Public Domain</h3>
+                                <div class="license-block">The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:
     May you do good and not evil.
     May you find forgiveness for yourself and forgive others.
-    May you share freely, never taking more than you give.</pre>
-                                </div>
+    May you share freely, never taking more than you give.</div>
 
-                                <!-- Component 4 -->
-                                <div class="license-entry-card">
-                                    <div class="license-entry-header">
-                                        <span class="license-pkg-name">Microsoft .NET Runtime &amp; WPF Libraries (.NET 8.0)</span>
-                                        <span class="license-badge">MIT License</span>
-                                    </div>
-                                    <div class="mono-meta">Copyright &copy; .NET Foundation and Contributors</div>
-                                    <pre class="license-text-block">Licensed under the MIT License. See https://github.com/dotnet/runtime for complete details.</pre>
-                                </div>
+                                <h3>Microsoft .NET Runtime &amp; WPF Libraries (.NET 8.0) — MIT License</h3>
+                                <div class="license-block">Copyright (c) .NET Foundation and Contributors. Licensed under the MIT License.</div>
                             </div>
                         </div>
-
                     </article>
                 </div>
             </div>
@@ -1098,25 +1096,31 @@ Unless required by applicable law or agreed to in writing, software distributed 
         <section id="changelog" class="site-section">
             <div class="site-container">
                 <div class="section-header">
-                    <div class="section-number">08</div>
+                    <div class="section-label">
+                        <span class="section-num">08</span>
+                        <span>Release Log</span>
+                    </div>
                     <h2 class="section-title">Release Notes: Version 1.0.0</h2>
                     <p class="section-desc">Release Date: September 29, 2026 &bull; Windows x64 Stable Channel</p>
                 </div>
 
-                <div class="verify-container-card">
-                    <h3 style="font-size: 14px; font-weight: 600; color: var(--win-blue-900);">ArborGraph v1.0.0 (Latest Production Release)</h3>
-                    <ul class="doc-bullet-list">
-                        <li><strong>Single-File Package:</strong> Self-contained x64 Windows binary bundling .NET 8 and WPF runtime libraries. Compressed from 164 MB to 73.3 MB with zero prerequisite installers.</li>
+                <div class="app-card">
+                    <div class="app-card-header">
+                        <span class="app-card-title">ArborGraph v1.0.0 (Production Release)</span>
+                        <span class="app-card-subtitle">win-x64 &bull; 73.3 MB</span>
+                    </div>
+                    <ul style="margin: 8px 0 0 20px; font-size: 12.5px; line-height: 1.6; color: var(--color-text-secondary);">
+                        <li><strong>Single-File Package:</strong> Self-contained x64 Windows binary bundling .NET 8 and WPF runtime libraries. Compressed from 155 MB to 73.3 MB with zero prerequisite installers.</li>
+                        <li><strong>Live Directory Feed:</strong> High-frequency streaming traversal buffer displaying active scan folders with real-time top-insertion.</li>
+                        <li><strong>Hardware Telemetry:</strong> Real-time CPU and RAM sparklines running on bounded 60-second ring buffers with dynamic memory ceiling calculation.</li>
                         <li><strong>Installer Consent Layer:</strong> Interactive Windows Setup wizard requiring explicit EULA agreement with local offline consent recording.</li>
                         <li><strong>Scanner Engine:</strong> Multi-threaded asynchronous directory traversal with bounded producer/consumer channels and atomic progress reporting.</li>
                         <li><strong>Developer Storage Hub:</strong> Contextual package cache inspection and purge tools for NuGet, npm, pip, Cargo, Gradle, and Docker.</li>
                         <li><strong>Targeted Junk Cleaner:</strong> Dedicated system temp, crash dump, prefetch, and browser cache cleaning with locked-file skip protection.</li>
                         <li><strong>Photoshop &amp; Media Inspector:</strong> Specialized scanner for heavy PSD/PSB working files and Adobe temp caches.</li>
                         <li><strong>Database Architecture:</strong> SQLite WAL mode with deferred secondary B-tree index rebuilds for high write throughput.</li>
-                        <li><strong>Interactive Treemap:</strong> Squarified aspect-ratio spatial mapping with recursive directory aggregation and breadcrumb zoom.</li>
+                        <li><strong>Interactive Treemap:</strong> Squarified aspect-ratio spatial mapping with recursive directory aggregation and breadcrumb navigation.</li>
                         <li><strong>Deduplication:</strong> 3-stage cryptographic pipeline prevents false positives from size collisions.</li>
-                        <li><strong>Reporting Engine:</strong> Standalone HTML executive generator, precision CSV tables, and structured JSON output.</li>
-                        <li><strong>Documentation &amp; Legal:</strong> Full legal ecosystem with EULA, Terms of Use, Privacy Policy, and Third-Party Licenses.</li>
                     </ul>
                 </div>
             </div>
@@ -1125,22 +1129,22 @@ Unless required by applicable law or agreed to in writing, software distributed 
     </main>
 
     <!-- =========================================================
-         4. CLEAN DEVELOPER FOOTER
+         FOOTER: CLEAN UTILITY FOOTER
          ========================================================= -->
     <footer class="site-footer">
         <div class="site-container">
-            <div class="footer-columns-grid">
-                <div class="footer-col">
+            <div class="footer-grid">
+                <div>
                     <div class="footer-col-title">ArborGraph</div>
-                    <p class="footer-col-desc">
-                        Windows disk analysis and storage visualization utility. 100% offline, zero-telemetry local system utility.
+                    <p class="footer-desc">
+                        Windows filesystem analytics, disk diagnostic visualization, and storage optimization utility. 100% offline local system software.
                     </p>
-                    <div class="footer-meta-line">Version 1.0.0 &bull; win-x64</div>
+                    <div style="font-size: 11px; color: var(--color-text-muted);">Version 1.0.0 &bull; Windows x64</div>
                 </div>
 
-                <div class="footer-col">
+                <div>
                     <div class="footer-col-title">Documentation</div>
-                    <ul class="footer-links">
+                    <ul class="footer-links-list">
                         <li><a href="#docs" class="footer-doc-link" data-doc="docGettingStarted">Getting Started</a></li>
                         <li><a href="#docs" class="footer-doc-link" data-doc="docInstallation">Installation Guide</a></li>
                         <li><a href="#docs" class="footer-doc-link" data-doc="docCli">CLI Automation</a></li>
@@ -1149,37 +1153,33 @@ Unless required by applicable law or agreed to in writing, software distributed 
                     </ul>
                 </div>
 
-                <div class="footer-col">
-                    <div class="footer-col-title">Legal &amp; Compliance</div>
-                    <ul class="footer-links">
-                        <li><a href="#legal" class="footer-legal-link" data-legal="legalEula">End User License Agreement</a></li>
+                <div>
+                    <div class="footer-col-title">Legal &amp; Policy</div>
+                    <ul class="footer-links-list">
+                        <li><a href="#legal" class="footer-legal-link" data-legal="legalEula">License Agreement</a></li>
                         <li><a href="#legal" class="footer-legal-link" data-legal="legalTerms">Terms of Use</a></li>
                         <li><a href="#legal" class="footer-legal-link" data-legal="legalPrivacy">Privacy Policy</a></li>
                         <li><a href="#legal" class="footer-legal-link" data-legal="legalLicenses">Third-Party Licenses</a></li>
                     </ul>
                 </div>
 
-                <div class="footer-col">
-                    <div class="footer-col-title">Support &amp; Publisher</div>
-                    <div class="footer-contact-item">Publisher: AG DIAZ EVANGELISTA</div>
-                    <div class="footer-contact-item">Support: evangelista.agdiaz@gmail.com</div>
-                    <div class="footer-contact-item">Build: 2026.10.03 (Stable)</div>
-                    <div class="footer-contact-item">Status: Clean Verified Package</div>
+                <div>
+                    <div class="footer-col-title">Support &amp; Verification</div>
+                    <div class="footer-contact-row">Publisher: AG DIAZ EVANGELISTA</div>
+                    <div class="footer-contact-row">Contact: evangelista.agdiaz@gmail.com</div>
+                    <div class="footer-contact-row">Build: 2026.10.03 (Production)</div>
+                    <div class="footer-contact-row">Integrity: SHA-256 Authenticated</div>
                 </div>
             </div>
 
-            <div class="footer-bottom-bar">
-                <div class="footer-copy">
-                    Copyright &copy; 2026 AG DIAZ EVANGELISTA. All rights reserved.
-                </div>
-                <div class="footer-badge">
-                    <span>Offline System Utility &bull; Zero External Network Transmissions</span>
-                </div>
+            <div class="footer-bottom">
+                <div>Copyright &copy; 2026 AG DIAZ EVANGELISTA. All rights reserved.</div>
+                <div>Offline Utility &bull; Zero External Network Transmissions</div>
             </div>
         </div>
     </footer>
 
-    <!-- Toast Notification for Dynamic Feedback -->
+    <!-- Toast Notification -->
     <div class="win-toast" id="toastMsg" role="alert" aria-live="polite">Action completed</div>
 
     <script src="./app.js"></script>

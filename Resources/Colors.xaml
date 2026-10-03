@@ -1,24 +1,39 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Native Windows Light Theme Palette -->
-    <Color x:Key="ColorBgCanvas">#FFFFFF</Color>
-    <Color x:Key="ColorBgSurface">#F8FAFC</Color>
+    <!-- Minimal, Clean, Utilitarian Developer Utility Palette -->
+    <Color x:Key="ColorBgCanvas">#FAFAFA</Color>
+    <Color x:Key="ColorBgSurface">#FFFFFF</Color>
     <Color x:Key="ColorBgCard">#FFFFFF</Color>
-    <Color x:Key="ColorBgCardHover">#F1F5F9</Color>
-    <Color x:Key="ColorBorder">#E2E8F0</Color>
-    <Color x:Key="ColorBorderLight">#CBD5E1</Color>
+    <Color x:Key="ColorBgCardHover">#F3F4F6</Color>
+    <Color x:Key="ColorBorder">#E5E7EB</Color>
+    <Color x:Key="ColorBorderLight">#F3F4F6</Color>
     
-    <Color x:Key="ColorTextPrimary">#0F172A</Color>
-    <Color x:Key="ColorTextSecondary">#475569</Color>
-    <Color x:Key="ColorTextMuted">#64748B</Color>
+    <Color x:Key="ColorTextPrimary">#111827</Color>
+    <Color x:Key="ColorTextSecondary">#4B5563</Color>
+    <Color x:Key="ColorTextMuted">#9CA3AF</Color>
 
-    <Color x:Key="ColorAccent">#0067C0</Color>
-    <Color x:Key="ColorAccentHover">#005299</Color>
-    <Color x:Key="ColorSuccess">#16A34A</Color>
-    <Color x:Key="ColorWarning">#D97706</Color>
+    <!-- Single Restrained Accent: Precision Steel Blue -->
+    <Color x:Key="ColorAccent">#005FB8</Color>
+    <Color x:Key="ColorAccentHover">#004C99</Color>
+    <Color x:Key="ColorAccentTint">#EFF6FF</Color>
+    <Color x:Key="ColorAccentTintBorder">#BFDBFE</Color>
+
+    <!-- Semantic Status (Used only for actual state, strictly non-decorative) -->
+    <Color x:Key="ColorSuccess">#15803D</Color>
+    <Color x:Key="ColorWarning">#B45309</Color>
     <Color x:Key="ColorDanger">#DC2626</Color>
 
+    <!-- Muted Tonal Scale for Treemap/Visualization -->
+    <Color x:Key="ColorTone1">#F3F4F6</Color>
+    <Color x:Key="ColorTone2">#E5E7EB</Color>
+    <Color x:Key="ColorTone3">#D1D5DB</Color>
+    <Color x:Key="ColorTone4">#9CA3AF</Color>
+    <Color x:Key="ColorTone5">#6B7280</Color>
+    <Color x:Key="ColorTone6">#4B5563</Color>
+    <Color x:Key="ColorTone7">#374151</Color>
+
+    <!-- Brushes -->
     <SolidColorBrush x:Key="BrushBgCanvas" Color="{StaticResource ColorBgCanvas}"/>
     <SolidColorBrush x:Key="BrushBgSurface" Color="{StaticResource ColorBgSurface}"/>
     <SolidColorBrush x:Key="BrushBgCard" Color="{StaticResource ColorBgCard}"/>
@@ -32,8 +47,19 @@
 
     <SolidColorBrush x:Key="BrushAccent" Color="{StaticResource ColorAccent}"/>
     <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource ColorAccentHover}"/>
+    <SolidColorBrush x:Key="BrushAccentTint" Color="{StaticResource ColorAccentTint}"/>
+    <SolidColorBrush x:Key="BrushAccentTintBorder" Color="{StaticResource ColorAccentTintBorder}"/>
+
     <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess}"/>
     <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning}"/>
     <SolidColorBrush x:Key="BrushDanger" Color="{StaticResource ColorDanger}"/>
+
+    <SolidColorBrush x:Key="BrushTone1" Color="{StaticResource ColorTone1}"/>
+    <SolidColorBrush x:Key="BrushTone2" Color="{StaticResource ColorTone2}"/>
+    <SolidColorBrush x:Key="BrushTone3" Color="{StaticResource ColorTone3}"/>
+    <SolidColorBrush x:Key="BrushTone4" Color="{StaticResource ColorTone4}"/>
+    <SolidColorBrush x:Key="BrushTone5" Color="{StaticResource ColorTone5}"/>
+    <SolidColorBrush x:Key="BrushTone6" Color="{StaticResource ColorTone6}"/>
+    <SolidColorBrush x:Key="BrushTone7" Color="{StaticResource ColorTone7}"/>
 
 </ResourceDictionary>

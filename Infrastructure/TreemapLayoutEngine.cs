@@ -7,28 +7,28 @@ public static class TreemapLayoutEngine
 {
     private static readonly Dictionary<string, Brush> CategoryBrushes = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "Video", CreateFrozenBrush("#8B5CF6") },       // Violet
-        { "Videos", CreateFrozenBrush("#8B5CF6") },
-        { "Images", CreateFrozenBrush("#10B981") },      // Emerald
-        { "Image", CreateFrozenBrush("#10B981") },
-        { "Photoshop", CreateFrozenBrush("#059669") },   // Darker Emerald
-        { "Executables", CreateFrozenBrush("#F43F5E") },  // Rose
-        { "Executable", CreateFrozenBrush("#F43F5E") },
-        { "Archives", CreateFrozenBrush("#F59E0B") },    // Amber
-        { "Archive", CreateFrozenBrush("#F59E0B") },
-        { "Compressed", CreateFrozenBrush("#F59E0B") },
-        { "Documents", CreateFrozenBrush("#0284C7") },   // Sky Blue
-        { "Document", CreateFrozenBrush("#0284C7") },
-        { "Code", CreateFrozenBrush("#06B6D4") },        // Cyan
-        { "Audio", CreateFrozenBrush("#EC4899") },       // Pink
-        { "Folder", CreateFrozenBrush("#334155") },      // Slate Dark
-        { "Directory", CreateFrozenBrush("#334155") },
-        { "Other", CreateFrozenBrush("#64748B") }        // Slate Muted
+        { "Video", CreateFrozenBrush("#64748B") },
+        { "Videos", CreateFrozenBrush("#64748B") },
+        { "Images", CreateFrozenBrush("#475569") },
+        { "Image", CreateFrozenBrush("#475569") },
+        { "Photoshop", CreateFrozenBrush("#475569") },
+        { "Executables", CreateFrozenBrush("#374151") },
+        { "Executable", CreateFrozenBrush("#374151") },
+        { "Archives", CreateFrozenBrush("#6B7280") },
+        { "Archive", CreateFrozenBrush("#6B7280") },
+        { "Compressed", CreateFrozenBrush("#6B7280") },
+        { "Documents", CreateFrozenBrush("#4B5563") },
+        { "Document", CreateFrozenBrush("#4B5563") },
+        { "Code", CreateFrozenBrush("#334155") },
+        { "Audio", CreateFrozenBrush("#64748B") },
+        { "Folder", CreateFrozenBrush("#1F2937") },
+        { "Directory", CreateFrozenBrush("#1F2937") },
+        { "Other", CreateFrozenBrush("#4B5563") }
     };
 
-    private static readonly Brush DefaultBrush = CreateFrozenBrush("#64748B");
-    private static readonly Brush BorderBrush = CreateFrozenBrush("#FFFFFF", 0.15);
-    private static readonly Brush FolderBorderBrush = CreateFrozenBrush("#38BDF8", 0.5);
+    private static readonly Brush DefaultBrush = CreateFrozenBrush("#4B5563");
+    private static readonly Brush BorderBrush = CreateFrozenBrush("#FFFFFF", 0.35);
+    private static readonly Brush FolderBorderBrush = CreateFrozenBrush("#005FB8", 0.6);
 
     private static Brush CreateFrozenBrush(string hex, double opacity = 1.0)
     {

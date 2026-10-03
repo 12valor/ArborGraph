@@ -1,0 +1,54 @@
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using DiskScope.Infrastructure;
+using DiskScope.Models;
+
+namespace DiskScope.ViewModels;
+
+public class ScannerViewModel : ObservableObject
+{
+    private readonly MainViewModel _mainVm;
+    private bool _showTechnicalDetails;
+
+    public ScannerViewModel(MainViewModel mainVm)
+    {
+        _mainVm = mainVm;
+        ExploreFilesCommand = new RelayCommand(_ => _mainVm.NavigateTo("Files"));
+        ReviewCleanupCommand = new RelayCommand(_ => _mainVm.NavigateTo("CleanupCenter"));
+    }
+
+    public OverviewViewModel OverviewVM => _mainVm.OverviewVM;
+    public ScanStats Stats => _mainVm.OverviewVM.Stats;
+    public ObservableCollection<string> RecentDirectories => _mainVm.OverviewVM.RecentDirectories;
+    public bool IsScanning => _mainVm.IsScanning;
+
+    public ICommand StartScanCommand => _mainVm.StartScanCommand;
+    public ICommand StopScanCommand => _mainVm.StopScanCommand;
+    public ICommand ExploreFilesCommand { get; }
+    public ICommand ReviewCleanupCommand { get; }
+
+    public bool ShowTechnicalDetails
+    {
+        get => _showTechnicalDetails;
+        set => SetProperty(ref _showTechnicalDetails, value);
+    }
+
+    public string CurrentTargetDescription
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(_mainVm.CustomScanPath))
+            {
+                return _mainVm.CustomScanPath;
+            }
+
+            var selected = _mainVm.OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name).ToList();
+            if (selected.Count > 0)
+            {
+                return string.Join(", ", selected);
+            }
+
+            return "C:\\";
+        }
+    }
+}

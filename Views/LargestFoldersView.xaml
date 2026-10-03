@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
-    <Grid Margin="24">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -14,25 +14,19 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Largest Folders" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-            <TextBlock Text="Aggregated storage totals per parent directory calculated without double-counting" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Largest Folders" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <TextBlock Text="Aggregated storage totals per parent directory calculated without double-counting" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+        </Grid>
 
-        <!-- Top Actions Bar -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="Showing top directories containing the largest volume of indexed files" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
-                <Button Grid.Column="1" Content="Refresh Folders" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
-            </Grid>
-        </Border>
-
-        <!-- Folders DataGrid -->
+        <!-- Clean DataGrid -->
         <DataGrid Grid.Row="2" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}"
                   MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.RowStyle>
@@ -40,15 +34,11 @@
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu>
-                                <MenuItem Header="Open Folder Location" 
-                                          Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <MenuItem Header="Copy Folder Path" 
-                                          Command="{Binding DataContext.CopyFolderPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <Separator Background="{StaticResource BrushBorder}"/>
-                                <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
-                                          Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
-                                          Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Open Folder Location" Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Copy Folder Path" Command="{Binding DataContext.CopyFolderPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator/>
+                                <MenuItem Header="Move to Recycle Bin" Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Permanently Delete..." Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
@@ -56,53 +46,56 @@
             </DataGrid.RowStyle>
 
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Directory Name" Binding="{Binding Name}" Width="240">
+                <DataGridTextColumn Header="Directory Name" Binding="{Binding Name}" Width="260">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontWeight" Value="Medium"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn Header="Aggregated Size" Binding="{Binding FormattedSize}" Width="120">
+                <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="110">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="TextAlignment" Value="Right"/>
-                            <Setter Property="Margin" Value="0,0,10,0"/>
+                            <Setter Property="Margin" Value="0,0,8,0"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
                 <!-- Proportion Bar Column -->
-                <DataGridTemplateColumn Header="Storage Distribution" Width="180">
+                <DataGridTemplateColumn Header="Share" Width="140">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid Margin="5,0">
-                                <ProgressBar Height="8" Maximum="100" Value="{Binding PercentageOfTotal, Mode=OneWay}"
-                                             Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCard}" BorderThickness="0"/>
+                            <Grid Margin="4,0">
+                                <ProgressBar Height="4" Maximum="100" Value="{Binding PercentageOfTotal, Mode=OneWay}"
+                                             Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0"/>
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTextColumn Header="Indexed Files" Binding="{Binding FormattedFileCount}" Width="110">
+                <DataGridTextColumn Header="Files" Binding="{Binding FormattedFileCount}" Width="90">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="TextAlignment" Value="Right"/>
-                            <Setter Property="Margin" Value="0,0,10,0"/>
+                            <Setter Property="Margin" Value="0,0,8,0"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                            <Setter Property="FontSize" Value="11"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn Header="Full Directory Path" Binding="{Binding Path}" Width="*">
+                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
                             <Setter Property="FontSize" Value="11"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
                             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -113,26 +106,29 @@
         </DataGrid>
 
         <!-- Selected Folder Panel -->
-        <Border Grid.Row="3" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+        <Border Grid.Row="3" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding SelectedFolder.Name, FallbackValue='Select a folder'}" 
-                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding SelectedFolder.Name, FallbackValue='Select a directory to inspect'}" 
+                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding SelectedFolder.FormattedSize, FallbackValue='—', StringFormat='  ({0})'}" 
+                                   FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
+                    </StackPanel>
                     <TextBlock Text="{Binding SelectedFolder.Path, FallbackValue='—'}" 
-                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open in Explorer" Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Copy Path" Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource ActionButtonStyle}" 
-                            Foreground="{StaticResource BrushWarning}"/>
+                    <Button Content="Open Folder" Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Copy Path" Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3"/>
                 </StackPanel>
             </Grid>
         </Border>

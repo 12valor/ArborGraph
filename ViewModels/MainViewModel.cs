@@ -58,6 +58,12 @@ public class MainViewModel : ObservableObject
         TreemapVM = new TreemapViewModel(_dbService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
         SettingsVM = new SettingsViewModel(_settingsService, _dbService);
+        ScannerVM = new ScannerViewModel(this);
+        FilesVM = new FilesViewModel(this);
+        SettingsVM.ScanLogVM = ScanLogVM;
+
+        OverviewVM.ReviewCleanupCommand = new RelayCommand(_ => NavigateTo("CleanupCenter"));
+        OverviewVM.StartScanCommand = new RelayCommand(async _ => await StartScanAsync());
 
         _currentView = OverviewVM;
 
@@ -87,6 +93,8 @@ public class MainViewModel : ObservableObject
     public TreemapViewModel TreemapVM { get; }
     public ScanLogViewModel ScanLogVM { get; }
     public SettingsViewModel SettingsVM { get; }
+    public ScannerViewModel ScannerVM { get; }
+    public FilesViewModel FilesVM { get; }
 
     public object CurrentView
     {
@@ -171,6 +179,8 @@ public class MainViewModel : ObservableObject
             CurrentTab = tabName;
             CurrentView = tabName switch
             {
+                "Scanner" => ScannerVM,
+                "Files" => FilesVM,
                 "Analytics" => AnalyticsVM,
                 "CleanupCenter" => CleanupCenterVM,
                 "DeveloperStorage" => DeveloperStorageVM,
@@ -188,7 +198,7 @@ public class MainViewModel : ObservableObject
             };
 
             // Lightweight, instant, or active-scanning states do not block with full loading card
-            if (IsScanning || tabName == "ScanLog" || tabName == "Duplicates")
+            if (IsScanning || tabName == "Scanner" || tabName == "Files" || tabName == "ScanLog" || tabName == "Duplicates")
             {
                 IsTabLoading = false;
                 return;

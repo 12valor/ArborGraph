@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="1050">
-    <Grid Margin="24">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -15,125 +15,93 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="Photoshop Storage Intelligence" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-                <TextBlock Text="Targeted analysis of creative artwork (.PSD, .PSB), scratch session temp files, Adobe Camera Raw caches, and presets" 
-                           FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Photoshop Storage" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <TextBlock Text="Analysis of creative artwork (.PSD, .PSB), scratch session temp files, and Camera Raw caches" 
+                           FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
-            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Height="30" Padding="14,0"/>
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
         </Grid>
 
-        <!-- Top Summary Cards -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Card 1: User Documents -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
-                <StackPanel>
-                    <TextBlock Text="USER DOCUMENTS (.PSD / .PSB)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                    <TextBlock Text="{Binding FormattedUserDocumentsBytes}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,2"/>
-                    <TextBlock FontSize="11" Foreground="{StaticResource BrushTextSecondary}">
-                        <Run Text="{Binding PsdCount, Mode=OneWay, StringFormat='{}{0:N0} PSD'}" FontWeight="SemiBold"/>
-                        <Run Text=" · " Foreground="{StaticResource BrushTextMuted}"/>
-                        <Run Text="{Binding PsbCount, Mode=OneWay, StringFormat='{}{0:N0} PSB'}" FontWeight="SemiBold"/>
-                    </TextBlock>
-                    <TextBlock Text="Protected creative artwork" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Card 2: Reclaimable Caches & Scratch -->
-            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="RECLAIMABLE CACHES" FontSize="10" FontWeight="Bold" Foreground="#D97706"/>
-                        <Border Grid.Column="1" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="3" Padding="4,1">
-                            <TextBlock Text="Safe Cleanup" FontSize="9" FontWeight="Bold" Foreground="#B45309"/>
-                        </Border>
-                    </Grid>
-                    <TextBlock Text="{Binding FormattedReclaimableBytes}" FontSize="20" FontWeight="Bold" Foreground="#D97706" Margin="0,6,0,2"/>
-                    <TextBlock Text="{Binding CacheAndScratchCount, StringFormat='{}{0:N0} scratch / cache files'}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                    <Button Content="Clean Safe Caches" Command="{Binding CleanSafeCachesCommand}" Style="{StaticResource ActionButtonStyle}"
-                            FontSize="10" Height="22" Padding="8,1" Margin="0,6,0,0" HorizontalAlignment="Left"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Card 3: Assets & Presets -->
-            <Border Grid.Column="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
-                <StackPanel>
-                    <TextBlock Text="ASSETS &amp; PRESETS" FontSize="10" FontWeight="Bold" Foreground="#0D9488"/>
-                    <TextBlock Text="{Binding OtherCount, StringFormat='{}{0:N0} items'}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,2"/>
-                    <TextBlock Text="Brushes, styles, actions, patterns" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                    <TextBlock Text=".abr, .asl, .atn, .pat files" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Card 4: Total Photoshop Storage -->
-            <Border Grid.Column="6" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
-                <StackPanel>
-                    <TextBlock Text="TOTAL PHOTOSHOP FOOTPRINT" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                    <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,6,0,2"/>
-                    <TextBlock Text="Total indexed storage" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                    <TextBlock Text="Full filesystem footprint" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Filter Bar -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
+        <!-- Clean Summary Strip -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="260"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="User Documents: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <TextBlock Text="{Binding FormattedUserDocumentsBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}"/>
+                    <TextBlock Text="{Binding PsdCount, Mode=OneWay, StringFormat='  ({0} PSD'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
+                    <TextBlock Text="{Binding PsbCount, Mode=OneWay, StringFormat=', {0} PSB)'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="Scratch &amp; Temp: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <TextBlock Text="{Binding FormattedScratchBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushWarning}" FontFamily="{StaticResource MonoFont}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                    <TextBlock Text="Total Footprint: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <TextBlock Text="{Binding FormattedTotalPhotoshopBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Segmented Category Switcher -->
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Category Filter:" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <ComboBox Grid.Column="1" ItemsSource="{Binding FilterOptions}" SelectedItem="{Binding SelectedFilter}" Height="28" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <RadioButton Content="All Files" Command="{Binding SelectFilterCommand}" CommandParameter="All"
+                                 IsChecked="True" Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
+                    <RadioButton Content="Documents (.PSD/.PSB)" Command="{Binding SelectFilterCommand}" CommandParameter="Documents"
+                                 Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
+                    <RadioButton Content="Scratch &amp; Temp" Command="{Binding SelectFilterCommand}" CommandParameter="Scratch"
+                                 Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
+                    <RadioButton Content="Camera Raw Cache" Command="{Binding SelectFilterCommand}" CommandParameter="CameraRaw"
+                                 Style="{StaticResource SegmentedTabButtonStyle}"/>
+                </StackPanel>
 
-                <TextBlock Grid.Column="3" Text="{Binding PhotoshopItems.Count, StringFormat='Displaying {0:N0} items'}" FontSize="12" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Purge Scratch Files..." Command="{Binding PurgeScratchCommand}" 
+                            Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,3"/>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Largest Photoshop Files DataGrid -->
-        <DataGrid Grid.Row="3" ItemsSource="{Binding PhotoshopItems}" SelectedItem="{Binding SelectedPhotoshopItem, Mode=TwoWay}"
+        <!-- DataGrid of Photoshop Targets -->
+        <DataGrid Grid.Row="3" ItemsSource="{Binding DisplayFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                   MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu>
-                                <MenuItem Header="Open in Photoshop" 
-                                          Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <MenuItem Header="Reveal in Windows Explorer" 
-                                          Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <Separator Background="{StaticResource BrushBorder}"/>
-                                <MenuItem Header="Copy Absolute Path" 
-                                          Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <MenuItem Header="Properties" 
-                                          Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <Separator Background="{StaticResource BrushBorder}"/>
-                                <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
-                                          Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
-                                          Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Open File" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Open File Location" Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator/>
+                                <MenuItem Header="Copy Absolute Path" Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Properties" Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <Separator/>
+                                <MenuItem Header="Move to Recycle Bin" Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <MenuItem Header="Permanently Delete..." Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
@@ -141,74 +109,36 @@
             </DataGrid.RowStyle>
 
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Classification" Width="140">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsReclaimable}" Value="True">
-                                                <Setter Property="Background" Value="#FEF3C7"/>
-                                                <Setter Property="BorderBrush" Value="#FDE68A"/>
-                                                <Setter Property="BorderThickness" Value="1"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsReclaimable}" Value="False">
-                                                <Setter Property="Background" Value="#F1F5F9"/>
-                                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                                                <Setter Property="BorderThickness" Value="1"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="{Binding TypeLabel}" FontSize="11" FontWeight="SemiBold">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsReclaimable}" Value="True">
-                                                    <Setter Property="Foreground" Value="#B45309"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsReclaimable}" Value="False">
-                                                    <Setter Property="Foreground" Value="#334155"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-
-                <DataGridTextColumn Header="Document Name" Binding="{Binding File.Name}" Width="260">
+                <DataGridTextColumn Header="Asset Name" Binding="{Binding Name}" Width="260">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontWeight" Value="Medium"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn Header="File Size" Binding="{Binding File.FormattedSize}" Width="110">
+                <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="100">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="TextAlignment" Value="Right"/>
-                            <Setter Property="Margin" Value="0,0,10,0"/>
+                            <Setter Property="Margin" Value="0,0,8,0"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn Header="Extension" Binding="{Binding File.Extension}" Width="85"/>
+                <DataGridTextColumn Header="Asset Type" Binding="{Binding Category}" Width="140"/>
 
-                <DataGridTextColumn Header="Last Modified" Binding="{Binding File.ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="150"/>
+                <DataGridTextColumn Header="Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="140"/>
 
-                <DataGridTextColumn Header="Path" Binding="{Binding File.Path}" Width="*">
+                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
                             <Setter Property="FontSize" Value="11"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
                             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -218,34 +148,31 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- Selected Document Panel with Safety Guidance -->
-        <Border Grid.Row="4" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+        <!-- Selected Asset Detail Strip -->
+        <Border Grid.Row="4" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding SelectedPhotoshopItem.File.Name, FallbackValue='Select an item above'}" 
-                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-                    <TextBlock Text="{Binding SelectedPhotoshopItem.File.Path, FallbackValue='—'}" 
-                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,6" TextTrimming="CharacterEllipsis"/>
-
-                    <!-- Safety description callout -->
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding SelectedPhotoshopItem.SafetyDescription, FallbackValue='Select a file to inspect its storage category and safety advice.'}" 
-                                   FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                    </Border>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select an asset to inspect'}" 
+                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding SelectedFile.FormattedSize, FallbackValue='—', StringFormat='  ({0})'}" 
+                                   FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open in Photoshop" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}"/>
+                    <Button Content="Open" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Reveal" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3"/>
                 </StackPanel>
             </Grid>
         </Border>

@@ -1,0 +1,168 @@
+<UserControl x:Class="DiskScope.Views.ScannerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,32" MaxWidth="900" HorizontalAlignment="Left">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. HEADER -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="Scanner" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <TextBlock Text="Real-time disk indexing and filesystem accounting" FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0"/>
+            </StackPanel>
+
+            <!-- 2. STATUS CARD / ACTIVE PANEL -->
+            <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="24" Margin="0,0,0,20">
+                <StackPanel>
+                    <!-- Target & State Line -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="TARGET: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding CurrentTargetDescription}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="8,3">
+                            <TextBlock Text="{Binding Stats.State}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushAccent}"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Progress Bar -->
+                    <ProgressBar Height="4" Margin="0,0,0,20"
+                                 IsIndeterminate="{Binding IsScanning}"
+                                 Foreground="{StaticResource BrushAccent}" 
+                                 Background="{StaticResource BrushBgCardHover}" 
+                                 BorderThickness="0"/>
+
+                    <!-- Plain-Language Primary Metrics Grid -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Files Scanned -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Files scanned" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}}" 
+                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <!-- Folders -->
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Folders" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}}" 
+                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <!-- Speed -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Speed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.FormattedFilesPerSecond}" 
+                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <!-- Elapsed Time -->
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Elapsed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.FormattedElapsed}" 
+                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Secondary Metric Line -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="Storage indexed: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.FormattedLogicalBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <TextBlock Text="Skipped: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                            <TextBlock Text="{Binding Stats.FilesSkipped, Converter={StaticResource NumberFormatConverter}, StringFormat='{}{0} files'}" FontSize="12" Foreground="{StaticResource BrushTextMuted}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Separator Margin="0,0,0,16"/>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                                Style="{StaticResource PrimaryButtonStyle}" 
+                                Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
+                                Padding="16,6" Margin="0,0,8,0"/>
+
+                        <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                                Style="{StaticResource DangerButtonStyle}" 
+                                Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
+                                Padding="16,6" Margin="0,0,8,0"/>
+
+                        <Button Content="Explore Files" Command="{Binding ExploreFilesCommand}" 
+                                Style="{StaticResource ActionButtonStyle}" 
+                                Padding="14,6" Margin="0,0,8,0"/>
+
+                        <Button Content="Review Cleanup" Command="{Binding ReviewCleanupCommand}" 
+                                Style="{StaticResource ActionButtonStyle}" 
+                                Padding="14,6"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. COLLAPSIBLE TECHNICAL DETAILS -->
+            <Expander Grid.Row="2" Header="Technical Details" IsExpanded="{Binding ShowTechnicalDetails}"
+                      Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                      Padding="16" Margin="0,0,0,16">
+                <StackPanel Margin="0,12,0,0">
+                    <!-- Current Directory -->
+                    <TextBlock Text="CURRENT TRAVERSAL PATH" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4"/>
+                    <TextBlock Text="{Binding Stats.CurrentDirectory, FallbackValue='—'}" 
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextPrimary}" 
+                               TextTrimming="CharacterEllipsis" Margin="0,0,0,14"/>
+
+                    <!-- Live Directory Buffer -->
+                    <TextBlock Text="RECENT DIRECTORIES BUFFER" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4"/>
+                    <ListBox ItemsSource="{Binding RecentDirectories}"
+                             Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                             FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"
+                             MaxHeight="140" Margin="0,0,0,14"
+                             VirtualizingStackPanel.IsVirtualizing="True"
+                             VirtualizingStackPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis" Padding="2,1"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Scan Integrity -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Integrity: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                        <TextBlock Text="{Binding OverviewVM.IntegrityStatus}" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+        </Grid>
+    </ScrollViewer>
+</UserControl>

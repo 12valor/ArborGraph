@@ -1,0 +1,98 @@
+<UserControl x:Class="DiskScope.Views.FilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:views="clr-namespace:DiskScope.Views"
+             xmlns:infra="clr-namespace:DiskScope.Infrastructure"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1050">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- SUB-NAVIGATION BAR -->
+        <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="20,10">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="Largest Files" 
+                             Command="{Binding SelectSubTabCommand}" CommandParameter="LargestFiles"
+                             IsChecked="True"
+                             Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
+
+                <RadioButton Content="Largest Folders" 
+                             Command="{Binding SelectSubTabCommand}" CommandParameter="LargestFolders"
+                             Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
+
+                <RadioButton Content="File Types" 
+                             Command="{Binding SelectSubTabCommand}" CommandParameter="FileTypes"
+                             Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
+
+                <RadioButton Content="Old Files" 
+                             Command="{Binding SelectSubTabCommand}" CommandParameter="OldFiles"
+                             Style="{StaticResource SegmentedTabButtonStyle}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- SUB-VIEW CONTAINER -->
+        <Grid Grid.Row="1">
+            <!-- Largest Files -->
+            <views:LargestFilesView DataContext="{Binding LargestFilesVM}">
+                <views:LargestFilesView.Style>
+                    <Style TargetType="views:LargestFilesView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="LargestFiles">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:LargestFilesView.Style>
+            </views:LargestFilesView>
+
+            <!-- Largest Folders -->
+            <views:LargestFoldersView DataContext="{Binding LargestFoldersVM}">
+                <views:LargestFoldersView.Style>
+                    <Style TargetType="views:LargestFoldersView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="LargestFolders">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:LargestFoldersView.Style>
+            </views:LargestFoldersView>
+
+            <!-- File Types -->
+            <views:FileTypesView DataContext="{Binding FileTypesVM}">
+                <views:FileTypesView.Style>
+                    <Style TargetType="views:FileTypesView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="FileTypes">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:FileTypesView.Style>
+            </views:FileTypesView>
+
+            <!-- Old Files -->
+            <views:OldFilesView DataContext="{Binding OldFilesVM}">
+                <views:OldFilesView.Style>
+                    <Style TargetType="views:OldFilesView">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="OldFiles">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:OldFilesView.Style>
+            </views:OldFilesView>
+        </Grid>
+    </Grid>
+</UserControl>

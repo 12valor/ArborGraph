@@ -28,6 +28,8 @@ public class SettingsViewModel : ObservableObject
     private string _newExclusionPath = string.Empty;
     private string _statusMessage = string.Empty;
 
+    private string _selectedSection = "General";
+
     public SettingsViewModel(SettingsService settingsService, DatabaseService dbService)
     {
         _settingsService = settingsService;
@@ -38,6 +40,10 @@ public class SettingsViewModel : ObservableObject
 
         LoadFromService();
 
+        SelectSectionCommand = new RelayCommand(p =>
+        {
+            if (p is string s) SelectedSection = s;
+        });
         AddExclusionCommand = new RelayCommand(_ => AddExclusion(), _ => !string.IsNullOrWhiteSpace(NewExclusionPath));
         BrowseExclusionFolderCommand = new RelayCommand(_ => BrowseExclusionFolder());
         RemoveExclusionCommand = new RelayCommand(_ => RemoveExclusion(), _ => !string.IsNullOrWhiteSpace(SelectedExclusion));
@@ -47,6 +53,14 @@ public class SettingsViewModel : ObservableObject
         ViewEulaCommand = new RelayCommand(_ => ViewEula());
     }
 
+    public string SelectedSection
+    {
+        get => _selectedSection;
+        set => SetProperty(ref _selectedSection, value);
+    }
+
+    public ICommand SelectSectionCommand { get; }
+    public ScanLogViewModel? ScanLogVM { get; set; }
     public ICommand ViewEulaCommand { get; }
 
     public ObservableCollection<string> ExcludedPaths { get; }

@@ -18,6 +18,7 @@
   <ItemGroup>
     <Resource Include="Resources\DiskScope.ico" />
     <Resource Include="Resources\app.ico" />
+    <Resource Include="Resources\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>

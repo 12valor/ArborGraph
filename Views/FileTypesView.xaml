@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1100">
-    <Grid Margin="24">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -14,58 +14,62 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="File Type Analysis &amp; Drill-Down" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
-            <TextBlock Text="Select any category to inspect, filter, and safely clean contributing files" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="File Types" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <TextBlock Text="Storage breakdown by extension and category" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+        </Grid>
 
-        <!-- Totals Card -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+        <!-- Summary Strip -->
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="TOTAL INDEXED STORAGE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
-                    <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,4,0,0"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Total Storage: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}"/>
                 </StackPanel>
-
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="TOTAL INDEXED FILES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
-                    <TextBlock Text="{Binding FormattedTotalFiles}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="Total Files: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <TextBlock Text="{Binding FormattedTotalFiles}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}"/>
                 </StackPanel>
-
-                <Button Grid.Column="2" Content="Refresh Analysis" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
-        <!-- Main Content Area: Left Categories, Right Drill-Down -->
+        <!-- Master-Detail Content: Categories Left, Drilldown Right -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="420"/>
-                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="14"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Left: Categories DataGrid -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="10">
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="CATEGORIES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="4,0,0,8"/>
+                    <TextBlock Grid.Row="0" Text="CATEGORIES" Style="{StaticResource SectionHeadingStyle}" Margin="4,2,0,6"/>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="110">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontWeight" Value="Medium"/>
                                         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
@@ -74,8 +78,9 @@
                             <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="85">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                                         <Setter Property="TextAlignment" Value="Right"/>
                                         <Setter Property="Margin" Value="0,0,6,0"/>
                                     </Style>
@@ -88,24 +93,25 @@
                                         <Grid Margin="2,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="42"/>
+                                                <ColumnDefinition Width="38"/>
                                             </Grid.ColumnDefinitions>
-                                            <ProgressBar Height="6" Maximum="100" Value="{Binding StoragePercentage, Mode=OneWay}"
-                                                         Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCard}" BorderThickness="0"
+                                            <ProgressBar Height="4" Maximum="100" Value="{Binding StoragePercentage, Mode=OneWay}"
+                                                         Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0"
                                                          VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="1" Text="{Binding FormattedPercentage}" Foreground="{StaticResource BrushTextSecondary}"
-                                                       FontSize="10" TextAlignment="Right" VerticalAlignment="Center"/>
+                                                       FontSize="10" TextAlignment="Right" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="Files" Binding="{Binding FormattedCount}" Width="70">
+                            <DataGridTextColumn Header="Files" Binding="{Binding FormattedFileCount}" Width="65">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="TextAlignment" Value="Right"/>
-                                        <Setter Property="Margin" Value="0,0,4,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                        <Setter Property="FontSize" Value="10"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
@@ -114,61 +120,40 @@
                 </Grid>
             </Border>
 
-            <!-- Right: Contributing Files Drill-Down -->
-            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="12">
+            <!-- Right: Files in Selected Category -->
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Drill-Down Header & Search Strip -->
-                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="CONTRIBUTING FILES: " FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}"/>
-                            <TextBlock Text="{Binding SelectedCategory.Category, FallbackValue='None'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}"/>
-                            <TextBlock Text=" (" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
-                            <TextBlock Text="{Binding SelectedCategory.FormattedSize, FallbackValue='0 B'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                            <TextBlock Text=")" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
-                        </StackPanel>
-
-                        <!-- Search Filter -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Search:" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" Margin="0,0,6,0"/>
-                            <TextBox Width="160" Height="26" VerticalContentAlignment="Center"
-                                     Text="{Binding FilterSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     Background="{StaticResource BrushBgCanvas}" Foreground="{StaticResource BrushTextPrimary}"
-                                     BorderBrush="{StaticResource BrushBorder}" Padding="6,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedCategory.Category, FallbackValue='Select Category'}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                            <TextBlock Text="{Binding CategoryFilesCount, StringFormat='  ({0} files)'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
 
-                    <!-- Files DataGrid -->
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding CategoryFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}">
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding CategoryFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                              MouseDoubleClick="DataGrid_MouseDoubleClick">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                                 <Setter Property="ContextMenu">
                                     <Setter.Value>
                                         <ContextMenu>
-                                            <MenuItem Header="Open File" 
-                                                      Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <MenuItem Header="Open File Location" 
-                                                      Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <Separator Background="{StaticResource BrushBorder}"/>
-                                            <MenuItem Header="Copy Absolute Path" 
-                                                      Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <MenuItem Header="Properties" 
-                                                      Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <Separator Background="{StaticResource BrushBorder}"/>
-                                            <MenuItem Header="Move to Recycle Bin" InputGestureText="Del"
-                                                      Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <MenuItem Header="Permanently Delete..." InputGestureText="Shift+Del"
-                                                      Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Open File" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Open File Location" Command="{Binding DataContext.OpenFileLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Copy Absolute Path" Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Properties" Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Move to Recycle Bin" Command="{Binding DataContext.MoveToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Permanently Delete..." Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>
@@ -176,35 +161,34 @@
                         </DataGrid.RowStyle>
 
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="File Name" Binding="{Binding Name}" Width="190">
+                            <DataGridTextColumn Header="File Name" Binding="{Binding Name}" Width="200">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontWeight" Value="Medium"/>
                                         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="95">
+                            <DataGridTextColumn Header="Size" Binding="{Binding FormattedSize}" Width="90">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                                         <Setter Property="TextAlignment" Value="Right"/>
-                                        <Setter Property="Margin" Value="0,0,8,0"/>
+                                        <Setter Property="Margin" Value="0,0,6,0"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridTextColumn Header="Ext" Binding="{Binding Extension}" Width="55"/>
+                            <DataGridTextColumn Header="Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="120"/>
 
-                            <DataGridTextColumn Header="Modified" Binding="{Binding ModifiedDate, Converter={StaticResource DateTimeToStringConverter}}" Width="135"/>
-
-                            <DataGridTextColumn Header="Full Path" Binding="{Binding Path}" Width="*">
+                            <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontFamily" Value="Consolas"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
                                         <Setter Property="FontSize" Value="11"/>
                                         <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
                                         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -217,29 +201,31 @@
             </Border>
         </Grid>
 
-        <!-- Selected File Action Bar -->
-        <Border Grid.Row="3" Margin="0,12,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14">
+        <!-- Selected File Detail Strip -->
+        <Border Grid.Row="3" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a file'}" 
-                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a file to inspect'}" 
+                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding SelectedFile.FormattedSize, FallbackValue='—', StringFormat='  ({0})'}" 
+                                   FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
+                    </StackPanel>
                     <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
-                               FontFamily="Consolas" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open File" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Reveal in Explorer" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Properties" Command="{Binding ShowPropertiesCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Move to Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Permanently Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource ActionButtonStyle}" 
-                            Foreground="{StaticResource BrushWarning}"/>
+                    <Button Content="Open" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Reveal" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
+                    <Button Content="Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3"/>
                 </StackPanel>
             </Grid>
         </Border>

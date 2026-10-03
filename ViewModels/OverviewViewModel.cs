@@ -67,6 +67,8 @@ public class OverviewViewModel : ObservableObject
     public ICommand DrilldownCommand { get; }
     public ICommand DrillUpCommand { get; }
     public ICommand ResetDrilldownCommand { get; }
+    public ICommand? ReviewCleanupCommand { get; set; }
+    public ICommand? StartScanCommand { get; set; }
 
     public ScanStats Stats
     {

@@ -1485,19 +1485,21 @@ code, pre, .mono-text {
 }
 
 .explorer-nav-btn {
+    position: relative;
     display: block;
     width: 100%;
     text-align: left;
     background: transparent;
     border: none;
     border-radius: var(--radius-md);
-    padding: 8px 12px;
+    padding: 8px 12px 8px 14px;
     font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 400;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background-color 0.1s ease, color 0.1s ease;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    outline: none;
 }
 
 .explorer-nav-btn:hover {
@@ -1506,11 +1508,21 @@ code, pre, .mono-text {
 }
 
 .explorer-nav-btn.active {
-    background-color: var(--color-accent-tint);
-    border-left: 3px solid var(--color-accent);
-    color: var(--color-accent);
-    font-weight: 500;
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    background-color: #EAECEF;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.explorer-nav-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    border-radius: 1.5px;
+    background-color: var(--color-accent);
 }
 
 .explorer-content-pane {
@@ -1713,9 +1725,14 @@ code, pre, .mono-text {
         overflow-x: auto;
     }
     .explorer-nav-btn.active {
+        background-color: #EAECEF;
+        color: var(--color-text-primary);
         border-left: none;
-        border-bottom: 3px solid var(--color-accent);
+        border-bottom: 2px solid var(--color-accent);
         border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+    .explorer-nav-btn.active::before {
+        display: none;
     }
     .footer-grid {
         grid-template-columns: 1fr 1fr;

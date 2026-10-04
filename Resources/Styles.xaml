@@ -186,25 +186,40 @@
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="Padding" Value="12,7"/>
+        <Setter Property="Padding" Value="14,7"/>
         <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Regular"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Margin="2,1"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                    </Border>
+                    <Grid Margin="2,1">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- Precision active indicator pill (Windows 11 Fluent 2 style) -->
+                        <Border x:Name="activeIndicator"
+                                Width="3"
+                                Height="16"
+                                CornerRadius="1.5"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Background="{StaticResource BrushAccent}"
+                                Margin="2,0,0,0"
+                                Visibility="Collapsed"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource BrushBgCardHover}"/>
                             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#E2E5E9"/>
                         </Trigger>
                         <DataTrigger Value="True">
                             <DataTrigger.Binding>
@@ -213,10 +228,9 @@
                                     <Binding Path="CommandParameter" RelativeSource="{RelativeSource Self}"/>
                                 </MultiBinding>
                             </DataTrigger.Binding>
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource BrushAccentTint}"/>
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
-                            <Setter TargetName="border" Property="BorderThickness" Value="3,0,0,0"/>
-                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource BrushBgNavActive}"/>
+                            <Setter TargetName="activeIndicator" Property="Visibility" Value="Visible"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </DataTrigger>
                     </ControlTemplate.Triggers>
@@ -235,6 +249,7 @@
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
@@ -250,7 +265,7 @@
                             <Setter TargetName="border" Property="Background" Value="{StaticResource BrushBgSurface}"/>
                             <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
                             <Setter TargetName="border" Property="BorderThickness" Value="1"/>
-                            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

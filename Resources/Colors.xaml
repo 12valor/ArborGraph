@@ -6,6 +6,7 @@
     <Color x:Key="ColorBgSurface">#FFFFFF</Color>
     <Color x:Key="ColorBgCard">#FFFFFF</Color>
     <Color x:Key="ColorBgCardHover">#F3F4F6</Color>
+    <Color x:Key="ColorBgNavActive">#EAECEF</Color>
     <Color x:Key="ColorBorder">#E5E7EB</Color>
     <Color x:Key="ColorBorderLight">#F3F4F6</Color>
     
@@ -38,6 +39,7 @@
     <SolidColorBrush x:Key="BrushBgSurface" Color="{StaticResource ColorBgSurface}"/>
     <SolidColorBrush x:Key="BrushBgCard" Color="{StaticResource ColorBgCard}"/>
     <SolidColorBrush x:Key="BrushBgCardHover" Color="{StaticResource ColorBgCardHover}"/>
+    <SolidColorBrush x:Key="BrushBgNavActive" Color="{StaticResource ColorBgNavActive}"/>
     <SolidColorBrush x:Key="BrushBorder" Color="{StaticResource ColorBorder}"/>
     <SolidColorBrush x:Key="BrushBorderLight" Color="{StaticResource ColorBorderLight}"/>
 

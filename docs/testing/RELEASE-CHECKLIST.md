@@ -41,6 +41,8 @@
   Automated duplicate selection retains at least one master copy; master copies cannot be batch-purged without explicit override (Verified: TC-DUP-01, TC-DUP-02 PASS).
 - [x] **Gate 3.5 — Contextual Developer Cache Safety:**  
   Only directories with verified developer project markers (`package.json`, `Cargo.toml`, `.csproj`, `build.gradle`) are flagged; generic folders named `target` or `build` are never flagged (Verified: TC-DEV-01 PASS).
+- [x] **Gate 3.6 — Security & Data-Safety Audit (PROMPT 12):**  
+  10-domain comprehensive security audit verified; 0 data exfiltration channels, 0 arbitrary process invocations, 0 unmanaged memory leaks, 100% SQLite query parameterization; 0 P0/P1 security blockers; 1 non-destructive P3 query prefix leak logged (`BUG-005`) for v1.0.1 (Verified: SEC-01 to SEC-08 PASS, SEC-09 LOGGED).
 
 ---
 

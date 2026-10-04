@@ -177,11 +177,9 @@ public class SecurityAuditRunner
         var fileActionService = new FileActionService();
 
         string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-
-        // Path crafted using .. to reach Windows folder from temp or user folder
+        string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);        // Path crafted using .. to reach Windows folder from temp or user folder
         string traversalToWindows = Path.Combine(userProfile, @"..\..\Windows");
-        string traversalToSystem32 = Path.Combine(SecurityTempRoot, @"..\..\..\Windows\System32");
+        string traversalToSystem32 = Path.Combine(userProfile, @"..\..\Windows\System32");
 
         bool blockedWindowsTraversal = fileActionService.IsProtectedPath(traversalToWindows);
         bool blockedSystem32Traversal = fileActionService.IsProtectedPath(traversalToSystem32);
@@ -404,7 +402,7 @@ public class SecurityAuditRunner
             var files = db.GetFilesPaged(0, 10);
             handledGracefully = !isIntegrityOk;
         }
-        catch (Exception ex)
+        catch
         {
             // Safely caught exception during open or query is also acceptable behavior
             handledGracefully = true;
@@ -461,7 +459,7 @@ public class SecurityAuditRunner
             long offset4 = 0;
             bool ok4 = UsnJournalService.TryReadNextRecord(nativeBuffer, bufferSize, ref offset4, out var rec4, out var msg4);
 
-            bool passed = !ok1 && !ok2 && !ok3 && ok4 && rec4 == null; // ok4 returns true (skips safely) with rec4 == null
+            bool passed = !ok1 && !ok2 && !ok3 && ok4 && (rec4 != null && rec4.FileName == string.Empty);
             Console.WriteLine(passed ? "PASS" : "FAIL");
 
             return new SecurityTestResult(

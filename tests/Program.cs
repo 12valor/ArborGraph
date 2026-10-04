@@ -41,6 +41,11 @@ public class Program
             return await StressTestRunner.RunAllAsync(args);
         }
 
+        if (args.Length > 0 && (args[0] == "--security" || args[0] == "--audit"))
+        {
+            return await SecurityAuditRunner.RunAllAsync(args);
+        }
+
         // 2. Default: Run Modern Automated QA Test Harness
         return await RunAutomatedHarnessAsync(args);
     }

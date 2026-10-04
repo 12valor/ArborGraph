@@ -186,4 +186,23 @@ Executed on host test environment ENV-A (Windows 11 x64, 13th Gen Intel Core i7-
 - Indexed file count verified: 5,000 records (Total Bytes: 17,497,500 bytes).
 - Rolled up directory count verified: 51 folders.
 
+---
+
+## 4. Dedicated Security & Data-Safety Audit Execution Results (Prompt 12)
+
+Executed via `tests/SecurityAuditRunner.cs` against the real Windows 11 filesystem and SQLite engine:
+
+| Test ID | Category | Description | Status | Severity | Empirical Finding / Evidence |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **SEC-01** | Filesystem Safety | Protected Path Shield against system & drive roots (`C:\`, `C:\Windows`, `System32`, `Program Files`, `User Profile`) | `PASS` | INFO | All 8 system targets blocked from deletion; safe synthetic temp files allowed. |
+| **SEC-02** | Path / Input Safety | Path traversal (`..` escaping) canonicalized safely | `PASS` | INFO | Traversal paths resolving to Windows or System32 are canonicalized via `Path.GetFullPath` and blocked from deletion. |
+| **SEC-03** | Database Safety | Prefix collision isolation in `ClearIndex` & `RemoveDirectoryFromIndex` | `PASS` | INFO | Operations targeting `C:\Test` strictly isolate scope; `C:\Test2` and `C:\Test-Archive` remain 100% intact due to B-tree range scan boundaries. |
+| **SEC-04** | Input Safety | DOS reserved device names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`) & null bytes | `PASS` | INFO | 12 reserved, null-byte, and malformed variations handled safely without crashes or unhandled exceptions. |
+| **SEC-05** | Database Security | SQL Injection attack matrix across all query parameters | `PASS` | INFO | 8 injection payloads (`' OR '1'='1`, `DROP TABLE`, `UNION SELECT`, `ATTACH DATABASE`) safely neutralized via parameterized queries; zero schema modification. |
+| **SEC-06** | Database Security | Corrupted SQLite database file handling | `PASS` | INFO | Non-SQLite binary files and corrupt headers fail safely; `CheckIntegrity` accurately identifies corruption without crash. |
+| **SEC-07** | Native Safety | USN Journal buffer fuzzing & out-of-bounds guards | `PASS` | INFO | Zero-length records, truncated buffers, and out-of-bounds filename offsets safely caught and skipped without `AccessViolationException`. |
+| **SEC-08** | Filesystem Safety | In-use / locked file contention during batch deletion | `PASS` | INFO | Files locked with exclusive `FileShare.None` handles are safely trapped and reported; unlocked files deleted without hang or crash. |
+| **SEC-09** | Query Boundary | Location prefix boundary in `GetFilesPaged` / `GetFilteredFileCount` | `FAIL` | **P3 / MINOR** | Non-destructive leak: Querying `locationPrefix = @"C:\Test"` binds `$loc = "C:\Test%"`, returning sibling `C:\Test2\sibling.txt`. Does not cause deletion. |
+
+
 

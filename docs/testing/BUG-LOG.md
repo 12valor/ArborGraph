@@ -15,9 +15,9 @@
 | **BUG-002** | P0 / BLOCKER | `FEAT-19` / `TC-UI-RESP-01`, `TC-UI-RESP-02` | Synchronous deletion executes on UI dispatcher thread, freezing window | CLOSED (Verified: TC-UI-RESP-01, TC-UI-RESP-02 PASS, Dispatcher latency < 1ms) | v1.0.0 |
 | **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | CLOSED (Verified: Clean Inno Setup compile & TC-INS-04 PASS) | v1.0.0 |
 | **BUG-004** | P1 / CRITICAL | `FEAT-04` / `TC-USN-01` | USN Journal native pointer boundary arithmetic risks memory violation | CLOSED (Verified: TC-USN-01 to TC-USN-04 PASS) | v1.0.0 |
-| **BUG-005** | P3 / MINOR | `FEAT-30` / `SEC-09` | Location filter query boundary binds `LIKE 'C:\Test%'` without trailing slash | NEW (Non-destructive search leak; Non-blocking) | v1.0.1 |
+| **BUG-005** | P3 / MINOR | `FEAT-30` / `SEC-09`, `TC-QRY-01` | Location filter query boundary binds `LIKE 'C:\Test%'` without trailing slash | CLOSED (Verified: SEC-09, TC-QRY-01 PASS) | v1.0.0 |
 
-*Note: Dedicated Security & Data-Safety Audit (Prompt 12) identified 0 P0/P1 release blockers; 1 non-destructive P3 query filter boundary issue logged (`BUG-005`).*
+*Note: All confirmed audit defects (BUG-001 through BUG-005) remediated and verified passing with zero open regressions.*
 
 ---
 
@@ -143,12 +143,12 @@
 
 ### Bug ID: `BUG-005`
 - **Severity:** P3 / MINOR
-- **Feature / Test ID:** `FEAT-30` / `SEC-09`
+- **Feature / Test ID:** `FEAT-30` / `SEC-09`, `TC-QRY-01`
 - **Title:** Location Prefix Filter In SQLite Query Binds Sibling Folders Without Trailing Slash (`LIKE 'C:\Test%'`)
 - **Environment:** Windows 10 / 11 x64, SQLite 3
-- **Status:** NEW (Confirmed in `Services/DatabaseService.cs`; Non-destructive query filtering leak; Non-blocking for v1.0.0)
-- **Fix / Version:** v1.0.1
-- **Regression Status:** FAILED in `SEC-09` (Boundary isolation test)
+- **Status:** CLOSED (FIXED in `Services/DatabaseService.cs`; Verified by automated tests `SEC-09` and `TC-QRY-01`)
+- **Fix / Version:** v1.0.0
+- **Regression Status:** VERIFIED PASS (SEC-09 PASS, TC-QRY-01 PASS, 30/30 suite PASS)
 - **Preconditions:** Files indexed across folders sharing a common prefix (e.g. `C:\Test` and `C:\Test2`).
 - **Steps to Reproduce:**
   1. Index files in both `C:\Test` (e.g. `C:\Test\in_target.txt`) and `C:\Test2` (e.g. `C:\Test2\sibling.txt`).
@@ -157,21 +157,32 @@
 - **Expected Result:**
   - Query returns only files inside `C:\Test\` and its subdirectories.
   - Files in sibling directory `C:\Test2` are excluded.
-- **Actual Result:**
+- **Actual Result Prior to Fix:**
   - In `Services/DatabaseService.cs` lines 561-562, 657, and 1123:
     ```csharp
     whereClause += " AND path LIKE $loc";
     command.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
     ```
-  - `TrimEnd('\\', '/')` strips the trailing slash, causing `$loc` to bind to `C:\Test%`.
-  - In SQLite, `path LIKE 'C:\Test%'` matches both `C:\Test\in_target.txt` AND `C:\Test2\sibling.txt`.
-- **Remediation Details (Recommended for v1.0.1):**
-  - Ensure canonical trailing path separator is appended prior to wildcard:
+  - `TrimEnd('\\', '/')` stripped the trailing slash, causing `$loc` to bind to `C:\Test%`.
+  - In SQLite, `path LIKE 'C:\Test%'` matched both `C:\Test\in_target.txt` AND `C:\Test2\sibling.txt`.
+- **Remediation Details:**
+  - In `Services/DatabaseService.cs` (`GetFilesPaged`, `GetFilteredFileCount`, and `StreamFilteredFiles`):
+    Normalized `locationPrefix` by trimming trailing slashes, ensuring drive letter casing, and appending a trailing path separator before the wildcard (`$"{cleanLoc}\\%"` and `$"{cleanLoc.Replace('\\', '/')}/%"`):
     ```csharp
-    var normalizedPrefix = locationPrefix.TrimEnd('\\', '/') + "\\";
-    command.Parameters.AddWithValue("$loc", $"{normalizedPrefix}%");
+    string cleanLoc = locationPrefix.Trim().TrimEnd('\\', '/');
+    if (cleanLoc.Length >= 2 && cleanLoc[1] == ':')
+    {
+        cleanLoc = char.ToUpperInvariant(cleanLoc[0]) + cleanLoc.Substring(1);
+    }
+    if (!string.IsNullOrEmpty(cleanLoc))
+    {
+        whereClause += " AND (path LIKE $loc OR path LIKE $locFwd)";
+        cmd.Parameters.AddWithValue("$loc", $"{cleanLoc}\\%");
+        cmd.Parameters.AddWithValue("$locFwd", $"{cleanLoc.Replace('\\', '/')}/%");
+    }
     ```
-  - Note: Destructive operations (`ClearIndex`, `RemoveDirectoryFromIndex`, `DeleteFilesBatch`) use exact B-tree boundary ranges (`path >= prefix AND path < prefixUpperBound`) and are NOT affected by this issue.
+  - Strengthened `TC-QRY-01` in `tests/AutomatedTestSuites.cs` to insert sibling folder fixtures (`C:\Media2`) and assert strict boundary isolation across `GetFilesPaged`, `GetFilteredFileCount`, and `StreamFilteredFiles`.
+  - Verified via `tests/SecurityAuditRunner.cs` test `SEC-09` that sibling folder leaks are completely eliminated (`SEC-09` PASS).
 
 ---
 

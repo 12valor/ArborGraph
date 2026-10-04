@@ -558,8 +558,17 @@ public class DatabaseService : IDisposable
 
                 if (!string.IsNullOrWhiteSpace(locationPrefix))
                 {
-                    whereClause += " AND path LIKE $loc";
-                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                    string cleanLoc = locationPrefix.Trim().TrimEnd('\\', '/');
+                    if (cleanLoc.Length >= 2 && cleanLoc[1] == ':')
+                    {
+                        cleanLoc = char.ToUpperInvariant(cleanLoc[0]) + cleanLoc.Substring(1);
+                    }
+                    if (!string.IsNullOrEmpty(cleanLoc))
+                    {
+                        whereClause += " AND (path LIKE $loc OR path LIKE $locFwd)";
+                        cmd.Parameters.AddWithValue("$loc", $"{cleanLoc}\\%");
+                        cmd.Parameters.AddWithValue("$locFwd", $"{cleanLoc.Replace('\\', '/')}/%");
+                    }
                 }
 
                 string validSort = sortBy.ToLowerInvariant() switch
@@ -654,8 +663,17 @@ public class DatabaseService : IDisposable
 
                 if (!string.IsNullOrWhiteSpace(locationPrefix))
                 {
-                    whereClause += " AND path LIKE $loc";
-                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                    string cleanLoc = locationPrefix.Trim().TrimEnd('\\', '/');
+                    if (cleanLoc.Length >= 2 && cleanLoc[1] == ':')
+                    {
+                        cleanLoc = char.ToUpperInvariant(cleanLoc[0]) + cleanLoc.Substring(1);
+                    }
+                    if (!string.IsNullOrEmpty(cleanLoc))
+                    {
+                        whereClause += " AND (path LIKE $loc OR path LIKE $locFwd)";
+                        cmd.Parameters.AddWithValue("$loc", $"{cleanLoc}\\%");
+                        cmd.Parameters.AddWithValue("$locFwd", $"{cleanLoc.Replace('\\', '/')}/%");
+                    }
                 }
 
                 cmd.CommandText = $"SELECT COUNT(*) FROM files {whereClause};";
@@ -1120,8 +1138,17 @@ public class DatabaseService : IDisposable
 
                 if (!string.IsNullOrWhiteSpace(locationPrefix))
                 {
-                    whereClause += " AND path LIKE $loc";
-                    cmd.Parameters.AddWithValue("$loc", $"{locationPrefix.TrimEnd('\\', '/')}%");
+                    string cleanLoc = locationPrefix.Trim().TrimEnd('\\', '/');
+                    if (cleanLoc.Length >= 2 && cleanLoc[1] == ':')
+                    {
+                        cleanLoc = char.ToUpperInvariant(cleanLoc[0]) + cleanLoc.Substring(1);
+                    }
+                    if (!string.IsNullOrEmpty(cleanLoc))
+                    {
+                        whereClause += " AND (path LIKE $loc OR path LIKE $locFwd)";
+                        cmd.Parameters.AddWithValue("$loc", $"{cleanLoc}\\%");
+                        cmd.Parameters.AddWithValue("$locFwd", $"{cleanLoc.Replace('\\', '/')}/%");
+                    }
                 }
 
                 string validSort = sortBy.ToLowerInvariant() switch

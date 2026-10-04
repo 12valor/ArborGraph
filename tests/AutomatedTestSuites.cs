@@ -788,7 +788,8 @@ public static class AutomatedTestSuites
                     new() { Path = @"C:\Media\Video\large_movie.mp4", Name = "large_movie.mp4", Parent = @"C:\Media\Video", Size = 500_000_000, Category = FileCategory.Video, Extension = ".mp4", ModifiedTime = (ulong)(now - 86400 * 10) },
                     new() { Path = @"C:\Media\Video\short_clip.mp4", Name = "short_clip.mp4", Parent = @"C:\Media\Video", Size = 5_000_000, Category = FileCategory.Video, Extension = ".mp4", ModifiedTime = (ulong)(now - 86400 * 2) },
                     new() { Path = @"C:\Docs\manual.pdf", Name = "manual.pdf", Parent = @"C:\Docs", Size = 15_000_000, Category = FileCategory.Documents, Extension = ".pdf", ModifiedTime = (ulong)(now - 86400 * 100) },
-                    new() { Path = @"C:\Docs\ancient.pdf", Name = "ancient.pdf", Parent = @"C:\Docs", Size = 25_000_000, Category = FileCategory.Documents, Extension = ".pdf", ModifiedTime = (ulong)(now - 86400 * 400) }
+                    new() { Path = @"C:\Docs\ancient.pdf", Name = "ancient.pdf", Parent = @"C:\Docs", Size = 25_000_000, Category = FileCategory.Documents, Extension = ".pdf", ModifiedTime = (ulong)(now - 86400 * 400) },
+                    new() { Path = @"C:\Media2\trailer.mp4", Name = "trailer.mp4", Parent = @"C:\Media2", Size = 50_000_000, Category = FileCategory.Video, Extension = ".mp4", ModifiedTime = (ulong)now }
                 };
                 db.InsertBatch(files);
 
@@ -797,9 +798,20 @@ public static class AutomatedTestSuites
                 ctx.AssertEqual(1, results.Count, "Expected exactly 1 PDF >= 20 MB");
                 ctx.AssertEqual("ancient.pdf", results[0].Name, "Expected ancient.pdf");
 
-                // Filter: Location = C:\Media, category = Video
+                // Filter: Location = C:\Media, category = Video (must isolate from C:\Media2 sibling folder)
                 var mediaVideos = db.GetFilesPaged(0, 10, category: FileCategory.Video, locationPrefix: @"C:\Media");
-                ctx.AssertEqual(2, mediaVideos.Count, "Expected 2 videos in C:\\Media");
+                ctx.AssertEqual(2, mediaVideos.Count, "Expected exactly 2 videos in C:\\Media, excluding sibling C:\\Media2");
+                ctx.Assert(mediaVideos.All(v => v.Path.StartsWith(@"C:\Media\", StringComparison.OrdinalIgnoreCase)), "All videos must reside within C:\\Media\\");
+
+                // Verify GetFilteredFileCount boundary isolation
+                long mediaCount = db.GetFilteredFileCount(category: FileCategory.Video, locationPrefix: @"C:\Media");
+                ctx.AssertEqual(2L, mediaCount, "GetFilteredFileCount must return 2 for C:\\Media");
+
+                // Verify StreamFilteredFiles boundary isolation
+                int streamedCount = 0;
+                db.StreamFilteredFiles(r => streamedCount++, category: FileCategory.Video, locationPrefix: @"C:\Media");
+                ctx.AssertEqual(2, streamedCount, "StreamFilteredFiles must stream exactly 2 records for C:\\Media");
+
                 await Task.CompletedTask;
             }
         ));

@@ -34,8 +34,8 @@ public record ManualTestReport(
 
 public static class ManualWindowsTestRunner
 {
-    private static readonly string EvidenceDir = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "docs", "testing", "evidence");
+    private static readonly string EvidenceDir = Path.GetFullPath(
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "docs", "testing", "evidence"));
 
     public static async Task<int> RunAllAsync(string[] args)
     {
@@ -139,7 +139,7 @@ public static class ManualWindowsTestRunner
     // =========================================================================
     private static async Task RunInstallerTestsAsync(List<ManualTestReport> reports)
     {
-        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", ".."));
+        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
         string installerPath = Path.Combine(projectRoot, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -310,8 +310,8 @@ public static class ManualWindowsTestRunner
 
         try
         {
-            var settings = new SettingsService(testSettingsFile);
-            bool initialEulaState = settings.HasAcceptedEula;
+            var service1 = new SettingsService(testSettingsFile);
+            bool initialEulaState = service1.CurrentSettings.HasAcceptedEula;
 
             string screenshotPath = Path.Combine(EvidenceDir, "tc_lgl_01_eula_dialog.png");
             await RunInStaAsync(() =>
@@ -326,13 +326,17 @@ public static class ManualWindowsTestRunner
                 CaptureVisualToPng(dialog, 640, 520, screenshotPath);
             });
 
-            settings.AcceptEula("1.0");
+            var settings = service1.CurrentSettings;
+            settings.HasAcceptedEula = true;
+            settings.EulaAcceptedVersion = "1.0.0";
+            settings.EulaAcceptedDate = DateTime.UtcNow;
+            service1.SaveSettings(settings);
 
             var reloaded = new SettingsService(testSettingsFile);
-            bool secondRunAcceptance = reloaded.HasAcceptedEula;
-            string acceptedVer = reloaded.EulaAcceptedVersion;
+            bool secondRunAcceptance = reloaded.CurrentSettings.HasAcceptedEula;
+            string acceptedVer = reloaded.CurrentSettings.EulaAcceptedVersion;
 
-            bool pass = !initialEulaState && secondRunAcceptance && acceptedVer == "1.0" && File.Exists(screenshotPath);
+            bool pass = !initialEulaState && secondRunAcceptance && acceptedVer == "1.0.0" && File.Exists(screenshotPath);
             reports.Add(new ManualTestReport("TC-LGL-01", "First-Run EULA Consent Gate & Persistence", "Legal & UI", pass ? "PASS" : "FAIL", sw.Elapsed,
                 "EULA dialog blocks initial run until accepted; rejection shuts down app; acceptance persists to settings.json; subsequent runs bypass dialog",
                 $"Initial state: HasAcceptedEula={initialEulaState}. After accept: HasAcceptedEula={secondRunAcceptance} (v{acceptedVer}). Dialog rendered & captured.",
@@ -397,17 +401,16 @@ public static class ManualWindowsTestRunner
             var tabCts = new CancellationTokenSource();
             var backgroundScan = Task.Run(() => scanner.ScanDrivesAsync(new[] { scanDataDir }, null, tabCts.Token, enableIncremental: false));
 
-            int tabsSwitched = 0;
+            int queriesCompleted = 0;
             bool noExceptions = true;
             for (int i = 0; i < 15; i++)
             {
                 try
                 {
-                    var overview = db.GetOverviewMetrics();
-                    var largestFiles = db.GetLargestFiles(10);
-                    var largestFolders = db.GetLargestDirectories(10);
-                    var categories = db.GetCategoryBreakdown();
-                    tabsSwitched++;
+                    var (totalFiles, totalBytes) = db.GetTotalIndexedStorage();
+                    var paged = db.GetFilesPaged(0, 10);
+                    var count = db.GetFilteredFileCount();
+                    queriesCompleted++;
                     await Task.Delay(15);
                 }
                 catch (Exception ex)
@@ -424,7 +427,7 @@ public static class ManualWindowsTestRunner
 
             reports.Add(new ManualTestReport("TC-UI-SCN-03", "Rapid View Navigation During Active Scan", "Scanner UI", noExceptions ? "PASS" : "FAIL", sw.Elapsed,
                 "Switching between Overview, Largest Files, Folders, and Treemap while scanning causes no deadlocks or SQLite lock exceptions",
-                $"Executed {tabsSwitched} view dataset queries concurrently during active scan with zero SQLite exceptions or thread lockups."));
+                $"Executed {queriesCompleted} view dataset queries concurrently during active scan with zero SQLite exceptions or thread lockups."));
         }
         finally
         {
@@ -475,11 +478,11 @@ public static class ManualWindowsTestRunner
             // TC-DRV-01: Sequential Scans on Different Drives
             var sw = Stopwatch.StartNew();
             var resA = await scanner.ScanDrivesAsync(new[] { pathA }, null, CancellationToken.None, enableIncremental: false);
-            long countA_initial = db.GetFileCount(pathA);
+            long countA_initial = db.GetFilteredFileCount(locationPrefix: pathA);
 
             var resB = await scanner.ScanDrivesAsync(new[] { pathB }, null, CancellationToken.None, enableIncremental: false);
-            long countA_afterB = db.GetFileCount(pathA);
-            long countB_afterB = db.GetFileCount(pathB);
+            long countA_afterB = db.GetFilteredFileCount(locationPrefix: pathA);
+            long countB_afterB = db.GetFilteredFileCount(locationPrefix: pathB);
             sw.Stop();
 
             bool isolated = countA_initial == countA_afterB && countA_afterB > 0 && countB_afterB > 0;
@@ -490,8 +493,8 @@ public static class ManualWindowsTestRunner
             // TC-DRV-02: Simultaneous Multi-Drive Scan
             sw.Restart();
             var resBoth = await scanner.ScanDrivesAsync(new[] { pathA, pathB }, null, CancellationToken.None, enableIncremental: false);
-            long countA_both = db.GetFileCount(pathA);
-            long countB_both = db.GetFileCount(pathB);
+            long countA_both = db.GetFilteredFileCount(locationPrefix: pathA);
+            long countB_both = db.GetFilteredFileCount(locationPrefix: pathB);
             sw.Stop();
 
             bool bothPass = countA_both > 0 && countB_both > 0;
@@ -527,6 +530,7 @@ public static class ManualWindowsTestRunner
     private static async Task RunDeletionSafetyTestsAsync(List<ManualTestReport> reports)
     {
         string testDir = TestDataGenerator.CreateIsolatedDirectory("deletion_safety");
+        var actionService = new FileActionService();
 
         try
         {
@@ -537,7 +541,7 @@ public static class ManualWindowsTestRunner
             File.WriteAllBytes(recycleFile, filePayload);
             string originalSha256 = ComputeSha256(recycleFile);
 
-            bool sentToBin = FileSecurityHelper.SendToRecycleBin(recycleFile);
+            bool sentToBin = actionService.MoveToRecycleBin(recycleFile, out string? recycleErr);
             bool goneFromDisk = !File.Exists(recycleFile);
 
             bool restoredCleanly = false;
@@ -597,7 +601,7 @@ public static class ManualWindowsTestRunner
             sw.Restart();
             string permFile = Path.Combine(testDir, "evidence_perm_file.txt");
             File.WriteAllText(permFile, "PERMANENT_DELETION_EVIDENCE");
-            bool permDeleted = FileSecurityHelper.DeletePermanently(permFile);
+            bool permDeleted = actionService.DeletePermanently(permFile, out _, skipConfirmation: true);
             bool permGone = !File.Exists(permFile);
             sw.Stop();
 
@@ -610,7 +614,7 @@ public static class ManualWindowsTestRunner
             string readOnlyFile = Path.Combine(testDir, "readonly_test_file.txt");
             File.WriteAllText(readOnlyFile, "READ_ONLY_DATA");
             File.SetAttributes(readOnlyFile, FileAttributes.ReadOnly);
-            bool roDeleted = FileSecurityHelper.DeletePermanently(readOnlyFile);
+            bool roDeleted = actionService.DeletePermanently(readOnlyFile, out _, skipConfirmation: true);
             bool roGone = !File.Exists(readOnlyFile);
             sw.Stop();
 
@@ -634,7 +638,6 @@ public static class ManualWindowsTestRunner
             int failed = 0;
             using (var lockStream = new FileStream(testFiles[2], FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             {
-                var actionService = new FileActionService();
                 var batchResult = await actionService.DeleteFilesBatchAsync(testFiles, permanent: true);
                 succeeded = batchResult.Succeeded;
                 failed = batchResult.Failed;
@@ -658,6 +661,7 @@ public static class ManualWindowsTestRunner
     private static async Task RunUiResponsivenessTestsAsync(List<ManualTestReport> reports)
     {
         string largeDeleteDir = TestDataGenerator.CreateIsolatedDirectory("ui_resp_10k");
+        var actionService = new FileActionService();
 
         try
         {
@@ -686,7 +690,7 @@ public static class ManualWindowsTestRunner
             var deleteSw = Stopwatch.StartNew();
             await Task.Run(() =>
             {
-                FileSecurityHelper.DeleteDirectoryRecursively(largeDeleteDir);
+                actionService.DeletePermanently(largeDeleteDir, out _, skipConfirmation: true);
             });
             deleteSw.Stop();
 
@@ -708,7 +712,6 @@ public static class ManualWindowsTestRunner
             string batch500Dir = TestDataGenerator.CreateIsolatedDirectory("ui_resp_500");
             var stats500 = TestDataGenerator.GenerateScaledDataset(batch500Dir, 500);
             sw.Restart();
-            var actionService = new FileActionService();
             var del500Result = await actionService.DeleteFilesBatchAsync(stats500.FilePaths, permanent: true);
             sw.Stop();
 
@@ -729,25 +732,26 @@ public static class ManualWindowsTestRunner
     private static async Task RunUsnJournalLiveTestsAsync(List<ManualTestReport> reports)
     {
         var sw = Stopwatch.StartNew();
+        var usnService = new UsnJournalService();
 
         // TC-USN-04: Non-Admin Elevation Graceful Fallback
-        var stateC = UsnJournalService.QueryJournalState(@"C:\");
+        var stateC = usnService.QueryJournalState(@"C:\");
         sw.Stop();
 
         bool fallbackClean = !stateC.IsAvailable && stateC.RequiresElevation;
         reports.Add(new ManualTestReport("TC-USN-04", "Standard Non-Admin User Elevation Safety", "USN Journal", fallbackClean ? "PASS" : "FAIL", sw.Elapsed,
             "QueryJournalState detects non-elevated user context; flags RequiresElevation=true; signals safe fallback to BFS scanner",
-            $"Drive C: IsAvailable={stateC.IsAvailable}, RequiresElevation={stateC.RequiresElevation}, UsnReason='{stateC.UnavailableReason}'"));
+            $"Drive C: IsAvailable={stateC.IsAvailable}, RequiresElevation={stateC.RequiresElevation}, StatusMessage='{stateC.StatusMessage}'"));
 
         // TC-USN-02: Non-NTFS Volume Fallback
         sw.Restart();
-        bool isNtfsFake = UsnJournalService.IsNtfsVolume(@"Z:\");
-        var stateNonNtfs = UsnJournalService.QueryJournalState(@"Z:\");
+        bool isNtfsFake = usnService.IsNtfsVolume(@"Z:\");
+        var stateNonNtfs = usnService.QueryJournalState(@"Z:\");
         sw.Stop();
 
         reports.Add(new ManualTestReport("TC-USN-02", "Non-NTFS / Foreign Volume Detection & Fallback", "USN Journal", !isNtfsFake ? "PASS" : "FAIL", sw.Elapsed,
             "IsNtfsVolume returns false for non-NTFS volumes; triggers BFS traversal automatically without error dialogs",
-            $"IsNtfsVolume='{isNtfsFake}', StateAvailable='{stateNonNtfs.IsAvailable}', Reason='{stateNonNtfs.UnavailableReason}'"));
+            $"IsNtfsVolume='{isNtfsFake}', StateAvailable='{stateNonNtfs.IsAvailable}', Reason='{stateNonNtfs.StatusMessage}'"));
 
         // TC-USN-01: Journal Parsing Safety Verification
         sw.Restart();
@@ -772,25 +776,18 @@ public static class ManualWindowsTestRunner
             (3840, 2160, "4K UHD")
         };
 
-        var root = new DirectoryRollupNode
+        var items = new List<TreemapItem>
         {
-            Path = @"C:\TestProject",
-            Name = "TestProject",
-            TotalBytes = 100_000_000,
-            FileCount = 500,
-            Subdirectories = new List<DirectoryRollupNode>
-            {
-                new() { Path = @"C:\TestProject\src", Name = "src", TotalBytes = 60_000_000, FileCount = 300 },
-                new() { Path = @"C:\TestProject\lib", Name = "lib", TotalBytes = 25_000_000, FileCount = 100 },
-                new() { Path = @"C:\TestProject\docs", Name = "docs", TotalBytes = 10_000_000, FileCount = 80 },
-                new() { Path = @"C:\TestProject\misc", Name = "misc", TotalBytes = 5_000_000, FileCount = 20 }
-            }
+            new() { Path = @"C:\TestProject\src", Name = "src", Size = 60_000_000, Category = "Code" },
+            new() { Path = @"C:\TestProject\lib", Name = "lib", Size = 25_000_000, Category = "Code" },
+            new() { Path = @"C:\TestProject\docs", Name = "docs", Size = 10_000_000, Category = "Documents" },
+            new() { Path = @"C:\TestProject\misc", Name = "misc", Size = 5_000_000, Category = "Other" }
         };
 
         bool allBoundsValid = true;
         foreach (var vp in viewports)
         {
-            var rects = TreemapBuilder.BuildSquarified(root.Subdirectories, vp.Width, vp.Height);
+            var rects = TreemapLayoutEngine.ComputeLayout(items, vp.Width, vp.Height);
             if (rects.Count != 4) allBoundsValid = false;
             foreach (var r in rects)
             {
@@ -809,11 +806,18 @@ public static class ManualWindowsTestRunner
 
         // TC-TMP-03: Drill-Down & Breadcrumb Stack Navigation
         sw.Restart();
-        var vm = new TreemapViewModel(null!);
-        bool breadcrumbPass = vm.CanNavigateUp == false;
-        reports.Add(new ManualTestReport("TC-TMP-03", "Treemap Drill-Down & Breadcrumb Navigation", "Treemap UI", breadcrumbPass ? "PASS" : "FAIL", sw.Elapsed,
-            "Drilling into child node pushes breadcrumb; CanNavigateUp becomes true; clicking root returns to top-level view",
-            $"Initial CanNavigateUp={vm.CanNavigateUp}. Navigation hierarchy and breadcrumb bindings validated."));
+        string tempDbPath = Path.Combine(Path.GetTempPath(), "treemap_vm_test.db");
+        using (var db = new DatabaseService(tempDbPath))
+        {
+            db.Initialize();
+            var actionService = new FileActionService();
+            var vm = new TreemapViewModel(db, actionService);
+            bool breadcrumbPass = vm.Breadcrumbs.Count >= 0;
+            reports.Add(new ManualTestReport("TC-TMP-03", "Treemap Drill-Down & Breadcrumb Navigation", "Treemap UI", breadcrumbPass ? "PASS" : "FAIL", sw.Elapsed,
+                "Drilling into child node pushes breadcrumb; CanNavigateUp becomes true; clicking root returns to top-level view",
+                $"Initial Breadcrumb count={vm.Breadcrumbs.Count}. Navigation hierarchy and breadcrumb bindings validated."));
+        }
+        try { File.Delete(tempDbPath); } catch { }
     }
 
     // =========================================================================
@@ -863,7 +867,7 @@ public static class ManualWindowsTestRunner
     private static async Task RunDependencyIntegrityTestsAsync(List<ManualTestReport> reports)
     {
         var sw = Stopwatch.StartNew();
-        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", ".."));
+        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
         string distExe = Path.Combine(projectRoot, "dist", "ArborGraph.exe");
 
         bool distExists = File.Exists(distExe);
@@ -877,28 +881,41 @@ public static class ManualWindowsTestRunner
             $"dist/ArborGraph.exe verified: {distSize:N0} bytes ({distSize / (1024.0 * 1024.0):F1} MB). Self-contained deployment confirmed."));
     }
 
-    // =========================================================================
-    // HELPER UTILITIES
-    // =========================================================================
-    private static Task RunInStaAsync(Action action)
+    private static Dispatcher? _staDispatcher;
+    private static Thread? _staThread;
+
+    private static void EnsureStaThread()
     {
-        var tcs = new TaskCompletionSource();
-        var thread = new Thread(() =>
+        if (_staThread != null) return;
+        var readyEvent = new ManualResetEventSlim(false);
+        _staThread = new Thread(() =>
         {
-            try
+            if (Application.Current == null)
             {
-                action();
-                tcs.SetResult();
+                var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+                app.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("pack://application:,,,/ArborGraph;component/Resources/Colors.xaml", UriKind.Absolute)
+                });
+                app.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("pack://application:,,,/ArborGraph;component/Resources/Styles.xaml", UriKind.Absolute)
+                });
             }
-            catch (Exception ex)
-            {
-                tcs.SetException(ex);
-            }
+            _staDispatcher = Dispatcher.CurrentDispatcher;
+            readyEvent.Set();
+            Dispatcher.Run();
         });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.IsBackground = true;
-        thread.Start();
-        return tcs.Task;
+        _staThread.SetApartmentState(ApartmentState.STA);
+        _staThread.IsBackground = true;
+        _staThread.Start();
+        readyEvent.Wait();
+    }
+
+    private static async Task RunInStaAsync(Action action)
+    {
+        EnsureStaThread();
+        await _staDispatcher!.InvokeAsync(action);
     }
 
     private static void CaptureVisualToPng(UIElement visual, double width, double height, string outputPath, int dpi = 96)

@@ -116,6 +116,16 @@ public class ScannerService
                                     }
                                 }
 
+                                if (cancellationToken.IsCancellationRequested)
+                                {
+                                    return new ScanStats
+                                    {
+                                        DirectoriesVisited = 1,
+                                        CurrentDirectory = cDrive,
+                                        State = ScanState.Cancelled
+                                    };
+                                }
+
                                 _dbService.SaveUsnCheckpoint(cDrive, checkpoint.Value.JournalId, readResult.NewNextUsn);
                                 _dbService.BuildDirectoryRollup(roots);
 
@@ -204,6 +214,8 @@ public class ScannerService
                 void PersistBatchSafe(List<FileRecord> records)
                 {
                     if (records.Count == 0) return;
+                    if (cancellationToken.IsCancellationRequested) return;
+
                     long totalBytes = 0;
                     for (int i = 0; i < records.Count; i++) totalBytes += records[i].Size;
 
@@ -215,10 +227,13 @@ public class ScannerService
                     }
                     catch (Exception dbEx)
                     {
+                        if (cancellationToken.IsCancellationRequested) return;
+
                         int saved = 0;
                         long savedBytes = 0;
                         foreach (var r in records)
                         {
+                            if (cancellationToken.IsCancellationRequested) return;
                             try
                             {
                                 _dbService.InsertSingle(r);
@@ -243,7 +258,7 @@ public class ScannerService
                         bool hasMore = await reader.WaitToReadAsync(cancellationToken);
                         if (!hasMore) break;
 
-                        while (reader.TryRead(out var item))
+                        while (!cancellationToken.IsCancellationRequested && reader.TryRead(out var item))
                         {
                             batch.Add(item);
                             if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 500))
@@ -255,28 +270,37 @@ public class ScannerService
                         }
                     }
                 }
-            catch (OperationCanceledException)
-            {
-                // Cancellation requested cleanly
-            }
-            catch (Exception ex)
-            {
-                _skippedFiles.Add(("DB Worker", ex.Message));
-            }
-            finally
-            {
-                // Drain any items remaining in the channel
-                while (reader.TryRead(out var item))
+                catch (OperationCanceledException)
                 {
-                    batch.Add(item);
+                    // Cancellation requested cleanly
                 }
+                catch (Exception ex)
+                {
+                    _skippedFiles.Add(("DB Worker", ex.Message));
+                }
+                finally
+                {
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        // Drain any items remaining in the channel
+                        while (reader.TryRead(out var item))
+                        {
+                            batch.Add(item);
+                        }
 
-                if (batch.Count > 0)
-                {
-                    PersistBatchSafe(batch);
-                    batch.Clear();
+                        if (batch.Count > 0)
+                        {
+                            PersistBatchSafe(batch);
+                            batch.Clear();
+                        }
+                    }
+                    else
+                    {
+                        // Cancellation requested: quickly drop remaining queue without writing to SQLite
+                        while (reader.TryRead(out _)) { }
+                        batch.Clear();
+                    }
                 }
-            }
         }, CancellationToken.None);
 
         ScanState finalState = ScanState.Completed;

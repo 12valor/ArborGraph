@@ -63,12 +63,12 @@ public class MainViewModel : ObservableObject
         SettingsVM.ScanLogVM = ScanLogVM;
 
         OverviewVM.ReviewCleanupCommand = new RelayCommand(_ => NavigateTo("CleanupCenter"));
-        OverviewVM.StartScanCommand = new RelayCommand(async _ => await StartScanAsync());
+        OverviewVM.StartScanCommand = new RelayCommand(async _ => await StartScanAsync(), _ => !IsScanning);
 
         _currentView = OverviewVM;
 
         StartScanCommand = new RelayCommand(async _ => await StartScanAsync(), _ => !IsScanning);
-        StopScanCommand = new RelayCommand(_ => StopScan(), _ => IsScanning);
+        StopScanCommand = new RelayCommand(_ => StopScan(), _ => IsScanning && _scanCts != null && !_scanCts.IsCancellationRequested);
         NavigateCommand = new RelayCommand(param => NavigateTo(param?.ToString() ?? "Overview"));
         BrowseCustomFolderCommand = new RelayCommand(_ => BrowseCustomFolder());
 
@@ -117,6 +117,7 @@ public class MainViewModel : ObservableObject
             {
                 (StartScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (StopScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (OverviewVM.StartScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportHtmlReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportJsonReportCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportFilesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -313,7 +314,9 @@ public class MainViewModel : ObservableObject
             }
             else
             {
-                ScanLogVM.AddLog("WARN", $"Custom folder path does not exist: {cleanCustomPath}");
+                ScanLogVM.AddLog("ERROR", $"Custom folder path does not exist: {cleanCustomPath}");
+                MessageBox.Show($"The specified scan folder does not exist:\n{cleanCustomPath}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
         }
 
@@ -413,13 +416,21 @@ public class MainViewModel : ObservableObject
 
             ScanLogVM.AddLog("INFO", statusMsg);
 
-            // Refresh data in all views
-            RefreshAllViews();
+            // Refresh data in all views on completion; for cancelled scans only refresh lightweight overview
+            if (finalStats.State != ScanState.Cancelled)
+            {
+                RefreshAllViews();
+            }
+            else
+            {
+                try { OverviewVM.GenerateStorageExplanation(); } catch { }
+            }
         }
         catch (OperationCanceledException)
         {
             OverviewVM.Stats.State = ScanState.Cancelled;
             ScanLogVM.AddLog("INFO", "Scan cancelled safely by user.");
+            try { OverviewVM.GenerateStorageExplanation(); } catch { }
         }
         catch (Exception ex)
         {
@@ -442,6 +453,7 @@ public class MainViewModel : ObservableObject
             if (_scanCts != null && !_scanCts.IsCancellationRequested)
             {
                 OverviewVM.Stats.State = ScanState.Stopping;
+                (StopScanCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
                 OverviewVM.AddRecentDirectory("Stop requested by user. Terminating traversal safely...", force: true);
                 _scanCts.Cancel();

@@ -92,13 +92,113 @@ public static class AutomatedTestSuites
                 // In production, roots passed is new[] { @"D:\" } or new[] { "D:" }
                 db.ClearIndex(new[] { @"D:\" });
 
-                // 4. Verify C:\ records were NOT deleted
+                // 4. Verify C:\ records were NOT deleted and D:\ records were cleared
                 var pagedFiles = db.GetFilesPaged(0, 100);
                 int cFilesRemaining = pagedFiles.Count(f => f.Path.StartsWith("C:", StringComparison.OrdinalIgnoreCase));
                 int dFilesRemaining = pagedFiles.Count(f => f.Path.StartsWith("D:", StringComparison.OrdinalIgnoreCase));
 
                 ctx.Assert(dFilesRemaining == 0, $"Drive D: records should have been cleared, found {dFilesRemaining} remaining.");
                 ctx.Assert(cFilesRemaining == 2, $"CRITICAL DATA SAFETY FAILURE: Scanning/clearing drive D: wiped drive C: records! Expected 2 C: files, but found {cFilesRemaining}.");
+
+                // 5. Rebuild D:\ records (simulating completed scan of D:\)
+                var fileD2 = new FileRecord
+                {
+                    Path = @"D:\Games\GameB\launcher.exe",
+                    Name = "launcher.exe",
+                    Parent = @"D:\Games\GameB",
+                    Size = 10485760,
+                    ModifiedTime = 1700001000,
+                    CreatedTime = 1700001000,
+                    Extension = ".exe",
+                    Category = FileCategory.Executables,
+                    Accessible = 1
+                };
+                db.InsertBatch(new[] { fileD2 });
+
+                // 6. Verify rebuilt state: C:\ still intact (2 records) and D:\ has new record (1 record)
+                var updatedFiles = db.GetFilesPaged(0, 100);
+                int cFilesFinal = updatedFiles.Count(f => f.Path.StartsWith("C:", StringComparison.OrdinalIgnoreCase));
+                int dFilesFinal = updatedFiles.Count(f => f.Path.StartsWith("D:", StringComparison.OrdinalIgnoreCase));
+                ctx.AssertEqual(2, cFilesFinal, "Drive C: records should remain intact after D: scan completion.");
+                ctx.AssertEqual(1, dFilesFinal, "Drive D: records should reflect newly scanned file.");
+                ctx.AssertEqual(3, updatedFiles.Count, "Total database files should be 3 (2 on C:, 1 on D:).");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DRV-02: Multi-Drive Multiple Roots Scoping & Explicit Full-Clear Fallbacks
+        runner.Register(new TestCase(
+            TestId: "TC-DRV-02",
+            FeatureId: "FEAT-08",
+            Title: "Multi-Drive Multiple Roots Scoping & Explicit Full-Clear Verification",
+            Priority: "P0 / BLOCKER",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies that multiple specific roots clear only the targeted volumes without wiping others, and that explicit full-clear (null, empty, ALL) still functions correctly.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("multidrive_roots_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                Func<string, string, FileRecord> makeFile = (path, name) => new FileRecord
+                {
+                    Path = path,
+                    Name = name,
+                    Parent = Path.GetDirectoryName(path) ?? string.Empty,
+                    Size = 1024,
+                    ModifiedTime = 1700000000,
+                    CreatedTime = 1700000000,
+                    Extension = Path.GetExtension(name),
+                    Category = FileCategory.Documents,
+                    Accessible = 1
+                };
+
+                // Seed C:, D:, and E: drives (2 files each = 6 files total)
+                var seedFiles = new[]
+                {
+                    makeFile(@"C:\Folder1\c1.txt", "c1.txt"),
+                    makeFile(@"C:\Folder2\c2.txt", "c2.txt"),
+                    makeFile(@"D:\Folder1\d1.txt", "d1.txt"),
+                    makeFile(@"D:\Folder2\d2.txt", "d2.txt"),
+                    makeFile(@"E:\Folder1\e1.txt", "e1.txt"),
+                    makeFile(@"E:\Folder2\e2.txt", "e2.txt"),
+                };
+                db.InsertBatch(seedFiles);
+
+                var (initCount, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(6, initCount, "Initial database should have 6 files across C:, D:, and E:");
+
+                // Test E: Multiple specific roots (clear C: and D: simultaneously, E: must remain untouched)
+                db.ClearIndex(new[] { @"C:\", @"D:\" });
+
+                var afterMultiClear = db.GetFilesPaged(0, 100);
+                int cCount = afterMultiClear.Count(f => f.Path.StartsWith("C:", StringComparison.OrdinalIgnoreCase));
+                int dCount = afterMultiClear.Count(f => f.Path.StartsWith("D:", StringComparison.OrdinalIgnoreCase));
+                int eCount = afterMultiClear.Count(f => f.Path.StartsWith("E:", StringComparison.OrdinalIgnoreCase));
+
+                ctx.AssertEqual(0, cCount, "Drive C: records should have been cleared.");
+                ctx.AssertEqual(0, dCount, "Drive D: records should have been cleared.");
+                ctx.AssertEqual(2, eCount, "Drive E: records MUST remain untouched when clearing C: and D:.");
+
+                // Test F1: Explicit "ALL" sentinel full clear
+                db.ClearIndex(new[] { "ALL" });
+                var (afterAllCount, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(0, afterAllCount, "Explicit 'ALL' sentinel should purge entire database.");
+
+                // Test F2: Null roots full clear
+                db.InsertBatch(new[] { makeFile(@"C:\file1.txt", "file1.txt"), makeFile(@"D:\file2.txt", "file2.txt") });
+                db.ClearIndex(null);
+                var (afterNullCount, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(0, afterNullCount, "null roots should perform intentional full database clear.");
+
+                // Test F3: Empty roots full clear
+                db.InsertBatch(new[] { makeFile(@"C:\file3.txt", "file3.txt") });
+                db.ClearIndex(Array.Empty<string>());
+                var (afterEmptyCount, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(0, afterEmptyCount, "Empty roots should perform intentional full database clear.");
+
                 await Task.CompletedTask;
             }
         ));

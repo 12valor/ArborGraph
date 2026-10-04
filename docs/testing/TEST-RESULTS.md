@@ -13,12 +13,12 @@
 | Metric | Count | Percentage |
 | :--- | :--- | :--- |
 | **Total Test Cases Planned** | 56 | 100.0% |
-| **Tests Executed via Automated Harness** | 19 | 33.9% |
-| **Passed** | 18 | 32.1% (94.7% of executed) |
-| **Failed** | 1 | 1.8% (5.3% of executed) |
+| **Tests Executed via Automated Harness** | 20 | 35.7% |
+| **Passed** | 20 | 35.7% (100.0% of executed) |
+| **Failed** | 0 | 0.0% (0.0% of executed) |
 | **Blocked** | 0 | 0.0% |
-| **Not Tested / Pending Manual Testing** | 37 | 66.1% |
-| **Automated Harness Elapsed Time** | 6.91s | |
+| **Not Tested / Pending Manual Testing** | 36 | 64.3% |
+| **Automated Harness Elapsed Time** | 7.56s | |
 
 ---
 
@@ -26,9 +26,9 @@
 
 | Test ID | Date | Environment | Expected Result | Actual Result | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **TC-DRV-01** | 2026-10-04 | ENV-A | Scanning D:\ preserves C:\ index in SQLite | Scanning/clearing D:\ wiped C:\ records! Expected 2, found 0. | `FAIL` | **CRITICAL DEFECT CONFIRMED (Blocker 1).** `DatabaseService.cs` L185 full wipe bug. |
-| **TC-DRV-02** | | ENV-A | Multi-root scan traverses both roots cleanly | | `NOT TESTED` | Requires multi-drive configuration test. |
-| **TC-DRV-03** | 2026-10-04 | ENV-A | Custom directory scan only clears scoped records | Scoped prefix deletion only cleared target directory records (17 ms). | `PASS` | Verified `path LIKE 'target%'` scoping works for non-root paths. |
+| **TC-DRV-01** | 2026-10-05 | ENV-A | Scanning D:\ preserves C:\ index in SQLite; D:\ rebuilt | Scoped range clear deleted only D:\; C:\ remained 100% intact (58 ms). | `PASS` | **BUG-001 RESOLVED & VERIFIED.** `DatabaseService.ClearIndex` drive-root scoping fixed. |
+| **TC-DRV-02** | 2026-10-05 | ENV-A | Multiple roots clear only target volumes; ALL/null full clear | C:\ and D:\ cleared; E:\ preserved. ALL/null/empty executed full wipe (16 ms). | `PASS` | Multi-root scoping and explicit full-clear fallback verified. |
+| **TC-DRV-03** | 2026-10-04 | ENV-A | Custom directory scan only clears scoped records | Scoped prefix deletion only cleared target directory records (13 ms). | `PASS` | Verified `path LIKE 'target%'` scoping works for non-root paths. |
 | **TC-DEL-01** | | ENV-A | Deleted file recoverable from Recycle Bin | | `NOT TESTED` | Shell32 `IFileOperation` integration (Requires manual desktop test). |
 | **TC-DEL-02** | | ENV-A | Protected paths (C:\Windows) blocked from deletion | | `NOT TESTED` | Handled by `FileSecurityHelper.cs` (Requires interactive dialog check). |
 | **TC-DEL-03** | | ENV-A | Cancel aborts; Confirm permanently deletes file | | `NOT TESTED` | Modal confirmation gate (Requires manual UI check). |

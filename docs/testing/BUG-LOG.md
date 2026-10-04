@@ -11,7 +11,7 @@
 
 | Bug ID | Severity | Feature / Test ID | Short Description | Status | Target Fix |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **BUG-001** | P0 / BLOCKER | `FEAT-08` / `TC-DRV-01` | Multi-drive `ClearIndex` root path logic (`isFullClear`) wipes previous drives | CONFIRMED DEFECT (`TC-DRV-01` FAILED) | v1.0.0 |
+| **BUG-001** | P0 / BLOCKER | `FEAT-08` / `TC-DRV-01`, `TC-DRV-02` | Multi-drive `ClearIndex` root path logic (`isFullClear`) wipes previous drives | CLOSED (Verified: TC-DRV-01, TC-DRV-02 PASS) | v1.0.0 |
 | **BUG-002** | P0 / BLOCKER | `FEAT-19` / `TC-UI-RESP-01` | Synchronous deletion executes on UI dispatcher thread, freezing window | OPEN (Audit Flag) | v1.0.0 |
 | **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | OPEN (Audit Flag) | v1.0.0 |
 | **BUG-004** | P1 / CRITICAL | `FEAT-04` / `TC-USN-01` | USN Journal native pointer boundary arithmetic risks memory violation | OPEN (Audit Flag) | v1.0.0 |
@@ -22,12 +22,12 @@
 
 ### Bug ID: `BUG-001`
 - **Severity:** P0 / BLOCKER
-- **Feature / Test ID:** `FEAT-08` / `TC-DRV-01`
+- **Feature / Test ID:** `FEAT-08` / `TC-DRV-01`, `TC-DRV-02`
 - **Title:** Multi-Drive Root Scan Wipes Previously Indexed Drives in SQLite (`ClearIndex` Scope Bug)
 - **Environment:** Windows 11 x64, Multi-drive system (`C:\` and `D:\`)
-- **Status:** CONFIRMED DEFECT (Reproduced and Failed in Automated Test `TC-DRV-01`)
-- **Fix / Version:** v1.0.0 (Release Blocker)
-- **Regression Status:** PENDING REMEDIATION & RE-TESTING
+- **Status:** CLOSED (FIXED in `Services/DatabaseService.cs`; Verified by automated tests `TC-DRV-01` and `TC-DRV-02`)
+- **Fix / Version:** v1.0.0
+- **Regression Status:** VERIFIED PASS (0 Failures, 100% Pass Rate across 20 automated tests)
 - **Preconditions:** Host system has at least two drives (`C:\` and `D:\`).
 - **Steps to Reproduce:**
   1. Launch ArborGraph. Select drive `C:\` and click `Start Scan`.

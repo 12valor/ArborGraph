@@ -9,15 +9,16 @@
 
 ## 1. Summary of Defects
 
-| Bug ID | Severity | Feature / Test ID | Short Description | Status | Target Fix |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **BUG-001** | P0 / BLOCKER | `FEAT-08` / `TC-DRV-01`, `TC-DRV-02` | Multi-drive `ClearIndex` root path logic (`isFullClear`) wipes previous drives | CLOSED (Verified: TC-DRV-01, TC-DRV-02 PASS) | v1.0.0 |
-| **BUG-002** | P0 / BLOCKER | `FEAT-19` / `TC-UI-RESP-01`, `TC-UI-RESP-02` | Synchronous deletion executes on UI dispatcher thread, freezing window | CLOSED (Verified: TC-UI-RESP-01, TC-UI-RESP-02 PASS, Dispatcher latency < 1ms) | v1.0.0 |
-| **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | CLOSED (Verified: Clean Inno Setup compile & TC-INS-04 PASS) | v1.0.0 |
-| **BUG-004** | P1 / CRITICAL | `FEAT-04` / `TC-USN-01` | USN Journal native pointer boundary arithmetic risks memory violation | CLOSED (Verified: TC-USN-01 to TC-USN-04 PASS) | v1.0.0 |
-| **BUG-005** | P3 / MINOR | `FEAT-30` / `SEC-09`, `TC-QRY-01` | Location filter query boundary binds `LIKE 'C:\Test%'` without trailing slash | CLOSED (Verified: SEC-09, TC-QRY-01 PASS) | v1.0.0 |
+| Bug ID | Severity | Status | Reproduction Summary | Fix Summary | Regression Test | Version Introduced | Version Fixed |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **BUG-001** | P0 / BLOCKER | CLOSED | Scanning `D:\` root after `C:\` triggered full wipe (`DELETE FROM files`) due to `isFullClear` length check | Root path comparison checks exact drive root prefix; avoids blanket delete when root is specified | `TC-DRV-01`, `TC-DRV-02` | v0.9.0 | v1.0.0 |
+| **BUG-002** | P0 / BLOCKER | CLOSED | Deleting files/folders executed synchronously on UI Dispatcher thread, causing window "Not Responding" | Deletion offloaded to `Task.Run` background thread with `IsDeleting` progress banner and < 1ms Dispatcher latency | `TC-UI-RESP-01`, `TC-UI-RESP-02` | v0.9.0 | v1.0.0 |
+| **BUG-003** | P0 / BLOCKER | CLOSED | Inno Setup `installer.iss` hardcoded legacy repository URL (`C-file-scanner`) in uninstall registry keys | Updated `#define MyAppURL` to `https://github.com/12valor/ArborGraph`; rebuilt installer binary | `TC-INS-04` | v0.9.0 | v1.0.0 |
+| **BUG-004** | P1 / CRITICAL | CLOSED | USN Journal native unmanaged pointer boundary arithmetic risked out-of-bounds reads on fragmented NTFS | Added `UsnRecordValidator` enforcing 4-level bounds validation before any memory dereference | `TC-USN-01`..`04` | v0.9.0 | v1.0.0 |
+| **BUG-005** | P3 / MINOR | CLOSED | Location filter query bound `LIKE 'C:\Test%'` without trailing slash, leaking sibling directory matches | Appended trailing path separators (`$"{cleanLoc}\\%"`) to ensure strict directory boundary matching | `SEC-09`, `TC-QRY-01` | v0.9.0 | v1.0.0 |
+| **BUG-006** | P0 / BLOCKER | CLOSED | Switching to "Files" tab crashed on missing `BrushBgElevated` resource; scan controls clipped on viewports < 1320px | Defined `BrushBgElevated` in `Colors.xaml`, restructured toolbar with scan buttons adjacent to target inputs | `TC-UI-01`, `TC-UI-02` | v1.0.0 | v1.0.0 (commit `4ca58ed`) |
 
-*Note: All confirmed audit defects (BUG-001 through BUG-005) remediated and verified passing with zero open regressions.*
+*Note: All confirmed defects (BUG-001 through BUG-006) are remediated and verified passing with zero open regressions.*
 
 ---
 
@@ -186,27 +187,50 @@
 
 ---
 
-## 3. Defect Report Template (For New Defect Logging)
+### Bug ID: `BUG-006`
+- **Severity:** P0 / BLOCKER
+- **Status:** CLOSED
+- **Feature / Test ID:** `FEAT-11`, `FEAT-08` / `TC-UI-01`, `TC-UI-02`
+- **Title:** `XamlParseException` on `BrushBgElevated` When Switching to Files Tab & Scan Controls Clipped on Viewports < 1320px
+- **Environment:** Windows 10 / 11 x64, Display Scaling 100%–150%, Displays/Windows <= 1024px Wide
+- **Version Introduced:** v1.0.0
+- **Version Fixed:** v1.0.0 (commit `4ca58ed`)
+- **Regression Status:** VERIFIED PASS (`TC-UI-01`, `TC-UI-02` PASS, full 32-stage automated suite PASS)
+- **Preconditions:** Fresh launch of ArborGraph standalone or setup installer on a standard display or window width <= 1024px.
+- **Steps to Reproduce:**
+  1. Launch `ArborGraph.exe`.
+  2. Observe the top toolbar: on displays or windows <= 1024px, the `Start Scan` button is pushed past the right window boundary and clipped off-screen.
+  3. Click the `Files` navigation tab on the left sidebar.
+  4. An error dialog appears: `An unexpected UI error occurred: Provide value on 'System.Windows.StaticResourceExtension' threw an exception`.
+  5. The main view aborts rendering, leaving a blank white workspace.
+- **Expected Result:**
+  - Tab switching between Overview, Scanner, Files, Treemap, Duplicates, Cleanup, Developer, Photoshop, and Settings occurs smoothly without XAML parse exceptions.
+  - The `Start Scan` button is prominently visible and accessible across all resolutions and DPI scaling factors down to 850px.
+- **Actual Result Prior to Fix:**
+  - `Views/LargestFilesView.xaml` (line 192) and `Views/LargestFoldersView.xaml` (line 35) referenced `Background="{StaticResource BrushBgElevated}"`. `BrushBgElevated` was not defined in `Resources/Colors.xaml`, causing `XamlParseException: Cannot find resource named 'BrushBgElevated'`.
+  - In `Views/MainWindow.xaml`, the top toolbar layout set the custom path column to `Width="*"`, which pushed the scan buttons to the far right edge of the 1320px window, clipping them completely on screens <= 1024px wide.
+- **Remediation Details:**
+  - In `Resources/Colors.xaml`, defined `<SolidColorBrush x:Key="BrushBgElevated" Color="{StaticResource ColorBgCardHover}"/>`.
+  - In `Views/LargestFilesView.xaml` and `Views/LargestFoldersView.xaml`, standardized ProgressBar background to `{StaticResource BrushBgCardHover}`.
+  - In `Views/MainWindow.xaml`, restructured the top toolbar so `Start Scan` and `Stop Scan` buttons are placed directly adjacent to the target path controls (`Grid.Column="6"`), ensuring 100% visibility down to 850px viewports.
+  - Adjusted default window dimensions to `Width="1100" Height="720" MinWidth="850" MinHeight="580"`.
+  - Added a prominent `Start Scan` action button directly in the `Views/OverviewView.xaml` header.
+  - Sanitized `CustomScanPath` in `ViewModels/MainViewModel.cs` to strip surrounding quotes and whitespace.
+  - Added automated tests `TC-UI-01` (StaticResource audit across all XAML files) and `TC-UI-02` (scan path sanitization).
+
+---
+
+## 3. Defect Report Template (For Ongoing Maintenance Tracking)
 
 ```markdown
 ### Bug ID: `BUG-XXX`
 - **Severity:** [P0 / BLOCKER | P1 / CRITICAL | P2 / MAJOR | P3 / MINOR]
-- **Feature / Test ID:** [e.g. FEAT-22 / TC-DUP-01]
-- **Title:** [Concise description of the failure]
-- **Environment:** [OS, Architecture, Hardware, RAM, Disk Type]
 - **Status:** [NEW | IN PROGRESS | RESOLVED | RE-TESTING | CLOSED]
-- **Fix / Version:** [Target version or commit hash]
-- **Regression Status:** [PASSED | FAILED | NOT RUN]
-- **Preconditions:** [State of the system/data before reproducing]
-- **Steps to Reproduce:**
-  1. ...
-  2. ...
-- **Expected Result:** [What the system should have done]
-- **Actual Result:** [What the system actually did]
-- **Stack Trace / Log Snippet:**
-  ```text
-  [Insert logs from %LOCALAPPDATA%\ArborGraph\app.log]
-  ```
+- **Reproduction:** [Clear, sequential steps to reproduce the issue]
+- **Fix:** [Specific code changes, files modified, and remediation rationale]
+- **Regression Test:** [Automated Test ID (e.g., TC-UI-01) or manual test procedure]
+- **Version Introduced:** [Release version or git commit hash where the bug first appeared]
+- **Version Fixed:** [Release version or git commit hash where the fix was committed]
 ```
 
 ---

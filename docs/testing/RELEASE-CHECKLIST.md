@@ -175,25 +175,76 @@
 
 ---
 
-## 12. Permanent Maintenance Rules & Protocols
+## 12. Post-Release Maintenance & Change-Level Gates
 
-For all ongoing development beyond v1.0.0, adhere to the following maintenance protocols:
+To maintain high software reliability without imposing bureaucratic overhead on a solo developer, all post-v1.0.0 modifications must follow these four tiered change-level quality gates:
 
-1. **For Future Small Changes & Bug Fixes:**
-   - Execute affected unit/component tests + full 30-stage regression suite:
+### 1. SMALL CHANGE
+- **Scope & Examples:**
+  - UI copy, labels, tooltips, and documentation wording
+  - Non-functional visual styling or brush adjustments
+  - Isolated, localized bug fixes (e.g., regex refinement, boundary guards)
+- **Mandatory Quality Gates:**
+  1. Verify affected component / UI view visually or functionally.
+  2. Execute the full automated regression suite and verify **100% pass rate**:
      ```powershell
-     dotnet run --project tests/DiskScope.Tests.csproj
+     dotnet run --project tests/DiskScope.Tests.csproj -c Release
      ```
-2. **For Filesystem, Database, or Deletion Changes:**
-   - Execute affected security tests + full regression suite + manual synthetic verification:
+  3. Ensure zero missing XAML resources via audit script:
      ```powershell
-     dotnet run --project tests/DiskScope.Tests.csproj -- --security
-     dotnet run --project tests/DiskScope.Tests.csproj
+     powershell -ExecutionPolicy Bypass -File scripts\audit_xaml_resources.ps1
      ```
-3. **For Any New Production Release:**
-   - Produce clean self-contained build + compile Inno Setup installer (`ISCC.exe`) + execute clean sandbox smoke test + verify checklist gates.
-4. **For Major Architectural Changes:**
-   - Perform a targeted 10-domain security and performance re-audit following `ARBORGRAPH_RELEASE_QA_AUDIT.md`.
+
+### 2. CORE CHANGE
+- **Scope & Examples:**
+  - Filesystem traversal engine (`ScannerService.cs`)
+  - SQLite WAL catalog schema, transaction handling, or queries (`DatabaseService.cs`)
+  - Permanent or Recycle Bin deletion mechanisms (`FileSecurityHelper.cs`, `FileActionService.cs`)
+  - Duplicate detection pipeline (`DuplicateAnalyzer.cs`)
+  - NTFS USN Journal native pointer or buffer logic (`UsnJournalService.cs`)
+- **Mandatory Quality Gates:**
+  1. Add or strengthen targeted safety tests for the specific change.
+  2. Execute the full automated regression suite (**32/32 PASS**):
+     ```powershell
+     dotnet run --project tests/DiskScope.Tests.csproj -c Release
+     ```
+  3. Run the automated security and data-safety audit suite (**9/9 PASS**):
+     ```powershell
+     dotnet run --project tests/DiskScope.Tests.csproj -c Release -- --security
+     ```
+  4. Perform relevant manual synthetic verification on an isolated test directory before committing.
+
+### 3. RELEASE CHANGE
+- **Scope & Examples:**
+  - Packaging any new patch (e.g. v1.0.1) or minor release (e.g. v1.1.0)
+  - Updating published release binaries on GitHub or website download endpoints
+- **Mandatory Quality Gates:**
+  1. Produce a clean, self-contained standalone Release build:
+     ```powershell
+     dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
+     ```
+  2. Compile and verify the Inno Setup installer:
+     ```powershell
+     & "C:\Users\evang\AppData\Local\Programs\Inno Setup 6\ISCC.exe" installer\installer.iss
+     ```
+  3. Conduct an end-to-end installation and smoke test (install, launch, scan, uninstall).
+  4. Compute and document cryptographic SHA-256 hashes (`SHA256SUMS.txt`).
+  5. Complete and record the release checklist gate sign-off in this document.
+
+### 4. ARCHITECTURAL CHANGE
+- **Scope & Examples:**
+  - Upgrading target .NET runtime versions
+  - Refactoring the core MVVM navigation or threading architecture
+  - Replacing or significantly restructuring major database tables or indexing strategies
+- **Mandatory Quality Gates:**
+  1. Conduct a targeted 10-domain security and data-safety code audit.
+  2. Implement new regression test cases in `tests/AutomatedTestSuites.cs` targeting newly introduced architectural interfaces.
+  3. Execute full scalability benchmarks (`10,000` to `250,000` synthetic files) to confirm throughput and working set memory ceilings:
+     ```powershell
+     dotnet run --project tests/DiskScope.Tests.csproj -c Release -- --benchmark 50000
+     ```
+  4. Execute stress and concurrency soak testing (`--stress`).
+
 
 
 

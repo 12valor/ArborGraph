@@ -146,6 +146,9 @@ public class FileActionService
 
         try
         {
+            string trimmed = path.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (trimmed.Length <= 2 && trimmed.EndsWith(":")) return true;
+
             string fullPath = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             string? root = Path.GetPathRoot(fullPath)?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -284,7 +287,10 @@ public class FileActionService
         if (IsProtectedPath(path))
         {
             errorMessage = $"Protected system or root path cannot be permanently deleted:\n{path}";
-            MessageBox.Show(errorMessage, "Safety Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (!skipConfirmation)
+            {
+                MessageBox.Show(errorMessage, "Safety Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             return false;
         }
 
@@ -329,6 +335,55 @@ public class FileActionService
             errorMessage = $"Permanent deletion failed: {ex.Message}";
             return false;
         }
+    }
+
+    public (int Succeeded, int Failed) DeleteFilesBatch(
+        IReadOnlyList<string> paths,
+        bool permanent,
+        IProgress<(int Completed, int Total, string CurrentItem)>? progress = null,
+        CancellationToken ct = default)
+    {
+        int succeeded = 0;
+        int failed = 0;
+        int total = paths.Count;
+
+        for (int i = 0; i < total; i++)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            string path = paths[i];
+            progress?.Report((i + 1, total, path));
+
+            if (IsProtectedPath(path))
+            {
+                failed++;
+                continue;
+            }
+
+            try
+            {
+                bool ok = permanent
+                    ? DeletePermanently(path, out _, skipConfirmation: true)
+                    : MoveToRecycleBin(path, out _);
+
+                if (ok) succeeded++; else failed++;
+            }
+            catch
+            {
+                failed++;
+            }
+        }
+
+        return (succeeded, failed);
+    }
+
+    public async Task<(int Succeeded, int Failed)> DeleteFilesBatchAsync(
+        IReadOnlyList<string> paths,
+        bool permanent,
+        IProgress<(int Completed, int Total, string CurrentItem)>? progress = null,
+        CancellationToken ct = default)
+    {
+        return await Task.Run(() => DeleteFilesBatch(paths, permanent, progress, ct), ct);
     }
 
     public void ShowProperties(string path)

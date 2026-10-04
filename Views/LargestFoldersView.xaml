@@ -26,6 +26,16 @@
             <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
         </Grid>
 
+        <!-- Deletion Progress Banner -->
+        <Border Grid.Row="1" Visibility="{Binding IsDeleting, Converter={StaticResource BoolToVis}}" 
+                Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" 
+                CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="{Binding DeletionStatus}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
+                <ProgressBar Height="3" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgElevated}" BorderThickness="0" Margin="0,6,0,0"/>
+            </StackPanel>
+        </Border>
+
         <!-- Clean DataGrid -->
         <DataGrid Grid.Row="2" ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}"
                   MouseDoubleClick="DataGrid_MouseDoubleClick">

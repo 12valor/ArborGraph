@@ -85,8 +85,8 @@ public class LargestFilesViewModel : ObservableObject
         CopyPathCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.CopyPath(SelectedFile.Path); });
         ShowPropertiesCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.ShowProperties(SelectedFile.Path); });
 
-        MoveToRecycleBinCommand = new RelayCommand(_ => MoveSelectedToRecycleBin(), _ => SelectedFile != null);
-        DeletePermanentlyCommand = new RelayCommand(_ => DeleteSelectedPermanently(), _ => SelectedFile != null);
+        MoveToRecycleBinCommand = new RelayCommand(async _ => await MoveSelectedToRecycleBinAsync(), _ => SelectedFile != null && !IsDeleting && !IsLoading);
+        DeletePermanentlyCommand = new RelayCommand(async _ => await DeleteSelectedPermanentlyAsync(), _ => SelectedFile != null && !IsDeleting && !IsLoading);
 
         NextPageCommand = new RelayCommand(_ => { CurrentPage++; RefreshData(); }, _ => CurrentPage < TotalPages);
         PrevPageCommand = new RelayCommand(_ => { CurrentPage--; RefreshData(); }, _ => CurrentPage > 1);
@@ -239,10 +239,41 @@ public class LargestFilesViewModel : ObservableObject
     public int TotalPages => (int)Math.Max(1, Math.Ceiling((double)_totalMatchingFiles / PageSize));
     public string PageSummary => $"Page {_currentPage} of {TotalPages} ({_totalMatchingFiles:N0} total matching files)";
 
+    private bool _isDeleting;
+    private string _deletionStatus = string.Empty;
+
     public bool IsLoading
     {
         get => _isLoading;
-        set => SetProperty(ref _isLoading, value);
+        set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                (RefreshCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool IsDeleting
+    {
+        get => _isDeleting;
+        set
+        {
+            if (SetProperty(ref _isDeleting, value))
+            {
+                (RefreshCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string DeletionStatus
+    {
+        get => _deletionStatus;
+        set => SetProperty(ref _deletionStatus, value);
     }
 
     public void ClearAllFilters()
@@ -322,41 +353,95 @@ public class LargestFilesViewModel : ObservableObject
         }
     }
 
-    private void MoveSelectedToRecycleBin()
+    private async Task MoveSelectedToRecycleBinAsync()
     {
-        if (SelectedFile == null) return;
+        if (SelectedFile == null || IsDeleting) return;
         string targetPath = SelectedFile.Path;
         var fileToRemove = SelectedFile;
 
-        if (_fileActionService.MoveToRecycleBin(targetPath, out string? err))
+        if (_fileActionService.IsProtectedPath(targetPath))
         {
-            _dbService.RemoveFileFromIndex(targetPath);
-            Files.Remove(fileToRemove);
-            TotalMatchingFiles = Math.Max(0, TotalMatchingFiles - 1);
-            SelectedFile = Files.FirstOrDefault();
+            System.Windows.MessageBox.Show($"Protected system or root path cannot be deleted:\n{targetPath}", "Safety Warning", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
         }
-        else if (!string.IsNullOrEmpty(err))
+
+        IsDeleting = true;
+        DeletionStatus = $"Moving \"{fileToRemove.Name}\" to Recycle Bin...";
+        try
         {
-            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            string? err = null;
+            bool success = await Task.Run(() => _fileActionService.MoveToRecycleBin(targetPath, out err));
+
+            if (success)
+            {
+                await Task.Run(() => _dbService.RemoveFileFromIndex(targetPath));
+                Files.Remove(fileToRemove);
+                TotalMatchingFiles = Math.Max(0, TotalMatchingFiles - 1);
+                SelectedFile = Files.FirstOrDefault();
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error moving file to Recycle Bin:\n{ex.Message}", "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsDeleting = false;
+            DeletionStatus = string.Empty;
         }
     }
 
-    private void DeleteSelectedPermanently()
+    private async Task DeleteSelectedPermanentlyAsync()
     {
-        if (SelectedFile == null) return;
+        if (SelectedFile == null || IsDeleting) return;
         string targetPath = SelectedFile.Path;
         var fileToRemove = SelectedFile;
 
-        if (_fileActionService.DeletePermanently(targetPath, out string? err))
+        if (_fileActionService.IsProtectedPath(targetPath))
         {
-            _dbService.RemoveFileFromIndex(targetPath);
-            Files.Remove(fileToRemove);
-            TotalMatchingFiles = Math.Max(0, TotalMatchingFiles - 1);
-            SelectedFile = Files.FirstOrDefault();
+            System.Windows.MessageBox.Show($"Protected system or root path cannot be permanently deleted:\n{targetPath}", "Safety Warning", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
         }
-        else if (!string.IsNullOrEmpty(err))
+
+        var res = System.Windows.MessageBox.Show(
+            $"Are you sure you want to PERMANENTLY delete this file?\n\n{targetPath}\n\nWARNING: This cannot be undone.",
+            "Confirm Permanent Deletion",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (res != System.Windows.MessageBoxResult.Yes) return;
+
+        IsDeleting = true;
+        DeletionStatus = $"Permanently deleting \"{fileToRemove.Name}\"...";
+        try
         {
-            System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            string? err = null;
+            bool success = await Task.Run(() => _fileActionService.DeletePermanently(targetPath, out err, skipConfirmation: true));
+
+            if (success)
+            {
+                await Task.Run(() => _dbService.RemoveFileFromIndex(targetPath));
+                Files.Remove(fileToRemove);
+                TotalMatchingFiles = Math.Max(0, TotalMatchingFiles - 1);
+                SelectedFile = Files.FirstOrDefault();
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                System.Windows.MessageBox.Show(err, "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error permanently deleting file:\n{ex.Message}", "Cleanup Notice", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsDeleting = false;
+            DeletionStatus = string.Empty;
         }
     }
 

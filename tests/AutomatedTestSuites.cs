@@ -20,6 +20,7 @@ public static class AutomatedTestSuites
         RegisterExportTests(runner);
         RegisterTreemapTests(runner);
         RegisterLegalAndSettingsTests(runner);
+        RegisterDeletionAndSafetyTests(runner);
     }
 
     // =========================================================================
@@ -995,6 +996,220 @@ public static class AutomatedTestSuites
                 ctx.Assert(service2.CurrentSettings.HasAcceptedEula, "HasAcceptedEula must be true after reload");
                 ctx.AssertEqual("1.0.0", service2.CurrentSettings.EulaAcceptedVersion, "EulaAcceptedVersion must match");
                 ctx.Assert(service2.CurrentSettings.EulaAcceptedDate.HasValue, "EulaAcceptedDate must have timestamp");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // J. DELETION & SAFETY SUITE (BUG-002 VERIFICATION)
+    // =========================================================================
+    private static void RegisterDeletionAndSafetyTests(TestRunner runner)
+    {
+        // TC-DEL-01: Single File Deletion & Database Index Consistency
+        runner.Register(new TestCase(
+            TestId: "TC-DEL-01",
+            FeatureId: "FEAT-19",
+            Title: "Single File Deletion & Database Index Consistency",
+            Priority: "P1 / CRITICAL",
+            Category: "Deletion & Filesystem Safety",
+            ProductionClass: "DiskScope.Services.FileActionService",
+            AuditRiskNote: "Verifies that deleting a single file removes it from disk and SQLite index without data residue.",
+            ExecuteAsync: async ctx =>
+            {
+                string tempDir = ctx.CreateTempDirectory("del_single");
+                string filePath = Path.Combine(tempDir, "sample.txt");
+                File.WriteAllText(filePath, "Hello ArborGraph Deletion Test");
+
+                string dbPath = ctx.CreateTempDatabasePath("del_single.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var rec = new FileRecord
+                {
+                    Path = filePath,
+                    Name = "sample.txt",
+                    Parent = tempDir,
+                    Size = 30,
+                    ModifiedTime = 1234567,
+                    CreatedTime = 1234567,
+                    Extension = ".txt",
+                    Category = FileCategory.Documents,
+                    Accessible = 1
+                };
+                db.InsertBatch(new[] { rec });
+
+                var fileAction = new FileActionService();
+                ctx.Assert(File.Exists(filePath), "Target file must exist prior to deletion");
+
+                bool deleted = fileAction.DeletePermanently(filePath, out string? err, skipConfirmation: true);
+                ctx.Assert(deleted, $"File deletion should succeed: {err}");
+                ctx.Assert(!File.Exists(filePath), "Target file must no longer exist on disk");
+
+                bool dbRemoved = db.RemoveFileFromIndex(filePath);
+                ctx.Assert(dbRemoved, "RemoveFileFromIndex should return true for existing record");
+
+                var remaining = db.GetFilesPaged(0, 10);
+                ctx.AssertEqual(0, remaining.Count, "Database should have 0 records after deletion");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DEL-02: Batch File Deletion, Locked File Handling & Accurate Counts
+        runner.Register(new TestCase(
+            TestId: "TC-DEL-02",
+            FeatureId: "FEAT-19",
+            Title: "Batch File Deletion, Locked File Handling & Accurate Counts",
+            Priority: "P1 / CRITICAL",
+            Category: "Deletion & Filesystem Safety",
+            ProductionClass: "DiskScope.Services.FileActionService",
+            AuditRiskNote: "Verifies that batch deletion handles in-use / locked files gracefully and returns exact success and failure counts without crashing.",
+            ExecuteAsync: async ctx =>
+            {
+                string tempDir = ctx.CreateTempDirectory("del_batch");
+                var paths = new List<string>();
+                for (int i = 1; i <= 5; i++)
+                {
+                    string p = Path.Combine(tempDir, $"batch_{i}.dat");
+                    File.WriteAllBytes(p, new byte[1024]);
+                    paths.Add(p);
+                }
+
+                // Lock file #3 with exclusive write lock
+                using var lockStream = File.Open(paths[2], FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+                var fileAction = new FileActionService();
+                var (succeeded, failed) = fileAction.DeleteFilesBatch(paths, permanent: true);
+
+                ctx.AssertEqual(4, succeeded, "4 unlocked files should have succeeded");
+                ctx.AssertEqual(1, failed, "1 locked file should have failed");
+
+                ctx.Assert(!File.Exists(paths[0]), "File 1 should be deleted");
+                ctx.Assert(!File.Exists(paths[1]), "File 2 should be deleted");
+                ctx.Assert(File.Exists(paths[2]), "Locked file 3 must still exist on disk");
+                ctx.Assert(!File.Exists(paths[3]), "File 4 should be deleted");
+                ctx.Assert(!File.Exists(paths[4]), "File 5 should be deleted");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DEL-03: Batch Deletion Cancellation Responsiveness
+        runner.Register(new TestCase(
+            TestId: "TC-DEL-03",
+            FeatureId: "FEAT-19",
+            Title: "Batch Deletion Cancellation Responsiveness",
+            Priority: "P1 / CRITICAL",
+            Category: "Deletion & Filesystem Safety",
+            ProductionClass: "DiskScope.Services.FileActionService",
+            AuditRiskNote: "Verifies batch deletion stops promptly when cancellation token is triggered, preserving remaining files.",
+            ExecuteAsync: async ctx =>
+            {
+                string tempDir = ctx.CreateTempDirectory("del_cancel");
+                var paths = new List<string>();
+                for (int i = 1; i <= 10; i++)
+                {
+                    string p = Path.Combine(tempDir, $"cancel_{i}.dat");
+                    File.WriteAllBytes(p, new byte[512]);
+                    paths.Add(p);
+                }
+
+                using var cts = new CancellationTokenSource();
+                var progress = new Progress<(int Completed, int Total, string CurrentItem)>(info =>
+                {
+                    if (info.Completed >= 3)
+                    {
+                        cts.Cancel();
+                    }
+                });
+
+                var fileAction = new FileActionService();
+                var (succeeded, _) = await fileAction.DeleteFilesBatchAsync(paths, permanent: true, progress, cts.Token);
+
+                ctx.Assert(succeeded >= 3 && succeeded < 10, $"Deletion should stop early upon cancellation; deleted {succeeded} of 10");
+                int remainingOnDisk = paths.Count(File.Exists);
+                ctx.AssertEqual(10 - succeeded, remainingOnDisk, "Remaining files on disk must match unexecuted items");
+            }
+        ));
+
+        // TC-DEL-04: Directory Recursive Deletion & Rollup Index Integrity
+        runner.Register(new TestCase(
+            TestId: "TC-DEL-04",
+            FeatureId: "FEAT-18",
+            Title: "Directory Recursive Deletion & Rollup Index Integrity",
+            Priority: "P0 / BLOCKER",
+            Category: "Deletion & Filesystem Safety",
+            ProductionClass: "DiskScope.Services.FileActionService",
+            AuditRiskNote: "Verifies that deleting a directory recursively deletes all children from disk and purges all folder records from SQLite.",
+            ExecuteAsync: async ctx =>
+            {
+                string rootDir = ctx.CreateTempDirectory("del_dir_root");
+                string subDir1 = Path.Combine(rootDir, "SubA");
+                string subDir2 = Path.Combine(rootDir, "SubB");
+                Directory.CreateDirectory(subDir1);
+                Directory.CreateDirectory(subDir2);
+
+                string file1 = Path.Combine(subDir1, "file1.bin");
+                string file2 = Path.Combine(subDir2, "file2.bin");
+                File.WriteAllBytes(file1, new byte[2048]);
+                File.WriteAllBytes(file2, new byte[4096]);
+
+                string dbPath = ctx.CreateTempDatabasePath("del_dir.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var rec1 = new FileRecord { Path = file1, Name = "file1.bin", Parent = subDir1, Size = 2048, ModifiedTime = 100, CreatedTime = 100, Accessible = 1 };
+                var rec2 = new FileRecord { Path = file2, Name = "file2.bin", Parent = subDir2, Size = 4096, ModifiedTime = 100, CreatedTime = 100, Accessible = 1 };
+                db.InsertBatch(new[] { rec1, rec2 });
+
+                var fileAction = new FileActionService();
+                bool deleted = fileAction.DeletePermanently(rootDir, out string? err, skipConfirmation: true);
+                ctx.Assert(deleted, $"Recursive directory deletion should succeed: {err}");
+                ctx.Assert(!Directory.Exists(rootDir), "Target directory must be gone from disk");
+
+                bool dbCleared = db.RemoveDirectoryFromIndex(rootDir);
+                ctx.Assert(dbCleared, "RemoveDirectoryFromIndex should return true");
+
+                var remainingFiles = db.GetFilesPaged(0, 10);
+                ctx.AssertEqual(0, remainingFiles.Count, "All child files in database should be removed");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DEL-05: Protected System and Root Path Deletion Shield
+        runner.Register(new TestCase(
+            TestId: "TC-DEL-05",
+            FeatureId: "FEAT-20",
+            Title: "Protected System and Root Path Deletion Shield",
+            Priority: "P0 / BLOCKER",
+            Category: "Deletion & Filesystem Safety",
+            ProductionClass: "DiskScope.Services.FileActionService",
+            AuditRiskNote: "Verifies that Windows directory, Program Files, User Profile root, and drive roots are strictly blocked from deletion.",
+            ExecuteAsync: async ctx =>
+            {
+                var fileAction = new FileActionService();
+
+                // Drive roots
+                ctx.Assert(fileAction.IsProtectedPath(@"C:\"), @"C:\ must be protected");
+                ctx.Assert(fileAction.IsProtectedPath(@"C:"), @"C: must be protected");
+                ctx.Assert(fileAction.IsProtectedPath(@"D:\"), @"D:\ must be protected");
+
+                // Windows directory
+                string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                ctx.Assert(fileAction.IsProtectedPath(winDir), $"{winDir} must be protected");
+                ctx.Assert(fileAction.IsProtectedPath(Path.Combine(winDir, "System32")), $"{winDir}\\System32 must be protected");
+
+                // Program Files
+                string progFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                ctx.Assert(fileAction.IsProtectedPath(progFiles), $"{progFiles} must be protected");
+
+                // User Profile root
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                ctx.Assert(fileAction.IsProtectedPath(userProfile), $"{userProfile} must be protected");
+
+                // Attempting deletion on protected path must fail immediately without touching disk
+                bool attempt = fileAction.DeletePermanently(winDir, out string? err, skipConfirmation: true);
+                ctx.Assert(!attempt, "Deleting Windows directory must return false");
+                ctx.Assert(err != null && err.Contains("Protected system"), "Error message must state protected path");
                 await Task.CompletedTask;
             }
         ));

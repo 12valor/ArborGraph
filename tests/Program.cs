@@ -36,6 +36,11 @@ public class Program
             return await ManualWindowsTestRunner.RunAllAsync(args);
         }
 
+        if (args.Length > 0 && (args[0] == "--stress" || args[0] == "--perf"))
+        {
+            return await StressTestRunner.RunAllAsync(args);
+        }
+
         // 2. Default: Run Modern Automated QA Test Harness
         return await RunAutomatedHarnessAsync(args);
     }

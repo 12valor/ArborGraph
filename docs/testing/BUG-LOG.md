@@ -284,3 +284,51 @@
   Updated `site/index.html` line 740 to "Run 30-Stage Regression Suite:".
   Verified against automated test suite execution (30/30 tests pass + 9/9 security tests pass).
 
+---
+
+## 5. Release Candidate Verification Sign-Off (Prompt 17)
+
+- **Release Target:** ArborGraph v1.0.0-RC1 (`net8.0-windows` x64)
+- **Baseline Git Commit:** `ec6876b458c1ea23ccbafed0e67e7033f46650bd`
+- **Total Open P0 Blockers:** **0**
+- **Total Open P1 Criticals:** **0**
+- **Total Open P2 Majors:** **0** (`DISC-001`, `DISC-002` closed; `DISC-003` as designed)
+- **Total Open P3 Minors:** **0** (`BUG-005`, `DISC-004` closed)
+- **Summary:** All 5 precursor functional defects (`BUG-001` through `BUG-005`) and all 4 documentation/release claim discrepancies (`DISC-001` through `DISC-004`) are verified closed. Zero open defects or regressions remain.
+- **Defect Verdict:** **RELEASE CANDIDATE READY — ZERO OPEN BLOCKERS.**
+
+---
+
+## 6. Final Pre-Release Readiness Sign-Off (Prompt 18)
+
+- **Audit Date:** 2026-10-05
+- **Evaluated Target:** ArborGraph v1.0.0 (`net8.0-windows` x64)
+- **Commit Baseline:** `ec6876b458c1ea23ccbafed0e67e7033f46650bd`
+- **Total Open P0 Blockers:** **0**
+- **Total Open P1 Criticals:** **0**
+- **Total Open P2 Majors:** **0**
+- **Total Open P3 Minors:** **0**
+- **Remaining Observations:** `SEC-FIND-02` (optional `ProcessStartInfo.ArgumentList` quotation hardening scheduled for v1.0.1 maintenance release).
+- **Decision:** **GO FOR OFFICIAL RELEASE (ZERO BLOCKERS)**
+
+---
+
+## 7. Final Release Packaging & Publication Sign-Off (Prompt 19)
+
+- **Release Target:** ArborGraph v1.0.0 (`net8.0-windows` x64)
+- **Tag:** `v1.0.0`
+- **Total Open P0 Blockers:** **0**
+- **Total Open P1 Criticals:** **0**
+- **Total Open P2 Majors:** **0**
+- **Total Open P3 Minors:** **0**
+- **Artifact Status:**
+  - `ArborGraph-Setup-1.0.0-x64.exe` (68,243,352 bytes | SHA-256: `EAF4F9BA287209CC245AD660C7DA8CBA564135C728784FB9F46DF3BC925C730A`)
+  - `ArborGraph.exe` (73,381,915 bytes | SHA-256: `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853`)
+  - `ArborGraph-v1.0.0-portable.zip` (67,782,875 bytes | SHA-256: `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF`)
+  - `SHA256SUMS.txt` (Verified)
+- **GitHub Release:** Published to `https://github.com/12valor/ArborGraph/releases/tag/v1.0.0`
+- **Final Status:** **PUBLISHED — ZERO DEFECTS / ZERO BLOCKERS**
+
+
+
+

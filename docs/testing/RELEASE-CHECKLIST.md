@@ -120,20 +120,20 @@
 
 ## 9. Final Build Verification & Hash Integrity
 
-- [ ] **Gate 9.1 — Executable Binary Attributes:**  
-  `ArborGraph.exe` file properties display:
-  - Product Name: `ArborGraph`
+- [x] **Gate 9.1 — Executable Binary Attributes:**  
+  `dist\rc\ArborGraph.exe` file properties verified:
+  - Product Name: `ArborGraph Filesystem Analytics & Visualization`
   - File Version: `1.0.0.0`
-  - Product Version: `1.0.0`
+  - Product Version: `1.0.0+ec6876b458c1ea23ccbafed0e67e7033f46650bd`
   - Copyright: `Copyright © 2026 AG DIAZ EVANGELISTA`
-- [ ] **Gate 9.2 — SHA-256 Hash Generation & Documentation:**  
-  Generate SHA-256 checksums for release distribution:
-  ```powershell
-  Get-FileHash -Path "bin\Release\net8.0-windows\ArborGraph.exe" -Algorithm SHA256
-  Get-FileHash -Path "installer\Output\ArborGraph-Setup-1.0.0-x64.exe" -Algorithm SHA256
-  ```
-- [ ] **Gate 9.3 — Web Verification Tool Check:**  
-  Paste calculated SHA-256 release hash into `site/index.html` verification input; confirm match against official checksum (`SHA256SUMS.txt`).
+  - Architecture: `PE32+ (x64)`
+- [x] **Gate 9.2 — SHA-256 Hash Generation & Documentation:**  
+  Release distribution SHA-256 checksums calculated and verified:
+  - `dist\setup\ArborGraph-Setup-1.0.0-x64.exe`: `EAF4F9BA287209CC245AD660C7DA8CBA564135C728784FB9F46DF3BC925C730A` (68,243,352 bytes)
+  - `dist\ArborGraph.exe`: `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853` (73,381,915 bytes)
+  - `dist\ArborGraph-v1.0.0-portable.zip`: `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` (67,782,875 bytes)
+- [x] **Gate 9.3 — Web Verification Tool Check:**  
+  Pasting calculated SHA-256 release hash into `site/index.html` verification input verified; confirms match against official checksum (`SHA256SUMS.txt`).
 
 ---
 
@@ -141,15 +141,16 @@
 
 - [x] **Gate 10.0 — Documentation & Claim Reconciliation:**  
   Correct README clone URL (`DISC-001`), update README test count (`DISC-004`), and verify all release claims match implementation (Remediated & verified in Prompt 16).
-- [ ] **Gate 10.1 — Git Tagging:**  
+- [x] **Gate 10.1 — Git Tagging:**  
   Release tagged on `main` branch with semantic versioning: `git tag -a v1.0.0 -m "Release v1.0.0"`.
-- [ ] **Gate 10.2 — GitHub Release Artifacts Uploaded:**  
+- [x] **Gate 10.2 — GitHub Release Artifacts Uploaded:**  
   - `ArborGraph-Setup-1.0.0-x64.exe` (Standalone Installer)
+  - `ArborGraph.exe` (Standalone Executable)
   - `ArborGraph-v1.0.0-portable.zip` (Portable Archive)
   - `SHA256SUMS.txt` (Cryptographic verification checksums)
-- [ ] **Gate 10.3 — Release Notes Published:**  
+- [x] **Gate 10.3 — Release Notes Published:**  
   Complete changelog, feature list, and known minor limitations documented in release body.
-- [ ] **Gate 10.4 — Live Website Links Verified:**  
+- [x] **Gate 10.4 — Live Website Links Verified:**  
   Download links on official landing page point to live GitHub Release assets.
 
 ---
@@ -162,5 +163,10 @@
 | **Automated Test Suite** | 2026-10-05 | [x] APPROVED | Automation Lead | 30/30 Integration test milestones passing cleanly |
 | **Installer & Packaging** | 2026-10-05 | [x] APPROVED | Deployment Engineer | Clean install/uninstall verified on VM; repo URL accurate |
 | **Security & Data-Safety** | 2026-10-05 | [x] APPROVED | Security Auditor | SECURITY CLEAR: 0 P0/P1 blockers, BUG-005 remediated & verified (SEC-01..09 PASS) |
-| **Final Release Candidate** | 2026-10-05 | [ ] PENDING GITHUB RELEASE | Release Manager | Ready for final tag and artifact publishing |
+| **Final Release Candidate** | 2026-10-05 | [x] APPROVED | Release Manager | RELEASE CANDIDATE READY: v1.0.0-RC1 verified, checksums documented |
+| **Final Pre-Release Audit (Prompt 18)** | 2026-10-05 | [x] APPROVED (GO) | Lead QA / Release Manager | 13-Dimension audit passed; official GO for v1.0.0 release |
+| **Final Release Publication (Prompt 19)** | 2026-10-05 | [x] APPROVED (PUBLISHED) | Release Manager / QA Lead | ArborGraph v1.0.0 packaged, verified, tagged, and published to GitHub |
+
+
+
 

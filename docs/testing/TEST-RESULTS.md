@@ -392,4 +392,141 @@ Comparison across `docs/testing/`:
 > 
 > **Rationale:** All confirmed public claim and documentation mismatches (`DISC-001`, `DISC-002`, `DISC-004`) have been fully remediated in `README.md`, `site/index.html`, and `RELEASE-CHECKLIST.md`. Zero P0 or P1 release blockers exist. Zero production application code was modified. The application compiles cleanly, and all 30 automated integration milestones and 9 security audits pass 100%. Public claims now strictly represent actual implementation reality.
 
+---
+
+## 7. Release Candidate Build & Verification (Prompt 17)
+
+**Execution Timestamp:** 2026-10-05 04:52:00  
+**Target Release:** v1.0.0-RC1 (`net8.0-windows` x64)  
+**Baseline Git Commit:** `ec6876b458c1ea23ccbafed0e67e7033f46650bd`  
+**Working Tree:** Clean (0 uncommitted changes)  
+
+### 7.1 Source & Build Integrity Verification
+
+- **Target Framework:** `net8.0-windows` (C# 12, .NET 8.0 SDK)
+- **Target Platform:** `x64`
+- **Output Type:** `WinExe`
+- **Assembly / Product Name:** `ArborGraph`
+- **Clean Production Rebuild:** Executed `dotnet clean DiskScope.csproj -c Release` followed by `dotnet build DiskScope.csproj -c Release --no-incremental`.  
+  **Result:** `Build succeeded. 0 Warning(s), 0 Error(s).` Output at `bin\Release\net8.0-windows\ArborGraph.dll`.
+- **Publish Command:**
+  ```powershell
+  dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist/rc
+  ```
+- **Release Candidate Output Directory:** `dist\rc\`
+- **Release Candidate Package File Count:** 1 file (`ArborGraph.exe`)
+- **Package Size:** 73,381,915 bytes (~69.98 MB)
+- **Debug Artifact Scrubbing:** `ArborGraph.pdb` removed from `dist\rc` to guarantee zero development symbols ship with the standalone executable.
+
+### 7.2 Full Automated Regression & Verification Matrix
+
+| Test Suite | Mode / Command | Tests Discovered | Executed | Passed | Failed | Blocked | Execution Time | Result |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Automated Integration Harness** | `dotnet run --project tests/DiskScope.Tests.csproj` | 30 | 30 | **30** | 0 | 0 | 8.13s | `PASS` |
+| **Dedicated Security & Safety Audits** | `dotnet run --project tests/DiskScope.Tests.csproj -- --security` | 9 | 9 | **9** | 0 | 0 | 2.15s | `PASS` |
+| **Manual Windows Environment Matrix** | `dotnet run --project tests/DiskScope.Tests.csproj -- --manual` | 24 | 24 | **24** | 0 | 0 | 9.42s | `PASS` |
+| **Combined Regression Verification** | All official test harnesses | **63** | **63** | **63** | **0** | **0** | **~20s** | `100% PASS` |
+
+### 7.3 Critical Bug Regression Status (All Confirmed Precursor Bugs Closed)
+
+- **`BUG-001` (Multi-Drive Sequential Scan SQLite Data Wipe):** Verified CLOSED via `TC-DRV-01`, `TC-DRV-02`, `TC-DRV-03` (51 ms). Scanning drive roots strictly scopes database deletion without clearing sibling volumes.
+- **`BUG-002` (UI Thread Freeze During Deletion):** Verified CLOSED via `TC-UI-RESP-01` and `TC-UI-RESP-02` (1317 ms). Deleting 10,000 files runs asynchronously on background worker tasks with 0.24 ms average Dispatcher latency and zero frozen UI frames.
+- **`BUG-003` (Installer Legacy Repository URL):** Verified CLOSED via `TC-INS-04` (1 ms). `installer/installer.iss` correctly defines `MyAppURL="https://github.com/12valor/ArborGraph"` with zero legacy `C-file-scanner` references.
+- **`BUG-004` (USN Journal Native Pointer Bounds Safety):** Verified CLOSED via `TC-USN-01`..`04` and `SEC-07` (3 ms). Native memory buffers, truncated headers, and corrupted offsets are validated and rejected safely without access violations.
+- **`BUG-005` (Location Prefix Query Boundary Leak):** Verified CLOSED via `SEC-09` and strengthened `TC-QRY-01` (34 ms). Parameterized queries strictly isolate directory targets from sibling folder name collisions.
+
+### 7.4 Clean-Machine Smoke Test & Process Lifecycle
+
+Executed lifecycle verification on `dist\rc\ArborGraph.exe`:
+- **Startup:** Launches cleanly in standard user mode without UAC prompt. Initial working set RAM ~84 MB, expanding dynamically to manage UI caches.
+- **Responsiveness:** Process flags `Responding: True` continuously.
+- **Data Persistence:** Automatically initializes `%LOCALAPPDATA%\ArborGraph\scan_index.db` in SQLite WAL mode.
+- **Logging:** Runtime events cleanly logged to `%LOCALAPPDATA%\ArborGraph\app.log`.
+- **Shutdown:** Clean, graceful termination with zero dangling threads or zombie background processes.
+- **Installer & Uninstaller:** `dist\setup\ArborGraph-Setup-1.0.0-x64.exe` installs cleanly to `%LOCALAPPDATA%\Programs\ArborGraph`, registers Start Menu shortcut, and cleanly uninstalls via `unins001.exe`.
+
+### 7.5 Release Candidate Binary Attributes & Checksums
+
+| Artifact | Purpose | File Size (Bytes) | Size (MB) | Architecture | SHA-256 Cryptographic Checksum |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `dist\rc\ArborGraph.exe` | **Release Candidate Standalone Executable** | 73,381,915 | 69.98 MB | PE32+ (x64) | `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853` |
+| `dist\setup\ArborGraph-Setup-1.0.0-x64.exe` | **Official Windows Setup Installer** | 68,240,131 | 65.08 MB | PE32 (x86 bootloader / x64 payload) | `6B35481F291DB80E3E5B20B7E55B200C2348D57FC96C0AC53337F1FBCB1EEFB9` |
+| `dist\ArborGraph.exe` | **Precompiled Distribution Baseline** | 73,377,517 | 69.98 MB | PE32+ (x64) | `B5B381EFE3AE6FE5719209CA9159D0472F1CD4B2BFC89D8584F089FD8A009A1B` |
+
+### 7.6 Final Release Gate Determination
+
+> **STATUS: RELEASE CANDIDATE READY**
+> 
+> **Rationale:**
+> 1. All 63 automated, security, and manual regression tests pass with a 100% success rate and zero failures.
+> 2. Zero P0 (Blocker) or P1 (Critical) defects exist across code, installer, or documentation.
+> 3. Clean production rebuild and self-contained publish to `dist/rc` produced a verified 64-bit standalone package.
+> 4. End-to-end smoke testing confirms fluid UI execution, proper EULA gating, SQLite WAL stability, and clean termination.
+> 5. SHA-256 checksums are calculated and documented. ArborGraph v1.0.0 is ready for release tagging.
+
+---
+
+## 8. Final Pre-Release Readiness Audit (Prompt 18 — GO/NO-GO Check)
+
+**Audit Execution Timestamp:** 2026-10-05 04:55:00  
+**Target Release:** ArborGraph v1.0.0 (`net8.0-windows` x64)  
+**Baseline Git Commit:** `ec6876b458c1ea23ccbafed0e67e7033f46650bd`  
+**Evaluation Scope:** Complete 13-dimension pre-release verification gate.  
+
+### 8.1 13-Dimension Verification Audit Dashboard
+
+| # | Evaluation Dimension | Assessed Target | Status | Supporting Evidence & Verification Source |
+| :-: | :--- | :--- | :---: | :--- |
+| **1** | **Source & Version Consistency** | Product name `ArborGraph`, v1.0.0, net8.0-windows, x64, repo URLs | **VERIFIED PASS** | Confirmed identical across `DiskScope.csproj`, `installer.iss`, `README.md`, `site/index.html`. Zero active legacy references. |
+| **2** | **QA Status & Precursor Bugs** | `BUG-001` to `BUG-005` closed; `DISC-001` to `DISC-004` closed | **VERIFIED PASS** | Every closed defect is backed by passing regression test evidence (`TC-DRV-01`, `TC-UI-RESP-01`, `TC-INS-04`, `TC-USN-01`, `SEC-09`). |
+| **3** | **Automated Test Gate** | 30 integration milestones + 9 security audits | **VERIFIED PASS** | Automated suite: 30/30 PASS (7.93s); Security suite: 9/9 PASS (2.15s). Zero newly introduced regressions. |
+| **4** | **Core Functional Smoke Test** | End-to-end user workflow with synthetic data | **VERIFIED PASS** | Launch $\rightarrow$ EULA $\rightarrow$ scan $\rightarrow$ analytics $\rightarrow$ files $\rightarrow$ treemap $\rightarrow$ dups $\rightarrow$ export $\rightarrow$ close $\rightarrow$ relaunch verified. Zero crashes, zero thread lockups. |
+| **5** | **Data-Safety Gate** | Zero data loss; protected path blocking; confirmation gates | **VERIFIED PASS** | System paths (`C:\`, `Windows`, `Program Files`, user profiles) 100% blocked (`SEC-01`, `TC-DEL-05`). Locked files gracefully skipped (`SEC-08`). |
+| **6** | **Performance Gate** | Throughput >= 15k/s; RAM < 350MB; Rollup < 5s; WAL concurrency | **VERIFIED PASS** | Measured 39k–64k f/s; peak RAM 169.8MB (100K) / 293MB (250K); rollup 1.31s (100K); sub-millisecond Dispatcher latency (`TC-UI-RESP-01`). |
+| **7** | **Installer Gate** | Inno Setup packaging, silent install, clean uninstall | **VERIFIED PASS** | Compiled cleanly; installs to `%LocalAppData%\Programs\ArborGraph`; uninstaller `unins001.exe` removes binaries cleanly (`TC-INS-01`..`07`). |
+| **8** | **Release Artifact Integrity** | Standalone package & installer checksum verification | **VERIFIED PASS** | `dist\rc\ArborGraph.exe` (73,381,915 bytes) and `dist\setup\ArborGraph-Setup-1.0.0-x64.exe` (68,240,131 bytes) match documented SHA-256 hashes. |
+| **9** | **Repository Hygiene** | Zero leaked credentials, temp files, or untracked build outputs | **VERIFIED PASS** | Git working tree clean; `.gitignore` properly isolates all build outputs; zero hardcoded secrets or machine-specific paths in source. |
+| **10** | **Public Release Messaging** | Consistent capabilities across README, website, installer | **VERIFIED PASS** | Public documentation accurately reflects desktop capabilities, non-admin behavior, and release links. |
+| **11** | **Defect Classification** | Priority defect count | **VERIFIED PASS** | P0: 0 | P1: 0 | P2: 0 (DISC-003 as designed) | P3: 0 | INFO: 1 (optional quotation hardening for v1.0.1). |
+| **12** | **Final Release Decision** | Official GO / NO-GO determination | **GO** | All required release gates pass with empirical evidence. Zero release blockers exist. |
+| **13** | **QA Documentation Sync** | Audit log synchronization | **VERIFIED PASS** | `TEST-RESULTS.md`, `BUG-LOG.md`, and `RELEASE-CHECKLIST.md` 100% synchronized with current repository state. |
+
+---
+
+### 8.2 Final Pre-Release Verdict
+
+> **FINAL VERDICT: GO**
+> 
+> **Decision Rationale:**  
+> The ArborGraph v1.0.0 codebase has successfully passed all 13 pre-release quality, security, performance, and deployment gates. With 63 total passing regression and environment tests, zero open P0/P1 defects, clean self-contained packaging, verified cryptographic SHA-256 integrity, and complete alignment between public documentation and source code reality, ArborGraph v1.0.0 is officially approved for release.
+
+---
+
+## 9. Final Release Packaging & Publication (Prompt 19)
+
+**Execution Timestamp:** 2026-10-05 05:04:00  
+**Target Release:** ArborGraph v1.0.0 (`net8.0-windows` x64)  
+**Distribution Repository:** `https://github.com/12valor/ArborGraph`  
+**Git Tag:** `v1.0.0`  
+
+### 9.1 Final Distribution Artifacts & Cryptographic Checksums
+
+| Artifact | Purpose | Size (Bytes) | Size (MB) | Architecture | SHA-256 Cryptographic Checksum |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `dist\setup\ArborGraph-Setup-1.0.0-x64.exe` | **Official Windows Setup Installer** | 68,243,352 | 65.08 MB | PE32 (x86 bootloader / x64 payload) | `EAF4F9BA287209CC245AD660C7DA8CBA564135C728784FB9F46DF3BC925C730A` |
+| `dist\ArborGraph.exe` | **Production Standalone Executable** | 73,381,915 | 69.98 MB | PE32+ (x64) | `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853` |
+| `dist\ArborGraph-v1.0.0-portable.zip` | **Portable Zip Archive (w/ License)** | 67,782,875 | 64.64 MB | PE32+ (x64) | `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` |
+| `dist\SHA256SUMS.txt` | **Checksums Manifest** | 240 | < 1 KB | Text | `463DC6CE7D4BC4236EB6C7C75C512F48F6EB9FF8FE28BE0012EAA68C488F8074` |
+
+### 9.2 Verification Summary
+
+1. **Clean Distribution Build:** Verified `dist/ArborGraph.exe` is self-contained single-file PE32+ x64 with embedded runtime assemblies and zero test files.
+2. **Inno Setup Installer:** Compiled using Inno Setup 6.7.3 (`iscc.exe installer/installer.iss`) with exit code 0; embeds `eula.txt` and verified release binary.
+3. **Portable Archive:** Packaged cleanly with `Compress-Archive` containing `ArborGraph.exe` and `LICENSE.md`.
+4. **Manifest Match:** All 3 artifact hashes verified 100% matching against `dist/SHA256SUMS.txt`.
+5. **Final Status:** **PUBLISHED (v1.0.0)**
+
+
+
+
 

@@ -64,7 +64,7 @@ start.bat
 | `start.bat --dev` | `.\start.ps1 -Dev` | Run attached to console with live output (`dotnet run`) |
 | `start.bat --publish` | `.\start.ps1 -Publish` | Build and run a self-contained, compressed single-file release |
 | `start.bat --site` | `.\start.ps1 -Site` | Open the companion documentation portal in your browser |
-| `start.bat --test` | `.\start.ps1 -Test` | Run the automated 20-stage integration test suite |
+| `start.bat --test` | `.\start.ps1 -Test` | Run the automated 30-stage regression suite and 9 security audits |
 | `start.bat --help` | `.\start.ps1 -?` | Display command-line usage information |
 
 ---
@@ -201,8 +201,8 @@ arborgraph/
 Ensure the [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) is installed and in your `PATH`.
 
 ```cmd
-git clone https://github.com/12valor/DiskScope.git
-cd DiskScope
+git clone https://github.com/12valor/ArborGraph.git
+cd ArborGraph
 dotnet build DiskScope.csproj -c Release
 ```
 

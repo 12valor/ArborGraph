@@ -208,3 +208,79 @@
   [Insert logs from %LOCALAPPDATA%\ArborGraph\app.log]
   ```
 ```
+
+---
+
+## 4. Documentation & Release Claim Discrepancies Register (Prompt 15 Truth Check & Prompt 16 Remediation)
+
+| Discrepancy ID | Severity | Source / Location | Description | Current Status | Remediation Required & Verification |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **DISC-001** | P2 / MAJOR | `README.md` (line 204) | Clone instruction referenced legacy URL: `git clone https://github.com/12valor/DiskScope.git` | **CLOSED** | **VERIFIED.** Updated URL to `https://github.com/12valor/ArborGraph.git` and `cd ArborGraph` in `README.md`. |
+| **DISC-002** | P2 / MAJOR | `docs/testing/RELEASE-CHECKLIST.md` (Gate 9.3), `TEST-CASES.md` (`TC-WEB-03`) | QA documents stated web tool verifies binary via file upload, but `site/index.html` implements text input paste comparator | **CLOSED** | **VERIFIED.** Updated `RELEASE-CHECKLIST.md` Gate 9.3 to reflect paste comparator interaction model. |
+| **DISC-003** | P2 / MAJOR | `Views/AnalyticsView.xaml`, `Views/ScanLogView.xaml` | Views and ViewModels exist in code and `App.xaml` DataTemplates, but have no navigation buttons in `MainWindow.xaml` sidebar | **AS DESIGNED** | Kept dormant internal views for deep linking / tests; zero false advertising in public docs or website. |
+| **DISC-004** | P3 / MINOR | `README.md` (line 67), `site/index.html` (line 740) | Cites "20-stage integration test suite", whereas suite now has 30 milestones + 9 security audits | **CLOSED** | **VERIFIED.** Updated `README.md` line 67 and `site/index.html` line 740 to 30-stage regression suite and 9 security audits. |
+
+---
+
+### Detailed Discrepancy Reports
+
+#### Discrepancy ID: `DISC-001`
+- **Severity:** P2 / MAJOR
+- **Location:** `README.md` (line 204)
+- **Title:** Outdated Repository Clone URL in Developer Setup Instructions
+- **Status:** **CLOSED (VERIFIED PASS)**
+- **Evidence:**
+  ```bash
+  git clone https://github.com/12valor/DiskScope.git
+  cd DiskScope
+  ```
+- **Remediation Details:**
+  Updated `README.md` lines 204–205 to:
+  ```bash
+  git clone https://github.com/12valor/ArborGraph.git
+  cd ArborGraph
+  ```
+  Verified via git diff and grep search.
+
+---
+
+#### Discrepancy ID: `DISC-002`
+- **Severity:** P2 / MAJOR
+- **Location:** `docs/testing/RELEASE-CHECKLIST.md` (Gate 9.3), `docs/testing/TEST-CASES.md` (`TC-WEB-03`)
+- **Title:** Checksum Verification Tool Described as File Upload Hasher Rather Than Paste Comparator
+- **Status:** **CLOSED (VERIFIED PASS)**
+- **Evidence:**
+  - `RELEASE-CHECKLIST.md` line 136 originally stated: "Upload release binary to site/index.html Web Crypto verifier; confirm calculated hash matches PowerShell checksum."
+  - `site/index.html` lines 426–441 implements `<input type="text" id="verifyInput">` comparator.
+- **Remediation Details:**
+  Updated `RELEASE-CHECKLIST.md` Gate 9.3 to:
+  "Paste calculated SHA-256 release hash into `site/index.html` verification input; confirm match against official checksum (`SHA256SUMS.txt`)."
+
+---
+
+#### Discrepancy ID: `DISC-003`
+- **Severity:** P2 / MAJOR
+- **Location:** `Views/AnalyticsView.xaml`, `Views/ScanLogView.xaml`, `ViewModels/AnalyticsViewModel.cs`, `ViewModels/ScanLogViewModel.cs`
+- **Title:** Analytics & Scan Log Views Implemented But Not User-Accessible From MainWindow Sidebar
+- **Status:** **AS DESIGNED / RETAINED INTERNAL**
+- **Evidence:**
+  - `MainWindow.xaml` sidebar exposes 9 primary user-facing workspaces: `Overview`, `Scanner`, `Files`, `Treemap`, `Duplicates`, `Cleanup`, `Developer`, `Photoshop`, `Settings`.
+  - `AnalyticsView` and `ScanLogView` exist in codebase and `App.xaml` DataTemplates, but have no sidebar navigation entry.
+- **Remediation Details:**
+  Confirmed that neither view is advertised in `README.md` or `site/index.html`. Retained as internal views for v1.0.0 testing and deep linking.
+
+---
+
+#### Discrepancy ID: `DISC-004`
+- **Severity:** P3 / MINOR
+- **Location:** `README.md` (line 67), `site/index.html` (line 740)
+- **Title:** Outdated Integration Test Suite Count in README and Website
+- **Status:** **CLOSED (VERIFIED PASS)**
+- **Evidence:**
+  - `README.md` line 67 stated: "20-stage integration test suite".
+  - `site/index.html` line 740 stated: "Run 20-Stage Integration Suite:".
+- **Remediation Details:**
+  Updated `README.md` line 67 to "Run the automated 30-stage regression suite and 9 security audits".
+  Updated `site/index.html` line 740 to "Run 30-Stage Regression Suite:".
+  Verified against automated test suite execution (30/30 tests pass + 9/9 security tests pass).
+

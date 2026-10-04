@@ -133,12 +133,14 @@
   Get-FileHash -Path "installer\Output\ArborGraph-Setup-1.0.0-x64.exe" -Algorithm SHA256
   ```
 - [ ] **Gate 9.3 — Web Verification Tool Check:**  
-  Upload release binary to `site/index.html` Web Crypto verifier; confirm calculated hash matches PowerShell checksum.
+  Paste calculated SHA-256 release hash into `site/index.html` verification input; confirm match against official checksum (`SHA256SUMS.txt`).
 
 ---
 
 ## 10. GitHub Release & Deployment Checks
 
+- [x] **Gate 10.0 — Documentation & Claim Reconciliation:**  
+  Correct README clone URL (`DISC-001`), update README test count (`DISC-004`), and verify all release claims match implementation (Remediated & verified in Prompt 16).
 - [ ] **Gate 10.1 — Git Tagging:**  
   Release tagged on `main` branch with semantic versioning: `git tag -a v1.0.0 -m "Release v1.0.0"`.
 - [ ] **Gate 10.2 — GitHub Release Artifacts Uploaded:**  

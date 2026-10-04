@@ -42,6 +42,71 @@ public class UsnReadResult
     public List<UsnChangeRecord> Changes { get; } = [];
 }
 
+public enum UsnRecordValidationStatus
+{
+    Valid,
+    EndOfBuffer,
+    BufferTooSmallForHeader,
+    RecordLengthTooSmall,
+    RecordLengthExceedsBuffer,
+    V2HeaderTruncated,
+    InvalidFileNameBounds,
+    UnsupportedVersion
+}
+
+public static class UsnRecordValidator
+{
+    public const int MinRecordHeaderSize = 8; // RecordLength (4) + MajorVersion (2) + MinorVersion (2)
+    public const int MinV2HeaderSize = 60;    // Size of fixed fields preceding FileName in USN_RECORD_V2
+
+    /// <summary>
+    /// Validates the record length against buffer bounds before any record fields are read.
+    /// </summary>
+    public static UsnRecordValidationStatus ValidateRecordBounds(
+        long offset,
+        long bytesReturned,
+        uint recordLength)
+    {
+        if (offset >= bytesReturned || recordLength == 0)
+            return UsnRecordValidationStatus.EndOfBuffer;
+
+        if (bytesReturned - offset < sizeof(uint))
+            return UsnRecordValidationStatus.BufferTooSmallForHeader;
+
+        if (recordLength < MinRecordHeaderSize)
+            return UsnRecordValidationStatus.RecordLengthTooSmall;
+
+        if (recordLength > (ulong)(bytesReturned - offset))
+            return UsnRecordValidationStatus.RecordLengthExceedsBuffer;
+
+        return UsnRecordValidationStatus.Valid;
+    }
+
+    /// <summary>
+    /// Validates a USN_RECORD_V2 header and filename layout before reading fields or strings.
+    /// </summary>
+    public static UsnRecordValidationStatus ValidateV2Record(
+        uint recordLength,
+        ushort majorVersion,
+        ushort fileNameOffset,
+        ushort fileNameLength)
+    {
+        if (majorVersion != 2)
+            return UsnRecordValidationStatus.UnsupportedVersion;
+
+        if (recordLength < MinV2HeaderSize)
+            return UsnRecordValidationStatus.V2HeaderTruncated;
+
+        if (fileNameOffset < MinV2HeaderSize)
+            return UsnRecordValidationStatus.InvalidFileNameBounds;
+
+        if (fileNameOffset > recordLength || fileNameLength > (recordLength - fileNameOffset))
+            return UsnRecordValidationStatus.InvalidFileNameBounds;
+
+        return UsnRecordValidationStatus.Valid;
+    }
+}
+
 public class UsnJournalService
 {
     private const uint GENERIC_READ = 0x80000000;
@@ -313,46 +378,29 @@ public class UsnJournalService
                     break;
                 }
 
-                // First 8 bytes of outBuf is the next USN
+                long effectiveBytes = Math.Min((long)bytesReturned, (long)bufferSize);
                 long nextUsnMarker = Marshal.ReadInt64(outBuf);
                 long offset = sizeof(long);
 
-                while (offset < bytesReturned)
+                while (offset < effectiveBytes)
                 {
-                    IntPtr recordPtr = IntPtr.Add(outBuf, (int)offset);
-                    uint recordLength = (uint)Marshal.ReadInt32(recordPtr);
-                    if (recordLength == 0) break;
-
-                    // USN_RECORD_V2 has major version = 2
-                    ushort majorVersion = (ushort)Marshal.ReadInt16(recordPtr, 4);
-                    if (majorVersion == 2)
+                    if (!TryReadNextRecord(outBuf, effectiveBytes, ref offset, out var record, out var diagMsg))
                     {
-                        ulong fileRef = (ulong)Marshal.ReadInt64(recordPtr, 8);
-                        ulong parentRef = (ulong)Marshal.ReadInt64(recordPtr, 16);
-                        long usn = Marshal.ReadInt64(recordPtr, 24);
-                        uint reason = (uint)Marshal.ReadInt32(recordPtr, 40);
-                        ushort fileNameLength = (ushort)Marshal.ReadInt16(recordPtr, 56);
-                        ushort fileNameOffset = (ushort)Marshal.ReadInt16(recordPtr, 58);
-
-                        string fileName = Marshal.PtrToStringUni(IntPtr.Add(recordPtr, fileNameOffset), fileNameLength / 2);
-
-                        var changeType = UsnChangeType.Modified;
-                        if ((reason & USN_REASON_FILE_CREATE) != 0) changeType = UsnChangeType.Created;
-                        else if ((reason & USN_REASON_FILE_DELETE) != 0) changeType = UsnChangeType.Deleted;
-                        else if ((reason & USN_REASON_RENAME_NEW_NAME) != 0) changeType = UsnChangeType.Renamed;
-
-                        result.Changes.Add(new UsnChangeRecord
+                        if (!string.IsNullOrEmpty(diagMsg))
                         {
-                            FileName = fileName,
-                            FileReferenceNumber = fileRef,
-                            ParentFileReferenceNumber = parentRef,
-                            Usn = usn,
-                            ChangeType = changeType,
-                            Reason = reason
-                        });
+                            LogDiagnostic(diagMsg);
+                        }
+                        break;
                     }
 
-                    offset += recordLength;
+                    if (record != null)
+                    {
+                        result.Changes.Add(record);
+                    }
+                    else if (!string.IsNullOrEmpty(diagMsg))
+                    {
+                        LogDiagnostic(diagMsg);
+                    }
                 }
 
                 if (nextUsnMarker <= currentUsn) break;
@@ -375,5 +423,127 @@ public class UsnJournalService
             if (inBuf != IntPtr.Zero) Marshal.FreeHGlobal(inBuf);
             if (outBuf != IntPtr.Zero) Marshal.FreeHGlobal(outBuf);
         }
+    }
+
+    /// <summary>
+    /// Attempts to read a single USN record from native memory at the specified offset with defensive bounds checking.
+    /// Returns false if the end of the buffer is reached or if an unrecoverable malformed record length is encountered.
+    /// Returns true if a record was successfully parsed (or safely skipped, e.g. unknown version or invalid filename).
+    /// </summary>
+    public static bool TryReadNextRecord(
+        IntPtr buffer,
+        long bytesReturned,
+        ref long offset,
+        out UsnChangeRecord? record,
+        out string? statusMessage)
+    {
+        record = null;
+        statusMessage = null;
+
+        if (buffer == IntPtr.Zero || offset >= bytesReturned)
+        {
+            statusMessage = "End of buffer reached.";
+            return false;
+        }
+
+        // 1. Verify enough bytes remain to read recordLength (DWORD, 4 bytes)
+        if (bytesReturned - offset < sizeof(uint))
+        {
+            statusMessage = $"Buffer truncated: only {bytesReturned - offset} bytes remain at offset {offset}, expected at least {sizeof(uint)}.";
+            offset = bytesReturned; // Stop traversal safely
+            return false;
+        }
+
+        IntPtr recordPtr = IntPtr.Add(buffer, (int)offset);
+        uint recordLength = (uint)Marshal.ReadInt32(recordPtr);
+
+        // 2. Validate record length against buffer bounds
+        var boundsStatus = UsnRecordValidator.ValidateRecordBounds(offset, bytesReturned, recordLength);
+        if (boundsStatus == UsnRecordValidationStatus.EndOfBuffer)
+        {
+            offset = bytesReturned; // Clean exit
+            return false;
+        }
+
+        if (boundsStatus != UsnRecordValidationStatus.Valid)
+        {
+            statusMessage = $"Invalid record length {recordLength} at offset {offset} ({boundsStatus}). Aborting buffer parse.";
+            offset = bytesReturned; // Prevent out-of-bounds advance or infinite loop
+            return false;
+        }
+
+        // 3. Read MajorVersion (WORD at offset 4) - safe because recordLength >= 8
+        ushort majorVersion = (ushort)Marshal.ReadInt16(recordPtr, 4);
+
+        if (majorVersion != 2)
+        {
+            // Safely skip unsupported record versions (e.g. V3/V4)
+            offset += recordLength;
+            statusMessage = $"Skipped unsupported USN record version {majorVersion} (length: {recordLength}).";
+            return true;
+        }
+
+        // 4. Validate USN_RECORD_V2 header length
+        if (recordLength < UsnRecordValidator.MinV2HeaderSize)
+        {
+            statusMessage = $"Malformed USN_RECORD_V2 at offset {offset}: recordLength {recordLength} is less than required header size {UsnRecordValidator.MinV2HeaderSize}.";
+            offset = bytesReturned;
+            return false;
+        }
+
+        // 5. Read V2 fixed fields
+        ulong fileRef = (ulong)Marshal.ReadInt64(recordPtr, 8);
+        ulong parentRef = (ulong)Marshal.ReadInt64(recordPtr, 16);
+        long usn = Marshal.ReadInt64(recordPtr, 24);
+        uint reason = (uint)Marshal.ReadInt32(recordPtr, 40);
+        ushort fileNameLength = (ushort)Marshal.ReadInt16(recordPtr, 56);
+        ushort fileNameOffset = (ushort)Marshal.ReadInt16(recordPtr, 58);
+
+        // 6. Validate filename offsets and bounds
+        var v2Status = UsnRecordValidator.ValidateV2Record(recordLength, majorVersion, fileNameOffset, fileNameLength);
+        string fileName = string.Empty;
+
+        if (v2Status == UsnRecordValidationStatus.InvalidFileNameBounds)
+        {
+            statusMessage = $"Invalid filename boundaries in USN record at offset {offset} (offset: {fileNameOffset}, length: {fileNameLength}, recordLength: {recordLength}). Skipping filename read.";
+        }
+        else if (fileNameLength > 0)
+        {
+            fileName = Marshal.PtrToStringUni(IntPtr.Add(recordPtr, fileNameOffset), fileNameLength / 2) ?? string.Empty;
+        }
+
+        var changeType = UsnChangeType.Modified;
+        if ((reason & USN_REASON_FILE_CREATE) != 0) changeType = UsnChangeType.Created;
+        else if ((reason & USN_REASON_FILE_DELETE) != 0) changeType = UsnChangeType.Deleted;
+        else if ((reason & USN_REASON_RENAME_NEW_NAME) != 0) changeType = UsnChangeType.Renamed;
+
+        record = new UsnChangeRecord
+        {
+            FileName = fileName,
+            FileReferenceNumber = fileRef,
+            ParentFileReferenceNumber = parentRef,
+            Usn = usn,
+            ChangeType = changeType,
+            Reason = reason
+        };
+
+        // Advance offset strictly by validated recordLength
+        offset += recordLength;
+        return true;
+    }
+
+    private static void LogDiagnostic(string message)
+    {
+        try
+        {
+            string logFile = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ArborGraph",
+                "app.log");
+            string? dir = Path.GetDirectoryName(logFile);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            File.AppendAllText(logFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [USN] {message}{Environment.NewLine}");
+        }
+        catch { }
     }
 }

@@ -14,7 +14,7 @@
 | **BUG-001** | P0 / BLOCKER | `FEAT-08` / `TC-DRV-01`, `TC-DRV-02` | Multi-drive `ClearIndex` root path logic (`isFullClear`) wipes previous drives | CLOSED (Verified: TC-DRV-01, TC-DRV-02 PASS) | v1.0.0 |
 | **BUG-002** | P0 / BLOCKER | `FEAT-19` / `TC-UI-RESP-01`, `TC-UI-RESP-02` | Synchronous deletion executes on UI dispatcher thread, freezing window | READY FOR MANUAL VERIFICATION (Automated Tests PASS) | v1.0.0 |
 | **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | CLOSED (Verified: Clean Inno Setup compile & TC-INS-04 PASS) | v1.0.0 |
-| **BUG-004** | P1 / CRITICAL | `FEAT-04` | USN Journal native pointer boundary arithmetic risks memory violation | OPEN (Audit Flag) | v1.0.0 |
+| **BUG-004** | P1 / CRITICAL | `FEAT-04` / `TC-USN-01` | USN Journal native pointer boundary arithmetic risks memory violation | CLOSED (Verified: TC-USN-01 to TC-USN-04 PASS) | v1.0.0 |
 
 ---
 
@@ -115,21 +115,26 @@
 - **Feature / Test ID:** `FEAT-04` / `TC-USN-01`
 - **Title:** USN Change Journal Unmanaged Memory Pointer Bounds Risk on Fragmented NTFS Volumes
 - **Environment:** Windows 10 / 11 x64, Active NTFS Volume
-- **Status:** OPEN (Identified in Code Audit — Pending Test Execution Confirmation)
+- **Status:** CLOSED (FIXED in `Services/UsnJournalService.cs`; Verified by automated tests `TC-USN-01` through `TC-USN-04`)
 - **Fix / Version:** v1.0.0
-- **Regression Status:** PENDING VERIFICATION
-- **Preconditions:** Large, heavily fragmented NTFS volume with active USN Change Journal.
+- **Regression Status:** VERIFIED PASS (Automated suite 30/30 passed; zero memory corruption or access violation exceptions)
+- **Preconditions:** Large, heavily fragmented NTFS volume with active USN Change Journal, or truncated driver buffer.
 - **Steps to Reproduce:**
   1. Trigger incremental USN Journal scan on active volume.
   2. Inspect buffer parsing in `UsnJournalService.cs`.
 - **Expected Result:** Pointer arithmetic is strictly bounded by buffer byte counts with structured boundary checks.
-- **Actual Result (Audit Finding):**
-  - `src/Services/UsnJournalService.cs` (lines 230–245) performs manual pointer advance:
-    ```csharp
-    IntPtr recordPtr = new IntPtr(bufferPtr.ToInt64() + 8);
-    // Uses Marshal.ReadInt32 and Marshal.PtrToStructure without rigorous boundary asserts
-    ```
-  - If a corrupted or truncated USN record is returned by `DeviceIoControl`, reading past allocated buffer could trigger an uncatchable `AccessViolationException`.
+- **Actual Result Prior to Fix:**
+  - In `Services/UsnJournalService.cs`:
+    - Inner while-loop did not check if remaining bytes were sufficient to read `recordLength` (4 bytes).
+    - Did not check if `recordLength` was valid (at least 8 bytes and `<= bytesReturned - offset`).
+    - Did not check if `recordLength` for V2 record was at least 60 bytes before reading header fields.
+    - Did not check if `fileNameOffset` and `fileNameLength` resided within `[60, recordLength]`, allowing `Marshal.PtrToStringUni` to read out-of-bounds process memory.
+- **Remediation Details:**
+  - Introduced `UsnRecordValidationStatus` and `UsnRecordValidator` to enforce bounds checks on `recordLength`, minimum header size (8 bytes), V2 header size (60 bytes), and filename bounds.
+  - Implemented `TryReadNextRecord` which validates offsets and byte counts before any native reads or string marshaling.
+  - Capped effective bytes in `ReadChanges` to `Math.Min(bytesReturned, bufferSize)`.
+  - Added diagnostic logging to `%LOCALAPPDATA%\ArborGraph\app.log`.
+  - Added automated tests `TC-USN-01` through `TC-USN-04` validating valid records, zero-length EOF, small record lengths, overflowing record lengths, buffer truncations, corrupt filename offsets, multi-record sequences, and fallback branches.
 
 ---
 

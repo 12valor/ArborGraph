@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
@@ -22,6 +23,7 @@ public static class AutomatedTestSuites
         RegisterLegalAndSettingsTests(runner);
         RegisterDeletionAndSafetyTests(runner);
         RegisterInstallerTests(runner);
+        RegisterUsnJournalTests(runner);
     }
 
     // =========================================================================
@@ -1287,6 +1289,296 @@ public static class AutomatedTestSuites
                     var fileInfo = new FileInfo(compiledSetupPath);
                     ctx.Assert(fileInfo.Length > 1_000_000, $"Compiled installer must be a valid PE binary (> 1MB), actual size: {fileInfo.Length} bytes");
                 }
+            }
+        ));
+    }
+
+    // =========================================================================
+    // L. USN CHANGE JOURNAL & BUFFER BOUNDS SAFETY SUITE
+    // =========================================================================
+    private static void RegisterUsnJournalTests(TestRunner runner)
+    {
+        // TC-USN-01: USN Journal Pointer Arithmetic & Native Memory Safety
+        runner.Register(new TestCase(
+            TestId: "TC-USN-01",
+            FeatureId: "FEAT-04",
+            Title: "USN Journal Pointer Arithmetic & Native Memory Safety (Bounds Validator & Buffer Parser)",
+            Priority: "P0 / BLOCKER",
+            Category: "USN Journal Safety",
+            ProductionClass: "DiskScope.Services.UsnJournalService",
+            AuditRiskNote: "BUG-004: Tests defensive bounds validation, pointer arithmetic safety, and truncated/malformed record trapping in unmanaged memory buffers without throwing AccessViolationException.",
+            ExecuteAsync: async ctx =>
+            {
+                // Helper to populate synthetic V2 record in native memory
+                static void WriteSyntheticV2Record(
+                    IntPtr buf,
+                    int recOffset,
+                    int recordLength,
+                    ushort majorVersion,
+                    string fileName,
+                    uint reason,
+                    ushort? customFileNameOffset = null,
+                    ushort? customFileNameLength = null)
+                {
+                    byte[] nameBytes = Encoding.Unicode.GetBytes(fileName);
+                    ushort fnOffset = customFileNameOffset ?? 60;
+                    ushort fnLength = customFileNameLength ?? (ushort)nameBytes.Length;
+
+                    Marshal.WriteInt32(buf, recOffset + 0, recordLength);
+                    Marshal.WriteInt16(buf, recOffset + 4, (short)majorVersion);
+                    Marshal.WriteInt16(buf, recOffset + 6, (short)0);
+                    Marshal.WriteInt64(buf, recOffset + 8, (long)123456);
+                    Marshal.WriteInt64(buf, recOffset + 16, (long)654321);
+                    Marshal.WriteInt64(buf, recOffset + 24, (long)5001);
+                    Marshal.WriteInt64(buf, recOffset + 32, (long)DateTime.UtcNow.ToFileTime());
+                    Marshal.WriteInt32(buf, recOffset + 40, (int)reason);
+                    Marshal.WriteInt32(buf, recOffset + 44, 0);
+                    Marshal.WriteInt32(buf, recOffset + 48, 0);
+                    Marshal.WriteInt32(buf, recOffset + 52, 0x20);
+                    Marshal.WriteInt16(buf, recOffset + 56, (short)fnLength);
+                    Marshal.WriteInt16(buf, recOffset + 58, (short)fnOffset);
+
+                    if (nameBytes.Length > 0 && (recOffset + fnOffset + nameBytes.Length) <= (recOffset + recordLength))
+                    {
+                        Marshal.Copy(nameBytes, 0, IntPtr.Add(buf, recOffset + fnOffset), nameBytes.Length);
+                    }
+                }
+
+                const int bufferSize = 1024;
+                IntPtr nativeBuffer = Marshal.AllocHGlobal(bufferSize);
+
+                try
+                {
+                    // 1. Valid V2 record test
+                    Marshal.WriteInt64(nativeBuffer, 0, 5000); // nextUsnMarker
+                    WriteSyntheticV2Record(nativeBuffer, 8, 80, 2, "sample.txt", 0x00000100); // 0x100 = FILE_CREATE
+
+                    long offset = 8;
+                    bool ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out var record, out var diagMsg);
+                    ctx.Assert(ok, "Valid record should parse successfully");
+                    ctx.Assert(record != null, "Record should not be null");
+                    ctx.AssertEqual("sample.txt", record!.FileName, "FileName should match");
+                    ctx.AssertEqual(UsnChangeType.Created, record.ChangeType, "ChangeType should be Created");
+                    ctx.AssertEqual(88L, offset, "Offset should advance to 88");
+
+                    // 2. Zero-length record (clean EOF)
+                    Marshal.WriteInt32(nativeBuffer, 8, 0);
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "Zero-length record should stop traversal");
+                    ctx.Assert(record == null, "Record should be null for EOF");
+                    ctx.AssertEqual(88L, offset, "Offset should move to end of buffer");
+
+                    // 3. Record length too small (< 8 bytes)
+                    Marshal.WriteInt32(nativeBuffer, 8, 4);
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "Record length < 8 should be rejected");
+                    ctx.Assert(diagMsg != null && diagMsg.Contains("RecordLengthTooSmall"), "Should report RecordLengthTooSmall");
+
+                    // 4. Record length exceeds remaining buffer
+                    Marshal.WriteInt32(nativeBuffer, 8, 200); // 200 > 88 - 8 = 80
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "Record length exceeding buffer should be rejected");
+                    ctx.Assert(diagMsg != null && diagMsg.Contains("RecordLengthExceedsBuffer"), "Should report RecordLengthExceedsBuffer");
+
+                    // 5. Pointer at buffer end
+                    offset = 88;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "Reading at buffer end should return false");
+
+                    // 6. Truncated buffer (< 4 bytes remaining)
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 10, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "Truncated buffer (< 4 bytes) should return false");
+                    ctx.Assert(diagMsg != null && diagMsg.Contains("Buffer truncated"), "Should report buffer truncated");
+
+                    // 7. V2 Header truncated (< 60 bytes)
+                    Marshal.WriteInt32(nativeBuffer, 8, 32);
+                    Marshal.WriteInt16(nativeBuffer, 12, 2); // MajorVersion = 2
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(!ok, "V2 record < 60 bytes should be rejected");
+                    ctx.Assert(diagMsg != null && diagMsg.Contains("required header size 60"), "Should report header size violation");
+
+                    // 8. Malformed fileNameOffset (< 60)
+                    WriteSyntheticV2Record(nativeBuffer, 8, 80, 2, "bad_offset.txt", 0x00000001, customFileNameOffset: 40);
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(ok, "Malformed filename offset should safely skip filename without crashing");
+                    ctx.Assert(record != null, "Record should still be produced");
+                    ctx.AssertEqual(string.Empty, record!.FileName, "FileName should be empty");
+                    ctx.AssertEqual(88L, offset, "Offset should advance by recordLength");
+
+                    // 9. Malformed fileNameLength (exceeds recordLength)
+                    WriteSyntheticV2Record(nativeBuffer, 8, 80, 2, "overflow.txt", 0x00000001, customFileNameLength: 500);
+                    offset = 8;
+                    ok = UsnJournalService.TryReadNextRecord(nativeBuffer, 88, ref offset, out record, out diagMsg);
+                    ctx.Assert(ok, "Malformed filename length should safely skip filename read");
+                    ctx.Assert(record != null && record.FileName == string.Empty, "FileName should be empty");
+
+                    // 10. Multi-record sequence: 2 valid records followed by 1 truncated record
+                    Marshal.WriteInt64(nativeBuffer, 0, 9999);
+                    WriteSyntheticV2Record(nativeBuffer, 8, 80, 2, "alpha.txt", 0x00000100);
+                    WriteSyntheticV2Record(nativeBuffer, 88, 80, 2, "beta.txt", 0x00000200); // DELETE
+                    Marshal.WriteInt32(nativeBuffer, 168, 500); // Truncated length (exceeds 250 - 168 = 82)
+
+                    offset = 8;
+                    long testBytesReturned = 250;
+                    var collectedRecords = new List<UsnChangeRecord>();
+
+                    while (offset < testBytesReturned)
+                    {
+                        if (!UsnJournalService.TryReadNextRecord(nativeBuffer, testBytesReturned, ref offset, out var rec, out _))
+                        {
+                            break;
+                        }
+                        if (rec != null) collectedRecords.Add(rec);
+                    }
+
+                    ctx.AssertEqual(2, collectedRecords.Count, "Exactly 2 valid records should be collected");
+                    ctx.AssertEqual("alpha.txt", collectedRecords[0].FileName, "First record matches");
+                    ctx.AssertEqual(UsnChangeType.Created, collectedRecords[0].ChangeType, "First record Created");
+                    ctx.AssertEqual("beta.txt", collectedRecords[1].FileName, "Second record matches");
+                    ctx.AssertEqual(UsnChangeType.Deleted, collectedRecords[1].ChangeType, "Second record Deleted");
+
+                    // 11. Unsupported MajorVersion (e.g. MajorVersion = 3)
+                    WriteSyntheticV2Record(nativeBuffer, 8, 80, 3, "unsupported_v3.bin", 0x00000001); // V3
+                    WriteSyntheticV2Record(nativeBuffer, 88, 80, 2, "gamma.txt", 0x00000001); // V2
+
+                    offset = 8;
+                    testBytesReturned = 168;
+                    collectedRecords.Clear();
+
+                    while (offset < testBytesReturned)
+                    {
+                        if (!UsnJournalService.TryReadNextRecord(nativeBuffer, testBytesReturned, ref offset, out var rec, out _))
+                        {
+                            break;
+                        }
+                        if (rec != null) collectedRecords.Add(rec);
+                    }
+
+                    ctx.AssertEqual(1, collectedRecords.Count, "Unsupported V3 record should be skipped; 1 V2 record collected");
+                    ctx.AssertEqual("gamma.txt", collectedRecords[0].FileName, "Gamma record extracted cleanly");
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(nativeBuffer);
+                }
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-USN-02: USN Journal Non-NTFS Graceful Fallback
+        runner.Register(new TestCase(
+            TestId: "TC-USN-02",
+            FeatureId: "FEAT-04",
+            Title: "USN Journal Non-NTFS Graceful Fallback",
+            Priority: "P1 / CRITICAL",
+            Category: "USN Journal Safety",
+            ProductionClass: "DiskScope.Services.UsnJournalService",
+            AuditRiskNote: "Verifies that non-NTFS volumes or invalid paths do not attempt raw P/Invoke and safely signal fallback to standard BFS scan.",
+            ExecuteAsync: async ctx =>
+            {
+                var usnService = new UsnJournalService();
+
+                // 1. IsNtfsVolume returns false for fictitious/non-NTFS path
+                bool isNtfs = usnService.IsNtfsVolume(@"Z:\VirtualNonExistent_TestDrive");
+                ctx.Assert(!isNtfs, "Virtual / non-existent path should not be identified as NTFS");
+
+                // 2. QueryJournalState reports unavailable
+                var state = usnService.QueryJournalState(@"Z:\VirtualNonExistent_TestDrive");
+                ctx.Assert(!state.IsAvailable, "State should report unavailable for non-NTFS path");
+                ctx.Assert(!string.IsNullOrEmpty(state.StatusMessage), "StatusMessage should explain why unavailable");
+
+                // 3. ReadChanges reports safe fallback
+                var readResult = usnService.ReadChanges(@"Z:\VirtualNonExistent_TestDrive", 12345678, 0);
+                ctx.Assert(!readResult.Success, "ReadChanges should return Success = false for non-NTFS volume");
+                ctx.Assert(readResult.Reason.Contains("Fallback to full scan"), "Reason should specify fallback to full scan");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-USN-03: USN Journal ID Mismatch Fallback
+        runner.Register(new TestCase(
+            TestId: "TC-USN-03",
+            FeatureId: "FEAT-04",
+            Title: "USN Journal ID Mismatch & Truncation Fallback",
+            Priority: "P1 / CRITICAL",
+            Category: "USN Journal Safety",
+            ProductionClass: "DiskScope.Services.UsnJournalService",
+            AuditRiskNote: "Verifies that journal recreation (ID mismatch) or record purge safely aborts incremental scan and triggers full scan fallback.",
+            ExecuteAsync: async ctx =>
+            {
+                var usnService = new UsnJournalService();
+
+                // Query host system C:\ drive
+                var state = usnService.QueryJournalState(@"C:\");
+
+                if (state.IsAvailable)
+                {
+                    // Case 1: ID mismatch
+                    ulong mismatchedId = state.JournalId ^ 0xDEADBEEFCAFE1234UL;
+                    var result1 = usnService.ReadChanges(@"C:\", mismatchedId, state.NextUsn);
+                    ctx.Assert(!result1.Success, "Mismatched Journal ID must trigger fallback");
+                    ctx.Assert(result1.Reason.Contains("recreated or ID changed"), $"Reason must indicate ID change. Actual: {result1.Reason}");
+
+                    // Case 2: StartUsn truncated / purged (< LowestValidUsn)
+                    if (state.LowestValidUsn > 0)
+                    {
+                        var result2 = usnService.ReadChanges(@"C:\", state.JournalId, state.LowestValidUsn - 1);
+                        ctx.Assert(!result2.Success, "StartUsn < LowestValidUsn must trigger fallback");
+                        ctx.Assert(result2.Reason.Contains("truncated since last scan"), "Reason must indicate truncation");
+                    }
+                }
+                else
+                {
+                    // If running non-elevated on C:\, verify fallback is clean without throwing
+                    var result = usnService.ReadChanges(@"C:\", 0x1234567890ABCDEFUL, 0);
+                    ctx.Assert(!result.Success, "Unavailable journal should cleanly return Success = false");
+                    ctx.Assert(result.Reason.Contains("Fallback to full scan"), "Reason should indicate fallback");
+                }
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-USN-04: Standard Non-Admin User Fallback
+        runner.Register(new TestCase(
+            TestId: "TC-USN-04",
+            FeatureId: "FEAT-04",
+            Title: "Standard Non-Admin User Elevation & Access-Denied Graceful Handling",
+            Priority: "P1 / CRITICAL",
+            Category: "USN Journal Safety",
+            ProductionClass: "DiskScope.Services.UsnJournalService",
+            AuditRiskNote: "Verifies that opening volume handles without Administrator privileges traps ERROR_ACCESS_DENIED safely and falls back.",
+            ExecuteAsync: async ctx =>
+            {
+                var usnService = new UsnJournalService();
+                var state = usnService.QueryJournalState(@"C:\");
+
+                // Either elevated (IsAvailable = true) or non-elevated (RequiresElevation = true)
+                if (!state.IsAvailable && state.RequiresElevation)
+                {
+                    ctx.Assert(state.StatusMessage.Contains("Administrator privileges"),
+                        "Non-elevated session must report Administrator privileges required");
+                }
+
+                // Call ReadChanges: must never throw unhandled Win32Exception or crash
+                var readResult = usnService.ReadChanges(@"C:\", 0x1234567890ABCDEFUL, 100);
+                ctx.Assert(readResult != null, "ReadResult must not be null");
+                // Either succeeded (if elevated & ID matched) or safely failed with fallback
+                if (!readResult!.Success)
+                {
+                    ctx.Assert(readResult.Reason.Contains("Fallback to full scan"),
+                        $"Fallback reason expected. Actual: {readResult.Reason}");
+                }
+
+                await Task.CompletedTask;
             }
         ));
     }

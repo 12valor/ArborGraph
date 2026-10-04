@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const OFFICIAL_HASH = 'BCBF7FFF8961BA12DDC747077FBF2B10775F97BE8C76C493488A1107D7CD750A';
+    const OFFICIAL_HASH = '31AC3B1DB800A368B92B243660DA12A7AF7B6DCA5327C8C2C99AA431540B0D85';
 
     // =========================================================================
     // 1. TOAST NOTIFICATION HELPER
@@ -436,11 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
         wizardLogText.textContent = '> Initializing Inno Setup 6.x engine...\n> Verifying NTFS write permissions...\n> Bounded staging buffer created.';
 
         const stages = [
-            { pct: 18, msg: "Extracting core binary: ArborGraph.exe (73.3 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 CLR runtime..." },
+            { pct: 18, msg: "Extracting core binary: ArborGraph.exe (73.4 MB)...", log: "> Extracting PE32+ executable header...\n> Unpacking bundled .NET 8.0 CLR runtime..." },
             { pct: 40, msg: "Deploying WPF presentation subsystem...", log: "> Registering PresentationCore & DirectX Hardware Acceleration pipeline..." },
             { pct: 62, msg: "Configuring SQLite database engine...", log: "> Unpacking Microsoft.Data.Sqlite & SQLitePCLRaw.bundle_e_sqlite3\n> Creating schema in %LocalAppData%\\ArborGraph..." },
             { pct: 82, msg: "Configuring application environment...", log: "> Setting WAL mode and 20,000-item channel capacity\n> Creating Start Menu & Desktop shortcuts..." },
-            { pct: 96, msg: "Verifying cryptographic digest...", log: "> Validating SHA-256 binary digest: BCBF7FFF...CD750A\n> Checksum verified bit-for-bit." },
+            { pct: 96, msg: "Verifying cryptographic digest...", log: "> Validating SHA-256 binary digest: 31AC3B1D...40B0D85\n> Checksum verified bit-for-bit." },
             { pct: 100, msg: "Installation completed successfully.", log: "> All package files deployed.\n> Setup completed with exit code 0." }
         ];
 

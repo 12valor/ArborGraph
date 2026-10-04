@@ -31,6 +31,11 @@ public class Program
             return await RunBenchmarkAsync(count);
         }
 
+        if (args.Length > 0 && args[0] == "--manual")
+        {
+            return await ManualWindowsTestRunner.RunAllAsync(args);
+        }
+
         // 2. Default: Run Modern Automated QA Test Harness
         return await RunAutomatedHarnessAsync(args);
     }

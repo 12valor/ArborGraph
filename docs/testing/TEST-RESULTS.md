@@ -13,12 +13,12 @@
 | Metric | Count | Percentage |
 | :--- | :--- | :--- |
 | **Total Test Cases Planned** | 56 | 100.0% |
-| **Tests Executed via Automated Harness** | 30 | 53.6% |
-| **Passed** | 30 | 53.6% (100.0% of executed) |
+| **Tests Executed via Automated Harness** | 31 | 55.4% |
+| **Passed** | 31 | 55.4% (100.0% of executed) |
 | **Failed** | 0 | 0.0% (0.0% of executed) |
 | **Blocked** | 0 | 0.0% |
-| **Not Tested / Pending Manual Testing** | 26 | 46.4% |
-| **Automated Harness Elapsed Time** | 7.98s | |
+| **Not Tested / Pending Manual Testing** | 25 | 44.6% |
+| **Automated Harness Elapsed Time** | 7.87s | |
 
 ---
 
@@ -26,51 +26,51 @@
 
 | Test ID | Date | Environment | Expected Result | Actual Result | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **TC-DRV-01** | 2026-10-05 | ENV-A | Scanning D:\ preserves C:\ index in SQLite; D:\ rebuilt | Scoped range clear deleted only D:\; C:\ remained 100% intact (53 ms). | `PASS` | **BUG-001 RESOLVED & VERIFIED.** `DatabaseService.ClearIndex` drive-root scoping fixed. |
-| **TC-DRV-02** | 2026-10-05 | ENV-A | Multiple roots clear only target volumes; ALL/null full clear | C:\ and D:\ cleared; E:\ preserved. ALL/null/empty executed full wipe (18 ms). | `PASS` | Multi-root scoping and explicit full-clear fallback verified. |
-| **TC-DRV-03** | 2026-10-04 | ENV-A | Custom directory scan only clears scoped records | Scoped prefix deletion only cleared target directory records (16 ms). | `PASS` | Verified `path LIKE 'target%'` scoping works for non-root paths. |
-| **TC-DEL-01** | 2026-10-05 | ENV-A | Single file deleted from disk and purged from SQLite index | File deleted permanently; index entry removed cleanly (21 ms). | `PASS` | Service-level file deletion & SQLite index sync verified. |
+| **TC-DRV-01** | 2026-10-05 | ENV-A | Scanning D:\ preserves C:\ index in SQLite; D:\ rebuilt | Scoped range clear deleted only D:\; C:\ remained 100% intact (55 ms). | `PASS` | **BUG-001 RESOLVED & VERIFIED.** `DatabaseService.ClearIndex` drive-root scoping fixed. |
+| **TC-DRV-02** | 2026-10-05 | ENV-A | Multiple roots clear only target volumes; ALL/null full clear | C:\ and D:\ cleared; E:\ preserved. ALL/null/empty executed full wipe (19 ms). | `PASS` | Multi-root scoping and explicit full-clear fallback verified. |
+| **TC-DRV-03** | 2026-10-05 | ENV-A | Custom directory scan only clears scoped records | Scoped prefix deletion only cleared target directory records (15 ms). | `PASS` | Verified `path LIKE 'target%'` scoping works for non-root paths. |
+| **TC-DEL-01** | 2026-10-05 | ENV-A | Single file deleted from disk and purged from SQLite index | File deleted permanently; index entry removed cleanly (22 ms). | `PASS` | Service-level file deletion & SQLite index sync verified. |
 | **TC-DEL-02** | 2026-10-05 | ENV-A | Batch deletion reports exact success/failure; locked file skipped | 4 files deleted, 1 locked file trapped safely; Succeeded=4, Failed=1 (7 ms). | `PASS` | Locked-file graceful handling verified. |
 | **TC-DEL-03** | 2026-10-05 | ENV-A | Batch deletion halts promptly on cancellation token | Cancelled after 3 files; remaining 7 files preserved on disk (7 ms). | `PASS` | Cancellation responsiveness verified. |
-| **TC-DEL-04** | 2026-10-05 | ENV-A | Recursive folder deletion purges children and SQLite records | Directory deleted recursively; database entries purged (18 ms). | `PASS` | Directory rollup index removal verified. |
+| **TC-DEL-04** | 2026-10-05 | ENV-A | Directory recursive deletion purges children and SQLite records | Directory deleted recursively; database entries purged (16 ms). | `PASS` | Directory rollup index removal verified. |
 | **TC-DEL-05** | 2026-10-05 | ENV-A | Protected system and drive roots blocked from deletion | C:\, C:\Windows, Program Files blocked from deletion (1 ms). | `PASS` | System shield & raw drive letter protection verified. |
-| **TC-UI-RESP-01** | | ENV-A | Window remains fluid during 10K folder deletion | Code fixed with Task.Run & IsDeleting banner | `READY FOR MANUAL` | Procedure defined; requires desktop manual drag/resize check. |
-| **TC-UI-RESP-02** | | ENV-A | Batch file deletion does not freeze UI thread | Code fixed with Task.Run & IsDeleting banner | `READY FOR MANUAL` | Procedure defined; requires desktop manual observation. |
-| **TC-USN-01** | 2026-10-05 | ENV-A | Incremental scan safe; zero access violations | Synthetic native memory buffer bounds, truncated lengths, and corrupt filename offsets validated safely without memory violations (6 ms). | `PASS` | **BUG-004 RESOLVED & VERIFIED.** `UsnRecordValidator` and `TryReadNextRecord` defensive checks enforced. |
-| **TC-USN-02** | 2026-10-05 | ENV-A | Non-NTFS drive falls back to full BFS cleanly | Non-NTFS volume safely identified; QueryJournalState and ReadChanges signal fallback to full scan (4 ms). | `PASS` | Non-NTFS fallback verified. |
-| **TC-USN-03** | 2026-10-05 | ENV-A | Journal ID mismatch triggers safe full rescan | Mismatched journal ID and startUsn purge detected cleanly; fallback signaled (2 ms). | `PASS` | Journal reset and purge handling verified. |
+| **TC-UI-RESP-01** | | ENV-A | Window remains fluid during 10K folder deletion | Code decoupled with Task.Run; IsDeleting banner active; service suite PASS | `MANUAL REQUIRED` | Procedure documented: drag/resize window during 10k deletion. |
+| **TC-UI-RESP-02** | | ENV-A | Batch file deletion does not freeze UI thread | Code decoupled with Task.Run; IsDeleting banner active; service suite PASS | `MANUAL REQUIRED` | Procedure documented: observe window responsiveness during deletion. |
+| **TC-USN-01** | 2026-10-05 | ENV-A | Incremental scan safe; zero access violations | Synthetic native memory buffer bounds, truncated lengths, and corrupt filename offsets validated safely without memory violations (3 ms). | `PASS` | **BUG-004 RESOLVED & VERIFIED.** `UsnRecordValidator` and `TryReadNextRecord` defensive checks enforced. |
+| **TC-USN-02** | 2026-10-05 | ENV-A | Non-NTFS drive falls back to full BFS cleanly | Non-NTFS volume safely identified; QueryJournalState and ReadChanges signal fallback to full scan (3 ms). | `PASS` | Non-NTFS fallback verified. |
+| **TC-USN-03** | 2026-10-05 | ENV-A | Journal ID mismatch triggers safe full rescan | Mismatched journal ID and startUsn purge detected cleanly; fallback signaled (1 ms). | `PASS` | Journal reset and purge handling verified. |
 | **TC-USN-04** | 2026-10-05 | ENV-A | Standard non-admin user falls back cleanly | Non-admin access-denied volume handle opening handled cleanly with RequiresElevation flag (1 ms). | `PASS` | Standard user elevation safety verified. |
-| **TC-SCN-01** | 2026-10-04 | ENV-A | Scanner cancels within 500ms when requested | Cancelled cleanly in 343 ms; database integrity preserved. | `PASS` | Bounded-channel cancellation token verified. |
-| **TC-SCN-02** | 2026-10-04 | ENV-A | Inaccessible folders skipped and logged | Traversal caught `UnauthorizedAccessException` and completed (29 ms). | `PASS` | Graceful permission bypass verified. |
-| **TC-SCN-03** | 2026-10-04 | ENV-A | Paths > 260 chars indexed without exception | 20-level deep path indexed and queryable in SQLite (44 ms). | `PASS` | Long path support verified. |
-| **TC-SCN-EDGE** | 2026-10-04 | ENV-A | Unicode, special chars & empty folders indexed | Japanese, Arabic, Emoji, and quotes indexed accurately (45 ms). | `PASS` | Exact numerical and character accounting verified. |
+| **TC-SCN-01** | 2026-10-05 | ENV-A | Scanner cancels within 500ms when requested | Cancelled cleanly in 311 ms; database integrity preserved. | `PASS` | Bounded-channel cancellation token verified. |
+| **TC-SCN-02** | 2026-10-05 | ENV-A | Inaccessible folders skipped and logged | Traversal caught `UnauthorizedAccessException` and completed (29 ms). | `PASS` | Graceful permission bypass verified. |
+| **TC-SCN-03** | 2026-10-05 | ENV-A | Paths > 260 chars indexed without exception | 20-level deep path indexed and queryable in SQLite (44 ms). | `PASS` | Long path support verified. |
+| **TC-SCN-EDGE** | 2026-10-05 | ENV-A | Unicode, special chars & empty folders indexed | Japanese, Arabic, Emoji, and quotes indexed accurately (41 ms). | `PASS` | Exact numerical and character accounting verified. |
 | **TC-SCN-04** | | ENV-A | Live directory feed does not flood UI thread | | `NOT TESTED` | Verified in legacy integration test suite. |
 | **TC-SCN-05** | | ENV-A | OneDrive placeholders skipped without hydration | | `NOT TESTED` | Requires OneDrive cloud files on disk. |
-| **TC-SET-01** | 2026-10-04 | ENV-A | Excluded paths completely skipped by scanner | Excluded directory recorded in SkippedDirectories, zero files indexed (70 ms). | `PASS` | SettingsService and ScannerService exclusion respect verified. |
-| **TC-ROL-01** | 2026-10-04 | ENV-A | Folder rollup size equals sum of all children | Root rolled-up size (228,891 bytes) exactly matched child total (35 ms). | `PASS` | Recursive mathematical accuracy verified. |
-| **TC-ROL-02** | 2026-10-04 | ENV-A | 1,000 synthetic dir rollup completes in < 3s | Rollup of 1,000 synthetic directories completed in 35 ms. | `PASS` | Bottom-up depth rollup algorithm scaling verified. |
-| **TC-DUP-01** | 2026-10-04 | ENV-A | 2 true duplicates found; 3 collisions rejected | Exactly 2 duplicate groups found; 32KB collision pair rejected (52 ms). | `PASS` | 3-stage cryptographic duplicate pipeline verified. |
-| **TC-DUP-02** | 2026-10-04 | ENV-A | 0-byte and locked files handled cleanly | Empty candidate search returned 0 groups without throwing (13 ms). | `PASS` | Edge-case duplicate handling verified. |
+| **TC-SET-01** | 2026-10-05 | ENV-A | Excluded paths completely skipped by scanner | Excluded directory recorded in SkippedDirectories, zero files indexed (66 ms). | `PASS` | SettingsService and ScannerService exclusion respect verified. |
+| **TC-ROL-01** | 2026-10-05 | ENV-A | Folder rollup size equals sum of all children | Root rolled-up size (228,891 bytes) exactly matched child total (31 ms). | `PASS` | Recursive mathematical accuracy verified. |
+| **TC-ROL-02** | 2026-10-05 | ENV-A | 1,000 synthetic dir rollup completes in < 3s | Rollup of 1,000 synthetic directories completed in 50 ms. | `PASS` | Bottom-up depth rollup algorithm scaling verified. |
+| **TC-DUP-01** | 2026-10-05 | ENV-A | 2 true duplicates found; 3 collisions rejected | Exactly 2 duplicate groups found; 32KB collision pair rejected (47 ms). | `PASS` | 3-stage cryptographic duplicate pipeline verified. |
+| **TC-DUP-02** | 2026-10-05 | ENV-A | 0-byte and locked files handled cleanly | Empty candidate search returned 0 groups without throwing (15 ms). | `PASS` | Edge-case duplicate handling verified. |
 | **TC-DUP-03** | | ENV-A | Master copy preserved; only duplicates deleted | | `NOT TESTED` | Manual UI selection logic. |
-| **TC-DEV-01** | 2026-10-04 | ENV-A | Node/.NET/Rust/Gradle detected; generic rejected | Node, .NET, Rust, Gradle detected; fake target/build rejected (35 ms). | `PASS` | Contextual parent markers verified with zero false positives. |
+| **TC-DEV-01** | 2026-10-05 | ENV-A | Node/.NET/Rust/Gradle detected; generic rejected | Node, .NET, Rust, Gradle detected; fake target/build rejected (29 ms). | `PASS` | Contextual parent markers verified with zero false positives. |
 | **TC-SAF-01** | | ENV-A | In-use files skipped; unlocked files deleted | | `NOT TESTED` | Verified in legacy test suite. |
 | **TC-PS-01** | | ENV-A | PSD/PSB cataloged; temp files flagged | | `NOT TESTED` | Verified in legacy test suite. |
-| **TC-TMP-01** | 2026-10-04 | ENV-A | Treemap renders valid rects; no NaN/Infinity | Zero-size, 1-item, and extreme aspect ratios produced valid rects (64 ms). | `PASS` | Squarified geometry boundary guards verified. |
+| **TC-TMP-01** | 2026-10-05 | ENV-A | Treemap renders valid rects; no NaN/Infinity | Zero-size, 1-item, and extreme aspect ratios produced valid rects (57 ms). | `PASS` | Squarified geometry boundary guards verified. |
 | **TC-TMP-02** | | ENV-A | Window resize recomputes treemap cleanly | | `NOT TESTED` | WPF UI resize event. |
 | **TC-TMP-03** | | ENV-A | Double-click drills down; breadcrumbs navigate | | `NOT TESTED` | Navigation stack synchronization. |
-| **TC-DB-01** | 2026-10-04 | ENV-A | Concurrent UI reads succeed during active scan | Concurrent readers completed 20 queries during bulk writes (569 ms). | `PASS` | SQLite WAL mode lock concurrency verified. |
+| **TC-DB-01** | 2026-10-05 | ENV-A | Concurrent UI reads succeed during active scan | Concurrent readers completed 20 queries during bulk writes (540 ms). | `PASS` | SQLite WAL mode lock concurrency verified. |
 | **TC-DB-02** | | ENV-A | WAL replays cleanly after abrupt process kill | | `NOT TESTED` | Requires process kill testing. |
-| **TC-DB-03** | 2026-10-04 | ENV-A | PRAGMA integrity_check returns ok | Database initialized in WAL mode; PRAGMA integrity_check passed (14 ms). | `PASS` | Schema and index verification verified. |
+| **TC-DB-03** | 2026-10-05 | ENV-A | PRAGMA integrity_check returns ok | Database initialized in WAL mode; PRAGMA integrity_check passed (18 ms). | `PASS` | Schema and index verification verified. |
 | **TC-ANL-01** | | ENV-A | Overview total size matches file sum exactly | | `NOT TESTED` | Verified in legacy test suite. |
-| **TC-QRY-01** | 2026-10-04 | ENV-A | Multi-criteria filters & pagination work cleanly | Filter by size (20MB), extension (.pdf), and location matched exactly (18 ms). | `PASS` | Parameterized SQLite query engine verified. |
-| **TC-QRY-SQLI** | 2026-10-04 | ENV-A | SQL injection inputs harmlessly parameterized | `' OR '1'='1` and `DROP TABLE` handled as literals; 0 matches, 0 corruption (13 ms). | `PASS` | Parameterized SQL query safety verified. |
-| **TC-EXP-01** | 2026-10-04 | ENV-A | HTML, JSON, and CSV exports validate cleanly | HTML5 report, JSON structure, and RFC 4180 CSV escaping verified (53 ms). | `PASS` | File export integrity verified. |
-| **TC-LGL-01** | 2026-10-04 | ENV-A | EULA gate blocks app until accepted | Defaults to false; accepting persists to disk and reloads cleanly (9 ms). | `PASS` | Legal compliance dialog persistence verified. |
+| **TC-QRY-01** | 2026-10-05 | ENV-A | Multi-criteria filters & pagination work cleanly | Filter by size (20MB), extension (.pdf), and location matched exactly (14 ms). | `PASS` | Parameterized SQLite query engine verified. |
+| **TC-QRY-SQLI** | 2026-10-05 | ENV-A | SQL injection inputs harmlessly parameterized | `' OR '1'='1` and `DROP TABLE` handled as literals; 0 matches, 0 corruption (16 ms). | `PASS` | Parameterized SQL query safety verified. |
+| **TC-EXP-01** | 2026-10-05 | ENV-A | HTML, JSON, and CSV exports validate cleanly | HTML5 report, JSON structure, and RFC 4180 CSV escaping verified (55 ms). | `PASS` | File export integrity verified. |
+| **TC-LGL-01** | 2026-10-05 | ENV-A | EULA gate blocks app until accepted | Defaults to false; accepting persists to disk and reloads cleanly (7 ms). | `PASS` | Legal compliance dialog persistence verified. |
 | **TC-ERR-01** | | ENV-A | Global unhandled exception caught and logged | | `NOT TESTED` | Requires runtime crash simulation. |
 | **TC-INS-01** | | ENV-D | Fresh install succeeds for standard non-admin | | `NOT TESTED` | Inno Setup `PrivilegesRequired=lowest`. |
 | **TC-INS-02** | | ENV-D | EULA rejection halts installation cleanly | | `NOT TESTED` | Mandatory license acceptance gate. |
 | **TC-INS-03** | | ENV-D | Desktop & Start Menu shortcuts point to valid app | | `NOT TESTED` | Shortcut target and icon verification. |
-| **TC-INS-04** | 2026-10-05 | ENV-D | Installed Apps URLs point to ArborGraph repo | MyAppURL, SupportURL, UpdatesURL verify as https://github.com/12valor/ArborGraph; installer compiled cleanly (2 ms). | `PASS` | **BUG-003 RESOLVED & VERIFIED.** Legacy C-file-scanner eliminated from Inno Setup script. |
+| **TC-INS-04** | 2026-10-05 | ENV-D | Installed Apps URLs point to ArborGraph repo | MyAppURL, SupportURL, UpdatesURL verify as https://github.com/12valor/ArborGraph; installer compiled cleanly (1 ms). | `PASS` | **BUG-003 RESOLVED & VERIFIED.** Legacy C-file-scanner eliminated from Inno Setup script. |
 | **TC-INS-05** | | ENV-D | In-place upgrade retains database and settings | | `NOT TESTED` | AppId stability and user data retention. |
 | **TC-INS-06** | | ENV-D | Uninstall removes all deployed binaries cleanly | | `NOT TESTED` | Registry and file purge validation. |
 | **TC-INS-07** | | ENV-D | Silent install (/VERYSILENT) exits with code 0 | | `NOT TESTED` | Headless scripted deployment. |
@@ -85,4 +85,18 @@
 | **TC-USB-06** | | ENV-A | User distinguishes safe cleanup from risky files | | `NOT TESTED` | Usability Task 6. |
 | **TC-CMP-01** | | ENV-B | Clean vector rendering across 100%–200% DPI | | `NOT TESTED` | High-DPI display scaling matrix. |
 | **TC-CMP-02** | | ENV-A | Removable exFAT USB scans without error | | `NOT TESTED` | Cross-filesystem compatibility. |
-| **TC-PERF-01** | | ENV-A | Throughput >= 15k/s; RAM < 350MB on 100K files | | `NOT TESTED` | Multi-tier performance benchmark. |
+| **TC-PERF-01** | 2026-10-05 | ENV-A | Throughput >= 15k/s; RAM < 350MB on 100K files | 100K files: 62,490 files/sec, 169.8 MB peak RAM, 30 ms rollup, 57.3 MB DB. | `PASS` | Progressive scale benchmarks executed up to 250,000 files. |
+
+---
+
+## 3. Scalability & Performance Benchmark Results (Progressive Scale Runs)
+
+Executed on host test environment ENV-A (Windows 11 x64, NVMe PCIe Gen 4 SSD):
+
+| Dataset Scale | Generation Time | Scan Duration | Throughput (Files/sec) | Managed RAM Delta | Peak Process Working Set | Avg CPU Load | Rollup Duration | SQLite DB Size |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **10,000 files** | 25.80 s | 2,073 ms | 4,824 f/s | +6.59 MB | 63.9 MB | 0.7% | 4 ms | 5.79 MB |
+| **50,000 files** | 50.11 s | 806 ms | 61,990 f/s | +23.83 MB | 113.3 MB | 7.3% | 19 ms | 28.54 MB |
+| **100,000 files** | 89.31 s | 1,600 ms | 62,490 f/s | +18.64 MB | 169.8 MB | 8.2% | 30 ms | 57.31 MB |
+| **250,000 files** | 318.33 s | 4,020 ms | 62,185 f/s | +11.40 MB | 221.6 MB | 7.8% | 84 ms | 143.57 MB |
+

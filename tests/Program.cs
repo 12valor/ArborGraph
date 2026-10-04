@@ -197,21 +197,34 @@ public class Program
 
             Console.WriteLine("[3/4] Running BFS scanner traversal...");
             var scanner = new ScannerService(db);
+            var cpuStart = Process.GetCurrentProcess().TotalProcessorTime;
             var scanSw = Stopwatch.StartNew();
             long initialRam = GC.GetTotalMemory(true);
             var scanStats = await scanner.ScanDrivesAsync(new[] { benchDir }, null, CancellationToken.None, enableIncremental: false);
             scanSw.Stop();
+            var cpuEnd = Process.GetCurrentProcess().TotalProcessorTime;
             long peakRam = GC.GetTotalMemory(false);
+            long peakWs = Process.GetCurrentProcess().PeakWorkingSet64;
 
             double filesPerSec = scanStats.FilesIndexed / Math.Max(scanSw.Elapsed.TotalSeconds, 0.001);
+            double avgCpu = (cpuEnd - cpuStart).TotalMilliseconds / Math.Max(scanSw.Elapsed.TotalMilliseconds * Environment.ProcessorCount, 1.0) * 100.0;
+
             Console.WriteLine($"  ✓ Scanned {scanStats.FilesIndexed:N0} files in {scanSw.ElapsedMilliseconds} ms ({filesPerSec:F0} files/sec).");
-            Console.WriteLine($"  ✓ RAM delta: {(peakRam - initialRam) / (1024.0 * 1024.0):F2} MB (Final: {peakRam / (1024.0 * 1024.0):F1} MB).");
+            Console.WriteLine($"  ✓ Managed RAM delta: {(peakRam - initialRam) / (1024.0 * 1024.0):F2} MB (Final: {peakRam / (1024.0 * 1024.0):F1} MB).");
+            Console.WriteLine($"  ✓ Peak Process Working Set: {peakWs / (1024.0 * 1024.0):F1} MB.");
+            Console.WriteLine($"  ✓ Average CPU Load: {avgCpu:F1}%.");
 
             Console.WriteLine("[4/4] Running recursive directory rollup...");
             var rollupSw = Stopwatch.StartNew();
             db.BuildDirectoryRollup();
             rollupSw.Stop();
             Console.WriteLine($"  ✓ Rollup completed in {rollupSw.ElapsedMilliseconds} ms.");
+
+            if (File.Exists(benchDbPath))
+            {
+                long dbSize = new FileInfo(benchDbPath).Length;
+                Console.WriteLine($"  ✓ SQLite database footprint: {dbSize / (1024.0 * 1024.0):F2} MB ({dbSize:N0} bytes).");
+            }
 
             Console.WriteLine("\n[BENCHMARK COMPLETE]");
             return 0;

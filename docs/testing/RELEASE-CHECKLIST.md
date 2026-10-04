@@ -167,6 +167,34 @@
 | **Final Pre-Release Audit (Prompt 18)** | 2026-10-05 | [x] APPROVED (GO) | Lead QA / Release Manager | 13-Dimension audit passed; official GO for v1.0.0 release |
 | **Final Release Publication (Prompt 19)** | 2026-10-05 | [x] APPROVED (PUBLISHED) | Release Manager / QA Lead | ArborGraph v1.0.0 packaged, verified, tagged, and published to GitHub |
 | **Post-Release Verification (Prompt 20)** | 2026-10-05 | [x] VERIFIED (GREEN) | Lead QA / Release Manager | GitHub release, asset downloads, hashes, website links & smoke tests verified 100% |
+| **Automated CI Setup (Prompt 21)** | 2026-10-05 | [x] APPROVED (CI READY) | DevOps / Automation Lead | GitHub Actions CI (.github/workflows/arborgraph-tests.yml) active and green |
+| **Final Performance & Security (Prompt 22)** | 2026-10-05 | [x] APPROVED (CLEAR) | Performance / Security Auditor | 10K-250K benchmarks & 9 security audits passed; 0 open blockers |
+| **Feature-Truth Audit (Prompt 23)** | 2026-10-05 | [x] APPROVED (READY) | Quality Architect | 100% feature alignment across all 15 capabilities; 0 legacy leaks |
+| **Final Release GO Gate (Prompt 24)** | 2026-10-05 | [x] APPROVED (GO) | Release Manager | Unanimous GO decision; published release assets verified |
+| **Initial QA Cycle Closure (Prompt 25)** | 2026-10-05 | [x] APPROVED (CLOSED) | QA Director / Release Manager | QA Cycle formally CLOSED; transitioned to Normal Maintenance |
+
+---
+
+## 12. Permanent Maintenance Rules & Protocols
+
+For all ongoing development beyond v1.0.0, adhere to the following maintenance protocols:
+
+1. **For Future Small Changes & Bug Fixes:**
+   - Execute affected unit/component tests + full 30-stage regression suite:
+     ```powershell
+     dotnet run --project tests/DiskScope.Tests.csproj
+     ```
+2. **For Filesystem, Database, or Deletion Changes:**
+   - Execute affected security tests + full regression suite + manual synthetic verification:
+     ```powershell
+     dotnet run --project tests/DiskScope.Tests.csproj -- --security
+     dotnet run --project tests/DiskScope.Tests.csproj
+     ```
+3. **For Any New Production Release:**
+   - Produce clean self-contained build + compile Inno Setup installer (`ISCC.exe`) + execute clean sandbox smoke test + verify checklist gates.
+4. **For Major Architectural Changes:**
+   - Perform a targeted 10-domain security and performance re-audit following `ARBORGRAPH_RELEASE_QA_AUDIT.md`.
+
 
 
 

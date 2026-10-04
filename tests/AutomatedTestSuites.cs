@@ -21,6 +21,7 @@ public static class AutomatedTestSuites
         RegisterTreemapTests(runner);
         RegisterLegalAndSettingsTests(runner);
         RegisterDeletionAndSafetyTests(runner);
+        RegisterInstallerTests(runner);
     }
 
     // =========================================================================
@@ -1211,6 +1212,81 @@ public static class AutomatedTestSuites
                 ctx.Assert(!attempt, "Deleting Windows directory must return false");
                 ctx.Assert(err != null && err.Contains("Protected system"), "Error message must state protected path");
                 await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // K. INSTALLER & DEPLOYMENT SUITE (BUG-003 VERIFICATION)
+    // =========================================================================
+    private static void RegisterInstallerTests(TestRunner runner)
+    {
+        // TC-INS-04: Inno Setup Installer Script Configuration & URL Integrity
+        runner.Register(new TestCase(
+            TestId: "TC-INS-04",
+            FeatureId: "FEAT-43",
+            Title: "Inno Setup Installer Script Configuration & URL Integrity",
+            Priority: "P0 / BLOCKER",
+            Category: "Installer & Deployment",
+            ProductionClass: "installer/installer.iss",
+            AuditRiskNote: "Confirms Blocker 3: Verifies installer.iss references the active repository https://github.com/12valor/ArborGraph and not the obsolete 12valor/C-file-scanner.",
+            ExecuteAsync: async ctx =>
+            {
+                // Locate installer.iss relative to current directory or AppContext.BaseDirectory
+                string baseDir = AppContext.BaseDirectory;
+                string? repoRoot = null;
+                var curr = new DirectoryInfo(baseDir);
+                while (curr != null)
+                {
+                    if (File.Exists(Path.Combine(curr.FullName, "installer", "installer.iss")))
+                    {
+                        repoRoot = curr.FullName;
+                        break;
+                    }
+                    curr = curr.Parent;
+                }
+
+                if (repoRoot == null && File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "installer", "installer.iss")))
+                {
+                    repoRoot = Directory.GetCurrentDirectory();
+                }
+
+                ctx.Assert(repoRoot != null, "Must locate repository root containing installer/installer.iss");
+                string issPath = Path.Combine(repoRoot!, "installer", "installer.iss");
+                ctx.Assert(File.Exists(issPath), $"installer.iss must exist at {issPath}");
+
+                string content = await File.ReadAllTextAsync(issPath);
+
+                // 1. Verify MyAppURL definition points to ArborGraph
+                ctx.Assert(content.Contains("#define MyAppURL \"https://github.com/12valor/ArborGraph\""),
+                    "MyAppURL must be defined as https://github.com/12valor/ArborGraph");
+
+                // 2. Verify legacy C-file-scanner repository is NOT present anywhere in installer script
+                ctx.Assert(!content.Contains("12valor/C-file-scanner"),
+                    "installer.iss must not contain any references to obsolete repository '12valor/C-file-scanner'");
+
+                // 3. Verify AppSupportURL and AppUpdatesURL are bound to {#MyAppURL}
+                ctx.Assert(content.Contains("AppSupportURL={#MyAppURL}"), "AppSupportURL must reference {#MyAppURL}");
+                ctx.Assert(content.Contains("AppUpdatesURL={#MyAppURL}"), "AppUpdatesURL must reference {#MyAppURL}");
+                ctx.Assert(content.Contains("AppPublisherURL={#MyAppURL}"), "AppPublisherURL must reference {#MyAppURL}");
+
+                // 4. Verify ProductName, Architecture, and Privileges
+                ctx.Assert(content.Contains("#define MyAppName \"ArborGraph\""), "MyAppName must be ArborGraph");
+                ctx.Assert(content.Contains("ArchitecturesAllowed=x64compatible"), "Architecture must be x64compatible");
+                ctx.Assert(content.Contains("PrivilegesRequired=lowest"), "PrivilegesRequired must be lowest");
+
+                // 5. Verify EULA file exists and is referenced
+                ctx.Assert(content.Contains("LicenseFile=eula.txt"), "LicenseFile must reference eula.txt");
+                string eulaPath = Path.Combine(repoRoot!, "installer", "eula.txt");
+                ctx.Assert(File.Exists(eulaPath), $"eula.txt must exist at {eulaPath}");
+
+                // 6. Verify compiled installer output if present
+                string compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
+                if (File.Exists(compiledSetupPath))
+                {
+                    var fileInfo = new FileInfo(compiledSetupPath);
+                    ctx.Assert(fileInfo.Length > 1_000_000, $"Compiled installer must be a valid PE binary (> 1MB), actual size: {fileInfo.Length} bytes");
+                }
             }
         ));
     }

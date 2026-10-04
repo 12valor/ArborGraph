@@ -6,7 +6,7 @@
 #define MyAppName "ArborGraph"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "AG DIAZ EVANGELISTA"
-#define MyAppURL "https://github.com/12valor/C-file-scanner"
+#define MyAppURL "https://github.com/12valor/ArborGraph"
 #define MyAppExeName "ArborGraph.exe"
 
 [Setup]

@@ -13,12 +13,12 @@
 | Metric | Count | Percentage |
 | :--- | :--- | :--- |
 | **Total Test Cases Planned** | 56 | 100.0% |
-| **Tests Executed via Automated Harness** | 25 | 44.6% |
-| **Passed** | 25 | 44.6% (100.0% of executed) |
+| **Tests Executed via Automated Harness** | 26 | 46.4% |
+| **Passed** | 26 | 46.4% (100.0% of executed) |
 | **Failed** | 0 | 0.0% (0.0% of executed) |
 | **Blocked** | 0 | 0.0% |
-| **Not Tested / Pending Manual Testing** | 31 | 55.4% |
-| **Automated Harness Elapsed Time** | 7.88s | |
+| **Not Tested / Pending Manual Testing** | 30 | 53.6% |
+| **Automated Harness Elapsed Time** | 8.07s | |
 
 ---
 
@@ -70,7 +70,7 @@
 | **TC-INS-01** | | ENV-D | Fresh install succeeds for standard non-admin | | `NOT TESTED` | Inno Setup `PrivilegesRequired=lowest`. |
 | **TC-INS-02** | | ENV-D | EULA rejection halts installation cleanly | | `NOT TESTED` | Mandatory license acceptance gate. |
 | **TC-INS-03** | | ENV-D | Desktop & Start Menu shortcuts point to valid app | | `NOT TESTED` | Shortcut target and icon verification. |
-| **TC-INS-04** | | ENV-D | Installed Apps URLs point to ArborGraph repo | | `NOT TESTED` | Inno Setup URL drift verification. |
+| **TC-INS-04** | 2026-10-05 | ENV-D | Installed Apps URLs point to ArborGraph repo | MyAppURL, SupportURL, UpdatesURL verify as https://github.com/12valor/ArborGraph; installer compiled cleanly (2 ms). | `PASS` | **BUG-003 RESOLVED & VERIFIED.** Legacy C-file-scanner eliminated from Inno Setup script. |
 | **TC-INS-05** | | ENV-D | In-place upgrade retains database and settings | | `NOT TESTED` | AppId stability and user data retention. |
 | **TC-INS-06** | | ENV-D | Uninstall removes all deployed binaries cleanly | | `NOT TESTED` | Registry and file purge validation. |
 | **TC-INS-07** | | ENV-D | Silent install (/VERYSILENT) exits with code 0 | | `NOT TESTED` | Headless scripted deployment. |

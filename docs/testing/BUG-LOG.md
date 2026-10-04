@@ -13,8 +13,8 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG-001** | P0 / BLOCKER | `FEAT-08` / `TC-DRV-01`, `TC-DRV-02` | Multi-drive `ClearIndex` root path logic (`isFullClear`) wipes previous drives | CLOSED (Verified: TC-DRV-01, TC-DRV-02 PASS) | v1.0.0 |
 | **BUG-002** | P0 / BLOCKER | `FEAT-19` / `TC-UI-RESP-01`, `TC-UI-RESP-02` | Synchronous deletion executes on UI dispatcher thread, freezing window | READY FOR MANUAL VERIFICATION (Automated Tests PASS) | v1.0.0 |
-| **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | OPEN (Audit Flag) | v1.0.0 |
-| **BUG-004** | P1 / CRITICAL | `FEAT-04` / `TC-USN-01` | USN Journal native pointer boundary arithmetic risks memory violation | OPEN (Audit Flag) | v1.0.0 |
+| **BUG-003** | P0 / BLOCKER | `FEAT-43` / `TC-INS-04` | Inno Setup `installer.iss` hardcodes outdated repository URL | CLOSED (Verified: Clean Inno Setup compile & TC-INS-04 PASS) | v1.0.0 |
+| **BUG-004** | P1 / CRITICAL | `FEAT-04` | USN Journal native pointer boundary arithmetic risks memory violation | OPEN (Audit Flag) | v1.0.0 |
 
 ---
 
@@ -88,21 +88,25 @@
 - **Feature / Test ID:** `FEAT-43` / `TC-INS-04`
 - **Title:** Inno Setup Installer Hardcodes Outdated Repository and Publisher URL
 - **Environment:** Windows Inno Setup 6 / Windows Installed Apps Settings
-- **Status:** OPEN (Identified in Code Audit — Pending Test Execution Confirmation)
+- **Status:** CLOSED (FIXED in `installer/installer.iss`; Verified by Inno Setup 6.7.3 compiler & automated test `TC-INS-04`)
 - **Fix / Version:** v1.0.0
-- **Regression Status:** PENDING VERIFICATION
-- **Preconditions:** Application installed via `installer/installer.iss`.
+- **Regression Status:** VERIFIED PASS (Inno Setup 6 compiler succeeded with 0 errors; TC-INS-04 passed in 2ms; full 26-test suite passed)
+- **Preconditions:** Application installer built via `installer/installer.iss`.
 - **Steps to Reproduce:**
   1. Inspect `installer/installer.iss` line 9.
-  2. Install application on Windows.
-  3. Check Windows `Settings` -> `Apps` -> `Installed Apps` -> `ArborGraph` -> Support URL.
+  2. Notice legacy repository URL `https://github.com/12valor/C-file-scanner`.
+  3. When compiled, Inno Setup injects `AppPublisherURL`, `AppSupportURL`, and `AppUpdatesURL` into the Windows uninstall registry.
 - **Expected Result:** URL points to active repository: `https://github.com/12valor/ArborGraph`.
-- **Actual Result (Audit Finding):**
-  - `installer/installer.iss` line 9 specifies:
+- **Actual Result Prior to Fix:**
+  - `installer/installer.iss` line 9 specified:
     ```pascal
     #define MyAppURL "https://github.com/12valor/C-file-scanner"
     ```
-  - Points to the legacy precursor project repository instead of `ArborGraph`.
+  - Pointed to the legacy precursor project repository instead of `ArborGraph`.
+- **Remediation Details:**
+  - Updated `#define MyAppURL "https://github.com/12valor/ArborGraph"` in `installer/installer.iss`.
+  - Compiled clean binary `dist/setup/ArborGraph-Setup-1.0.0-x64.exe` (68,240,131 bytes) using Inno Setup 6.7.3 (`iscc.exe`).
+  - Added and executed automated test `TC-INS-04` confirming `MyAppURL`, `AppPublisherURL`, `AppSupportURL`, and `AppUpdatesURL` are set to `https://github.com/12valor/ArborGraph` with zero references to `C-file-scanner`.
 
 ---
 

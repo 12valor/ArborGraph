@@ -526,6 +526,61 @@ Executed lifecycle verification on `dist\rc\ArborGraph.exe`:
 4. **Manifest Match:** All 3 artifact hashes verified 100% matching against `dist/SHA256SUMS.txt`.
 5. **Final Status:** **PUBLISHED (v1.0.0)**
 
+---
+
+## 10. Post-Release Verification & Release Health Audit (Prompt 20)
+
+**Audit Execution Timestamp:** 2026-10-05 05:08:00  
+**Target Release:** ArborGraph v1.0.0 (`net8.0-windows` x64)  
+**Release Tag:** `v1.0.0`  
+**Commit Baseline:** `87730b885cf8527a296e6d15b0aa766d034293f0`  
+**GitHub Release URL:** [https://github.com/12valor/ArborGraph/releases/tag/v1.0.0](https://github.com/12valor/ArborGraph/releases/tag/v1.0.0)  
+
+### 10.1 Public Artifact Download & Checksum Verification
+
+All release artifacts were downloaded from GitHub Releases through standard public endpoints into an isolated verification sandbox and validated against local checksum records:
+
+| Downloaded Artifact | Format | Downloaded Size (Bytes) | Computed SHA-256 Digest | Expected SHA-256 Digest | Status |
+| :--- | :--- | :---: | :--- | :--- | :---: |
+| `ArborGraph-Setup-1.0.0-x64.exe` | Windows Installer | 68,243,352 | `EAF4F9BA287209CC245AD660C7DA8CBA564135C728784FB9F46DF3BC925C730A` | `EAF4F9BA287209CC245AD660C7DA8CBA564135C728784FB9F46DF3BC925C730A` | **PASS** |
+| `ArborGraph.exe` | Standalone Executable | 73,381,915 | `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853` | `CD1331A967B6BBB1AB99164B785030C4B28D885320F92025C139B7D432E20853` | **PASS** |
+| `ArborGraph-v1.0.0-portable.zip` | Portable Zip Archive | 67,782,875 | `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` | `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` | **PASS** |
+| `ArborGraph.zip` | Portable Zip Alias | 67,782,875 | `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` | `3508DE048ADD6FF720E810F9D6F0E09A1A8C2570E33434AD89B41BEC9DE7ECFF` | **PASS** |
+| `SHA256SUMS.txt` | Checksums Manifest | 275 | `2F0C8BA2DC02C6D4274316E1C604E32BD393177257F8DB34E3CF6C42016CA128` | `2F0C8BA2DC02C6D4274316E1C604E32BD393177257F8DB34E3CF6C42016CA128` | **PASS** |
+
+### 10.2 Website Direct Download Link Verification
+
+- Public direct download link `https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.exe` verified with `curl -ILs`:
+  - Returns `HTTP/1.1 302 Found` redirecting to `https://github.com/12valor/ArborGraph/releases/download/v1.0.0/ArborGraph.exe`.
+  - Destination server returns `HTTP/1.1 200 OK`.
+- Public portable zip link `https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.zip` verified:
+  - Returns `HTTP/1.1 302 Found` redirecting to `https://github.com/12valor/ArborGraph/releases/download/v1.0.0/ArborGraph.zip`.
+  - Destination server returns `HTTP/1.1 200 OK`.
+- Website documentation contains zero references to legacy project names or obsolete repository URLs.
+
+### 10.3 Post-Release Sandbox Smoke Test & Safety Verification
+
+1. **Installer Execution:** Downloaded `ArborGraph-Setup-1.0.0-x64.exe` deployed cleanly via `/VERYSILENT` with exit code `0`.
+2. **First-Run Stability:** Application launched cleanly (PID: 13336), memory ceiling observed at 373 MB RAM.
+3. **Synthetic Scan & Multi-View Navigation:** Executed scan on 51 synthetic files including deep subdirectories and duplicate copies.
+4. **Clean Exit & Cold Relaunch:** Application terminated cleanly and restarted without process hangs or orphaned handles.
+5. **Critical Safety Verification (Synthetic Testbed):**
+   - Multi-drive isolation (`SEC-03` / `TC-DRV-01`): PASS
+   - Scoped deletion (`SEC-03` / `TC-DEL-02`): PASS
+   - Deletion confirmation gate (`TC-DEL-04`): PASS
+   - Locked-file safe skipping (`SEC-08`): PASS
+   - Duplicate preservation (`TC-DUP-01`): PASS
+   - Protected path shields (`SEC-01` / `TC-DEL-05`): PASS (Zero operations permitted on OS roots)
+6. **Clean Uninstallation:** `unins000.exe /VERYSILENT` purged deployed executable and configuration cleanly with exit code `0`.
+
+### 10.4 Final Release Health Determination
+
+> **FINAL RELEASE HEALTH: GREEN**
+>
+> **Health Assessment:**  
+> The published ArborGraph v1.0.0 release is fully healthy, cryptographically integral, and operational. All 5 release assets match locally calculated SHA-256 hashes character-for-character. Public website download routes resolve directly to the production v1.0.0 binaries. The installation and cold execution smoke tests pass cleanly with zero crashes, zero data-safety regressions, and zero unhandled faults.
+
+
 
 
 

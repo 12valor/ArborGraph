@@ -189,7 +189,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="{Binding DeletionStatus}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
-                    <ProgressBar Grid.Row="1" Height="2" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgElevated}" BorderThickness="0" Margin="0,4,0,0"/>
+                    <ProgressBar Grid.Row="1" Height="2" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0" Margin="0,4,0,0"/>
                 </Grid>
 
                 <Grid>

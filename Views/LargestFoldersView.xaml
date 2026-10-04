@@ -32,7 +32,7 @@
                 CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
             <StackPanel>
                 <TextBlock Text="{Binding DeletionStatus}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
-                <ProgressBar Height="3" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgElevated}" BorderThickness="0" Margin="0,6,0,0"/>
+                <ProgressBar Height="3" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0" Margin="0,6,0,0"/>
             </StackPanel>
         </Border>
 

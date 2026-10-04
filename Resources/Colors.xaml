@@ -39,6 +39,7 @@
     <SolidColorBrush x:Key="BrushBgSurface" Color="{StaticResource ColorBgSurface}"/>
     <SolidColorBrush x:Key="BrushBgCard" Color="{StaticResource ColorBgCard}"/>
     <SolidColorBrush x:Key="BrushBgCardHover" Color="{StaticResource ColorBgCardHover}"/>
+    <SolidColorBrush x:Key="BrushBgElevated" Color="{StaticResource ColorBgCardHover}"/>
     <SolidColorBrush x:Key="BrushBgNavActive" Color="{StaticResource ColorBgNavActive}"/>
     <SolidColorBrush x:Key="BrushBorder" Color="{StaticResource ColorBorder}"/>
     <SolidColorBrush x:Key="BrushBorderLight" Color="{StaticResource ColorBorderLight}"/>

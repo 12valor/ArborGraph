@@ -8,7 +8,13 @@ foreach ($line in ($colors + $styles)) {
     }
 }
 
-$files = Get-ChildItem -Path Views, MainWindow.xaml -Filter *.xaml -Recurse
+$files = Get-ChildItem -Filter *.xaml -Recurse | Where-Object { 
+    $_.FullName -notmatch 'Colors\.xaml' -and 
+    $_.FullName -notmatch 'Styles\.xaml' -and 
+    $_.FullName -notmatch 'App\.xaml' 
+}
+
+$missingCount = 0
 foreach ($f in $files) {
     $text = Get-Content $f.FullName -Raw
     $local = @{}
@@ -19,6 +25,9 @@ foreach ($f in $files) {
         $res = $m.Groups[1].Value.Trim()
         if (-not $defined.ContainsKey($res) -and -not $local.ContainsKey($res)) {
             Write-Host "$($f.Name): $res"
+            $missingCount++
         }
     }
 }
+
+Write-Host "Total missing resources: $missingCount"

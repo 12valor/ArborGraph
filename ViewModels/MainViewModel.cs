@@ -304,11 +304,20 @@ public class MainViewModel : ObservableObject
 
         var rootsToScan = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(CustomScanPath) && Directory.Exists(CustomScanPath))
+        string cleanCustomPath = CustomScanPath?.Trim().Trim('"').Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(cleanCustomPath))
         {
-            rootsToScan.Add(CustomScanPath);
+            if (Directory.Exists(cleanCustomPath))
+            {
+                rootsToScan.Add(cleanCustomPath);
+            }
+            else
+            {
+                ScanLogVM.AddLog("WARN", $"Custom folder path does not exist: {cleanCustomPath}");
+            }
         }
-        else
+
+        if (rootsToScan.Count == 0)
         {
             foreach (var d in OverviewVM.Drives)
             {

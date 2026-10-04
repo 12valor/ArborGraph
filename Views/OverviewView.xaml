@@ -29,6 +29,13 @@
                     <TextBlock Text="Storage allocation, largest contributors, and cleanup opportunities" 
                                FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0"/>
                 </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                            Style="{StaticResource PrimaryButtonStyle}" Padding="16,6" Margin="0,0,8,0"/>
+                    <Button Content="Review Cleanup" Command="{Binding ReviewCleanupCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Padding="14,6"/>
+                </StackPanel>
             </Grid>
 
             <!-- 2. SYSTEM RESOURCE MONITORING (Thin, subtle technical sparklines) -->

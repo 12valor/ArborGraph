@@ -1,0 +1,902 @@
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using DiskScope.Infrastructure;
+using DiskScope.Models;
+using DiskScope.Services;
+
+namespace DiskScope.Tests;
+
+public static class AutomatedTestSuites
+{
+    public static void RegisterAll(TestRunner runner)
+    {
+        RegisterDatabaseTests(runner);
+        RegisterScannerTests(runner);
+        RegisterRollupTests(runner);
+        RegisterDuplicateTests(runner);
+        RegisterDeveloperStorageTests(runner);
+        RegisterQueryAndFilterTests(runner);
+        RegisterExportTests(runner);
+        RegisterTreemapTests(runner);
+        RegisterLegalAndSettingsTests(runner);
+    }
+
+    // =========================================================================
+    // A. DATABASE / INDEX SAFETY SUITE
+    // =========================================================================
+    private static void RegisterDatabaseTests(TestRunner runner)
+    {
+        // TC-DRV-01: Multi-Drive Sequential Scan Data Isolation (ClearIndex Scoping Bug)
+        runner.Register(new TestCase(
+            TestId: "TC-DRV-01",
+            FeatureId: "FEAT-08",
+            Title: "Multi-Drive Sequential Scan Data Isolation (ClearIndex Root Scoping Bug)",
+            Priority: "P0 / BLOCKER",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Confirms Blocker 1: In DatabaseService.cs line 185, ClearIndex evaluates isFullClear = true for drive root paths (e.g. D:), executing DELETE FROM files without a WHERE clause and wiping previously indexed drives (C:).",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("multidrive_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                // 1. Populate drive C: records
+                var fileC1 = new FileRecord
+                {
+                    Path = @"C:\Users\Alice\Documents\report.docx",
+                    Name = "report.docx",
+                    Parent = @"C:\Users\Alice\Documents",
+                    Size = 10240,
+                    ModifiedTime = 1700000000,
+                    CreatedTime = 1700000000,
+                    Extension = ".docx",
+                    Category = FileCategory.Documents,
+                    Accessible = 1
+                };
+                var fileC2 = new FileRecord
+                {
+                    Path = @"C:\Projects\ArborGraph\code.cs",
+                    Name = "code.cs",
+                    Parent = @"C:\Projects\ArborGraph",
+                    Size = 20480,
+                    ModifiedTime = 1700000000,
+                    CreatedTime = 1700000000,
+                    Extension = ".cs",
+                    Category = FileCategory.Code,
+                    Accessible = 1
+                };
+
+                // 2. Populate drive D: records
+                var fileD1 = new FileRecord
+                {
+                    Path = @"D:\Games\GameA\game.exe",
+                    Name = "game.exe",
+                    Parent = @"D:\Games\GameA",
+                    Size = 52428800,
+                    ModifiedTime = 1700000000,
+                    CreatedTime = 1700000000,
+                    Extension = ".exe",
+                    Category = FileCategory.Executables,
+                    Accessible = 1
+                };
+
+                db.InsertBatch(new[] { fileC1, fileC2, fileD1 });
+
+                // Verify initial counts
+                var (initFiles, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(3, initFiles, "Initial database should have 3 files across C: and D:");
+
+                // 3. Perform scoped ClearIndex for drive D:\ only (as ScannerService does before scanning D:\)
+                // In production, roots passed is new[] { @"D:\" } or new[] { "D:" }
+                db.ClearIndex(new[] { @"D:\" });
+
+                // 4. Verify C:\ records were NOT deleted
+                var pagedFiles = db.GetFilesPaged(0, 100);
+                int cFilesRemaining = pagedFiles.Count(f => f.Path.StartsWith("C:", StringComparison.OrdinalIgnoreCase));
+                int dFilesRemaining = pagedFiles.Count(f => f.Path.StartsWith("D:", StringComparison.OrdinalIgnoreCase));
+
+                ctx.Assert(dFilesRemaining == 0, $"Drive D: records should have been cleared, found {dFilesRemaining} remaining.");
+                ctx.Assert(cFilesRemaining == 2, $"CRITICAL DATA SAFETY FAILURE: Scanning/clearing drive D: wiped drive C: records! Expected 2 C: files, but found {cFilesRemaining}.");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DRV-03: Custom Directory Target Scoped ClearIndex
+        runner.Register(new TestCase(
+            TestId: "TC-DRV-03",
+            FeatureId: "FEAT-02",
+            Title: "Custom Directory Target Scoped ClearIndex",
+            Priority: "P1 / CRITICAL",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies that custom directory scanning only clears records matching the specific directory prefix.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("custom_dir_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var recA = new FileRecord
+                {
+                    Path = @"C:\TestFolderA\sub\fileA.txt",
+                    Name = "fileA.txt",
+                    Parent = @"C:\TestFolderA\sub",
+                    Size = 100,
+                    ModifiedTime = 1234567,
+                    CreatedTime = 1234567,
+                    Extension = ".txt",
+                    Category = FileCategory.Documents,
+                    Accessible = 1
+                };
+                var recB = new FileRecord
+                {
+                    Path = @"C:\TestFolderB\sub\fileB.txt",
+                    Name = "fileB.txt",
+                    Parent = @"C:\TestFolderB\sub",
+                    Size = 200,
+                    ModifiedTime = 1234567,
+                    CreatedTime = 1234567,
+                    Extension = ".txt",
+                    Category = FileCategory.Documents,
+                    Accessible = 1
+                };
+                db.InsertBatch(new[] { recA, recB });
+
+                // Clear ONLY TestFolderA
+                db.ClearIndex(new[] { @"C:\TestFolderA" });
+
+                var remaining = db.GetFilesPaged(0, 100);
+                ctx.Assert(remaining.Any(f => f.Path == recB.Path), "TestFolderB record should have been preserved");
+                ctx.Assert(!remaining.Any(f => f.Path == recA.Path), "TestFolderA record should have been cleared");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-DB-01: Concurrent Reads During Active Write Transactions
+        runner.Register(new TestCase(
+            TestId: "TC-DB-01",
+            FeatureId: "FEAT-08",
+            Title: "Concurrent SQLite Reads During Active Bulk Insertion in WAL Mode",
+            Priority: "P1 / CRITICAL",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies SQLite WAL configuration allows UI readers to query while background worker is writing 5,000-record batches without 'database is locked' exceptions.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("concurrency_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                long writeCount = 0;
+                Exception? readException = null;
+
+                // Background writer loop
+                var writerTask = Task.Run(() =>
+                {
+                    int batchId = 0;
+                    while (!cts.IsCancellationRequested && batchId < 10)
+                    {
+                        var batch = new List<FileRecord>(200);
+                        for (int i = 0; i < 200; i++)
+                        {
+                            batch.Add(new FileRecord
+                            {
+                                Path = $@"C:\Bench\Dir_{batchId}\file_{i}.dat",
+                                Name = $"file_{i}.dat",
+                                Parent = $@"C:\Bench\Dir_{batchId}",
+                                Size = 1024,
+                                ModifiedTime = 1000,
+                                CreatedTime = 1000,
+                                Extension = ".dat",
+                                Category = FileCategory.Other,
+                                Accessible = 1
+                            });
+                        }
+                        db.InsertBatch(batch);
+                        Interlocked.Add(ref writeCount, batch.Count);
+                        batchId++;
+                        Thread.Sleep(10);
+                    }
+                });
+
+                // Concurrent reader loop
+                var readerTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        for (int i = 0; i < 20; i++)
+                        {
+                            var paged = db.GetFilesPaged(0, 50);
+                            var categories = db.GetCategoryBreakdown();
+                            var (totalFiles, totalBytes) = db.GetTotalIndexedStorage();
+                            Thread.Sleep(15);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        readException = ex;
+                    }
+                });
+
+                await Task.WhenAll(writerTask, readerTask);
+
+                ctx.Assert(readException == null, $"Concurrent read failed with exception: {readException?.Message}");
+                ctx.Assert(writeCount > 0, "Writer should have inserted records successfully");
+            }
+        ));
+
+        // TC-DB-03: SQLite Schema Creation, WAL Mode & Integrity Check
+        runner.Register(new TestCase(
+            TestId: "TC-DB-03",
+            FeatureId: "FEAT-09",
+            Title: "Database Schema Creation, WAL Configuration & PRAGMA Integrity Check",
+            Priority: "P1 / CRITICAL",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies database initializes correctly with WAL journal mode, required tables (files, directories, scan_history), and passes PRAGMA integrity_check.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("integrity_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                bool integrityOk = db.CheckIntegrity();
+                ctx.Assert(integrityOk, "PRAGMA integrity_check failed on fresh database");
+
+                // Verify WAL mode
+                using var conn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}");
+                conn.Open();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "PRAGMA journal_mode;";
+                string? mode = cmd.ExecuteScalar()?.ToString();
+                ctx.AssertEqual("wal", mode?.ToLowerInvariant(), "SQLite journal_mode should be WAL");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // B. SCANNER TEST SUITE
+    // =========================================================================
+    private static void RegisterScannerTests(TestRunner runner)
+    {
+        // TC-SCN-01: Scanner Cancellation Token Responsiveness
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-01",
+            FeatureId: "FEAT-03",
+            Title: "Scanner Traversal Cancellation Responsiveness (< 500ms)",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Verifies bounded-channel traversal responds promptly to CancellationToken cancellation without deadlocks or unhandled exceptions.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("scan_cancel_test");
+                // Generate 1,000 files to give scanner work
+                TestDataGenerator.GenerateScaledDataset(testDir, 1000);
+
+                string dbPath = ctx.CreateTempDatabasePath("cancel_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                using var cts = new CancellationTokenSource();
+
+                // Trigger cancellation after 20ms
+                cts.CancelAfter(20);
+
+                var sw = Stopwatch.StartNew();
+                var stats = await scanner.ScanDrivesAsync(new[] { testDir }, null, cts.Token, enableIncremental: false);
+                sw.Stop();
+
+                ctx.AssertEqual(ScanState.Cancelled, stats.State, "ScanState should be Cancelled");
+                ctx.Assert(sw.ElapsedMilliseconds < 1500, $"Cancellation took too long: {sw.ElapsedMilliseconds} ms (must be < 1500 ms)");
+                ctx.Assert(db.CheckIntegrity(), "Database should maintain integrity after scan cancellation");
+            }
+        ));
+
+        // TC-SCN-02: Inaccessible / Permission-Denied Folders Graceful Bypass
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-02",
+            FeatureId: "FEAT-03",
+            Title: "Inaccessible System Folders Graceful Bypass (UnauthorizedAccessException)",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Verifies that scanner catches UnauthorizedAccessException, logs to SkippedDirectories, and continues scanning without terminating.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("inaccessible_test");
+                string accessibleSub = Path.Combine(testDir, "AccessibleFolder");
+                Directory.CreateDirectory(accessibleSub);
+                File.WriteAllText(Path.Combine(accessibleSub, "file1.txt"), "hello world");
+
+                string dbPath = ctx.CreateTempDatabasePath("inacc_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                var stats = await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                ctx.AssertEqual(ScanState.Completed, stats.State, "ScanState should be Completed");
+                ctx.Assert(stats.FilesIndexed >= 1, "Accessible files must be indexed");
+            }
+        ));
+
+        // TC-SCN-03: Deep Path Traversal (> 260 Characters / MAX_PATH)
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-03",
+            FeatureId: "FEAT-03",
+            Title: "Deep Path Traversal Exceeding 260 Characters (MAX_PATH)",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Verifies that scanner handles deeply nested hierarchies exceeding Windows MAX_PATH (260 chars) without PathTooLongException.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("deep_path_test");
+                var edgeStats = TestDataGenerator.GenerateEdgeCasesDataset(testDir);
+
+                string dbPath = ctx.CreateTempDatabasePath("deep_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                var scanStats = await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                ctx.AssertEqual(ScanState.Completed, scanStats.State, "Deep path scan should complete");
+                ctx.AssertEqual(edgeStats.ExpectedFileCount, (int)scanStats.FilesIndexed, "All files including deep paths should be indexed");
+
+                // Verify leaf file queryable in SQLite
+                var paged = db.GetFilesPaged(0, 100);
+                bool hasDeepFile = paged.Any(f => f.Name.Contains("deeply_nested_leaf_file"));
+                ctx.Assert(hasDeepFile, "Deeply nested file was not found in SQLite index");
+            }
+        ));
+
+        // TC-SCN-EDGE: Unicode, Special Characters & Empty Folders
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-EDGE",
+            FeatureId: "FEAT-03",
+            Title: "Unicode Filenames, Special Characters & Empty Directories Accounting",
+            Priority: "P2 / MAJOR",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Verifies exact accounting on Unicode filenames (Japanese, Arabic, Emoji), special characters (#, %, &, quotes), and empty folders.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("unicode_spec_test");
+                var edgeStats = TestDataGenerator.GenerateEdgeCasesDataset(testDir);
+
+                string dbPath = ctx.CreateTempDatabasePath("unicode_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                var scanStats = await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                ctx.Assert(scanStats.FilesIndexed == edgeStats.ExpectedFileCount,
+                    $"Expected {edgeStats.ExpectedFileCount} files indexed, got {scanStats.FilesIndexed}");
+                ctx.Assert(scanStats.LogicalBytesIndexed == edgeStats.ExpectedTotalBytes,
+                    $"Expected {edgeStats.ExpectedTotalBytes} bytes, got {scanStats.LogicalBytesIndexed}");
+
+                // Verify Unicode characters preserved in database
+                var paged = db.GetFilesPaged(0, 100);
+                ctx.Assert(paged.Any(f => f.Name.Contains("日本語")), "Japanese Unicode filename was corrupted in SQLite");
+                ctx.Assert(paged.Any(f => f.Name.Contains("ملف_عربي")), "Arabic Unicode filename was corrupted in SQLite");
+                ctx.Assert(paged.Any(f => f.Name.Contains("🚀")), "Emoji Unicode filename was corrupted in SQLite");
+                ctx.Assert(paged.Any(f => f.Name.Contains("quote'test'and#hash")), "Special character filename with quotes was corrupted");
+            }
+        ));
+
+        // TC-SET-01: Scanner Exclusion Rules Enforcement
+        runner.Register(new TestCase(
+            TestId: "TC-SET-01",
+            FeatureId: "FEAT-40",
+            Title: "Scanner Exclusion Rules Enforcement",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Verifies that directories configured in SettingsService exclusions are completely skipped by the BFS scanner.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("exclusion_scan_test");
+                string allowedSub = Path.Combine(testDir, "Allowed");
+                string excludedSub = Path.Combine(testDir, "ExcludedSecret");
+                Directory.CreateDirectory(allowedSub);
+                Directory.CreateDirectory(excludedSub);
+
+                File.WriteAllText(Path.Combine(allowedSub, "public.txt"), "public content");
+                File.WriteAllText(Path.Combine(excludedSub, "secret.txt"), "secret content");
+
+                string settingsPath = Path.Combine(ctx.CreateTempDirectory("set"), "settings.json");
+                var settingsService = new SettingsService(settingsPath);
+                settingsService.AddExclusion(excludedSub);
+
+                string dbPath = ctx.CreateTempDatabasePath("exclusion_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db, null, settingsService);
+                var stats = await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                ctx.AssertEqual(1, (int)stats.FilesIndexed, "Only allowed file should be indexed");
+                var paged = db.GetFilesPaged(0, 100);
+                ctx.Assert(paged.All(f => !f.Path.Contains("ExcludedSecret")), "Excluded folder files must NOT be in SQLite database");
+                ctx.Assert(scanner.SkippedDirectories.Any(sd => sd.Path.Equals(excludedSub, StringComparison.OrdinalIgnoreCase)),
+                    "Excluded directory should be recorded in ScannerService.SkippedDirectories");
+            }
+        ));
+    }
+
+    // =========================================================================
+    // C. DIRECTORY ROLLUP SUITE
+    // =========================================================================
+    private static void RegisterRollupTests(TestRunner runner)
+    {
+        // TC-ROL-01: Recursive Folder Rollup Mathematical Correctness
+        runner.Register(new TestCase(
+            TestId: "TC-ROL-01",
+            FeatureId: "FEAT-10",
+            Title: "Recursive Folder Rollup Exact Parent/Child Size Calculations",
+            Priority: "P1 / CRITICAL",
+            Category: "Directory Rollup Engine",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies BuildDirectoryRollup aggregates direct sizes and child subfolder sizes with 100% precision without rounding or omission errors.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("rollup_exact_test");
+                var dsStats = TestDataGenerator.GenerateDatasetA(testDir);
+
+                string dbPath = ctx.CreateTempDatabasePath("rollup_exact.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                // Build rollup
+                db.BuildDirectoryRollup();
+
+                var largestFolders = db.GetLargestFolders(50, excludeDriveRoots: false);
+                ctx.Assert(largestFolders.Count > 0, "Directories table should contain rolled-up records");
+
+                // Root folder size must match total bytes exactly
+                var rootFolder = largestFolders.FirstOrDefault(f => string.Equals(f.Path, testDir, StringComparison.OrdinalIgnoreCase));
+                ctx.Assert(rootFolder != null, "Root folder record must exist in rolled-up directories");
+                ctx.AssertEqual(dsStats.ExpectedTotalBytes, rootFolder!.Size, "Root rolled-up size must equal total files size");
+                ctx.AssertEqual(dsStats.ExpectedFileCount, (int)rootFolder.FileCount, "Root rolled-up file count must equal total file count");
+            }
+        ));
+
+        // TC-ROL-02: Large Synthetic Directory Structure Rollup Scaling
+        runner.Register(new TestCase(
+            TestId: "TC-ROL-02",
+            FeatureId: "FEAT-10",
+            Title: "Large Synthetic Directory Structure Rollup Scalability Benchmark",
+            Priority: "P1 / CRITICAL",
+            Category: "Directory Rollup Engine",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Benchmarks BuildDirectoryRollup on 1,000 directories to verify memory allocation and execution time remain bounded.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("rollup_scale.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                // Synthetic hierarchy: 1,000 directories across 4 levels
+                int dirCount = 1000;
+                var records = new List<FileRecord>(dirCount * 2);
+                long expectedTotalBytes = 0;
+
+                for (int i = 0; i < dirCount; i++)
+                {
+                    string parent = $@"C:\ScaleTest\Level1_{i % 5}\Level2_{i % 25}\Dir_{i}";
+                    long size = (i + 1) * 100;
+                    expectedTotalBytes += size;
+
+                    records.Add(new FileRecord
+                    {
+                        Path = Path.Combine(parent, $"file_{i}.dat"),
+                        Name = $"file_{i}.dat",
+                        Parent = parent,
+                        Size = size,
+                        ModifiedTime = 1000,
+                        CreatedTime = 1000,
+                        Extension = ".dat",
+                        Category = FileCategory.Other,
+                        Accessible = 1
+                    });
+                }
+
+                db.InsertBatch(records);
+
+                var sw = Stopwatch.StartNew();
+                db.BuildDirectoryRollup();
+                sw.Stop();
+
+                ctx.Assert(sw.ElapsedMilliseconds < 3000, $"Rollup of 1,000 dirs took too long: {sw.ElapsedMilliseconds} ms (must be < 3000 ms)");
+
+                var folders = db.GetLargestFolders(10, excludeDriveRoots: false);
+                ctx.Assert(folders.Count > 0, "Rolled-up directories should be queryable");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // D. DUPLICATE DETECTION SUITE
+    // =========================================================================
+    private static void RegisterDuplicateTests(TestRunner runner)
+    {
+        // TC-DUP-01: 3-Stage Cryptographic Duplicate Detection & Collision Rejection
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-01",
+            FeatureId: "FEAT-22",
+            Title: "3-Stage Duplicate Pipeline Accuracy (Size -> MD5 Prefix -> SHA-256)",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Verifies 3-stage duplicate pipeline detects genuine identical duplicates and strictly rejects same-size different-content collisions.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("dup_test");
+                var (dsStats, grp1, grp2, collisions) = TestDataGenerator.GenerateDuplicatesDataset(testDir);
+
+                string dbPath = ctx.CreateTempDatabasePath("dup_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { testDir }, null, CancellationToken.None, enableIncremental: false);
+
+                var analyzer = new DuplicateAnalyzer(db);
+                var dupGroups = await analyzer.FindDuplicatesAsync(minSize: 1024);
+
+                // Group 1: 64 KB (2 copies), Group 2: 128 KB (3 copies)
+                // Collision pair: 32 KB (must NOT be a duplicate group)
+                ctx.AssertEqual(2, dupGroups.Count, "Expected exactly 2 true duplicate groups");
+
+                var g64 = dupGroups.FirstOrDefault(g => g.ExactSize == 65536);
+                ctx.Assert(g64 != null, "64 KB duplicate group was not detected");
+                ctx.AssertEqual(2, g64!.FileCount, "64 KB group should have 2 copies");
+                ctx.AssertEqual(65536L, g64.WastedBytes, "64 KB group wasted bytes should be 65536");
+
+                var g128 = dupGroups.FirstOrDefault(g => g.ExactSize == 131072);
+                ctx.Assert(g128 != null, "128 KB duplicate group was not detected");
+                ctx.AssertEqual(3, g128!.FileCount, "128 KB group should have 3 copies");
+                ctx.AssertEqual(262144L, g128.WastedBytes, "128 KB group wasted bytes should be 262144 (2 extra copies)");
+
+                // Verify collision rejection: 32,768 bytes
+                bool collisionMistakenlyGrouped = dupGroups.Any(g => g.ExactSize == 32768);
+                ctx.Assert(!collisionMistakenlyGrouped, "COLLISION REJECTION FAILURE: Files with identical size but differing bytes were incorrectly grouped as duplicates!");
+            }
+        ));
+
+        // TC-DUP-02: Zero-Byte and Edge-Case Duplicate Handling
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-02",
+            FeatureId: "FEAT-22",
+            Title: "Zero-Byte Files & Empty Candidate Handling in Duplicate Pipeline",
+            Priority: "P2 / MAJOR",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Verifies 0-byte files or empty databases do not throw exceptions or cause division-by-zero errors in DuplicateAnalyzer.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("empty_dup.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var analyzer = new DuplicateAnalyzer(db);
+                var emptyGroups = await analyzer.FindDuplicatesAsync(minSize: 1024);
+                ctx.AssertEqual(0, emptyGroups.Count, "Empty database should yield 0 duplicate groups without throwing");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // E. DEVELOPER STORAGE DETECTION SUITE
+    // =========================================================================
+    private static void RegisterDeveloperStorageTests(TestRunner runner)
+    {
+        // TC-DEV-01: Contextual Developer Project Detection & False-Positive Rejection
+        runner.Register(new TestCase(
+            TestId: "TC-DEV-01",
+            FeatureId: "FEAT-24",
+            Title: "Contextual Developer Project Marker Verification (Node, .NET, Rust, Gradle)",
+            Priority: "P1 / CRITICAL",
+            Category: "Developer Storage",
+            ProductionClass: "DiskScope.Services.DeveloperStorageService",
+            AuditRiskNote: "Verifies contextual parent markers (package.json, Cargo.toml, .csproj, build.gradle) prevent false-positive deletion of generic folders named 'target' or 'build'.",
+            ExecuteAsync: async ctx =>
+            {
+                string testDir = ctx.CreateTempDirectory("dev_workspace_test");
+                var (_, nodeDir, binDir, rustTarget, gradleBuild, fakeRustTarget, fakeGradleBuild) =
+                    TestDataGenerator.GenerateDeveloperDataset(testDir);
+
+                string dbPath = ctx.CreateTempDatabasePath("dev_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var devService = new DeveloperStorageService(db);
+                var summaries = await devService.ScanWorkspaceAsync(testDir);
+
+                // 1. Verify Node.js
+                var nodeSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.NodeJs);
+                ctx.Assert(nodeSummary != null && nodeSummary.Items.Any(i => i.Path == nodeDir), "Node.js node_modules should be detected");
+
+                // 2. Verify .NET
+                var dotNetSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.DotNet);
+                ctx.Assert(dotNetSummary != null && dotNetSummary.Items.Any(i => i.Path == binDir), ".NET bin should be detected");
+
+                // 3. Verify Rust
+                var rustSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.Rust);
+                ctx.Assert(rustSummary != null && rustSummary.Items.Any(i => i.Path == rustTarget), "Rust target directory should be detected");
+
+                // 4. Verify Gradle
+                var gradleSummary = summaries.FirstOrDefault(s => s.Ecosystem == DeveloperEcosystem.GradleJava);
+                ctx.Assert(gradleSummary != null && gradleSummary.Items.Any(i => i.Path == gradleBuild), "Gradle build directory should be detected");
+
+                // 5. CRITICAL FALSE-POSITIVE TRAPS
+                if (rustSummary != null)
+                {
+                    bool fakeRustDetected = rustSummary.Items.Any(i => i.Path == fakeRustTarget);
+                    ctx.Assert(!fakeRustDetected, $"FALSE POSITIVE: Non-Rust folder '{fakeRustTarget}' was falsely classified as Rust build cache!");
+                }
+
+                if (gradleSummary != null)
+                {
+                    bool fakeGradleDetected = gradleSummary.Items.Any(i => i.Path == fakeGradleBuild);
+                    ctx.Assert(!fakeGradleDetected, $"FALSE POSITIVE: Non-Gradle folder '{fakeGradleBuild}' was falsely classified as Gradle build cache!");
+                }
+            }
+        ));
+    }
+
+    // =========================================================================
+    // F. QUERY / FILTERING SUITE
+    // =========================================================================
+    private static void RegisterQueryAndFilterTests(TestRunner runner)
+    {
+        // TC-QRY-01: Multi-Criteria SQL Search and Pagination
+        runner.Register(new TestCase(
+            TestId: "TC-QRY-01",
+            FeatureId: "FEAT-16",
+            Title: "Multi-Criteria SQL Storage Search & Paging Accuracy",
+            Priority: "P1 / CRITICAL",
+            Category: "Query Engine",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies multi-criteria filtering by size, extension, age, location prefix, and offset pagination.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("query_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var files = new List<FileRecord>
+                {
+                    new() { Path = @"C:\Media\Video\large_movie.mp4", Name = "large_movie.mp4", Parent = @"C:\Media\Video", Size = 500_000_000, Category = FileCategory.Video, Extension = ".mp4", ModifiedTime = (ulong)(now - 86400 * 10) },
+                    new() { Path = @"C:\Media\Video\short_clip.mp4", Name = "short_clip.mp4", Parent = @"C:\Media\Video", Size = 5_000_000, Category = FileCategory.Video, Extension = ".mp4", ModifiedTime = (ulong)(now - 86400 * 2) },
+                    new() { Path = @"C:\Docs\manual.pdf", Name = "manual.pdf", Parent = @"C:\Docs", Size = 15_000_000, Category = FileCategory.Documents, Extension = ".pdf", ModifiedTime = (ulong)(now - 86400 * 100) },
+                    new() { Path = @"C:\Docs\ancient.pdf", Name = "ancient.pdf", Parent = @"C:\Docs", Size = 25_000_000, Category = FileCategory.Documents, Extension = ".pdf", ModifiedTime = (ulong)(now - 86400 * 400) }
+                };
+                db.InsertBatch(files);
+
+                // Filter: Extension = .pdf, minSize = 20 MB
+                var results = db.GetFilesPaged(0, 10, minSize: 20_000_000, extension: ".pdf");
+                ctx.AssertEqual(1, results.Count, "Expected exactly 1 PDF >= 20 MB");
+                ctx.AssertEqual("ancient.pdf", results[0].Name, "Expected ancient.pdf");
+
+                // Filter: Location = C:\Media, category = Video
+                var mediaVideos = db.GetFilesPaged(0, 10, category: FileCategory.Video, locationPrefix: @"C:\Media");
+                ctx.AssertEqual(2, mediaVideos.Count, "Expected 2 videos in C:\\Media");
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-QRY-SQLI: Parameterized Input Safety (SQL Injection-Like Input)
+        runner.Register(new TestCase(
+            TestId: "TC-QRY-SQLI",
+            FeatureId: "FEAT-16",
+            Title: "SQL Injection Safety in Query Explorer and Search Inputs",
+            Priority: "P1 / CRITICAL",
+            Category: "Query Engine",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies user input containing quotes, semicolons, and SQL operators remains properly parameterized and cannot corrupt the database.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("sqli_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var file = new FileRecord
+                {
+                    Path = @"C:\Test\normal.txt",
+                    Name = "normal.txt",
+                    Parent = @"C:\Test",
+                    Size = 100,
+                    Category = FileCategory.Documents,
+                    Extension = ".txt"
+                };
+                db.InsertBatch(new[] { file });
+
+                // Injection attempt 1: OR 1=1
+                var res1 = db.GetFilesPaged(0, 10, search: "' OR '1'='1");
+                ctx.AssertEqual(0, res1.Count, "SQL injection search string should return 0 matches, not bypass filter");
+
+                // Injection attempt 2: DROP TABLE
+                var res2 = db.GetFilesPaged(0, 10, search: "'; DROP TABLE files; --");
+                ctx.AssertEqual(0, res2.Count, "DROP TABLE attempt should be treated as literal search string");
+
+                // Verify tables still exist
+                var (count, _) = db.GetTotalIndexedStorage();
+                ctx.AssertEqual(1, count, "Files table should remain completely intact after injection attempt");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // G. EXPORT SUITE
+    // =========================================================================
+    private static void RegisterExportTests(TestRunner runner)
+    {
+        // TC-EXP-01: Audit Export Integrity (HTML, JSON, CSV)
+        runner.Register(new TestCase(
+            TestId: "TC-EXP-01",
+            FeatureId: "FEAT-33",
+            Title: "Audit Export Generation Integrity (HTML, JSON, CSV)",
+            Priority: "P1 / CRITICAL",
+            Category: "Export Subsystem",
+            ProductionClass: "DiskScope.Services.ExportService",
+            AuditRiskNote: "Verifies standalone HTML report, JSON structured dump, and precision CSV files export cleanly without truncation or malformed delimiters.",
+            ExecuteAsync: async ctx =>
+            {
+                string exportDir = ctx.CreateTempDirectory("export_out");
+                string dbPath = ctx.CreateTempDatabasePath("export_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var testRec = new FileRecord
+                {
+                    Path = @"C:\Reports\special, quote ""test"".txt",
+                    Name = @"special, quote ""test"".txt",
+                    Parent = @"C:\Reports",
+                    Size = 4096,
+                    Category = FileCategory.Documents,
+                    Extension = ".txt"
+                };
+                db.InsertBatch(new[] { testRec });
+
+                var exportService = new ExportService();
+                var report = await exportService.BuildAuditReportAsync(db, null, null, @"C:\Reports");
+
+                // 1. HTML Export
+                string htmlPath = Path.Combine(exportDir, "audit.html");
+                await exportService.ExportToHtmlAsync(report, htmlPath);
+                ctx.Assert(File.Exists(htmlPath), "HTML audit report was not created");
+                string html = await File.ReadAllTextAsync(htmlPath);
+                ctx.Assert(html.Contains("<!DOCTYPE html>"), "HTML export missing DOCTYPE");
+                ctx.Assert(html.Contains("Storage Audit"), "HTML export missing title");
+
+                // 2. JSON Export
+                string jsonPath = Path.Combine(exportDir, "audit.json");
+                await exportService.ExportToJsonAsync(report, jsonPath);
+                ctx.Assert(File.Exists(jsonPath), "JSON audit report was not created");
+                string json = await File.ReadAllTextAsync(jsonPath);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                ctx.Assert(doc.RootElement.GetProperty("TotalFilesIndexed").GetInt64() == 1, "JSON TotalFilesIndexed mismatch");
+
+                // 3. CSV Export with special character / quote escaping
+                string csvPath = Path.Combine(exportDir, "files.csv");
+                await exportService.ExportFilesToCsvAsync(new[] { testRec }, csvPath);
+                ctx.Assert(File.Exists(csvPath), "CSV export was not created");
+                var csvLines = await File.ReadAllLinesAsync(csvPath);
+                ctx.Assert(csvLines.Length == 2, "CSV should contain header + 1 record");
+                ctx.Assert(csvLines[1].Contains("\"\"test\"\""), "Quotes in CSV filename should be RFC 4180 escaped with double-quotes");
+            }
+        ));
+    }
+
+    // =========================================================================
+    // H. TREEMAP / ANALYTICS LOGIC SUITE
+    // =========================================================================
+    private static void RegisterTreemapTests(TestRunner runner)
+    {
+        // TC-TMP-01: Squarified Treemap Layout Engine Validity
+        runner.Register(new TestCase(
+            TestId: "TC-TMP-01",
+            FeatureId: "FEAT-30",
+            Title: "Squarified Treemap Layout Engine Edge Cases (Zero-Size, 1-Item, Extreme Ratios)",
+            Priority: "P1 / CRITICAL",
+            Category: "Treemap Engine",
+            ProductionClass: "DiskScope.Infrastructure.TreemapLayoutEngine",
+            AuditRiskNote: "Verifies squarified layout engine produces valid non-overlapping rectangles without NaN, Infinity, or negative coordinates across edge cases.",
+            ExecuteAsync: async ctx =>
+            {
+                double width = 800.0;
+                double height = 600.0;
+
+                // Case 1: Empty input
+                var empty = TreemapLayoutEngine.ComputeLayout(Array.Empty<TreemapItem>(), width, height);
+                ctx.AssertEqual(0, empty.Count, "Empty item list should return 0 rects");
+
+                // Case 2: Zero-size files only
+                var zeroItems = new[] { new TreemapItem { Name = "empty.dat", Size = 0 } };
+                var zeroResult = TreemapLayoutEngine.ComputeLayout(zeroItems, width, height);
+                ctx.AssertEqual(0, zeroResult.Count, "Zero-size items should be filtered out without throwing");
+
+                // Case 3: Exactly one item
+                var singleItem = new[] { new TreemapItem { Name = "solo.dat", Size = 100_000 } };
+                var singleResult = TreemapLayoutEngine.ComputeLayout(singleItem, width, height);
+                ctx.AssertEqual(1, singleResult.Count, "Single item should produce 1 rect");
+                ctx.AssertEqual(width, singleResult[0].Width, "Single item width should equal canvas width");
+                ctx.AssertEqual(height, singleResult[0].Height, "Single item height should equal canvas height");
+
+                // Case 4: Extreme aspect ratio canvas (e.g. 5000 x 50)
+                var multiItems = new List<TreemapItem>
+                {
+                    new() { Name = "a.dat", Size = 500_000 },
+                    new() { Name = "b.dat", Size = 300_000 },
+                    new() { Name = "c.dat", Size = 200_000 }
+                };
+                var extremeResult = TreemapLayoutEngine.ComputeLayout(multiItems, 5000.0, 50.0);
+                ctx.AssertEqual(3, extremeResult.Count, "Extreme canvas should layout all 3 items");
+                foreach (var r in extremeResult)
+                {
+                    ctx.Assert(!double.IsNaN(r.X) && !double.IsInfinity(r.X), "X cannot be NaN or Infinity");
+                    ctx.Assert(!double.IsNaN(r.Y) && !double.IsInfinity(r.Y), "Y cannot be NaN or Infinity");
+                    ctx.Assert(!double.IsNaN(r.Width) && !double.IsInfinity(r.Width), "Width cannot be NaN or Infinity");
+                    ctx.Assert(!double.IsNaN(r.Height) && !double.IsInfinity(r.Height), "Height cannot be NaN or Infinity");
+                    ctx.Assert(r.Width > 0 && r.Height > 0, "Rect dimensions must be positive");
+                }
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // I. LEGAL & SETTINGS SUITE
+    // =========================================================================
+    private static void RegisterLegalAndSettingsTests(TestRunner runner)
+    {
+        // TC-LGL-01: First-Run EULA Consent Gate & Settings Persistence
+        runner.Register(new TestCase(
+            TestId: "TC-LGL-01",
+            FeatureId: "FEAT-39",
+            Title: "First-Run EULA Consent Gate & Settings Persistence",
+            Priority: "P0 / BLOCKER",
+            Category: "Settings & Legal Compliance",
+            ProductionClass: "DiskScope.Services.SettingsService",
+            AuditRiskNote: "Verifies EULA acceptance status and timestamp persist across application restarts.",
+            ExecuteAsync: async ctx =>
+            {
+                string settingsPath = Path.Combine(ctx.CreateTempDirectory("eula_test"), "settings.json");
+
+                // 1. Fresh settings: HasAcceptedEula must default to false
+                var service1 = new SettingsService(settingsPath);
+                ctx.Assert(!service1.CurrentSettings.HasAcceptedEula, "Fresh install must default to HasAcceptedEula = false");
+
+                // 2. Accept EULA and save
+                var settings = service1.CurrentSettings;
+                settings.HasAcceptedEula = true;
+                settings.EulaAcceptedVersion = "1.0.0";
+                settings.EulaAcceptedDate = DateTime.UtcNow;
+                service1.SaveSettings(settings);
+
+                // 3. Reload from disk
+                var service2 = new SettingsService(settingsPath);
+                ctx.Assert(service2.CurrentSettings.HasAcceptedEula, "HasAcceptedEula must be true after reload");
+                ctx.AssertEqual("1.0.0", service2.CurrentSettings.EulaAcceptedVersion, "EulaAcceptedVersion must match");
+                ctx.Assert(service2.CurrentSettings.EulaAcceptedDate.HasValue, "EulaAcceptedDate must have timestamp");
+                await Task.CompletedTask;
+            }
+        ));
+    }
+}

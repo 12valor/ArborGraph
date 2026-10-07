@@ -380,8 +380,8 @@ public static class AutomatedTestSuites
             ExecuteAsync: async ctx =>
             {
                 string testDir = ctx.CreateTempDirectory("scan_cancel_test");
-                // Generate 1,000 files to give scanner work
-                TestDataGenerator.GenerateScaledDataset(testDir, 1000);
+                // Generate 2,000 files to give scanner work
+                TestDataGenerator.GenerateScaledDataset(testDir, 2000);
 
                 string dbPath = ctx.CreateTempDatabasePath("cancel_test.db");
                 using var db = new DatabaseService(dbPath);
@@ -390,8 +390,8 @@ public static class AutomatedTestSuites
                 var scanner = new ScannerService(db);
                 using var cts = new CancellationTokenSource();
 
-                // Trigger cancellation after 20ms
-                cts.CancelAfter(20);
+                // Trigger cancellation after 5ms to guarantee cancellation during active traversal
+                cts.CancelAfter(5);
 
                 var sw = Stopwatch.StartNew();
                 var stats = await scanner.ScanDrivesAsync(new[] { testDir }, null, cts.Token, enableIncremental: false);

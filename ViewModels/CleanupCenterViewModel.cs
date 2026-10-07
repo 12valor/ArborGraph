@@ -143,6 +143,21 @@ public class CleanupCenterViewModel : ObservableObject
             var loadedCategories = await Task.Run(async () =>
             {
                 var list = new List<CleanupCategory>();
+                var claimedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                bool IsClaimed(string path)
+                {
+                    if (claimedPaths.Contains(path)) return true;
+                    foreach (var p in claimedPaths)
+                    {
+                        if (path.StartsWith(p + "\\", StringComparison.OrdinalIgnoreCase) ||
+                            path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
 
                 // 1. Developer Caches & Artifacts
                 var devSummaries = await _devService.ScanDeveloperStorageAsync(ct);
@@ -169,12 +184,13 @@ public class CleanupCenterViewModel : ObservableObject
                             Reason = item.ContextReason,
                             IsSelected = true
                         });
+                        claimedPaths.Add(item.Path);
                     }
                 }
                 devCat.RefreshTotals();
-                list.Add(devCat);
+                if (devCat.Items.Count > 0) list.Add(devCat);
 
-                // 2. Duplicate Redundancy
+                // 2. Duplicate Redundancy (Non-overlapping copies)
                 var dupCandidates = _dbService.GetDuplicateSizeCandidates(minCount: 2, minSize: 1024, limit: 150);
                 var dupCat = new CleanupCategory
                 {
@@ -194,6 +210,8 @@ public class CleanupCenterViewModel : ObservableObject
                         for (int i = 1; i < dupFiles.Count; i++)
                         {
                             var f = dupFiles[i];
+                            if (IsClaimed(f.Path)) continue;
+
                             dupCat.Items.Add(new CleanupCandidateItem
                             {
                                 Path = f.Path,
@@ -205,40 +223,14 @@ public class CleanupCenterViewModel : ObservableObject
                                 Reason = $"Redundant duplicate copy (Keeper: {dupFiles[0].Name})",
                                 IsSelected = true
                             });
+                            claimedPaths.Add(f.Path);
                         }
                     }
                 }
                 dupCat.RefreshTotals();
-                list.Add(dupCat);
+                if (dupCat.Items.Count > 0) list.Add(dupCat);
 
-                // 3. Old Dormant Files (> 180 Days)
-                var oldFiles = _dbService.GetOldFiles(daysOld: 180, limit: 250);
-                var oldCat = new CleanupCategory
-                {
-                    Id = "old_files",
-                    Name = "Old Dormant Files (> 180 Days)",
-                    Description = "Files not modified in over 6 months",
-                    Icon = "⏳",
-                    SafetyBadge = "Review Recommended"
-                };
-                foreach (var f in oldFiles)
-                {
-                    oldCat.Items.Add(new CleanupCandidateItem
-                    {
-                        Path = f.Path,
-                        Name = f.Name,
-                        IsDirectory = false,
-                        SizeBytes = f.Size,
-                        FileCount = 1,
-                        LastModified = f.ModifiedDate,
-                        Reason = "Not modified in > 180 days",
-                        IsSelected = false // Require conscious user selection for personal files!
-                    });
-                }
-                oldCat.RefreshTotals();
-                list.Add(oldCat);
-
-                // 4. Temporary & Log Files
+                // 3. Temporary & Log Files (Excluding items inside developer or claimed folders)
                 var tempCat = new CleanupCategory
                 {
                     Id = "temp_logs",
@@ -250,6 +242,7 @@ public class CleanupCenterViewModel : ObservableObject
                 _dbService.StreamFilteredFiles(
                     onRecord: f =>
                     {
+                        if (IsClaimed(f.Path)) return;
                         tempCat.Items.Add(new CleanupCandidateItem
                         {
                             Path = f.Path,
@@ -258,9 +251,10 @@ public class CleanupCenterViewModel : ObservableObject
                             SizeBytes = f.Size,
                             FileCount = 1,
                             LastModified = f.ModifiedDate,
-                            Reason = "Temporary / backup log file",
+                            Reason = "Temporary file",
                             IsSelected = true
                         });
+                        claimedPaths.Add(f.Path);
                     },
                     minSize: 1024,
                     search: ".tmp",
@@ -269,29 +263,28 @@ public class CleanupCenterViewModel : ObservableObject
                 _dbService.StreamFilteredFiles(
                     onRecord: f =>
                     {
-                        if (!tempCat.Items.Any(i => i.Path.Equals(f.Path, StringComparison.OrdinalIgnoreCase)))
+                        if (IsClaimed(f.Path)) return;
+                        tempCat.Items.Add(new CleanupCandidateItem
                         {
-                            tempCat.Items.Add(new CleanupCandidateItem
-                            {
-                                Path = f.Path,
-                                Name = f.Name,
-                                IsDirectory = false,
-                                SizeBytes = f.Size,
-                                FileCount = 1,
-                                LastModified = f.ModifiedDate,
-                                Reason = "Log / Dump file",
-                                IsSelected = true
-                            });
-                        }
+                            Path = f.Path,
+                            Name = f.Name,
+                            IsDirectory = false,
+                            SizeBytes = f.Size,
+                            FileCount = 1,
+                            LastModified = f.ModifiedDate,
+                            Reason = "Log / Dump file",
+                            IsSelected = true
+                        });
+                        claimedPaths.Add(f.Path);
                     },
                     minSize: 1024,
                     search: ".log",
                     ct: ct);
 
                 tempCat.RefreshTotals();
-                list.Add(tempCat);
+                if (tempCat.Items.Count > 0) list.Add(tempCat);
 
-                // 5. Photoshop Cache & Scratch Files
+                // 4. Photoshop Cache & Scratch Files (Excluding items already claimed)
                 var psFiles = _dbService.GetPhotoshopFiles(limit: 200)
                     .Where(f => f.Path.Contains("Temp", StringComparison.OrdinalIgnoreCase)
                              || f.Path.Contains("AutoRecover", StringComparison.OrdinalIgnoreCase)
@@ -308,6 +301,7 @@ public class CleanupCenterViewModel : ObservableObject
                 };
                 foreach (var f in psFiles)
                 {
+                    if (IsClaimed(f.Path)) continue;
                     psCat.Items.Add(new CleanupCandidateItem
                     {
                         Path = f.Path,
@@ -319,9 +313,10 @@ public class CleanupCenterViewModel : ObservableObject
                         Reason = "Adobe Photoshop temporary scratch / AutoRecover cache",
                         IsSelected = true
                     });
+                    claimedPaths.Add(f.Path);
                 }
                 psCat.RefreshTotals();
-                list.Add(psCat);
+                if (psCat.Items.Count > 0) list.Add(psCat);
 
                 return list;
             }, ct);

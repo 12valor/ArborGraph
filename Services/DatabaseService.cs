@@ -2067,30 +2067,46 @@ public class DatabaseService : IDisposable
             {
                 EnsureOpen();
 
-                // 1. Old files (180+ days)
-                double cutoff180 = DateTimeOffset.UtcNow.AddDays(-180).ToUnixTimeSeconds();
-                using (var cmd = _connection!.CreateCommand())
+                // 1. Developer Build Caches & Artifacts (node_modules, bin, obj, target, etc.)
+                try
                 {
-                    cmd.CommandText = "SELECT COUNT(id), SUM(size) FROM files WHERE modified_time <= $cutoff AND size > 0;";
-                    cmd.Parameters.AddWithValue("$cutoff", cutoff180);
-                    using var reader = cmd.ExecuteReader();
-                    if (reader.Read())
+                    var devCandidates = GetDirectoriesByNames(new[] { "node_modules", "bin", "obj", "target", "__pycache__", ".gradle", "build" });
+                    if (devCandidates.Count > 0)
                     {
-                        long c = reader.IsDBNull(0) ? 0 : reader.GetInt64(0);
-                        long b = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
-                        list.Add(new ReclaimableItem
+                        // Filter out nested subdirectories to avoid double-counting
+                        var ordered = devCandidates.OrderBy(d => d.Path.Length).ToList();
+                        var topLevelDev = new List<DirectoryRecord>();
+                        foreach (var cand in ordered)
                         {
-                            Category = "Dormant Files (180d+)",
-                            Description = "Files not modified in over 6 months",
-                            Bytes = b,
-                            FileCount = c,
-                            ActionHint = "Review in Old Files tab for archival"
-                        });
-                        total += b;
+                            if (!topLevelDev.Any(parent => cand.Path.StartsWith(parent.Path + "\\", StringComparison.OrdinalIgnoreCase) ||
+                                                           cand.Path.StartsWith(parent.Path + "/", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                topLevelDev.Add(cand);
+                            }
+                        }
+
+                        long devBytes = topLevelDev.Sum(d => d.Size);
+                        long devCount = topLevelDev.Sum(d => d.FileCount);
+                        if (devBytes > 0)
+                        {
+                            list.Add(new ReclaimableItem
+                            {
+                                Category = "Developer Build Artifacts",
+                                Description = $"{topLevelDev.Count:N0} build & dependency folders (node_modules, bin/obj, target)",
+                                Bytes = devBytes,
+                                FileCount = devCount,
+                                ActionHint = "Review in Developer Storage tab"
+                            });
+                            total += devBytes;
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Dev breakdown error: {ex.Message}");
+                }
 
-                // 2. Potential Duplicates (Exact size matches)
+                // 2. Potential Duplicates (Exact size matches, counting only redundant copy bytes)
                 var dup = GetDuplicateOverview();
                 if (dup.PotentialWastedBytes > 0)
                 {
@@ -2120,15 +2136,18 @@ public class DatabaseService : IDisposable
                     total += adobe.TotalBytes;
                 }
 
-                // 4. General Temporary & Log files
+                // 4. General Temporary, Dump & Log files (excluding Adobe and developer paths to avoid double-counting)
                 using (var cmd = _connection!.CreateCommand())
                 {
                     cmd.CommandText = @"
                         SELECT COUNT(id), SUM(size)
                         FROM files
-                        WHERE extension IN ('.tmp', '.log', '.bak', '.old', '.dmp', '.chk', '.wbk')
+                        WHERE (extension IN ('.tmp', '.log', '.bak', '.old', '.dmp', '.chk', '.wbk')
                            OR name LIKE 'temp_%'
-                           OR name LIKE 'cache_%';
+                           OR name LIKE 'cache_%')
+                          AND path NOT LIKE '%Adobe%'
+                          AND path NOT LIKE '%Photoshop%'
+                          AND path NOT LIKE '%node_modules%';
                     ";
                     using var reader = cmd.ExecuteReader();
                     if (reader.Read())
@@ -2143,7 +2162,7 @@ public class DatabaseService : IDisposable
                                 Description = "Transient files with .tmp, .log, .bak, .old extensions",
                                 Bytes = b,
                                 FileCount = c,
-                                ActionHint = "Filter in Largest Files tab"
+                                ActionHint = "Review in Cleanup tab"
                             });
                             total += b;
                         }

@@ -13,7 +13,6 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- 1. HEADER -->
@@ -180,7 +179,7 @@
             </Border>
 
             <!-- 4. LIVE DIRECTORY FEED (Prominent, Always-Visible Traversal Console) -->
-            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
+            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20">
                 <StackPanel>
                     <!-- Feed Header -->
                     <Grid Margin="0,0,0,10">
@@ -214,7 +213,7 @@
                     <ListBox ItemsSource="{Binding RecentDirectories}"
                              Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1"
                              FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"
-                             Height="180"
+                             Height="320"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
                              HorizontalContentAlignment="Stretch">
@@ -225,22 +224,6 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </StackPanel>
-            </Border>
-
-            <!-- 5. DIAGNOSTICS & INTEGRITY (Technical Summary) -->
-            <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="INTEGRITY: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,6,0"/>
-                        <TextBlock Text="{Binding OverviewVM.IntegrityStatus}" FontWeight="Medium" FontSize="11" Foreground="{StaticResource BrushAccent}"/>
-                    </StackPanel>
-                    <TextBlock Grid.Column="2" Text="Offline, Deterministic SQLite WAL Traversal" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center"/>
-                </Grid>
             </Border>
 
         </Grid>

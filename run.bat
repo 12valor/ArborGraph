@@ -1,0 +1,3 @@
+@echo off
+title Launching ArborGraph...
+start "" "%~dp0bin\Debug\net8.0-windows\ArborGraph.exe"

@@ -93,33 +93,32 @@ public class ExportService
         sb.AppendLine("    <style>");
         sb.AppendLine(@"
         :root {
-            --bg-canvas: #0B0F19;
-            --bg-surface: #111827;
-            --bg-surface-elevated: #1F2937;
-            --border: #374151;
-            --text-primary: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --text-muted: #6B7280;
-            --accent: #3B82F6;
-            --accent-purple: #8B5CF6;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --rose: #F43F5E;
+            --bg: #0C0F14;
+            --surface: #12161F;
+            --surface-elevated: #181E2A;
+            --border: #222B3D;
+            --border-strong: #2F3B52;
+            --text-main: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #E2E8F0;
+            --mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-canvas);
-            color: var(--text-primary);
+            font-family: var(--sans);
+            background-color: var(--bg);
+            color: var(--text-main);
             line-height: 1.5;
-            padding: 32px 24px;
+            padding: 36px 28px;
+            -webkit-font-smoothing: antialiased;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1240px; margin: 0 auto; }
 
-        /* Header */
-        .header {
+        /* Report Meta Header */
+        .report-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -127,159 +126,226 @@ public class ExportService
             border-bottom: 1px solid var(--border);
             margin-bottom: 28px;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 20px;
         }
-        .brand { display: flex; align-items: center; gap: 12px; }
-        .logo-badge {
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            color: #fff;
-            font-weight: 800;
-            font-size: 14px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
+        .report-title-group { display: flex; flex-direction: column; gap: 4px; }
+        .system-tag {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
         }
-        .title h1 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-        .title p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .report-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text-main);
+        }
+        .report-meta-timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: var(--mono);
+        }
 
-        .meta-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-        .badge {
-            background: var(--bg-surface-elevated);
+        .meta-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .meta-cell {
+            background: var(--surface);
             border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: var(--mono);
+        }
+        .meta-label {
+            color: var(--text-muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .meta-value {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Metric Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .summary-card-title {
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+        }
+        .summary-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--mono);
+            color: var(--text-main);
+            margin: 8px 0 3px 0;
+            letter-spacing: -0.5px;
+        }
+        .summary-card-desc {
             font-size: 12px;
             color: var(--text-secondary);
         }
-        .badge strong { color: var(--text-primary); }
 
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .kpi-card {
-            background: var(--bg-surface);
+        /* Audit Sections */
+        .audit-section {
+            background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
+            border-radius: 3px;
+            padding: 22px 24px;
+            margin-bottom: 26px;
         }
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: var(--accent);
-        }
-        .kpi-card.purple::before { background: var(--accent-purple); }
-        .kpi-card.green::before { background: var(--success); }
-        .kpi-card.amber::before { background: var(--warning); }
-
-        .kpi-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-        .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 6px 0 2px 0; }
-        .kpi-desc { font-size: 12px; color: var(--text-secondary); }
-
-        /* Section */
-        .section {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 28px;
-        }
-        .section-header {
+        .section-headline {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: baseline;
             margin-bottom: 18px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
         }
-        .section-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-        .section-badge { font-size: 12px; color: var(--text-muted); }
+        .section-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-main);
+        }
+        .section-count {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
 
         /* Tables */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+        }
         th {
-            background: var(--bg-surface-elevated);
+            background: var(--surface-elevated);
             color: var(--text-muted);
+            font-family: var(--mono);
             font-weight: 600;
-            padding: 10px 14px;
+            padding: 9px 12px;
             border-bottom: 1px solid var(--border);
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            font-size: 10px;
+            letter-spacing: 0.7px;
         }
         td {
-            padding: 10px 14px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
-            color: var(--text-primary);
+            color: var(--text-main);
+            vertical-align: middle;
         }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+        tr:hover td { background-color: rgba(255, 255, 255, 0.015); }
 
-        .progress-bar-bg {
-            background: var(--bg-surface-elevated);
-            height: 6px;
-            border-radius: 3px;
-            width: 120px;
+        .mono-num {
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+        }
+        .bold-num {
+            font-family: var(--mono);
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .ratio-bar-track {
+            background: var(--surface-elevated);
+            height: 4px;
+            border-radius: 1px;
+            width: 90px;
             overflow: hidden;
             display: inline-block;
             vertical-align: middle;
             margin-right: 8px;
         }
-        .progress-bar-fill {
+        .ratio-bar-fill {
             height: 100%;
-            background: var(--accent);
-            border-radius: 3px;
+            background: #94A3B8;
         }
 
         .cat-tag {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 2px 7px;
+            border-radius: 2px;
             font-size: 11px;
-            font-weight: 600;
-            background: var(--bg-surface-elevated);
+            font-family: var(--mono);
+            font-weight: 500;
+            background: var(--surface-elevated);
             border: 1px solid var(--border);
+            color: var(--text-secondary);
         }
-        .cat-tag.Video { color: #A78BFA; }
-        .cat-tag.Photoshop, .cat-tag.Images { color: #34D399; }
-        .cat-tag.Executables { color: #FB7185; }
-        .cat-tag.Archives { color: #FBBF24; }
-        .cat-tag.Documents { color: #38BDF8; }
-        .cat-tag.Code { color: #22D3EE; }
-        .cat-tag.Audio { color: #F472B6; }
 
         .path-cell {
-            font-family: Consolas, 'Courier New', monospace;
-            font-size: 12px;
+            font-family: var(--mono);
+            font-size: 11.5px;
             color: var(--text-secondary);
             word-break: break-all;
         }
 
-        .risk-safe { color: var(--success); font-weight: 600; }
-        .risk-caution { color: var(--warning); font-weight: 600; }
+        .count-badge {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 1px 6px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text-secondary);
+        }
 
         /* Footer */
-        .footer {
-            text-align: center;
+        .report-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding-top: 24px;
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 11px;
+            font-family: var(--mono);
             border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         @media print {
-            body { background: #fff; color: #000; padding: 0; }
-            .kpi-card, .section { background: #fff; border: 1px solid #ccc; color: #000; }
-            th { background: #eee; color: #333; }
-            td { color: #111; }
-            .path-cell { color: #444; }
-            .logo-badge { background: #333; color: #fff; }
+            body { background: #FFFFFF; color: #0F172A; padding: 0; }
+            .summary-card, .audit-section, .meta-cell { background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F172A; }
+            th { background: #F1F5F9; color: #475569; border-bottom: 1px solid #CBD5E1; }
+            td { color: #0F172A; border-bottom: 1px solid #E2E8F0; }
+            .path-cell { color: #334155; }
+            .report-header, .report-footer { border-color: #CBD5E1; }
+            .ratio-bar-track { background: #E2E8F0; }
+            .ratio-bar-fill { background: #475569; }
         }
         ");
         sb.AppendLine("    </style>");
@@ -288,56 +354,63 @@ public class ExportService
         sb.AppendLine("<div class=\"container\">");
 
         // Header
-        sb.AppendLine("    <div class=\"header\">");
-        sb.AppendLine("        <div class=\"brand\">");
-        sb.AppendLine("            <div class=\"logo-badge\">ARBORGRAPH</div>");
-        sb.AppendLine("            <div class=\"title\">");
-        sb.AppendLine("                <h1>Filesystem Storage &amp; Visualization Report</h1>");
-        sb.AppendLine($"                <p>Generated on {WebUtility.HtmlEncode(report.GeneratedAtUtc)}</p>");
-        sb.AppendLine("            </div>");
+        sb.AppendLine("    <div class=\"report-header\">");
+        sb.AppendLine("        <div class=\"report-title-group\">");
+        sb.AppendLine("            <span class=\"system-tag\">ArborGraph &bull; Storage Telemetry Audit</span>");
+        sb.AppendLine("            <h1 class=\"report-title\">Filesystem Storage Audit Report</h1>");
+        sb.AppendLine($"            <span class=\"report-meta-timestamp\">Report generated: {WebUtility.HtmlEncode(report.GeneratedAtUtc)}</span>");
         sb.AppendLine("        </div>");
-        sb.AppendLine("        <div class=\"meta-badges\">");
-        sb.AppendLine($"            <div class=\"badge\">Target: <strong>{WebUtility.HtmlEncode(report.TargetRoots)}</strong></div>");
-        sb.AppendLine($"            <div class=\"badge\">Duration: <strong>{WebUtility.HtmlEncode(report.ScanDuration)}</strong></div>");
+        sb.AppendLine("        <div class=\"meta-strip\">");
+        sb.AppendLine("            <div class=\"meta-cell\">");
+        sb.AppendLine("                <div class=\"meta-label\">Target Volume</div>");
+        sb.AppendLine($"                <div class=\"meta-value\">{WebUtility.HtmlEncode(report.TargetRoots)}</div>");
+        sb.AppendLine("            </div>");
+        sb.AppendLine("            <div class=\"meta-cell\">");
+        sb.AppendLine("                <div class=\"meta-label\">Scan Duration</div>");
+        sb.AppendLine($"                <div class=\"meta-value\">{WebUtility.HtmlEncode(report.ScanDuration)}</div>");
+        sb.AppendLine("            </div>");
         if (report.FilesPerSecond > 0)
         {
-            sb.AppendLine($"            <div class=\"badge\">Throughput: <strong>{report.FilesPerSecond:N0} files/sec</strong></div>");
+            sb.AppendLine("            <div class=\"meta-cell\">");
+            sb.AppendLine("                <div class=\"meta-label\">Throughput</div>");
+            sb.AppendLine($"                <div class=\"meta-value\">{report.FilesPerSecond:N0} files/sec</div>");
+            sb.AppendLine("            </div>");
         }
         sb.AppendLine("        </div>");
         sb.AppendLine("    </div>");
 
-        // KPI Cards
-        sb.AppendLine("    <div class=\"kpi-grid\">");
-        sb.AppendLine("        <div class=\"kpi-card\">");
-        sb.AppendLine("            <div class=\"kpi-title\">Total Indexed Volume</div>");
-        sb.AppendLine($"            <div class=\"kpi-value\">{WebUtility.HtmlEncode(report.FormattedTotalSize)}</div>");
-        sb.AppendLine($"            <div class=\"kpi-desc\">Across {report.TotalFilesIndexed:N0} total files</div>");
+        // Metric Summary Grid
+        sb.AppendLine("    <div class=\"summary-grid\">");
+        sb.AppendLine("        <div class=\"summary-card\">");
+        sb.AppendLine("            <div class=\"summary-card-title\">Total Indexed Volume</div>");
+        sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedTotalSize)}</div>");
+        sb.AppendLine($"            <div class=\"summary-card-desc\">{report.TotalFilesIndexed:N0} total files indexed</div>");
         sb.AppendLine("        </div>");
 
-        sb.AppendLine("        <div class=\"kpi-card green\">");
-        sb.AppendLine("            <div class=\"kpi-title\">Cleanable Junk &amp; Caches</div>");
-        sb.AppendLine($"            <div class=\"kpi-value\">{WebUtility.HtmlEncode(report.FormattedCleanableJunk)}</div>");
-        sb.AppendLine($"            <div class=\"kpi-desc\">{report.JunkTargets.Count:N0} discovered junk locations</div>");
+        sb.AppendLine("        <div class=\"summary-card\">");
+        sb.AppendLine("            <div class=\"summary-card-title\">Disposable Caches</div>");
+        sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedCleanableJunk)}</div>");
+        sb.AppendLine($"            <div class=\"summary-card-desc\">{report.JunkTargets.Count:N0} identified cache locations</div>");
         sb.AppendLine("        </div>");
 
-        sb.AppendLine("        <div class=\"kpi-card amber\">");
-        sb.AppendLine("            <div class=\"kpi-title\">Wasted Duplicate Storage</div>");
-        sb.AppendLine($"            <div class=\"kpi-value\">{WebUtility.HtmlEncode(report.FormattedDuplicateWasted)}</div>");
-        sb.AppendLine($"            <div class=\"kpi-desc\">Redundant copies occupying disk space</div>");
+        sb.AppendLine("        <div class=\"summary-card\">");
+        sb.AppendLine("            <div class=\"summary-card-title\">Duplicate Redundancy</div>");
+        sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedDuplicateWasted)}</div>");
+        sb.AppendLine("            <div class=\"summary-card-desc\">Redundant duplicate copy storage</div>");
         sb.AppendLine("        </div>");
 
-        sb.AppendLine("        <div class=\"kpi-card purple\">");
-        sb.AppendLine("            <div class=\"kpi-title\">File Categories</div>");
-        sb.AppendLine($"            <div class=\"kpi-value\">{report.Categories.Count} Types</div>");
-        sb.AppendLine("            <div class=\"kpi-desc\">Grouped by file signatures</div>");
+        sb.AppendLine("        <div class=\"summary-card\">");
+        sb.AppendLine("            <div class=\"summary-card-title\">File Categories</div>");
+        sb.AppendLine($"            <div class=\"summary-card-value\">{report.Categories.Count} Types</div>");
+        sb.AppendLine("            <div class=\"summary-card-desc\">Classified by file extension</div>");
         sb.AppendLine("        </div>");
         sb.AppendLine("    </div>");
 
         // Category Breakdown
-        sb.AppendLine("    <div class=\"section\">");
-        sb.AppendLine("        <div class=\"section-header\">");
-        sb.AppendLine("            <div class=\"section-title\">Storage Distribution by Category</div>");
-        sb.AppendLine($"            <div class=\"section-badge\">{report.Categories.Count} categories mapped</div>");
+        sb.AppendLine("    <div class=\"audit-section\">");
+        sb.AppendLine("        <div class=\"section-headline\">");
+        sb.AppendLine("            <div class=\"section-title\">01 // Storage by File Category</div>");
+        sb.AppendLine($"            <div class=\"section-count\">{report.Categories.Count} categories mapped</div>");
         sb.AppendLine("        </div>");
         sb.AppendLine("        <table>");
         sb.AppendLine("            <thead>");
@@ -353,12 +426,12 @@ public class ExportService
         foreach (var cat in report.Categories)
         {
             sb.AppendLine("                <tr>");
-            sb.AppendLine($"                    <td><span class=\"cat-tag {WebUtility.HtmlEncode(cat.Category)}\">{WebUtility.HtmlEncode(cat.Category)}</span></td>");
-            sb.AppendLine($"                    <td style=\"text-align: right;\">{cat.FileCount:N0}</td>");
-            sb.AppendLine($"                    <td style=\"text-align: right;\"><strong>{WebUtility.HtmlEncode(cat.FormattedSize)}</strong></td>");
-            sb.AppendLine("                    <td style=\"text-align: right;\">");
-            sb.AppendLine($"                        <div class=\"progress-bar-bg\"><div class=\"progress-bar-fill\" style=\"width: {cat.PercentageOfTotal:0.#}%\"></div></div>");
-            sb.AppendLine($"                        <span>{cat.PercentageOfTotal:0.1}%</span>");
+            sb.AppendLine($"                    <td><span class=\"cat-tag\">{WebUtility.HtmlEncode(cat.Category)}</span></td>");
+            sb.AppendLine($"                    <td class=\"mono-num\" style=\"text-align: right;\">{cat.FileCount:N0}</td>");
+            sb.AppendLine($"                    <td class=\"bold-num\" style=\"text-align: right;\">{WebUtility.HtmlEncode(cat.FormattedSize)}</td>");
+            sb.AppendLine("                    <td class=\"mono-num\" style=\"text-align: right;\">");
+            sb.AppendLine($"                        <div class=\"ratio-bar-track\"><div class=\"ratio-bar-fill\" style=\"width: {cat.PercentageOfTotal:0.#}%\"></div></div>");
+            sb.AppendLine($"                        <span>{cat.PercentageOfTotal:0.0}%</span>");
             sb.AppendLine("                    </td>");
             sb.AppendLine("                </tr>");
         }
@@ -370,15 +443,15 @@ public class ExportService
         // Top Largest Files
         if (report.TopLargestFiles.Count > 0)
         {
-            sb.AppendLine("    <div class=\"section\">");
-            sb.AppendLine("        <div class=\"section-header\">");
-            sb.AppendLine("            <div class=\"section-title\">Top 50 Largest Files (Storage Hogs)</div>");
-            sb.AppendLine($"            <div class=\"section-badge\">Showing top {report.TopLargestFiles.Count} files</div>");
+            sb.AppendLine("    <div class=\"audit-section\">");
+            sb.AppendLine("        <div class=\"section-headline\">");
+            sb.AppendLine("            <div class=\"section-title\">02 // Largest Files by Volume</div>");
+            sb.AppendLine($"            <div class=\"section-count\">Top {report.TopLargestFiles.Count} files</div>");
             sb.AppendLine("        </div>");
             sb.AppendLine("        <table>");
             sb.AppendLine("            <thead>");
             sb.AppendLine("                <tr>");
-            sb.AppendLine("                    <th style=\"width: 40px;\">#</th>");
+            sb.AppendLine("                    <th style=\"width: 44px;\">#</th>");
             sb.AppendLine("                    <th>File Name</th>");
             sb.AppendLine("                    <th>Category</th>");
             sb.AppendLine("                    <th style=\"text-align: right;\">Size</th>");
@@ -391,10 +464,10 @@ public class ExportService
             foreach (var f in report.TopLargestFiles)
             {
                 sb.AppendLine("                <tr>");
-                sb.AppendLine($"                    <td style=\"color: var(--text-muted);\">{rank++}</td>");
+                sb.AppendLine($"                    <td class=\"mono-num\" style=\"color: var(--text-muted);\">{rank++}</td>");
                 sb.AppendLine($"                    <td><strong>{WebUtility.HtmlEncode(f.Name)}</strong></td>");
-                sb.AppendLine($"                    <td><span class=\"cat-tag {WebUtility.HtmlEncode(f.Category)}\">{WebUtility.HtmlEncode(f.Category)}</span></td>");
-                sb.AppendLine($"                    <td style=\"text-align: right; color: var(--accent); font-weight: 600;\">{WebUtility.HtmlEncode(f.FormattedSize)}</td>");
+                sb.AppendLine($"                    <td><span class=\"cat-tag\">{WebUtility.HtmlEncode(f.Category)}</span></td>");
+                sb.AppendLine($"                    <td class=\"bold-num\" style=\"text-align: right;\">{WebUtility.HtmlEncode(f.FormattedSize)}</td>");
                 sb.AppendLine($"                    <td class=\"path-cell\">{WebUtility.HtmlEncode(f.Path)}</td>");
                 sb.AppendLine("                </tr>");
             }
@@ -407,10 +480,10 @@ public class ExportService
         // Cleanable Junk Targets
         if (report.JunkTargets.Count > 0)
         {
-            sb.AppendLine("    <div class=\"section\">");
-            sb.AppendLine("        <div class=\"section-header\">");
-            sb.AppendLine("            <div class=\"section-title\">Discovered Junk &amp; Developer Cache Targets</div>");
-            sb.AppendLine($"            <div class=\"section-badge\">{report.JunkTargets.Count} items • {WebUtility.HtmlEncode(report.FormattedCleanableJunk)} reclaimable</div>");
+            sb.AppendLine("    <div class=\"audit-section\">");
+            sb.AppendLine("        <div class=\"section-headline\">");
+            sb.AppendLine("            <div class=\"section-title\">03 // Reclaimable Cache &amp; Temporary Directories</div>");
+            sb.AppendLine($"            <div class=\"section-count\">{report.JunkTargets.Count} targets &bull; {WebUtility.HtmlEncode(report.FormattedCleanableJunk)} reclaimable</div>");
             sb.AppendLine("        </div>");
             sb.AppendLine("        <table>");
             sb.AppendLine("            <thead>");
@@ -428,10 +501,10 @@ public class ExportService
             {
                 string targetPath = string.Join("; ", junk.TargetDirectories);
                 sb.AppendLine("                <tr>");
-                sb.AppendLine($"                    <td>{WebUtility.HtmlEncode(junk.Category.ToString())}</td>");
+                sb.AppendLine($"                    <td><span class=\"cat-tag\">{WebUtility.HtmlEncode(junk.Category.ToString())}</span></td>");
                 sb.AppendLine($"                    <td><strong>{WebUtility.HtmlEncode(junk.Name)}</strong></td>");
-                sb.AppendLine($"                    <td>{junk.FileCount:N0} files</td>");
-                sb.AppendLine($"                    <td style=\"text-align: right; color: var(--success); font-weight: 600;\">{WebUtility.HtmlEncode(junk.FormattedSize)}</td>");
+                sb.AppendLine($"                    <td class=\"mono-num\">{junk.FileCount:N0} files</td>");
+                sb.AppendLine($"                    <td class=\"bold-num\" style=\"text-align: right;\">{WebUtility.HtmlEncode(junk.FormattedSize)}</td>");
                 sb.AppendLine($"                    <td class=\"path-cell\">{WebUtility.HtmlEncode(targetPath)}</td>");
                 sb.AppendLine("                </tr>");
             }
@@ -444,18 +517,18 @@ public class ExportService
         // Duplicate Groups
         if (report.DuplicateGroups.Count > 0)
         {
-            sb.AppendLine("    <div class=\"section\">");
-            sb.AppendLine("        <div class=\"section-header\">");
-            sb.AppendLine("            <div class=\"section-title\">Identified Cryptographic Duplicate Groups</div>");
-            sb.AppendLine($"            <div class=\"section-badge\">{report.DuplicateGroups.Count} groups • {WebUtility.HtmlEncode(report.FormattedDuplicateWasted)} wasted</div>");
+            sb.AppendLine("    <div class=\"audit-section\">");
+            sb.AppendLine("        <div class=\"section-headline\">");
+            sb.AppendLine("            <div class=\"section-title\">04 // Verified Duplicate Files</div>");
+            sb.AppendLine($"            <div class=\"section-count\">{report.DuplicateGroups.Count} groups &bull; {WebUtility.HtmlEncode(report.FormattedDuplicateWasted)} redundant</div>");
             sb.AppendLine("        </div>");
             sb.AppendLine("        <table>");
             sb.AppendLine("            <thead>");
             sb.AppendLine("                <tr>");
             sb.AppendLine("                    <th>Unit Size</th>");
             sb.AppendLine("                    <th style=\"text-align: center;\">Copies</th>");
-            sb.AppendLine("                    <th style=\"text-align: right;\">Wasted Space</th>");
-            sb.AppendLine("                    <th>SHA-256 Prefix</th>");
+            sb.AppendLine("                    <th style=\"text-align: right;\">Redundant Space</th>");
+            sb.AppendLine("                    <th>SHA-256 Hash Prefix</th>");
             sb.AppendLine("                    <th>File Paths</th>");
             sb.AppendLine("                </tr>");
             sb.AppendLine("            </thead>");
@@ -464,10 +537,10 @@ public class ExportService
             foreach (var dup in report.DuplicateGroups)
             {
                 sb.AppendLine("                <tr>");
-                sb.AppendLine($"                    <td><strong>{WebUtility.HtmlEncode(dup.FormattedSize)}</strong></td>");
-                sb.AppendLine($"                    <td style=\"text-align: center;\"><span class=\"badge\">{dup.FileCount}</span></td>");
-                sb.AppendLine($"                    <td style=\"text-align: right; color: var(--warning); font-weight: 600;\">{WebUtility.HtmlEncode(dup.FormattedWasted)}</td>");
-                sb.AppendLine($"                    <td style=\"font-family: Consolas;\">{WebUtility.HtmlEncode(dup.ShortHash)}</td>");
+                sb.AppendLine($"                    <td class=\"bold-num\">{WebUtility.HtmlEncode(dup.FormattedSize)}</td>");
+                sb.AppendLine($"                    <td style=\"text-align: center;\"><span class=\"count-badge\">{dup.FileCount}</span></td>");
+                sb.AppendLine($"                    <td class=\"bold-num\" style=\"text-align: right;\">{WebUtility.HtmlEncode(dup.FormattedWasted)}</td>");
+                sb.AppendLine($"                    <td class=\"mono-num\" style=\"color: var(--text-muted);\">{WebUtility.HtmlEncode(dup.ShortHash)}</td>");
                 sb.AppendLine("                    <td class=\"path-cell\">");
                 foreach (var f in dup.Files)
                 {
@@ -483,8 +556,9 @@ public class ExportService
         }
 
         // Footer
-        sb.AppendLine("    <div class=\"footer\">");
-        sb.AppendLine("        <p>Generated by <strong>ArborGraph</strong> • Filesystem Analytics &amp; Visualization • Fully offline report</p>");
+        sb.AppendLine("    <div class=\"report-footer\">");
+        sb.AppendLine("        <div>ArborGraph Storage Engine &bull; Deterministic Filesystem Telemetry</div>");
+        sb.AppendLine("        <div>Compiled offline directly from SQLite index &bull; Zero external cloud dependencies</div>");
         sb.AppendLine("    </div>");
 
         sb.AppendLine("</div>");

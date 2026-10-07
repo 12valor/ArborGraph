@@ -3,37 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArborGraph — Storage Audit Report</title>
-    <style>
-
+    <title>ArborGraph — Storage Audit Report</title>    <style>
         :root {
-            --bg-canvas: #0B0F19;
-            --bg-surface: #111827;
-            --bg-surface-elevated: #1F2937;
-            --border: #374151;
-            --text-primary: #F9FAFB;
-            --text-secondary: #9CA3AF;
-            --text-muted: #6B7280;
-            --accent: #3B82F6;
-            --accent-purple: #8B5CF6;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --rose: #F43F5E;
+            --bg: #0C0F14;
+            --surface: #12161F;
+            --surface-elevated: #181E2A;
+            --border: #222B3D;
+            --border-strong: #2F3B52;
+            --text-main: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #E2E8F0;
+            --mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-canvas);
-            color: var(--text-primary);
+            font-family: var(--sans);
+            background-color: var(--bg);
+            color: var(--text-main);
             line-height: 1.5;
-            padding: 32px 24px;
+            padding: 36px 28px;
+            -webkit-font-smoothing: antialiased;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1240px; margin: 0 auto; }
 
-        /* Header */
-        .header {
+        /* Report Meta Header */
+        .report-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -41,185 +38,275 @@
             border-bottom: 1px solid var(--border);
             margin-bottom: 28px;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 20px;
         }
-        .brand { display: flex; align-items: center; gap: 12px; }
-        .logo-badge {
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            color: #fff;
-            font-weight: 800;
-            font-size: 14px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
+        .report-title-group { display: flex; flex-direction: column; gap: 4px; }
+        .system-tag {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
         }
-        .title h1 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-        .title p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .report-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text-main);
+        }
+        .report-meta-timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: var(--mono);
+        }
 
-        .meta-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-        .badge {
-            background: var(--bg-surface-elevated);
+        .meta-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .meta-cell {
+            background: var(--surface);
             border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: var(--mono);
+        }
+        .meta-label {
+            color: var(--text-muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .meta-value {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Metric Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .summary-card-title {
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+        }
+        .summary-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--mono);
+            color: var(--text-main);
+            margin: 8px 0 3px 0;
+            letter-spacing: -0.5px;
+        }
+        .summary-card-desc {
             font-size: 12px;
             color: var(--text-secondary);
         }
-        .badge strong { color: var(--text-primary); }
 
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .kpi-card {
-            background: var(--bg-surface);
+        /* Audit Sections */
+        .audit-section {
+            background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
+            border-radius: 3px;
+            padding: 22px 24px;
+            margin-bottom: 26px;
         }
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: var(--accent);
-        }
-        .kpi-card.purple::before { background: var(--accent-purple); }
-        .kpi-card.green::before { background: var(--success); }
-        .kpi-card.amber::before { background: var(--warning); }
-
-        .kpi-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-        .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 6px 0 2px 0; }
-        .kpi-desc { font-size: 12px; color: var(--text-secondary); }
-
-        /* Section */
-        .section {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 28px;
-        }
-        .section-header {
+        .section-headline {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: baseline;
             margin-bottom: 18px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
         }
-        .section-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-        .section-badge { font-size: 12px; color: var(--text-muted); }
+        .section-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-main);
+        }
+        .section-count {
+            font-size: 12px;
+            font-family: var(--mono);
+            color: var(--text-muted);
+        }
 
         /* Tables */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+        }
         th {
-            background: var(--bg-surface-elevated);
+            background: var(--surface-elevated);
             color: var(--text-muted);
+            font-family: var(--mono);
             font-weight: 600;
-            padding: 10px 14px;
+            padding: 9px 12px;
             border-bottom: 1px solid var(--border);
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            font-size: 10px;
+            letter-spacing: 0.7px;
         }
         td {
-            padding: 10px 14px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
-            color: var(--text-primary);
+            color: var(--text-main);
+            vertical-align: middle;
         }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+        tr:hover td { background-color: rgba(255, 255, 255, 0.015); }
 
-        .progress-bar-bg {
-            background: var(--bg-surface-elevated);
-            height: 6px;
-            border-radius: 3px;
-            width: 120px;
+        .mono-num {
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+        }
+        .bold-num {
+            font-family: var(--mono);
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .ratio-bar-track {
+            background: var(--surface-elevated);
+            height: 4px;
+            border-radius: 1px;
+            width: 90px;
             overflow: hidden;
             display: inline-block;
             vertical-align: middle;
             margin-right: 8px;
         }
-        .progress-bar-fill {
+        .ratio-bar-fill {
             height: 100%;
-            background: var(--accent);
-            border-radius: 3px;
+            background: #94A3B8;
         }
 
         .cat-tag {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 2px 7px;
+            border-radius: 2px;
             font-size: 11px;
-            font-weight: 600;
-            background: var(--bg-surface-elevated);
+            font-family: var(--mono);
+            font-weight: 500;
+            background: var(--surface-elevated);
             border: 1px solid var(--border);
+            color: var(--text-secondary);
         }
-        .cat-tag.Video { color: #A78BFA; }
-        .cat-tag.Photoshop, .cat-tag.Images { color: #34D399; }
-        .cat-tag.Executables { color: #FB7185; }
-        .cat-tag.Archives { color: #FBBF24; }
-        .cat-tag.Documents { color: #38BDF8; }
-        .cat-tag.Code { color: #22D3EE; }
-        .cat-tag.Audio { color: #F472B6; }
 
         .path-cell {
-            font-family: Consolas, 'Courier New', monospace;
-            font-size: 12px;
+            font-family: var(--mono);
+            font-size: 11.5px;
             color: var(--text-secondary);
             word-break: break-all;
         }
 
-        .risk-safe { color: var(--success); font-weight: 600; }
-        .risk-caution { color: var(--warning); font-weight: 600; }
+        .count-badge {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 1px 6px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text-secondary);
+        }
 
         /* Footer */
-        .footer {
-            text-align: center;
+        .report-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding-top: 24px;
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 11px;
+            font-family: var(--mono);
             border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         @media print {
-            body { background: #fff; color: #000; padding: 0; }
-            .kpi-card, .section { background: #fff; border: 1px solid #ccc; color: #000; }
-            th { background: #eee; color: #333; }
-            td { color: #111; }
-            .path-cell { color: #444; }
-            .logo-badge { background: #333; color: #fff; }
+            body { background: #FFFFFF; color: #0F172A; padding: 0; }
+            .summary-card, .audit-section, .meta-cell { background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F172A; }
+            th { background: #F1F5F9; color: #475569; border-bottom: 1px solid #CBD5E1; }
+            td { color: #0F172A; border-bottom: 1px solid #E2E8F0; }
+            .path-cell { color: #334155; }
+            .report-header, .report-footer { border-color: #CBD5E1; }
+            .ratio-bar-track { background: #E2E8F0; }
+            .ratio-bar-fill { background: #475569; }
         }
-        
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <div class="brand">
-            <div class="logo-badge">ARBORGRAPH</div>
-            <div class="title">
-                <h1>Filesystem Storage &amp; Visualization Report</h1>
-                <p>Generated on 2026-10-07 09:59:00 UTC</p>
+        <div class="report-header">
+        <div class="report-title-group">
+            <span class="system-tag">ArborGraph &bull; Storage Telemetry Audit</span>
+            <h1 class="report-title">Filesystem Storage Audit Report</h1>
+            <span class="report-meta-timestamp">Report generated: 2026-10-07 09:59:00 UTC</span>
+        </div>
+        <div class="meta-strip">
+            <div class="meta-cell">
+                <div class="meta-label">Target Volume</div>
+                <div class="meta-value">C:\</div>
+            </div>
+            <div class="meta-cell">
+                <div class="meta-label">Scan Duration</div>
+                <div class="meta-value">4m 43s</div>
+            </div>
+            <div class="meta-cell">
+                <div class="meta-label">Throughput</div>
+                <div class="meta-value">8,740 files/sec</div>
             </div>
         </div>
-        <div class="meta-badges">
-            <div class="badge">Target: <strong>C:\</strong></div>
-            <div class="badge">Duration: <strong>4m 43s</strong></div>
-            <div class="badge">Throughput: <strong>8,740 files/sec</strong></div>
+    </div>
+    </div>
+        <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-card-title">Total Indexed Volume</div>
+            <div class="summary-card-value">375.66 GB</div>
+            <div class="summary-card-desc">2,477,875 total files indexed</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-title">Disposable Caches</div>
+            <div class="summary-card-value">10.24 GB</div>
+            <div class="summary-card-desc">10 identified cache locations</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-title">Duplicate Redundancy</div>
+            <div class="summary-card-value">80.59 GB</div>
+            <div class="summary-card-desc">Redundant duplicate copy storage</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-title">File Categories</div>
+            <div class="summary-card-value">9 Types</div>
+            <div class="summary-card-desc">Classified by file extension</div>
         </div>
     </div>
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-title">Total Indexed Volume</div>
-            <div class="kpi-value">375.66 GB</div>
-            <div class="kpi-desc">Across 2,477,875 total files</div>
-        </div>
         <div class="kpi-card green">
             <div class="kpi-title">Cleanable Junk &amp; Caches</div>
             <div class="kpi-value">10.24 GB</div>
@@ -236,10 +323,10 @@
             <div class="kpi-desc">Grouped by file signatures</div>
         </div>
     </div>
-    <div class="section">
-        <div class="section-header">
-            <div class="section-title">Storage Distribution by Category</div>
-            <div class="section-badge">9 categories mapped</div>
+    <div class="audit-section">
+        <div class="section-headline">
+            <div class="section-title">01 // Storage by File Category</div>
+            <div class="section-count">9 categories mapped</div>
         </div>
         <table>
             <thead>
@@ -252,93 +339,93 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right;">1,158,611</td>
                     <td style="text-align: right;"><strong>169.9 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 45.2%"></div></div>
-                        <span>451%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 45.2%"></div></div>
+                        <span>45.2%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right;">27,605</td>
                     <td style="text-align: right;"><strong>103.93 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 27.7%"></div></div>
-                        <span>281%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 27.7%"></div></div>
+                        <span>27.7%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Video">Video</span></td>
+                    <td><span class="cat-tag">Video</span></td>
                     <td style="text-align: right;">1,357</td>
                     <td style="text-align: right;"><strong>34.05 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 9.1%"></div></div>
-                        <span>91%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 9.1%"></div></div>
+                        <span>9.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right;">3,724</td>
                     <td style="text-align: right;"><strong>23.26 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 6.2%"></div></div>
-                        <span>61%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 6.2%"></div></div>
+                        <span>6.2%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Code">Code</span></td>
+                    <td><span class="cat-tag">Code</span></td>
                     <td style="text-align: right;">978,362</td>
                     <td style="text-align: right;"><strong>17.33 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 4.6%"></div></div>
-                        <span>51%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 4.6%"></div></div>
+                        <span>4.6%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Images">Images</span></td>
+                    <td><span class="cat-tag">Images</span></td>
                     <td style="text-align: right;">196,821</td>
                     <td style="text-align: right;"><strong>11.83 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 3.1%"></div></div>
-                        <span>31%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 3.1%"></div></div>
+                        <span>3.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Photoshop">Photoshop</span></td>
+                    <td><span class="cat-tag">Photoshop</span></td>
                     <td style="text-align: right;">82</td>
                     <td style="text-align: right;"><strong>7.81 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 2.1%"></div></div>
-                        <span>21%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 2.1%"></div></div>
+                        <span>2.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Audio">Audio</span></td>
+                    <td><span class="cat-tag">Audio</span></td>
                     <td style="text-align: right;">51,231</td>
                     <td style="text-align: right;"><strong>6.41 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 1.7%"></div></div>
-                        <span>21%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 1.7%"></div></div>
+                        <span>2.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag Documents">Documents</span></td>
+                    <td><span class="cat-tag">Documents</span></td>
                     <td style="text-align: right;">60,082</td>
                     <td style="text-align: right;"><strong>1.13 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 0.3%"></div></div>
-                        <span>01%</span>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 0.3%"></div></div>
+                        <span>0.3%</span>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="section">
-        <div class="section-header">
-            <div class="section-title">Top 50 Largest Files (Storage Hogs)</div>
-            <div class="section-badge">Showing top 50 files</div>
+    <div class="audit-section">
+        <div class="section-headline">
+            <div class="section-title">02 // Largest Files by Volume</div>
+            <div class="section-count">Showing top 50 files</div>
         </div>
         <table>
             <thead>
@@ -354,360 +441,360 @@
                 <tr>
                     <td style="color: var(--text-muted);">1</td>
                     <td><strong>pagefile.sys</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">13.50 GB</td>
                     <td class="path-cell">C:\pagefile.sys</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">2</td>
                     <td><strong>hiberfil.sys</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">6.28 GB</td>
                     <td class="path-cell">C:\hiberfil.sys</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">3</td>
                     <td><strong>Install Resolve 19.0b.dat</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">4.90 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\DaVinci_Resolve_Studio_19.0.0.51\DaVinci Resolve\Install Resolve 19.0b.dat</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">4</td>
                     <td><strong>aad3a9d865c8789d.nvph</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">4.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789d.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">5</td>
                     <td><strong>ggml-large-v3.bin</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.88 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-large-v3.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">6</td>
                     <td><strong>stream.x64.x-none.dat</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.71 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Microsoft Office 2024 LTSC v2408 Build 17932.20252 (x64) Multilingual\Office\Data\16.0.17932.20252\stream.x64.x-none.dat</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">7</td>
                     <td><strong>Adobe Photoshop 2021 v22.5.9.1101.7z</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.31 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2021 v22.5.9.1101.7z</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">8</td>
                     <td><strong>The-Jackbox-Party-Pack-5-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.18 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Party-Pack-5-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">9</td>
                     <td><strong>The-Jackbox-Naughty-Pack-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.15 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Naughty-Pack-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">10</td>
                     <td><strong>The-Jackbox-Party-Pack-6-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.07 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Party-Pack-6-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">11</td>
                     <td><strong>TensorRT.cache</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.04 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Support\DVIP\Cache\TensorRT.cache</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">12</td>
                     <td><strong>Adobe Photoshop 2024 25.12.0.806.rar</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.99 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Editing\Adobe Photoshop 2024 25.12.0.806.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">13</td>
                     <td><strong>Adobe Photoshop 2024 25.12.0.806.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.99 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2024 25.12.0.806\Adobe Photoshop 2024 25.12.0.806.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">14</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.98 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ArborGraph\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">15</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.98 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\DiskScope\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">16</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.76 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\DiskScopePro\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">17</td>
                     <td><strong>QuartusLiteSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.63 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\QuartusLiteSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">18</td>
                     <td><strong>AdobePhotoshop22-Core_x64.zip</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.55 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2021 v22.5.9.1101\products\PHSP\AdobePhotoshop22-Core_x64.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">19</td>
                     <td><strong>ggml-large-v3-turbo.bin</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.51 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-large-v3-turbo.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">20</td>
                     <td><strong>ggml-medium.en.bin</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.43 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-medium.en.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">21</td>
                     <td><strong>final showcase.psd</strong></td>
-                    <td><span class="cat-tag Photoshop">Photoshop</span></td>
+                    <td><span class="cat-tag">Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.42 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\final showcase.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">22</td>
                     <td><strong>cyclonev-25.1std.0.1129.qdz</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.34 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\cyclonev-25.1std.0.1129.qdz</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">23</td>
                     <td><strong>Free Polo Strip Collar Mockup Template.psd</strong></td>
-                    <td><span class="cat-tag Photoshop">Photoshop</span></td>
+                    <td><span class="cat-tag">Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.18 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Free Polo Strip Collar Mockup Template\Free Polo Strip Collar Mockup Template.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">24</td>
                     <td><strong>Files09.psd</strong></td>
-                    <td><span class="cat-tag Photoshop">Photoshop</span></td>
+                    <td><span class="cat-tag">Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.02 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Files09.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">25</td>
                     <td><strong>aad3a9d865c8789e.nvph</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789e.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">26</td>
                     <td><strong>aad3a9d865c8789f.nvph</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789f.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">27</td>
                     <td><strong>QuestaSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">942.16 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\QuestaSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">28</td>
                     <td><strong>scan_index.db-wal</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">940.16 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ArborGraph\scan_index.db-wal</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">29</td>
                     <td><strong>Anaconda3-2025.06-0-Windows-x86_64 (1).exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">914.33 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Anaconda3-2025.06-0-Windows-x86_64 (1).exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">30</td>
                     <td><strong>Anaconda3-2025.06-0-Windows-x86_64.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">914.33 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Anaconda3-2025.06-0-Windows-x86_64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">31</td>
                     <td><strong>_pywrap_tensorflow_internal.pyd.conda_trash</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">894.77 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\envs\tensorflow_env\Lib\site-packages\tensorflow\python\_pywrap_tensorflow_internal.pyd.conda_trash</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">32</td>
                     <td><strong>0525ca50-dffc-11f0-9b93-d843aed1afad.quar</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\ProgramData\Malwarebytes\MBAMService\Quarantine\0525ca50-dffc-11f0-9b93-d843aed1afad.quar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">33</td>
                     <td><strong>ODI2.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODI2\ODI2.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">34</td>
                     <td><strong>ODI5.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODI5\ODI5.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">35</td>
                     <td><strong>ODIz.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODIz\ODIz.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">36</td>
                     <td><strong>RiscFreeSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">869.03 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\RiscFreeSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">37</td>
                     <td><strong>581.29-notebook-win10-win11-64bit-international-nsd-dch-whql.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">853.96 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\581.29-notebook-win10-win11-64bit-international-nsd-dch-whql.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">38</td>
                     <td><strong>CC_win_2_swencode.yuv</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">848.36 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\CapCut\User Data\Cache\bytebench\CC_win_2_swencode.yuv</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">39</td>
                     <td><strong>9f5ee034-dffc-11f0-a6bd-d843aed1afad.quar</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">840.75 MB</td>
                     <td class="path-cell">C:\ProgramData\Malwarebytes\MBAMService\Quarantine\9f5ee034-dffc-11f0-a6bd-d843aed1afad.quar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">40</td>
                     <td><strong>Wondershare Filmora 14.3.2.11147.zip</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">836.57 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Wondershare Filmora 14.3.2.11147.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">41</td>
                     <td><strong>PBIDesktopSetup_x64.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">826.23 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\PBIDesktopSetup_x64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">42</td>
                     <td><strong>final_model.h5</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">769.13 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Pen_vs_Pencil_Project\PENCIL VS PEN\final_model.h5</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">43</td>
                     <td><strong>4659ca35f11d623472b58659181d92df_1388_720.mp4</strong></td>
-                    <td><span class="cat-tag Video">Video</span></td>
+                    <td><span class="cat-tag">Video</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">742.21 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\CapCut\User Data\Cache\agencycache\4659ca35f11d623472b58659181d92df_1388_720.mp4</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">44</td>
                     <td><strong>1215(2).mp4</strong></td>
-                    <td><span class="cat-tag Video">Video</span></td>
+                    <td><span class="cat-tag">Video</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">692.31 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Editing\brainrotuploads\1215(2).mp4</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">45</td>
                     <td><strong>Graphic-Designs-main (1).zip</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">680.58 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Graphic-Designs-main (1).zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">46</td>
                     <td><strong>Graphic-Designs-main.zip</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">680.58 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Graphic-Designs-main.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">47</td>
                     <td><strong>cudatoolkit-11.2.2-h7d7167e_13.conda</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">634.49 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\pkgs\cudatoolkit-11.2.2-h7d7167e_13.conda</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">48</td>
                     <td><strong>7acf88f024cc3398bd0646226eb7c6c85efd07</strong></td>
-                    <td><span class="cat-tag Other">Other</span></td>
+                    <td><span class="cat-tag">Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">632.47 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Pen_vs_Pencil_Project\PENCIL VS PEN\.git\objects\f8\7acf88f024cc3398bd0646226eb7c6c85efd07</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">49</td>
                     <td><strong>Affinity x64.exe</strong></td>
-                    <td><span class="cat-tag Executables">Executables</span></td>
+                    <td><span class="cat-tag">Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">613.89 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Affinity x64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">50</td>
                     <td><strong>cudnn-8.1.0.77-h3e0f4f4_0.tar.bz2</strong></td>
-                    <td><span class="cat-tag Archives">Archives</span></td>
+                    <td><span class="cat-tag">Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">610.83 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\pkgs\cudnn-8.1.0.77-h3e0f4f4_0.tar.bz2</td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="section">
-        <div class="section-header">
-            <div class="section-title">Discovered Junk &amp; Developer Cache Targets</div>
-            <div class="section-badge">10 items • 10.24 GB reclaimable</div>
+    <div class="audit-section">
+        <div class="section-headline">
+            <div class="section-title">03 // Reclaimable Cache &amp; Temporary Directories</div>
+            <div class="section-count">10 items • 10.24 GB reclaimable</div>
         </div>
         <table>
             <thead>
@@ -793,8 +880,9 @@
             </tbody>
         </table>
     </div>
-    <div class="footer">
-        <p>Generated by <strong>ArborGraph</strong> • Filesystem Analytics &amp; Visualization • Fully offline report</p>
+        <div class="report-footer">
+        <div>ArborGraph Storage Engine &bull; Deterministic Filesystem Telemetry</div>
+        <div>Compiled offline directly from SQLite index &bull; Zero external cloud dependencies</div>
     </div>
 </div>
 </body>

@@ -123,6 +123,7 @@ public class MainViewModel : ObservableObject
                 (ExportFilesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportDuplicatesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportJunkCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                CommandManager.InvalidateRequerySuggested();
             }
         }
     }
@@ -395,7 +396,7 @@ public class MainViewModel : ObservableObject
 
         try
         {
-            var finalStats = await _scannerService.ScanDrivesAsync(rootsToScan, progress, _scanCts.Token);
+            var finalStats = await _scannerService.ScanDrivesAsync(rootsToScan, progress, _scanCts.Token, enableIncremental: false);
             OverviewVM.Stats = finalStats;
 
             foreach (var (dir, reason) in _scannerService.SkippedDirectories)

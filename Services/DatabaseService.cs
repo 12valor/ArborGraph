@@ -184,6 +184,7 @@ public class DatabaseService : IDisposable
                     if (isFullClear)
                     {
                         using var cmd = _connection.CreateCommand();
+                        _activeCommand = cmd;
                         cmd.Transaction = tx;
                         cmd.CommandText = "DELETE FROM files; DELETE FROM directories;";
                         cmd.ExecuteNonQuery();
@@ -191,15 +192,14 @@ public class DatabaseService : IDisposable
                     else
                     {
                         using var cmd = _connection.CreateCommand();
+                        _activeCommand = cmd;
                         cmd.Transaction = tx;
-                        // Use B-tree index range scan on path instead of full-table scan with substr
+                        // Use direct B-tree index range scan on path instead of unindexed OR/COLLATE NOCASE full-table scan
                         cmd.CommandText = @"
-                            DELETE FROM files 
-                            WHERE path = $root COLLATE NOCASE 
-                               OR (path >= $prefix AND path < $prefixUpper);
-                            DELETE FROM directories 
-                            WHERE path = $root COLLATE NOCASE 
-                               OR (path >= $prefix AND path < $prefixUpper);
+                            DELETE FROM files WHERE path >= $prefix AND path < $prefixUpper;
+                            DELETE FROM files WHERE path = $root;
+                            DELETE FROM directories WHERE path >= $prefix AND path < $prefixUpper;
+                            DELETE FROM directories WHERE path = $root;
                         ";
                         var pRoot = cmd.Parameters.Add("$root", SqliteType.Text);
                         var pPrefix = cmd.Parameters.Add("$prefix", SqliteType.Text);
@@ -229,6 +229,10 @@ public class DatabaseService : IDisposable
                 {
                     try { tx.Rollback(); } catch { }
                     throw;
+                }
+                finally
+                {
+                    _activeCommand = null;
                 }
             }
             catch (Exception ex)

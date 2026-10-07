@@ -65,7 +65,7 @@ public class ScannerService
         IReadOnlyList<string> roots,
         IProgress<ScanProgressReport>? progress,
         CancellationToken cancellationToken,
-        bool enableIncremental = true)
+        bool enableIncremental = false)
     {
         return Task.Run(async () =>
         {
@@ -85,6 +85,16 @@ public class ScannerService
             string scanMode = "Full Scan";
             string? scanModeDetails = null;
             var settings = _settingsService?.CurrentSettings ?? new DiskScopeSettings();
+
+            var stopwatch = Stopwatch.StartNew();
+            var lastReportStopwatch = Stopwatch.StartNew();
+            var feedStopwatch = Stopwatch.StartNew();
+            var scanStartTime = DateTime.UtcNow;
+            string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
+            string? lastRecentDirEmitted = currentDirectory;
+
+            // Immediate initial report so UI status and directory feed update without waiting
+            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, currentDirectory, scanMode, scanModeDetails);
 
             // Check if single drive root on NTFS volume with an existing USN checkpoint
             if (enableIncremental && roots.Count == 1)
@@ -194,14 +204,6 @@ public class ScannerService
                 SingleReader = true,
                 SingleWriter = false
             });
-
-            var stopwatch = Stopwatch.StartNew();
-            var lastReportStopwatch = Stopwatch.StartNew();
-            var scanStartTime = DateTime.UtcNow;
-            string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
-
-            // Immediate initial report so UI status and directory feed update without waiting
-            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, currentDirectory, scanMode, scanModeDetails);
 
             // Background SQLite Ingestion Task
             var dbWorker = Task.Run(async () =>
@@ -351,10 +353,12 @@ public class ScannerService
                     // Directory Visited: attempted to enter/read
                     Interlocked.Increment(ref _directoriesVisited);
 
-                    // Live feed emission on directory entry (throttled to 40ms for smooth UI streaming)
-                    if (lastReportStopwatch.ElapsedMilliseconds >= 40)
+                    // Live feed emission on directory entry (throttled to 35ms for smooth UI streaming)
+                    if (feedStopwatch.ElapsedMilliseconds >= 35 && dir != lastRecentDirEmitted)
                     {
+                        lastRecentDirEmitted = dir;
                         EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir);
+                        feedStopwatch.Restart();
                         lastReportStopwatch.Restart();
                     }
 
@@ -426,10 +430,10 @@ public class ScannerService
                                 }
                             }
 
-                            // Throttled progress report
+                            // Throttled progress report (throughput & file metrics without feed pollution)
                             if (lastReportStopwatch.ElapsedMilliseconds >= 40)
                             {
-                                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, dir, scanMode, scanModeDetails);
+                                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
                                 lastReportStopwatch.Restart();
                             }
                         }

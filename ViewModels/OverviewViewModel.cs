@@ -335,7 +335,7 @@ public class OverviewViewModel : ObservableObject
         {
             try
             {
-                dispatcher.BeginInvoke(DispatcherPriority.Background, () => AddRecentDirectory(dir, true));
+                dispatcher.BeginInvoke(DispatcherPriority.Normal, () => AddRecentDirectory(dir, true));
                 return;
             }
             catch { }
@@ -345,6 +345,11 @@ public class OverviewViewModel : ObservableObject
         {
             lock (_recentDirsLock)
             {
+                if (RecentDirectories.Count > 0 && string.Equals(RecentDirectories[0], dir, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
                 if (RecentDirectories.Count >= 60)
                 {
                     RecentDirectories.RemoveAt(RecentDirectories.Count - 1);

@@ -63,6 +63,29 @@ public class SettingsViewModel : ObservableObject
     public ScanLogViewModel? ScanLogVM { get; set; }
     public ICommand ViewEulaCommand { get; }
 
+    private MainViewModel? _mainVm;
+    public MainViewModel? MainVM
+    {
+        get => _mainVm;
+        set
+        {
+            if (SetProperty(ref _mainVm, value))
+            {
+                OnPropertyChanged(nameof(ExportHtmlReportCommand));
+                OnPropertyChanged(nameof(ExportJsonReportCommand));
+                OnPropertyChanged(nameof(ExportFilesCsvCommand));
+                OnPropertyChanged(nameof(ExportDuplicatesCsvCommand));
+                OnPropertyChanged(nameof(ExportJunkCsvCommand));
+            }
+        }
+    }
+
+    public ICommand? ExportHtmlReportCommand => MainVM?.ExportHtmlReportCommand;
+    public ICommand? ExportJsonReportCommand => MainVM?.ExportJsonReportCommand;
+    public ICommand? ExportFilesCsvCommand => MainVM?.ExportFilesCsvCommand;
+    public ICommand? ExportDuplicatesCsvCommand => MainVM?.ExportDuplicatesCsvCommand;
+    public ICommand? ExportJunkCsvCommand => MainVM?.ExportJunkCsvCommand;
+
     public ObservableCollection<string> ExcludedPaths { get; }
     public IReadOnlyList<string> LogLevelOptions { get; }
 

@@ -28,6 +28,7 @@ public class ScannerViewModel : ObservableObject
             }
             else if (e.PropertyName == nameof(MainViewModel.CustomScanPath))
             {
+                OnPropertyChanged(nameof(CustomScanPath));
                 OnPropertyChanged(nameof(CurrentTargetDescription));
             }
         };
@@ -46,6 +47,21 @@ public class ScannerViewModel : ObservableObject
     public ObservableCollection<string> RecentDirectories => _mainVm.OverviewVM.RecentDirectories;
     public bool IsScanning => _mainVm.IsScanning;
 
+    public string CustomScanPath
+    {
+        get => _mainVm.CustomScanPath;
+        set
+        {
+            if (_mainVm.CustomScanPath != value)
+            {
+                _mainVm.CustomScanPath = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CurrentTargetDescription));
+            }
+        }
+    }
+
+    public ICommand BrowseCustomFolderCommand => _mainVm.BrowseCustomFolderCommand;
     public ICommand StartScanCommand => _mainVm.StartScanCommand;
     public ICommand StopScanCommand => _mainVm.StopScanCommand;
     public ICommand ExploreFilesCommand { get; }

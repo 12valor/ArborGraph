@@ -58,6 +58,7 @@ public class MainViewModel : ObservableObject
         TreemapVM = new TreemapViewModel(_dbService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
         SettingsVM = new SettingsViewModel(_settingsService, _dbService);
+        SettingsVM.MainVM = this;
         ScannerVM = new ScannerViewModel(this);
         FilesVM = new FilesViewModel(this);
         SettingsVM.ScanLogVM = ScanLogVM;

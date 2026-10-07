@@ -13,6 +13,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- 1. HEADER -->
@@ -21,8 +22,59 @@
                 <TextBlock Text="Real-time disk indexing, traversal monitoring, and filesystem telemetry" FontSize="13" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0"/>
             </StackPanel>
 
-            <!-- 2. STATUS CARD / METRICS -->
-            <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
+            <!-- 2. SCAN TARGET & CONTROLS -->
+            <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18,14" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="18"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="160"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Drives Selector -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Drives:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
+                        <ItemsControl ItemsSource="{Binding OverviewVM.Drives}" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="12" FontFamily="{StaticResource MonoFont}"/>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Custom Folder Input -->
+                    <TextBlock Grid.Column="2" Text="Folder:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="3" Text="{Binding CustomScanPath, UpdateSourceTrigger=PropertyChanged}" 
+                             VerticalContentAlignment="Center" Height="28" Padding="8,0" FontSize="11" FontFamily="{StaticResource MonoFont}"/>
+                    <Button Grid.Column="4" Content="Browse..." Command="{Binding BrowseCustomFolderCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Height="28" Padding="12,0" Margin="6,0,0,0"/>
+
+                    <!-- Scan Action Controls -->
+                    <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                                Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
+                                Style="{StaticResource PrimaryButtonStyle}" Height="28" Width="100"/>
+                        <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                                Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
+                                Style="{StaticResource DangerButtonStyle}" Height="28" Width="100"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 3. STATUS CARD / METRICS -->
+            <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
                     <!-- Target & State Line -->
                     <Grid Margin="0,0,0,14">
@@ -127,8 +179,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- 3. LIVE DIRECTORY FEED (Prominent, Always-Visible Traversal Console) -->
-            <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
+            <!-- 4. LIVE DIRECTORY FEED (Prominent, Always-Visible Traversal Console) -->
+            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
                     <!-- Feed Header -->
                     <Grid Margin="0,0,0,10">
@@ -175,8 +227,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- 4. DIAGNOSTICS & INTEGRITY (Technical Summary) -->
-            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10">
+            <!-- 5. DIAGNOSTICS & INTEGRITY (Technical Summary) -->
+            <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>

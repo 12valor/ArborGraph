@@ -46,6 +46,8 @@
                              Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
                 <RadioButton Content="History" Command="{Binding SelectSectionCommand}" CommandParameter="History"
                              Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
+                <RadioButton Content="Export" Command="{Binding SelectSectionCommand}" CommandParameter="Export"
+                             Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,4,0"/>
                 <RadioButton Content="Advanced" Command="{Binding SelectSectionCommand}" CommandParameter="Advanced"
                              Style="{StaticResource SegmentedTabButtonStyle}"/>
             </StackPanel>
@@ -229,6 +231,113 @@
 
                         <Button Content="Clear All Scan History Records" Command="{Binding ClearAllHistoryCommand}" 
                                 Style="{StaticResource DangerButtonStyle}" HorizontalAlignment="Left" Padding="12,5"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- EXPORT SECTION -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedSection}" Value="Export">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ScrollViewer.Style>
+                    <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                        <TextBlock Text="EXPORT &amp; REPORTING" Style="{StaticResource SectionHeadingStyle}"/>
+                        <TextBlock Text="Export scan results, filesystem analytics, and diagnostics in various portable formats." 
+                                   FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,16"/>
+
+                        <!-- HTML Audit Report -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Interactive HTML Audit Report" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="Self-contained interactive dashboard with dark mode, storage charts, extension breakdown, and largest files."
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Export HTML..." Command="{Binding ExportHtmlReportCommand}" 
+                                        Style="{StaticResource PrimaryButtonStyle}" Padding="14,6" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- JSON Raw Snapshot -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Full JSON Snapshot" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="Complete structured JSON payload containing summary metrics, top file records, and directory hierarchy."
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Export JSON..." Command="{Binding ExportJsonReportCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Padding="14,6" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Tabular CSV Exports Group -->
+                        <TextBlock Text="TABULAR DATA EXPORTS (CSV)" Style="{StaticResource SectionHeadingStyle}" Margin="0,8,0,8"/>
+
+                        <!-- Files CSV -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Files &amp; Directories List" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="Tabular CSV export of all indexed filesystem nodes, sizes, and timestamps."
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Export Files CSV..." Command="{Binding ExportFilesCsvCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Padding="12,6" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Duplicates CSV -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Duplicate Files Catalog" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="CSV containing groups of duplicate files identified during scanning."
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Export Duplicates CSV..." Command="{Binding ExportDuplicatesCsvCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Padding="12,6" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Junk / Temp Files CSV -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Junk &amp; Temp Candidates" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="CSV listing recoverable temporary files, logs, caches, and orphaned files."
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Export Junk CSV..." Command="{Binding ExportJunkCsvCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Padding="12,6" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 

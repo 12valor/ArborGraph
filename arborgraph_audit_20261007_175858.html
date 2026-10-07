@@ -190,6 +190,26 @@
             color: var(--text-main);
         }
 
+        .distribution-bar {
+            display: flex;
+            height: 10px;
+            width: 100%;
+            border-radius: 3px;
+            overflow: hidden;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            gap: 1px;
+        }
+        .dist-segment {
+            height: 100%;
+            min-width: 2px;
+            transition: opacity 0.15s ease;
+        }
+        .dist-segment:hover {
+            opacity: 0.85;
+        }
+
         .ratio-bar-track {
             background: var(--surface-elevated);
             height: 4px;
@@ -202,20 +222,78 @@
         }
         .ratio-bar-fill {
             height: 100%;
-            background: #94A3B8;
+            border-radius: 1px;
         }
 
         .cat-tag {
-            display: inline-block;
-            padding: 2px 7px;
-            border-radius: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 3px;
             font-size: 11px;
             font-family: var(--mono);
             font-weight: 500;
+            line-height: 1.4;
+            letter-spacing: 0.02em;
             background: var(--surface-elevated);
             border: 1px solid var(--border);
             color: var(--text-secondary);
+            white-space: nowrap;
         }
+        .cat-tag-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            background: currentColor;
+        }
+
+        .cat-tag.cat-video { background: rgba(167, 139, 250, 0.12); color: #C4B5FD; border-color: rgba(167, 139, 250, 0.35); }
+        .cat-tag.cat-video .cat-tag-dot { background: #A78BFA; }
+
+        .cat-tag.cat-audio { background: rgba(244, 114, 182, 0.12); color: #F9A8D4; border-color: rgba(244, 114, 182, 0.35); }
+        .cat-tag.cat-audio .cat-tag-dot { background: #F472B6; }
+
+        .cat-tag.cat-images { background: rgba(52, 211, 153, 0.12); color: #6EE7B7; border-color: rgba(52, 211, 153, 0.35); }
+        .cat-tag.cat-images .cat-tag-dot { background: #34D399; }
+
+        .cat-tag.cat-photoshop { background: rgba(56, 189, 248, 0.12); color: #7DD3FC; border-color: rgba(56, 189, 248, 0.35); }
+        .cat-tag.cat-photoshop .cat-tag-dot { background: #38BDF8; }
+
+        .cat-tag.cat-archives { background: rgba(251, 191, 36, 0.12); color: #FCD34D; border-color: rgba(251, 191, 36, 0.35); }
+        .cat-tag.cat-archives .cat-tag-dot { background: #FBBF24; }
+
+        .cat-tag.cat-executables { background: rgba(251, 113, 133, 0.12); color: #FDA4AF; border-color: rgba(251, 113, 133, 0.35); }
+        .cat-tag.cat-executables .cat-tag-dot { background: #FB7185; }
+
+        .cat-tag.cat-code { background: rgba(45, 212, 191, 0.12); color: #5EEAD4; border-color: rgba(45, 212, 191, 0.35); }
+        .cat-tag.cat-code .cat-tag-dot { background: #2DD4BF; }
+
+        .cat-tag.cat-documents { background: rgba(96, 165, 250, 0.12); color: #93C5FD; border-color: rgba(96, 165, 250, 0.35); }
+        .cat-tag.cat-documents .cat-tag-dot { background: #60A5FA; }
+
+        .cat-tag.cat-database { background: rgba(129, 140, 248, 0.12); color: #A5B4FC; border-color: rgba(129, 140, 248, 0.35); }
+        .cat-tag.cat-database .cat-tag-dot { background: #818CF8; }
+
+        .cat-tag.cat-browser { background: rgba(245, 158, 11, 0.12); color: #FCD34D; border-color: rgba(245, 158, 11, 0.35); }
+        .cat-tag.cat-browser .cat-tag-dot { background: #F59E0B; }
+
+        .cat-tag.cat-developer { background: rgba(45, 212, 191, 0.12); color: #5EEAD4; border-color: rgba(45, 212, 191, 0.35); }
+        .cat-tag.cat-developer .cat-tag-dot { background: #2DD4BF; }
+
+        .cat-tag.cat-system { background: rgba(56, 189, 248, 0.12); color: #7DD3FC; border-color: rgba(56, 189, 248, 0.35); }
+        .cat-tag.cat-system .cat-tag-dot { background: #38BDF8; }
+
+        .cat-tag.cat-design { background: rgba(192, 132, 252, 0.12); color: #E9D5FF; border-color: rgba(192, 132, 252, 0.35); }
+        .cat-tag.cat-design .cat-tag-dot { background: #C084FC; }
+
+        .cat-tag.cat-application { background: rgba(96, 165, 250, 0.12); color: #93C5FD; border-color: rgba(96, 165, 250, 0.35); }
+        .cat-tag.cat-application .cat-tag-dot { background: #60A5FA; }
+
+        .cat-tag.cat-other { background: rgba(148, 163, 184, 0.12); color: #CBD5E1; border-color: rgba(148, 163, 184, 0.25); }
+        .cat-tag.cat-other .cat-tag-dot { background: #94A3B8; }
 
         .path-cell {
             font-family: var(--mono);
@@ -257,7 +335,8 @@
             .path-cell { color: #334155; }
             .report-header, .report-footer { border-color: #CBD5E1; }
             .ratio-bar-track { background: #E2E8F0; }
-            .ratio-bar-fill { background: #475569; }
+            .distribution-bar { background: #E2E8F0; border-color: #CBD5E1; }
+            .cat-tag { background: #F8FAFC !important; border-color: #CBD5E1 !important; color: #0F172A !important; }
         }
     </style>
 </head>
@@ -311,6 +390,17 @@
             <div class="section-title">01 // Storage by File Category</div>
             <div class="section-count">9 categories mapped</div>
         </div>
+        <div class="distribution-bar">
+            <div class="dist-segment" style="width: 45.2%; background: #94A3B8;" title="Other: 45.2% (169.90 GB)"></div>
+            <div class="dist-segment" style="width: 27.7%; background: #FB7185;" title="Executables: 27.7% (103.93 GB)"></div>
+            <div class="dist-segment" style="width: 9.1%; background: #A78BFA;" title="Video: 9.1% (34.05 GB)"></div>
+            <div class="dist-segment" style="width: 6.2%; background: #FBBF24;" title="Archives: 6.2% (23.26 GB)"></div>
+            <div class="dist-segment" style="width: 4.6%; background: #2DD4BF;" title="Code: 4.6% (17.33 GB)"></div>
+            <div class="dist-segment" style="width: 3.1%; background: #34D399;" title="Images: 3.1% (11.83 GB)"></div>
+            <div class="dist-segment" style="width: 2.1%; background: #38BDF8;" title="Photoshop: 2.1% (7.81 GB)"></div>
+            <div class="dist-segment" style="width: 1.7%; background: #F472B6;" title="Audio: 1.7% (6.41 GB)"></div>
+            <div class="dist-segment" style="width: 0.3%; background: #60A5FA;" title="Documents: 0.3% (1.13 GB)"></div>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -322,83 +412,83 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right;">1,158,611</td>
                     <td style="text-align: right;"><strong>169.9 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 45.2%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 45.2%; background: #94A3B8;"></div></div>
                         <span>45.2%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right;">27,605</td>
                     <td style="text-align: right;"><strong>103.93 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 27.7%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 27.7%; background: #FB7185;"></div></div>
                         <span>27.7%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Video</span></td>
+                    <td><span class="cat-tag cat-video"><span class="cat-tag-dot"></span>Video</span></td>
                     <td style="text-align: right;">1,357</td>
                     <td style="text-align: right;"><strong>34.05 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 9.1%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 9.1%; background: #A78BFA;"></div></div>
                         <span>9.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right;">3,724</td>
                     <td style="text-align: right;"><strong>23.26 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 6.2%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 6.2%; background: #FBBF24;"></div></div>
                         <span>6.2%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Code</span></td>
+                    <td><span class="cat-tag cat-code"><span class="cat-tag-dot"></span>Code</span></td>
                     <td style="text-align: right;">978,362</td>
                     <td style="text-align: right;"><strong>17.33 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 4.6%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 4.6%; background: #2DD4BF;"></div></div>
                         <span>4.6%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Images</span></td>
+                    <td><span class="cat-tag cat-images"><span class="cat-tag-dot"></span>Images</span></td>
                     <td style="text-align: right;">196,821</td>
                     <td style="text-align: right;"><strong>11.83 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 3.1%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 3.1%; background: #34D399;"></div></div>
                         <span>3.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Photoshop</span></td>
+                    <td><span class="cat-tag cat-photoshop"><span class="cat-tag-dot"></span>Photoshop</span></td>
                     <td style="text-align: right;">82</td>
                     <td style="text-align: right;"><strong>7.81 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 2.1%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 2.1%; background: #38BDF8;"></div></div>
                         <span>2.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Audio</span></td>
+                    <td><span class="cat-tag cat-audio"><span class="cat-tag-dot"></span>Audio</span></td>
                     <td style="text-align: right;">51,231</td>
                     <td style="text-align: right;"><strong>6.41 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 1.7%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 1.7%; background: #F472B6;"></div></div>
                         <span>2.1%</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="cat-tag">Documents</span></td>
+                    <td><span class="cat-tag cat-documents"><span class="cat-tag-dot"></span>Documents</span></td>
                     <td style="text-align: right;">60,082</td>
                     <td style="text-align: right;"><strong>1.13 GB</strong></td>
                     <td style="text-align: right;">
-                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 0.3%"></div></div>
+                        <div class="ratio-bar-track"><div class="ratio-bar-fill" style="width: 0.3%; background: #60A5FA;"></div></div>
                         <span>0.3%</span>
                     </td>
                 </tr>
@@ -424,350 +514,350 @@
                 <tr>
                     <td style="color: var(--text-muted);">1</td>
                     <td><strong>pagefile.sys</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">13.50 GB</td>
                     <td class="path-cell">C:\pagefile.sys</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">2</td>
                     <td><strong>hiberfil.sys</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">6.28 GB</td>
                     <td class="path-cell">C:\hiberfil.sys</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">3</td>
                     <td><strong>Install Resolve 19.0b.dat</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">4.90 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\DaVinci_Resolve_Studio_19.0.0.51\DaVinci Resolve\Install Resolve 19.0b.dat</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">4</td>
                     <td><strong>aad3a9d865c8789d.nvph</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">4.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789d.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">5</td>
                     <td><strong>ggml-large-v3.bin</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.88 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-large-v3.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">6</td>
                     <td><strong>stream.x64.x-none.dat</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.71 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Microsoft Office 2024 LTSC v2408 Build 17932.20252 (x64) Multilingual\Office\Data\16.0.17932.20252\stream.x64.x-none.dat</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">7</td>
                     <td><strong>Adobe Photoshop 2021 v22.5.9.1101.7z</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.31 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2021 v22.5.9.1101.7z</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">8</td>
                     <td><strong>The-Jackbox-Party-Pack-5-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.18 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Party-Pack-5-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">9</td>
                     <td><strong>The-Jackbox-Naughty-Pack-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.15 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Naughty-Pack-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">10</td>
                     <td><strong>The-Jackbox-Party-Pack-6-SteamRIP.com.rar</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.07 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\The-Jackbox-Party-Pack-6-SteamRIP.com.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">11</td>
                     <td><strong>TensorRT.cache</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">2.04 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Support\DVIP\Cache\TensorRT.cache</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">12</td>
                     <td><strong>Adobe Photoshop 2024 25.12.0.806.rar</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.99 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Editing\Adobe Photoshop 2024 25.12.0.806.rar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">13</td>
                     <td><strong>Adobe Photoshop 2024 25.12.0.806.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.99 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2024 25.12.0.806\Adobe Photoshop 2024 25.12.0.806.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">14</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.98 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ArborGraph\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">15</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.98 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\DiskScope\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">16</td>
                     <td><strong>scan_index.db</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.76 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\DiskScopePro\scan_index.db</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">17</td>
                     <td><strong>QuartusLiteSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.63 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\QuartusLiteSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">18</td>
                     <td><strong>AdobePhotoshop22-Core_x64.zip</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.55 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Adobe Photoshop 2021 v22.5.9.1101\products\PHSP\AdobePhotoshop22-Core_x64.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">19</td>
                     <td><strong>ggml-large-v3-turbo.bin</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.51 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-large-v3-turbo.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">20</td>
                     <td><strong>ggml-medium.en.bin</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.43 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\com.autosubs\models\models--ggerganov--whisper.cpp\snapshots\5359861c739e955e79d9a303bcbc70fb988958b1\ggml-medium.en.bin</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">21</td>
                     <td><strong>final showcase.psd</strong></td>
-                    <td><span class="cat-tag">Photoshop</span></td>
+                    <td><span class="cat-tag cat-photoshop"><span class="cat-tag-dot"></span>Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.42 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\final showcase.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">22</td>
                     <td><strong>cyclonev-25.1std.0.1129.qdz</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.34 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\cyclonev-25.1std.0.1129.qdz</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">23</td>
                     <td><strong>Free Polo Strip Collar Mockup Template.psd</strong></td>
-                    <td><span class="cat-tag">Photoshop</span></td>
+                    <td><span class="cat-tag cat-photoshop"><span class="cat-tag-dot"></span>Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.18 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Free Polo Strip Collar Mockup Template\Free Polo Strip Collar Mockup Template.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">24</td>
                     <td><strong>Files09.psd</strong></td>
-                    <td><span class="cat-tag">Photoshop</span></td>
+                    <td><span class="cat-tag cat-photoshop"><span class="cat-tag-dot"></span>Photoshop</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.02 GB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Files09.psd</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">25</td>
                     <td><strong>aad3a9d865c8789e.nvph</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789e.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">26</td>
                     <td><strong>aad3a9d865c8789f.nvph</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">1.00 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\NVIDIA\DXCache\aad3a9d865c8789f.nvph</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">27</td>
                     <td><strong>QuestaSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">942.16 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\QuestaSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">28</td>
                     <td><strong>scan_index.db-wal</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">940.16 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ArborGraph\scan_index.db-wal</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">29</td>
                     <td><strong>Anaconda3-2025.06-0-Windows-x86_64 (1).exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">914.33 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Anaconda3-2025.06-0-Windows-x86_64 (1).exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">30</td>
                     <td><strong>Anaconda3-2025.06-0-Windows-x86_64.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">914.33 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Anaconda3-2025.06-0-Windows-x86_64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">31</td>
                     <td><strong>_pywrap_tensorflow_internal.pyd.conda_trash</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">894.77 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\envs\tensorflow_env\Lib\site-packages\tensorflow\python\_pywrap_tensorflow_internal.pyd.conda_trash</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">32</td>
                     <td><strong>0525ca50-dffc-11f0-9b93-d843aed1afad.quar</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\ProgramData\Malwarebytes\MBAMService\Quarantine\0525ca50-dffc-11f0-9b93-d843aed1afad.quar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">33</td>
                     <td><strong>ODI2.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODI2\ODI2.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">34</td>
                     <td><strong>ODI5.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODI5\ODI5.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">35</td>
                     <td><strong>ODIz.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">891.10 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\ODIz\ODIz.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">36</td>
                     <td><strong>RiscFreeSetup-25.1std.0.1129-windows.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">869.03 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Quartus-lite-25.1std.0.1129-windows\components\RiscFreeSetup-25.1std.0.1129-windows.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">37</td>
                     <td><strong>581.29-notebook-win10-win11-64bit-international-nsd-dch-whql.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">853.96 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\581.29-notebook-win10-win11-64bit-international-nsd-dch-whql.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">38</td>
                     <td><strong>CC_win_2_swencode.yuv</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">848.36 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\CapCut\User Data\Cache\bytebench\CC_win_2_swencode.yuv</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">39</td>
                     <td><strong>9f5ee034-dffc-11f0-a6bd-d843aed1afad.quar</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">840.75 MB</td>
                     <td class="path-cell">C:\ProgramData\Malwarebytes\MBAMService\Quarantine\9f5ee034-dffc-11f0-a6bd-d843aed1afad.quar</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">40</td>
                     <td><strong>Wondershare Filmora 14.3.2.11147.zip</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">836.57 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Wondershare Filmora 14.3.2.11147.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">41</td>
                     <td><strong>PBIDesktopSetup_x64.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">826.23 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\PBIDesktopSetup_x64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">42</td>
                     <td><strong>final_model.h5</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">769.13 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Pen_vs_Pencil_Project\PENCIL VS PEN\final_model.h5</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">43</td>
                     <td><strong>4659ca35f11d623472b58659181d92df_1388_720.mp4</strong></td>
-                    <td><span class="cat-tag">Video</span></td>
+                    <td><span class="cat-tag cat-video"><span class="cat-tag-dot"></span>Video</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">742.21 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\CapCut\User Data\Cache\agencycache\4659ca35f11d623472b58659181d92df_1388_720.mp4</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">44</td>
                     <td><strong>1215(2).mp4</strong></td>
-                    <td><span class="cat-tag">Video</span></td>
+                    <td><span class="cat-tag cat-video"><span class="cat-tag-dot"></span>Video</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">692.31 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Editing\brainrotuploads\1215(2).mp4</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">45</td>
                     <td><strong>Graphic-Designs-main (1).zip</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">680.58 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Graphic-Designs-main (1).zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">46</td>
                     <td><strong>Graphic-Designs-main.zip</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">680.58 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Graphic-Designs-main.zip</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">47</td>
                     <td><strong>cudatoolkit-11.2.2-h7d7167e_13.conda</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">634.49 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\pkgs\cudatoolkit-11.2.2-h7d7167e_13.conda</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">48</td>
                     <td><strong>7acf88f024cc3398bd0646226eb7c6c85efd07</strong></td>
-                    <td><span class="cat-tag">Other</span></td>
+                    <td><span class="cat-tag cat-other"><span class="cat-tag-dot"></span>Other</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">632.47 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Pen_vs_Pencil_Project\PENCIL VS PEN\.git\objects\f8\7acf88f024cc3398bd0646226eb7c6c85efd07</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">49</td>
                     <td><strong>Affinity x64.exe</strong></td>
-                    <td><span class="cat-tag">Executables</span></td>
+                    <td><span class="cat-tag cat-executables"><span class="cat-tag-dot"></span>Executables</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">613.89 MB</td>
                     <td class="path-cell">C:\Users\evang\Downloads\Affinity x64.exe</td>
                 </tr>
                 <tr>
                     <td style="color: var(--text-muted);">50</td>
                     <td><strong>cudnn-8.1.0.77-h3e0f4f4_0.tar.bz2</strong></td>
-                    <td><span class="cat-tag">Archives</span></td>
+                    <td><span class="cat-tag cat-archives"><span class="cat-tag-dot"></span>Archives</span></td>
                     <td style="text-align: right; color: var(--accent); font-weight: 600;">610.83 MB</td>
                     <td class="path-cell">C:\Users\evang\anaconda3\pkgs\cudnn-8.1.0.77-h3e0f4f4_0.tar.bz2</td>
                 </tr>
@@ -791,70 +881,70 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>System</td>
+                    <td><span class="cat-tag cat-system"><span class="cat-tag-dot"></span>System</span></td>
                     <td><strong>User Temporary Files</strong></td>
                     <td>5,790 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">5.51 GB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\Temp\; C:\Users\evang\AppData\Local\Temp</td>
                 </tr>
                 <tr>
-                    <td>System</td>
+                    <td><span class="cat-tag cat-system"><span class="cat-tag-dot"></span>System</span></td>
                     <td><strong>Windows Update Download Cache</strong></td>
                     <td>6 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">1.17 GB</td>
                     <td class="path-cell">C:\WINDOWS\SoftwareDistribution\Download</td>
                 </tr>
                 <tr>
-                    <td>System</td>
+                    <td><span class="cat-tag cat-system"><span class="cat-tag-dot"></span>System</span></td>
                     <td><strong>Crash Dumps &amp; Error Reports</strong></td>
                     <td>11 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">187.27 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\CrashDumps; C:\Users\evang\AppData\Local\Microsoft\Windows\WER</td>
                 </tr>
                 <tr>
-                    <td>System</td>
+                    <td><span class="cat-tag cat-system"><span class="cat-tag-dot"></span>System</span></td>
                     <td><strong>Windows Explorer Thumbnail Cache</strong></td>
                     <td>15 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">67.22 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\Microsoft\Windows\Explorer</td>
                 </tr>
                 <tr>
-                    <td>Browser</td>
+                    <td><span class="cat-tag cat-browser"><span class="cat-tag-dot"></span>Browser</span></td>
                     <td><strong>Google Chrome Cache</strong></td>
                     <td>5,318 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">402.66 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\Google\Chrome\User Data\Default\Cache; C:\Users\evang\AppData\Local\Google\Chrome\User Data\Default\Code Cache</td>
                 </tr>
                 <tr>
-                    <td>Browser</td>
+                    <td><span class="cat-tag cat-browser"><span class="cat-tag-dot"></span>Browser</span></td>
                     <td><strong>Microsoft Edge Cache</strong></td>
                     <td>5,882 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">411.50 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\Microsoft\Edge\User Data\Default\Cache; C:\Users\evang\AppData\Local\Microsoft\Edge\User Data\Default\Code Cache</td>
                 </tr>
                 <tr>
-                    <td>Browser</td>
+                    <td><span class="cat-tag cat-browser"><span class="cat-tag-dot"></span>Browser</span></td>
                     <td><strong>Brave Browser Cache</strong></td>
                     <td>8,688 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">778.65 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Cache; C:\Users\evang\AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Code Cache</td>
                 </tr>
                 <tr>
-                    <td>Browser</td>
+                    <td><span class="cat-tag cat-browser"><span class="cat-tag-dot"></span>Browser</span></td>
                     <td><strong>Discord &amp; Electron Cache</strong></td>
                     <td>588 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">117.84 MB</td>
                     <td class="path-cell">C:\Users\evang\AppData\Roaming\discord\Cache; C:\Users\evang\AppData\Roaming\discord\Code Cache</td>
                 </tr>
                 <tr>
-                    <td>Developer</td>
+                    <td><span class="cat-tag cat-developer"><span class="cat-tag-dot"></span>Developer</span></td>
                     <td><strong>NuGet Package Cache</strong></td>
                     <td>785 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">340.75 MB</td>
                     <td class="path-cell">C:\Users\evang\.nuget\packages</td>
                 </tr>
                 <tr>
-                    <td>Developer</td>
+                    <td><span class="cat-tag cat-developer"><span class="cat-tag-dot"></span>Developer</span></td>
                     <td><strong>pip Cache</strong></td>
                     <td>1,939 files</td>
                     <td style="text-align: right; color: var(--success); font-weight: 600;">1.30 GB</td>

@@ -1,6 +1,7 @@
 # ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
+[![Latest Release: v1.1.0](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
 [![Runtime: .NET 8.0](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Privacy: 100% Offline](https://img.shields.io/badge/Privacy-100%25%20Offline%20%2F%20Zero%20Telemetry-107C41)](LICENSE.md#3-local-architecture--privacy-commitment)
@@ -80,10 +81,11 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
    - Embedded real-time scan traversal feed.
 
 2. **Scanner:**
-   - Real-time disk indexing console showing current target, active scan state, and indeterminate progress indicator.
+   - **Target Configuration & Controls:** Drive selector checkboxes (`C:\`, etc.), custom target folder input, folder browse dialog, and responsive **Start Scan** / **Stop Scan** controls integrated directly into the view.
+   - Real-time disk indexing console showing current target, active scan state, and progress indicator.
    - Live metrics: files indexed, folders processed, traversal speed (files/sec), and elapsed time.
-   - Dedicated **Live Directory Feed** displaying the active folder path and a rolling monospace history buffer.
-   - Responsive **Start Scan** and **Stop Scan** controls with immediate safe cancellation and transaction rollbacks.
+   - Dedicated **Live Directory Feed** displaying active folder path and rolling monospace traversal history buffer.
+   - Stabilized viewport dimensions preventing container width jitter during active scanning.
 
 3. **Files:**
    - Searchable filesystem explorer backed by indexed SQLite queries.
@@ -118,10 +120,14 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
    - Dedicated inspector for Adobe Photoshop (`.psd`) and Large Document (`.psb`) assets.
    - Categorized audit of heavy working files, backup saves, and Adobe scratch file disk usage.
 
-9. **Settings & Integrity:**
+9. **Settings & Exports:**
    - Excluded directories and file extension filter rules.
    - Toggles for hidden files, system files, and NTFS junction / reparse point traversal.
    - Database WAL integrity checker and manual index reset tools.
+   - **Consolidated Export & Reporting Center:** Export scan analytics in multiple portable formats:
+     - **Interactive HTML Audit Report:** Self-contained dashboard with dark/light themes, category breakdown distribution bar, and largest file tables.
+     - **Full JSON Snapshot:** Complete structured filesystem snapshot dump.
+     - **Tabular CSV Exports:** Dedicated CSV data exports for indexed files, duplicate groups, and cleanable junk candidates.
 
 ---
 
@@ -252,7 +258,7 @@ ArborGraph includes an Inno Setup script configured for packaging a standard Win
 
 ## Running Automated Tests
 
-The test suite validates the full operational lifecycle: SQLite ingestion in WAL mode, recursive directory rollups, cryptographic duplicate detection, safe cancellation, junk file deletion, treemap layout, live directory feed buffer, and report exports.
+The test suite validates the full operational lifecycle across 32 automated test suites: SQLite ingestion in WAL mode, recursive directory rollups, cryptographic duplicate detection, safe cancellation, junk file deletion, treemap layout, live directory feed buffer, XAML StaticResource integrity, and report exports.
 
 Run the test suite via the launcher:
 ```cmd

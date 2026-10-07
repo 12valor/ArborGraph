@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
             eulaVersion: "1.0",
             accepted: true,
             acceptedAt: new Date().toISOString(),
-            applicationVersion: "1.0.0",
+            applicationVersion: "1.1.0",
             architecture: "win-x64",
             publisher: "AG DIAZ EVANGELISTA",
             offlineStorage: "%LocalAppData%\\ArborGraph"

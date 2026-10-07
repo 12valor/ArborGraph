@@ -7,7 +7,7 @@
              d:DesignHeight="750" d:DesignWidth="1000">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="32,24,32,32" MaxWidth="920" HorizontalAlignment="Left">
+        <Grid Margin="28,24,28,32" HorizontalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -30,12 +30,12 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="TARGET: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                            <TextBlock Text="{Binding CurrentTargetDescription}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}"/>
-                        </StackPanel>
-                        <Border Grid.Column="1" Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="8,3">
-                            <TextBlock Text="{Binding Stats.State}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushAccent}"/>
+                        <DockPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="TARGET: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" DockPanel.Dock="Left"/>
+                            <TextBlock Text="{Binding CurrentTargetDescription}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                        <Border Grid.Column="1" Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="8,3" MinWidth="75">
+                            <TextBlock Text="{Binding Stats.State}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Center"/>
                         </Border>
                     </Grid>
 
@@ -109,12 +109,12 @@
                         <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
                                 Style="{StaticResource PrimaryButtonStyle}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
-                                Padding="18,6" Margin="0,0,8,0"/>
+                                MinWidth="110" Padding="18,6" Margin="0,0,8,0"/>
 
                         <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
                                 Style="{StaticResource DangerButtonStyle}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
-                                Padding="18,6" Margin="0,0,8,0"/>
+                                MinWidth="110" Padding="18,6" Margin="0,0,8,0"/>
 
                         <Button Content="Explore Files" Command="{Binding ExploreFilesCommand}" 
                                 Style="{StaticResource ActionButtonStyle}" 
@@ -163,7 +163,9 @@
                              Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1"
                              FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"
                              Height="180"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             HorizontalContentAlignment="Stretch">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis" Padding="4,2"/>

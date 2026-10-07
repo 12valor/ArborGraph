@@ -71,10 +71,10 @@
                 <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
                             Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
-                            Style="{StaticResource PrimaryButtonStyle}" Height="28" Padding="14,0" Margin="0,0,6,0"/>
+                            Style="{StaticResource PrimaryButtonStyle}" Height="28" Width="96" Margin="0,0,6,0"/>
                     <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
-                            Style="{StaticResource DangerButtonStyle}" Height="28" Padding="14,0" Margin="0,0,6,0"/>
+                            Style="{StaticResource DangerButtonStyle}" Height="28" Width="96" Margin="0,0,6,0"/>
                 </StackPanel>
 
                 <!-- Export Action Menu -->
@@ -243,7 +243,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- State Indicator -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" MinWidth="75">
                     <Ellipse Width="6" Height="6" Margin="0,0,6,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">

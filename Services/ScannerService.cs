@@ -534,23 +534,51 @@ public class ScannerService
         }
         finally
         {
+            using var progressCts = new CancellationTokenSource();
+            var progressHeartbeat = Task.Run(async () =>
+            {
+                while (!progressCts.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(250, progressCts.Token);
+                        EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                    }
+                    catch (OperationCanceledException) { break; }
+                }
+            });
+
             try
             {
-                // Complete channel and wait for SQLite ingestion to drain safely
+                currentDirectory = "Finalizing file queues to SQLite index...";
+                scanModeDetails = "Draining worker batch queues";
+                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
                 channel.Writer.TryComplete();
                 await dbWorker;
-            }
-            catch
-            {
-                // Channel drain failure should never crash the scanner
-            }
 
-            _dbService.EndBulkIngestion();
-            if (!cancellationToken.IsCancellationRequested)
-            {
-                _dbService.BuildDirectoryRollup(roots);
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    currentDirectory = "Computing hierarchical folder size rollups...";
+                    scanModeDetails = "Aggregating directory sizes & subfolder metrics";
+                    EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                    _dbService.BuildDirectoryRollup(roots, cancellationToken);
+                }
+
+                currentDirectory = "Optimizing database indexes & WAL checkpoint...";
+                scanModeDetails = "Building search indexes and flushing SQLite WAL";
+                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                _dbService.EndBulkIngestion();
             }
-            stopwatch.Stop();
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Post-processing error: {ex.Message}");
+            }
+            finally
+            {
+                progressCts.Cancel();
+                try { await progressHeartbeat; } catch { }
+                stopwatch.Stop();
+            }
         }
 
         if (cancellationToken.IsCancellationRequested && finalState != ScanState.Failed)

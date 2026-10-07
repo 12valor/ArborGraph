@@ -727,7 +727,7 @@ public class DatabaseService : IDisposable
         return parent != null ? NormalizeDirPath(parent) : string.Empty;
     }
 
-    public void BuildDirectoryRollup(IReadOnlyList<string>? roots = null)
+    public void BuildDirectoryRollup(IReadOnlyList<string>? roots = null, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
@@ -744,6 +744,8 @@ public class DatabaseService : IDisposable
                 {
                     while (reader.Read())
                     {
+                        if (cancellationToken.IsCancellationRequested) return;
+
                         string rawParent = reader.GetString(0);
                         long dSize = reader.GetInt64(1);
                         long dCount = reader.GetInt64(2);
@@ -797,6 +799,8 @@ public class DatabaseService : IDisposable
                     }
                 }
 
+                if (cancellationToken.IsCancellationRequested) return;
+
                 // Initialize totals with direct files
                 foreach (var node in nodes.Values)
                 {
@@ -812,6 +816,8 @@ public class DatabaseService : IDisposable
 
                 foreach (var node in sorted)
                 {
+                    if (cancellationToken.IsCancellationRequested) return;
+
                     if (!string.IsNullOrEmpty(node.Parent) && nodes.TryGetValue(node.Parent, out var parentNode))
                     {
                         parentNode.TotalSize += node.TotalSize;
@@ -820,43 +826,81 @@ public class DatabaseService : IDisposable
                     }
                 }
 
-                // Persist rolled up hierarchy to directories table
-                using var tx = _connection.BeginTransaction();
-                using var clearCmd = _connection.CreateCommand();
-                clearCmd.Transaction = tx;
-                clearCmd.CommandText = "DELETE FROM directories;";
-                clearCmd.ExecuteNonQuery();
+                if (cancellationToken.IsCancellationRequested) return;
 
-                using var insertCmd = _connection.CreateCommand();
-                insertCmd.Transaction = tx;
-                insertCmd.CommandText = @"
-                    INSERT INTO directories (path, name, parent, total_size, direct_size, total_files, direct_files, subfolder_count)
-                    VALUES ($path, $name, $parent, $total_size, $direct_size, $total_files, $direct_files, $subfolder_count);
-                ";
-
-                var pPath = insertCmd.Parameters.Add("$path", SqliteType.Text);
-                var pName = insertCmd.Parameters.Add("$name", SqliteType.Text);
-                var pParent = insertCmd.Parameters.Add("$parent", SqliteType.Text);
-                var pTotalSize = insertCmd.Parameters.Add("$total_size", SqliteType.Integer);
-                var pDirectSize = insertCmd.Parameters.Add("$direct_size", SqliteType.Integer);
-                var pTotalFiles = insertCmd.Parameters.Add("$total_files", SqliteType.Integer);
-                var pDirectFiles = insertCmd.Parameters.Add("$direct_files", SqliteType.Integer);
-                var pSubfolders = insertCmd.Parameters.Add("$subfolder_count", SqliteType.Integer);
-
-                foreach (var node in nodes.Values)
+                // Temporarily drop secondary indexes on directories to accelerate bulk insertion
+                using (var dropIndexCmd = _connection.CreateCommand())
                 {
-                    pPath.Value = node.Path;
-                    pName.Value = node.Name;
-                    pParent.Value = node.Parent;
-                    pTotalSize.Value = node.TotalSize;
-                    pDirectSize.Value = node.DirectSize;
-                    pTotalFiles.Value = node.TotalFiles;
-                    pDirectFiles.Value = node.DirectFiles;
-                    pSubfolders.Value = node.SubfolderCount;
-                    insertCmd.ExecuteNonQuery();
+                    dropIndexCmd.CommandText = @"
+                        DROP INDEX IF EXISTS idx_directories_total_size;
+                        DROP INDEX IF EXISTS idx_directories_parent;
+                        DROP INDEX IF EXISTS idx_directories_name;
+                    ";
+                    dropIndexCmd.ExecuteNonQuery();
                 }
 
-                tx.Commit();
+                // Persist rolled up hierarchy to directories table
+                using var tx = _connection.BeginTransaction();
+                try
+                {
+                    using var clearCmd = _connection.CreateCommand();
+                    clearCmd.Transaction = tx;
+                    clearCmd.CommandText = "DELETE FROM directories;";
+                    clearCmd.ExecuteNonQuery();
+
+                    using var insertCmd = _connection.CreateCommand();
+                    _activeCommand = insertCmd;
+                    insertCmd.Transaction = tx;
+                    insertCmd.CommandText = @"
+                        INSERT INTO directories (path, name, parent, total_size, direct_size, total_files, direct_files, subfolder_count)
+                        VALUES ($path, $name, $parent, $total_size, $direct_size, $total_files, $direct_files, $subfolder_count);
+                    ";
+
+                    var pPath = insertCmd.Parameters.Add("$path", SqliteType.Text);
+                    var pName = insertCmd.Parameters.Add("$name", SqliteType.Text);
+                    var pParent = insertCmd.Parameters.Add("$parent", SqliteType.Text);
+                    var pTotalSize = insertCmd.Parameters.Add("$total_size", SqliteType.Integer);
+                    var pDirectSize = insertCmd.Parameters.Add("$direct_size", SqliteType.Integer);
+                    var pTotalFiles = insertCmd.Parameters.Add("$total_files", SqliteType.Integer);
+                    var pDirectFiles = insertCmd.Parameters.Add("$direct_files", SqliteType.Integer);
+                    var pSubfolders = insertCmd.Parameters.Add("$subfolder_count", SqliteType.Integer);
+
+                    foreach (var node in nodes.Values)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            try { tx.Rollback(); } catch { }
+                            return;
+                        }
+
+                        pPath.Value = node.Path;
+                        pName.Value = node.Name;
+                        pParent.Value = node.Parent;
+                        pTotalSize.Value = node.TotalSize;
+                        pDirectSize.Value = node.DirectSize;
+                        pTotalFiles.Value = node.TotalFiles;
+                        pDirectFiles.Value = node.DirectFiles;
+                        pSubfolders.Value = node.SubfolderCount;
+                        insertCmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                finally
+                {
+                    _activeCommand = null;
+                }
+
+                // Recreate secondary indexes on directories
+                using (var reindexCmd = _connection.CreateCommand())
+                {
+                    reindexCmd.CommandText = @"
+                        CREATE INDEX IF NOT EXISTS idx_directories_total_size ON directories(total_size DESC);
+                        CREATE INDEX IF NOT EXISTS idx_directories_parent ON directories(parent);
+                        CREATE INDEX IF NOT EXISTS idx_directories_name ON directories(name);
+                    ";
+                    reindexCmd.ExecuteNonQuery();
+                }
             }
             catch (Exception ex)
             {

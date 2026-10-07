@@ -445,6 +445,37 @@ public class MainViewModel : ObservableObject
             try { _scanCts?.Dispose(); } catch { }
             _scanCts = null;
         }
+
+        // Play completion sound and display modal popup upon successful scan
+        if (OverviewVM.Stats.State == ScanState.Completed)
+        {
+            try
+            {
+                System.Media.SystemSounds.Asterisk.Play();
+            }
+            catch { }
+
+            string formattedSize = SizeFormatter.Format(OverviewVM.Stats.LogicalBytesIndexed);
+            string target = !string.IsNullOrWhiteSpace(CustomScanPath)
+                ? CustomScanPath
+                : string.Join(", ", OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name));
+            if (string.IsNullOrWhiteSpace(target)) target = "C:\\";
+
+            string completionMessage =
+                $"Scan completed successfully!\n\n" +
+                $"• Target: {target}\n" +
+                $"• Files Indexed: {OverviewVM.Stats.FilesIndexed:N0}\n" +
+                $"• Storage Indexed: {formattedSize}\n" +
+                $"• Folders Visited: {OverviewVM.Stats.DirectoriesVisited:N0}\n" +
+                $"• Duration: {OverviewVM.Stats.FormattedElapsed}\n" +
+                $"• Average Speed: {OverviewVM.Stats.FormattedFilesPerSecond}";
+
+            MessageBox.Show(
+                completionMessage,
+                "ArborGraph — Scan Completed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
     }
 
     public void StopScan()

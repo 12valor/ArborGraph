@@ -63,6 +63,7 @@
                     <!-- Scan Action Controls -->
                     <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                                Foreground="#FFFFFF"
                                 Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
                                 Style="{StaticResource PrimaryButtonStyle}" Height="28" Width="100"/>
                         <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
@@ -158,6 +159,7 @@
                     <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal">
                         <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                                Foreground="#FFFFFF"
                                 Style="{StaticResource PrimaryButtonStyle}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
                                 MinWidth="110" Padding="18,6" Margin="0,0,8,0"/>

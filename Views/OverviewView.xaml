@@ -32,6 +32,7 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                            Foreground="#FFFFFF"
                             Style="{StaticResource PrimaryButtonStyle}" Padding="16,6" Margin="0,0,8,0"/>
                     <Button Content="Review Cleanup" Command="{Binding ReviewCleanupCommand}" 
                             Style="{StaticResource ActionButtonStyle}" Padding="14,6"/>
@@ -207,6 +208,7 @@
                             </Grid>
 
                             <Button Content="Review Cleanup" Command="{Binding ReviewCleanupCommand}" 
+                                    Foreground="#FFFFFF"
                                     Style="{StaticResource PrimaryButtonStyle}" 
                                     HorizontalAlignment="Left" Padding="14,6"/>
                         </StackPanel>

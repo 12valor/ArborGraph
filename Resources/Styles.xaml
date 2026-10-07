@@ -48,6 +48,7 @@
     <Style x:Key="ActionButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource BrushTextPrimary}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="12,6"/>
@@ -63,7 +64,9 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -85,11 +88,19 @@
 
     <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}"/>
 
-    <!-- Primary Windows Precision Steel Blue Button -->
+    <!-- Primary Windows Precision Steel Blue Button (Guaranteed Crisp White Text) -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+        <Style.Resources>
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+            </Style>
+        </Style.Resources>
         <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
         <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -99,7 +110,9 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          TextElement.Foreground="#FFFFFF"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -123,9 +136,16 @@
 
     <!-- Danger Button (Subtle Outline) -->
     <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+        <Style.Resources>
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
+            </Style>
+        </Style.Resources>
         <Setter Property="Background" Value="{StaticResource BrushBgSurface}"/>
         <Setter Property="BorderBrush" Value="#FECACA"/>
         <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource BrushDanger}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -134,7 +154,9 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="4"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">

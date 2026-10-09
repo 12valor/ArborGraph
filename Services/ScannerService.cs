@@ -91,7 +91,7 @@ public class ScannerService
             var feedStopwatch = Stopwatch.StartNew();
             var scanStartTime = DateTime.UtcNow;
             string currentDirectory = roots.FirstOrDefault() ?? string.Empty;
-            string? lastRecentDirEmitted = currentDirectory;
+            string? lastRecentDirEmitted = null;
 
             // Immediate initial report so UI status and directory feed update without waiting
             EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, currentDirectory, scanMode, scanModeDetails);
@@ -195,10 +195,25 @@ public class ScannerService
                 }
             }
 
+            using var progressCts = new CancellationTokenSource();
+            string currentDirectoryRef = currentDirectory;
+            var progressHeartbeat = Task.Run(async () =>
+            {
+                while (!progressCts.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(100, progressCts.Token);
+                        EmitProgress(progress, stopwatch, Volatile.Read(ref currentDirectoryRef), ScanState.Scanning, null, scanMode, scanModeDetails);
+                    }
+                    catch (OperationCanceledException) { break; }
+                }
+            });
+
             _dbService.BeginBulkIngestion();
             _dbService.ClearIndex(roots);
 
-            var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(20000)
+            var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(50000)
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
@@ -332,6 +347,7 @@ public class ScannerService
 
                     string dir = dirQueue.Dequeue();
                     currentDirectory = dir;
+                    Volatile.Write(ref currentDirectoryRef, dir);
 
                     if (_settingsService != null && _settingsService.IsPathExcluded(dir, settings))
                     {
@@ -534,23 +550,10 @@ public class ScannerService
         }
         finally
         {
-            using var progressCts = new CancellationTokenSource();
-            var progressHeartbeat = Task.Run(async () =>
-            {
-                while (!progressCts.Token.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Task.Delay(250, progressCts.Token);
-                        EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
-                    }
-                    catch (OperationCanceledException) { break; }
-                }
-            });
-
             try
             {
                 currentDirectory = "Finalizing file queues to SQLite index...";
+                Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Draining worker batch queues";
                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
                 channel.Writer.TryComplete();
@@ -559,12 +562,14 @@ public class ScannerService
                 if (!cancellationToken.IsCancellationRequested)
                 {
                     currentDirectory = "Computing hierarchical folder size rollups...";
+                    Volatile.Write(ref currentDirectoryRef, currentDirectory);
                     scanModeDetails = "Aggregating directory sizes & subfolder metrics";
                     EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
                     _dbService.BuildDirectoryRollup(roots, cancellationToken);
                 }
 
                 currentDirectory = "Optimizing database indexes & WAL checkpoint...";
+                Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Building search indexes and flushing SQLite WAL";
                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
                 _dbService.EndBulkIngestion();

@@ -20,6 +20,11 @@ public class Program
             return await RunLiveTestAsync();
         }
 
+        if (args.Length > 0 && args[0] == "--vm-test")
+        {
+            return await RunVmTestAsync();
+        }
+
         if (args.Length > 0 && args[0] == "--legacy")
         {
             return await RunLegacyIntegrationSuiteAsync();
@@ -258,7 +263,8 @@ public class Program
         Console.WriteLine($"[LIVE TEST] Using DB: {realDb}");
         var db = new DatabaseService(realDb);
         db.Initialize();
-        var scanner = new ScannerService(db);
+        var settingsService = new SettingsService();
+        var scanner = new ScannerService(db, null, settingsService);
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         var progress = new Progress<ScanProgressReport>(r =>
         {
@@ -266,7 +272,7 @@ public class Program
         });
         Console.WriteLine("[LIVE TEST] Starting ScanDrivesAsync on C:\\...");
         var sw = Stopwatch.StartNew();
-        var res = await scanner.ScanDrivesAsync(new[] { @"C:\" }, progress, cts.Token);
+        var res = await scanner.ScanDrivesAsync(new[] { @"C:\" }, progress, cts.Token, enableIncremental: false);
         sw.Stop();
         Console.WriteLine($"[LIVE TEST] Finished in {sw.ElapsedMilliseconds}ms. State: {res.State}, Files: {res.FilesIndexed}, Dirs: {res.DirectoriesProcessed}");
         return 0;
@@ -301,5 +307,65 @@ public class Program
             TestDataGenerator.SafeCleanup(testRoot);
             TestDataGenerator.SafeCleanup(testDbFolder);
         }
+    }
+
+    private static async Task<int> RunVmTestAsync()
+    {
+        Console.WriteLine("[VM TEST] Starting WPF MainViewModel test on STA thread...");
+        var tcs = new TaskCompletionSource<int>();
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                if (Application.Current == null)
+                {
+                    _ = new Application();
+                }
+
+                Console.WriteLine("[VM TEST] Creating MainViewModel...");
+                var vm = new MainViewModel();
+
+                vm.OverviewVM.Stats.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(ScanStats.FilesIndexed) || e.PropertyName == nameof(ScanStats.DirectoriesVisited))
+                    {
+                        Console.WriteLine($"[VM STATS] Visited: {vm.OverviewVM.Stats.DirectoriesVisited} | Indexed: {vm.OverviewVM.Stats.FilesIndexed} | Elapsed: {vm.OverviewVM.Stats.Elapsed.TotalSeconds:F2}s | CurDir: {vm.OverviewVM.Stats.CurrentDirectory}");
+                    }
+                };
+
+                ((System.Collections.Specialized.INotifyCollectionChanged)vm.OverviewVM.RecentDirectories).CollectionChanged += (s, e) =>
+                {
+                    if (e.NewItems != null && e.NewItems.Count > 0)
+                    {
+                        Console.WriteLine($"[VM RECENT] Added: {e.NewItems[0]} (Total: {vm.OverviewVM.RecentDirectories.Count})");
+                    }
+                };
+
+                Console.WriteLine("[VM TEST] Calling StartScanAsync()...");
+                var scanTask = vm.StartScanAsync();
+
+                Task.Run(async () =>
+                {
+                    await Task.Delay(3500);
+                    Console.WriteLine("[VM TEST] Cancelling scan via StopScanCommand...");
+                    vm.StopScanCommand.Execute(null);
+                });
+
+                scanTask.GetAwaiter().GetResult();
+                Console.WriteLine($"[VM TEST] Completed! Final Indexed: {vm.OverviewVM.Stats.FilesIndexed}, Visited: {vm.OverviewVM.Stats.DirectoriesVisited}");
+                tcs.SetResult(0);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VM TEST ERROR] {ex}");
+                tcs.SetException(ex);
+            }
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        return await tcs.Task;
     }
 }

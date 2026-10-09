@@ -44,7 +44,19 @@ if %ERRORLEVEL% equ 0 (
     )
 )
 
-:: 2. Launch root standalone executable if available
+:: 2. Launch freshly built Debug executable if available
+if exist "bin\Debug\net8.0-windows\ArborGraph.exe" (
+    echo [*] Starting ArborGraph...
+    start "" "bin\Debug\net8.0-windows\ArborGraph.exe" %*
+    goto :Success
+)
+if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
+    echo [*] Starting ArborGraph (legacy binary)...
+    start "" "bin\Debug\net8.0-windows\DiskScope.exe" %*
+    goto :Success
+)
+
+:: 3. Launch root standalone executable if available
 if exist "ArborGraph.exe" (
     echo [*] Starting standalone ArborGraph...
     start "" "ArborGraph.exe" %*
@@ -61,7 +73,7 @@ if exist "PrismDrive.exe" (
     goto :Success
 )
 
-:: 3. Launch dist standalone executable if available
+:: 4. Launch dist standalone executable if available
 if exist "dist\ArborGraph.exe" (
     echo [*] Starting standalone ArborGraph...
     start "" "dist\ArborGraph.exe" %*
@@ -70,18 +82,6 @@ if exist "dist\ArborGraph.exe" (
 if exist "dist\DiskScope.exe" (
     echo [*] Starting standalone ArborGraph (legacy binary)...
     start "" "dist\DiskScope.exe" %*
-    goto :Success
-)
-
-:: 4. Launch the Debug executable if available
-if exist "bin\Debug\net8.0-windows\ArborGraph.exe" (
-    echo [*] Starting ArborGraph...
-    start "" "bin\Debug\net8.0-windows\ArborGraph.exe" %*
-    goto :Success
-)
-if exist "bin\Debug\net8.0-windows\DiskScope.exe" (
-    echo [*] Starting ArborGraph (legacy binary)...
-    start "" "bin\Debug\net8.0-windows\DiskScope.exe" %*
     goto :Success
 )
 

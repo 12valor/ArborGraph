@@ -147,9 +147,14 @@ if ($Dev) {
 if ($hasNet8) {
     Write-Host "[*] Building ArborGraph ($Configuration)..." -ForegroundColor Cyan
     & dotnet build DiskScope.csproj -c $Configuration --nologo -v quiet
-    foreach ($exe in @($rootExe, $distExe, $debugExe, $legacyDebugExe, $legacyRootExe)) {
+    $targetExeList = if ($Configuration -eq "Release") {
+        @($distExe, $publishExe, $rootExe, $debugExe)
+    } else {
+        @($debugExe, $distExe, $rootExe)
+    }
+    foreach ($exe in $targetExeList) {
         if (Test-Path $exe) {
-            Write-Host "[*] Starting ArborGraph..." -ForegroundColor Green
+            Write-Host "[*] Starting ArborGraph ($exe)..." -ForegroundColor Green
             Start-Process -FilePath $exe
             return
         }

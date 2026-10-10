@@ -323,8 +323,10 @@ public class Program
                     _ = new Application();
                 }
 
-                Console.WriteLine("[VM TEST] Creating MainViewModel...");
-                var vm = new MainViewModel();
+                string tempDb = Path.Combine(Path.GetTempPath(), "vm_test_" + Guid.NewGuid().ToString("N")[..8] + ".db");
+                Console.WriteLine($"[VM TEST] Creating MainViewModel with temp DB: {tempDb}...");
+                var db = new DatabaseService(tempDb);
+                var vm = new MainViewModel(db);
 
                 vm.OverviewVM.Stats.PropertyChanged += (s, e) =>
                 {
@@ -349,11 +351,15 @@ public class Program
                 {
                     await Task.Delay(3500);
                     Console.WriteLine("[VM TEST] Cancelling scan via StopScanCommand...");
-                    vm.StopScanCommand.Execute(null);
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => vm.StopScanCommand.Execute(null));
                 });
 
-                scanTask.GetAwaiter().GetResult();
+                var frame = new System.Windows.Threading.DispatcherFrame();
+                scanTask.ContinueWith(_ => frame.Continue = false);
+                System.Windows.Threading.Dispatcher.PushFrame(frame);
+
                 Console.WriteLine($"[VM TEST] Completed! Final Indexed: {vm.OverviewVM.Stats.FilesIndexed}, Visited: {vm.OverviewVM.Stats.DirectoriesVisited}");
+                try { File.Delete(tempDb); } catch { }
                 tcs.SetResult(0);
             }
             catch (Exception ex)

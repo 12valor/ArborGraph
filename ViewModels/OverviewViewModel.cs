@@ -324,6 +324,12 @@ public class OverviewViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(dir)) return;
 
+        bool isPriorityMessage = dir.StartsWith("[PHASE]") || dir.StartsWith("[COMPLETE]") || dir.StartsWith("[STATUS]");
+        if (isPriorityMessage)
+        {
+            force = true;
+        }
+
         if (!force)
         {
             if ((DateTime.UtcNow - _lastRecentDirTime).TotalMilliseconds < 35) return;

@@ -210,8 +210,10 @@ public class ScannerService
                 }
             });
 
+            EmitProgress(progress, stopwatch, "Initializing target workspace...", ScanState.Scanning, "[PHASE] Initializing target workspace & clearing previous index...");
             _dbService.BeginBulkIngestion();
             _dbService.ClearIndex(roots);
+            EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Traversal started on: {string.Join(", ", roots)}");
 
             var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(50000)
             {
@@ -223,7 +225,7 @@ public class ScannerService
             // Background SQLite Ingestion Task
             var dbWorker = Task.Run(async () =>
             {
-                const int batchSize = 5000;
+                const int batchSize = 10000;
                 var batch = new List<FileRecord>(batchSize);
                 var reader = channel.Reader;
                 var lastFlush = Stopwatch.StartNew();
@@ -278,7 +280,7 @@ public class ScannerService
                         while (!cancellationToken.IsCancellationRequested && reader.TryRead(out var item))
                         {
                             batch.Add(item);
-                            if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 500))
+                            if (batch.Count >= batchSize || (batch.Count > 0 && lastFlush.ElapsedMilliseconds >= 300))
                             {
                                 PersistBatchSafe(batch);
                                 batch.Clear();
@@ -383,9 +385,18 @@ public class ScannerService
                     try
                     {
                         var dirInfo = new DirectoryInfo(dir);
+                        int filesInCurDir = 0;
                         foreach (var fi in dirInfo.EnumerateFiles())
                         {
                             if (cancellationToken.IsCancellationRequested) break;
+                            filesInCurDir++;
+
+                            // Pulse live feed during large directory file enumeration (>1,500 files in a single folder)
+                            if (filesInCurDir % 1500 == 0 && feedStopwatch.ElapsedMilliseconds >= 120)
+                            {
+                                EmitProgress(progress, stopwatch, dir, ScanState.Scanning, $"{dir} ({filesInCurDir:N0} files indexed...)");
+                                feedStopwatch.Restart();
+                            }
 
                             // Skip hidden or system files if configured
                             if (!settings.IncludeHiddenFiles && (fi.Attributes & FileAttributes.Hidden) != 0)
@@ -555,7 +566,7 @@ public class ScannerService
                 currentDirectory = "Finalizing file queues to SQLite index...";
                 Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Draining worker batch queues";
-                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Finalizing file queues to SQLite index...", scanMode, scanModeDetails);
                 channel.Writer.TryComplete();
                 await dbWorker;
 
@@ -564,15 +575,16 @@ public class ScannerService
                     currentDirectory = "Computing hierarchical folder size rollups...";
                     Volatile.Write(ref currentDirectoryRef, currentDirectory);
                     scanModeDetails = "Aggregating directory sizes & subfolder metrics";
-                    EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                    EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Computing hierarchical folder size rollups...", scanMode, scanModeDetails);
                     _dbService.BuildDirectoryRollup(roots, cancellationToken);
                 }
 
                 currentDirectory = "Optimizing database indexes & WAL checkpoint...";
                 Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Building search indexes and flushing SQLite WAL";
-                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, null, scanMode, scanModeDetails);
+                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Optimizing database indexes & flushing WAL...", scanMode, scanModeDetails);
                 _dbService.EndBulkIngestion();
+                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Scan index ready: {Volatile.Read(ref _filesIndexed):N0} files recorded.", scanMode, scanModeDetails);
             }
             catch (Exception ex)
             {
@@ -655,6 +667,9 @@ public class ScannerService
                 BytesPerSecond = finalStats.BytesPerSecond,
                 CurrentDirectory = finalStats.CurrentDirectory,
                 State = finalStats.State,
+                NewRecentDirectory = finalStats.State == ScanState.Cancelled
+                    ? "[STATUS] Scan cancelled safely by user."
+                    : $"[COMPLETE] Indexed {finalStats.FilesIndexed:N0} files across {finalStats.DirectoriesProcessed:N0} folders in {finalStats.FormattedElapsed}.",
                 ScanMode = scanMode,
                 ScanModeDetails = scanModeDetails
             });

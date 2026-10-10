@@ -316,9 +316,23 @@
                                    FontSize="11" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" MaxWidth="500" TextTrimming="CharacterEllipsis"/>
                     </Grid>
                     <ListBox ItemsSource="{Binding RecentDirectories}"
+                             Focusable="False"
                              Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1"
                              FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"
-                             Height="110" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                             Height="110" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.CanContentScroll="False">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Focusable" Value="False"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis" Padding="2,1"/>

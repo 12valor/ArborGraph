@@ -181,6 +181,50 @@ public class DatabaseService : IDisposable
                     bool isFullClear = roots == null || roots.Count == 0 ||
                                        roots.Any(r => string.Equals(r?.Trim(), "ALL", StringComparison.OrdinalIgnoreCase));
 
+                    if (!isFullClear && roots != null)
+                    {
+                        // Check if all existing records belong to the target roots.
+                        // If no records exist outside the target roots, full table truncation is safe and instantaneous.
+                        try
+                        {
+                            var cleanRoots = roots
+                                .Where(r => !string.IsNullOrWhiteSpace(r))
+                                .Select(r =>
+                                {
+                                    string cr = r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                                    if (cr.Length >= 2 && cr[1] == ':')
+                                    {
+                                        cr = char.ToUpperInvariant(cr[0]) + cr.Substring(1);
+                                    }
+                                    return cr;
+                                })
+                                .ToList();
+
+                            if (cleanRoots.Count > 0)
+                            {
+                                using var checkCmd = _connection.CreateCommand();
+                                checkCmd.Transaction = tx;
+                                var sb = new System.Text.StringBuilder("SELECT 1 FROM files WHERE ");
+                                for (int i = 0; i < cleanRoots.Count; i++)
+                                {
+                                    if (i > 0) sb.Append(" AND ");
+                                    sb.Append($"(path < $pMin{i} OR path >= $pMax{i})");
+                                    checkCmd.Parameters.AddWithValue($"$pMin{i}", cleanRoots[i] + Path.DirectorySeparatorChar);
+                                    checkCmd.Parameters.AddWithValue($"$pMax{i}", cleanRoots[i] + (char)(Path.DirectorySeparatorChar + 1));
+                                }
+                                sb.Append(" LIMIT 1;");
+                                checkCmd.CommandText = sb.ToString();
+
+                                var checkResult = checkCmd.ExecuteScalar();
+                                if (checkResult == null)
+                                {
+                                    isFullClear = true;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+
                     if (isFullClear)
                     {
                         using var cmd = _connection.CreateCommand();
@@ -265,16 +309,6 @@ public class DatabaseService : IDisposable
                     PRAGMA synchronous = OFF;
                     PRAGMA temp_store = MEMORY;
                     PRAGMA cache_size = -64000;
-
-                    DROP INDEX IF EXISTS idx_files_size;
-                    DROP INDEX IF EXISTS idx_files_parent;
-                    DROP INDEX IF EXISTS idx_files_parent_size;
-                    DROP INDEX IF EXISTS idx_files_modified;
-                    DROP INDEX IF EXISTS idx_files_modified_size;
-                    DROP INDEX IF EXISTS idx_files_extension;
-                    DROP INDEX IF EXISTS idx_files_category;
-                    DROP INDEX IF EXISTS idx_files_category_size;
-                    DROP INDEX IF EXISTS idx_files_name;
                 ";
                 cmd.ExecuteNonQuery();
             }
@@ -294,16 +328,6 @@ public class DatabaseService : IDisposable
                 EnsureOpen();
                 using var cmd = _connection!.CreateCommand();
                 cmd.CommandText = @"
-                    CREATE INDEX IF NOT EXISTS idx_files_size ON files(size DESC);
-                    CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent);
-                    CREATE INDEX IF NOT EXISTS idx_files_parent_size ON files(parent, size);
-                    CREATE INDEX IF NOT EXISTS idx_files_modified ON files(modified_time DESC);
-                    CREATE INDEX IF NOT EXISTS idx_files_modified_size ON files(modified_time, size);
-                    CREATE INDEX IF NOT EXISTS idx_files_extension ON files(extension);
-                    CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
-                    CREATE INDEX IF NOT EXISTS idx_files_category_size ON files(category, size);
-                    CREATE INDEX IF NOT EXISTS idx_files_name ON files(name);
-
                     PRAGMA synchronous = NORMAL;
                     PRAGMA wal_checkpoint(PASSIVE);
                 ";

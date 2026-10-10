@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const OFFICIAL_HASH = '2B1565D766CA89C1D26BBDF56C49144890AA83A568BE607C79C36A5D7A8310F6';
+    const OFFICIAL_HASH = '8A43C0632695BCF407865759DBC7EA811E537FDD42AEC2948A8B229D831036DB';
 
     // =========================================================================
     // 1. TOAST NOTIFICATION HELPER

@@ -261,11 +261,18 @@ public class Program
         string realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArborGraph", "scan_index.db");
         if (!File.Exists(realDb)) realDb = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DiskScope", "scan_index.db");
         Console.WriteLine($"[LIVE TEST] Using DB: {realDb}");
+        var fi = new FileInfo(realDb);
+        Console.WriteLine($"[LIVE TEST] DB File Size: {fi.Length:N0} bytes ({fi.Length / (1024.0 * 1024.0):F2} MB)");
+
         var db = new DatabaseService(realDb);
         db.Initialize();
+
+        var (totalFiles, totalBytes) = db.GetTotalIndexedStorage();
+        Console.WriteLine($"[LIVE TEST] Current indexed storage: {totalFiles:N0} files, {totalBytes:N0} bytes");
+
         var settingsService = new SettingsService();
         var scanner = new ScannerService(db, null, settingsService);
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var progress = new Progress<ScanProgressReport>(r =>
         {
             Console.WriteLine($"[PROGRESS] Elapsed: {r.Elapsed.TotalSeconds:F2}s | Indexed: {r.FilesIndexed} | Dirs: {r.DirectoriesProcessed} | RecentDir: {r.NewRecentDirectory} | CurDir: {r.CurrentDirectory}");

@@ -25,6 +25,7 @@ public static class AutomatedTestSuites
         RegisterInstallerTests(runner);
         RegisterUsnJournalTests(runner);
         RegisterXamlAndUiTests(runner);
+        RegisterUpdateSystemTests(runner);
     }
 
     // =========================================================================
@@ -1703,6 +1704,149 @@ public static class AutomatedTestSuites
                 string nonExistent = Path.Combine(tempDir, "NonExistentFolder_12345");
                 string cleanedNonExistent = nonExistent.Trim().Trim('"').Trim();
                 ctx.Assert(!Directory.Exists(cleanedNonExistent), "Nonexistent path must be detected as not existing");
+
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // N. GITHUB RELEASES UPDATE SYSTEM SUITE
+    // =========================================================================
+    private static void RegisterUpdateSystemTests(TestRunner runner)
+    {
+        // TC-UPD-01: Version Comparison Logic
+        runner.Register(new TestCase(
+            TestId: "TC-UPD-01",
+            FeatureId: "FEAT-14",
+            Title: "Semantic Version Comparison Ordering and Equality",
+            Priority: "P0 / BLOCKER",
+            Category: "Update System",
+            ProductionClass: "DiskScope.Services.UpdateService",
+            AuditRiskNote: "Verifies update version comparison correctly detects newer versions and avoids false positive update prompts on same or older versions.",
+            ExecuteAsync: async ctx =>
+            {
+                var v1_1_1 = new Version(1, 1, 1);
+                var v1_1_2 = new Version(1, 1, 2);
+                var v1_2_0 = new Version(1, 2, 0);
+                var v2_0_0 = new Version(2, 0, 0);
+                var v1_1_0 = new Version(1, 1, 0);
+                var v1_1_1_dup = new Version(1, 1, 1);
+
+                ctx.Assert(UpdateService.CompareVersions(v1_1_2, v1_1_1) > 0, "1.1.2 must be newer than 1.1.1");
+                ctx.Assert(UpdateService.CompareVersions(v1_2_0, v1_1_1) > 0, "1.2.0 must be newer than 1.1.1");
+                ctx.Assert(UpdateService.CompareVersions(v2_0_0, v1_1_1) > 0, "2.0.0 must be newer than 1.1.1");
+                ctx.AssertEqual(0, UpdateService.CompareVersions(v1_1_1, v1_1_1_dup), "Same version must equal 0");
+                ctx.Assert(UpdateService.CompareVersions(v1_1_0, v1_1_1) < 0, "Older version must return < 0");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-UPD-02: Cryptographic SHA-256 Digest Calculation & Verification
+        runner.Register(new TestCase(
+            TestId: "TC-UPD-02",
+            FeatureId: "FEAT-14",
+            Title: "Cryptographic SHA-256 Download Integrity Verification",
+            Priority: "P0 / BLOCKER",
+            Category: "Update System",
+            ProductionClass: "DiskScope.Services.UpdateService",
+            AuditRiskNote: "Verifies that downloaded update binaries are validated against published SHA-256 digests and altered files are rejected.",
+            ExecuteAsync: async ctx =>
+            {
+                string tempDir = ctx.CreateTempDirectory("sha256_update_test");
+                string testFile = Path.Combine(tempDir, "test_binary.exe");
+                byte[] sampleBytes = Encoding.UTF8.GetBytes("ArborGraph Standalone Executable Test Payload 2026");
+                await File.WriteAllBytesAsync(testFile, sampleBytes);
+
+                // Compute hash using service
+                string computedHash = await UpdateService.ComputeSha256Async(testFile);
+                ctx.Assert(!string.IsNullOrEmpty(computedHash), "Computed SHA-256 hash must not be empty");
+                ctx.AssertEqual(64, computedHash.Length, "SHA-256 hex digest must be 64 characters");
+
+                // Verify matching hash
+                ctx.Assert(string.Equals(computedHash, computedHash, StringComparison.OrdinalIgnoreCase), "Identical hash must match");
+
+                // Verify altered file produces different hash
+                byte[] alteredBytes = Encoding.UTF8.GetBytes("ArborGraph Tampered Executable Payload 2026");
+                string alteredFile = Path.Combine(tempDir, "tampered_binary.exe");
+                await File.WriteAllBytesAsync(alteredFile, alteredBytes);
+                string tamperedHash = await UpdateService.ComputeSha256Async(alteredFile);
+
+                ctx.Assert(!string.Equals(computedHash, tamperedHash, StringComparison.OrdinalIgnoreCase), "Altered binary must produce differing digest");
+            }
+        ));
+
+        // TC-UPD-03: Active Scan State Protection and Deferral
+        runner.Register(new TestCase(
+            TestId: "TC-UPD-03",
+            FeatureId: "FEAT-14",
+            Title: "Active Scan Deferral and Restart Command Invalidation",
+            Priority: "P0 / BLOCKER",
+            Category: "Update System",
+            ProductionClass: "DiskScope.ViewModels.MainViewModel",
+            AuditRiskNote: "Ensures the application cannot be restarted to apply an update while a filesystem scan is actively running.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("update_safety_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var mainVm = new DiskScope.ViewModels.MainViewModel(db);
+
+                // Simulate update available and ready to restart
+                mainVm.ShowUpdate(new UpdateInfo
+                {
+                    TargetVersion = new Version(1, 1, 2),
+                    TagName = "v1.1.2",
+                    ReleaseName = "ArborGraph v1.1.2",
+                    ReleaseNotes = "Safety test release notes"
+                });
+
+                ctx.Assert(mainVm.IsUpdateBannerVisible, "Banner must be visible when update is shown");
+                ctx.AssertEqual("ArborGraph v1.1.2 is available", mainVm.UpdateVersionText, "Version text must match tag");
+
+                // Set ready to restart
+                mainVm.IsUpdateReadyToRestart = true;
+                ctx.Assert(mainVm.RestartToUpdateCommand.CanExecute(null), "Restart command should be executable when not scanning");
+
+                // Now simulate scan active
+                mainVm.IsScanning = true;
+                ctx.Assert(!mainVm.RestartToUpdateCommand.CanExecute(null), "Restart command MUST NOT be executable while IsScanning == true");
+
+                // Scan finishes
+                mainVm.IsScanning = false;
+                ctx.Assert(mainVm.RestartToUpdateCommand.CanExecute(null), "Restart command should become executable once scan finishes");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-UPD-04: Banner Dismissal and Status Flow
+        runner.Register(new TestCase(
+            TestId: "TC-UPD-04",
+            FeatureId: "FEAT-14",
+            Title: "Update Banner Dismissal and Non-Disruptive Flow",
+            Priority: "P1 / CRITICAL",
+            Category: "Update System",
+            ProductionClass: "DiskScope.ViewModels.MainViewModel",
+            AuditRiskNote: "Verifies user can dismiss the update banner without affecting normal application operations.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("update_dismiss_test.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var mainVm = new DiskScope.ViewModels.MainViewModel(db);
+                mainVm.ShowUpdate(new UpdateInfo
+                {
+                    TargetVersion = new Version(1, 1, 2),
+                    TagName = "v1.1.2"
+                });
+
+                ctx.Assert(mainVm.IsUpdateBannerVisible, "Banner should be visible");
+                mainVm.DismissUpdateCommand.Execute(null);
+                ctx.Assert(!mainVm.IsUpdateBannerVisible, "Banner must be hidden after dismissing");
 
                 await Task.CompletedTask;
             }

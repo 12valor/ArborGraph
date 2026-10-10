@@ -71,7 +71,82 @@
 
             <!-- ACTIVE VIEW CONTAINER & LOADING OVERLAY -->
             <Grid Grid.Column="1" Background="{StaticResource BrushBgCanvas}">
-                <ContentControl Content="{Binding CurrentView}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- UPDATE NOTIFICATION BANNER -->
+                <Border Grid.Row="0"
+                        Visibility="{Binding IsUpdateBannerVisible, Converter={StaticResource BoolToVis}}"
+                        Background="{StaticResource BrushBgSurface}"
+                        BorderBrush="{StaticResource BrushAccent}"
+                        BorderThickness="0,0,0,2"
+                        Padding="16,10"
+                        Panel.ZIndex="50">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Icon Badge -->
+                        <Border Grid.Column="0" Background="{StaticResource BrushAccent}" CornerRadius="3" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="UPDATE" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        </Border>
+
+                        <!-- Info & Progress -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding UpdateVersionText}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="12,0,0,0" FontWeight="Medium"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding UpdateNotesSummary}" FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+
+                            <ProgressBar Height="3" Margin="0,6,0,0" Value="{Binding UpdateDownloadProgress}" Maximum="100"
+                                         Foreground="{StaticResource BrushAccent}"
+                                         Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+
+                        <!-- Actions -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Update Now Button -->
+                            <Button Content="Update Now" 
+                                    Command="{Binding StartUpdateCommand}"
+                                    Padding="12,4" Margin="0,0,6,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsUpdateReadyToRestart}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsUpdateDownloading}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- Restart Now Button -->
+                            <Button Content="Restart Now" 
+                                    Command="{Binding RestartToUpdateCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Padding="12,4" Margin="0,0,6,0"
+                                    Visibility="{Binding IsUpdateReadyToRestart, Converter={StaticResource BoolToVis}}"/>
+
+                            <!-- Later / Dismiss Button -->
+                            <Button Content="Later" 
+                                    Command="{Binding DismissUpdateCommand}"
+                                    Style="{StaticResource ActionButtonStyle}"
+                                    Padding="10,4"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ContentControl Grid.Row="1" Content="{Binding CurrentView}">
                     <ContentControl.Resources>
                         <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
                             <views:OverviewView/>
@@ -126,7 +201,7 @@
                 </ContentControl>
 
                 <!-- TAB LOADING OVERLAY -->
-                <Border Background="#90FAFAFA" 
+                <Border Grid.Row="0" Grid.RowSpan="2" Background="#90FAFAFA" 
                         Visibility="{Binding IsTabLoading, Converter={StaticResource BoolToVis}}"
                         Panel.ZIndex="999">
                     <Border Background="{StaticResource BrushBgSurface}" 

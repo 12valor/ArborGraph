@@ -30,6 +30,32 @@ public class SettingsViewModel : ObservableObject
 
     private string _selectedSection = "General";
 
+    public IUpdateService? UpdateService { get; set; }
+
+    private string _updateCheckStatus = string.Empty;
+    public string UpdateCheckStatus
+    {
+        get => _updateCheckStatus;
+        set => SetProperty(ref _updateCheckStatus, value);
+    }
+
+    private bool _isCheckingForUpdates;
+    public bool IsCheckingForUpdates
+    {
+        get => _isCheckingForUpdates;
+        set
+        {
+            if (SetProperty(ref _isCheckingForUpdates, value))
+            {
+                (CheckForUpdatesCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string CurrentVersionText => $"Version {UpdateService?.CurrentVersion.ToString(3) ?? "1.1.1"}";
+
+    public ICommand CheckForUpdatesCommand { get; }
+
     public SettingsViewModel(SettingsService settingsService, DatabaseService dbService)
     {
         _settingsService = settingsService;
@@ -51,6 +77,44 @@ public class SettingsViewModel : ObservableObject
         ResetDefaultsCommand = new RelayCommand(_ => ResetDefaults());
         ClearAllHistoryCommand = new RelayCommand(_ => ClearAllHistory());
         ViewEulaCommand = new RelayCommand(_ => ViewEula());
+        CheckForUpdatesCommand = new RelayCommand(async _ => await CheckForUpdatesAsync(), _ => !IsCheckingForUpdates);
+    }
+
+    public async Task CheckForUpdatesAsync()
+    {
+        if (UpdateService == null || IsCheckingForUpdates) return;
+
+        IsCheckingForUpdates = true;
+        UpdateCheckStatus = "Checking for updates on GitHub...";
+
+        try
+        {
+            var response = await UpdateService.CheckForUpdatesAsync();
+            switch (response.Result)
+            {
+                case UpdateCheckResult.UpdateAvailable when response.Update != null:
+                    UpdateCheckStatus = $"Update available: {response.Update.TagName}.";
+                    MainVM?.ShowUpdate(response.Update);
+                    break;
+                case UpdateCheckResult.UpToDate:
+                    UpdateCheckStatus = "ArborGraph is up to date.";
+                    break;
+                case UpdateCheckResult.RateLimited:
+                    UpdateCheckStatus = "GitHub API rate limit reached. Please check back later.";
+                    break;
+                default:
+                    UpdateCheckStatus = string.IsNullOrWhiteSpace(response.Message) ? "Could not verify updates." : response.Message;
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateCheckStatus = $"Update check failed: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
+        }
     }
 
     public string SelectedSection

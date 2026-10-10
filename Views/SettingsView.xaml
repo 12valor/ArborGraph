@@ -84,12 +84,32 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                             <Image Source="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" Width="28" Height="28" Margin="0,0,10,0" VerticalAlignment="Center"/>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="ArborGraph" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="ArborGraph" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="{Binding CurrentVersionText}" FontSize="12" Foreground="{StaticResource BrushAccent}" FontWeight="Medium" Margin="8,2,0,0"/>
+                                </StackPanel>
                                 <TextBlock Text="Filesystem Analytics &amp; Visualization" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,1,0,0"/>
                             </StackPanel>
                         </StackPanel>
-                        <TextBlock Text="A local Windows utility for understanding storage through hierarchical analysis, file intelligence, and visual reporting. (Previously known as DiskScope Pro)" 
-                                   FontSize="11.5" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <TextBlock Text="A local Windows utility for understanding storage through hierarchical analysis, file intelligence, and visual reporting." 
+                                   FontSize="11.5" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                        <!-- Update Management -->
+                        <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Application Updates" FontWeight="SemiBold" FontSize="12.5" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="{Binding UpdateCheckStatus}" 
+                                               FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Check for Updates" Command="{Binding CheckForUpdatesCommand}" 
+                                        Style="{StaticResource ActionButtonStyle}" Padding="12,4"/>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 

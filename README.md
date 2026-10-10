@@ -1,7 +1,7 @@
 # ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
-[![Latest Release: v1.1.1](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
+[![Latest Release: v1.1.2](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
 [![Runtime: .NET 8.0](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Privacy: 100% Offline](https://img.shields.io/badge/Privacy-100%25%20Offline%20%2F%20Zero%20Telemetry-107C41)](LICENSE.md#3-local-architecture--privacy-commitment)

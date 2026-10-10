@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const OFFICIAL_HASH = '8A43C0632695BCF407865759DBC7EA811E537FDD42AEC2948A8B229D831036DB';
+    const OFFICIAL_HASH = '65418FFCDFC74B41307266F2E0AC03D2DA6C96D0DE8F835597953E668CD8A87B';
 
     // =========================================================================
     // 1. TOAST NOTIFICATION HELPER
@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
             eulaVersion: "1.0",
             accepted: true,
             acceptedAt: new Date().toISOString(),
-            applicationVersion: "1.1.1",
+            applicationVersion: "1.1.2",
             architecture: "win-x64",
             publisher: "AG DIAZ EVANGELISTA",
             offlineStorage: "%LocalAppData%\\ArborGraph"

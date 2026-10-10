@@ -19,6 +19,7 @@ public class MainViewModel : ObservableObject
     private readonly JunkCleanerService _junkCleanerService;
     private readonly ExportService _exportService;
     private readonly SettingsService _settingsService;
+    private readonly IUpdateService _updateService;
 
     private object _currentView;
     private string _currentTab = "Overview";
@@ -26,16 +27,28 @@ public class MainViewModel : ObservableObject
     private CancellationTokenSource? _scanCts;
     private string _customScanPath = string.Empty;
 
-    public MainViewModel() : this(null)
+    // Update state fields
+    private UpdateInfo? _latestUpdateInfo;
+    private bool _isUpdateBannerVisible;
+    private bool _isUpdateDownloading;
+    private double _updateDownloadProgress;
+    private bool _isUpdateReadyToRestart;
+    private string _updateStatusText = string.Empty;
+    private string _updateVersionText = string.Empty;
+    private string _updateNotesSummary = string.Empty;
+    private bool _isUpdateWaitingForScan;
+
+    public MainViewModel() : this(null, null)
     {
     }
 
-    public MainViewModel(DatabaseService? dbService)
+    public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null)
     {
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();
 
         _settingsService = new SettingsService();
+        _updateService = updateService ?? new UpdateService();
         _scannerService = new ScannerService(_dbService, usnService: null, _settingsService);
         _diskService = new DiskService();
         _fileActionService = new FileActionService();
@@ -58,6 +71,7 @@ public class MainViewModel : ObservableObject
         TreemapVM = new TreemapViewModel(_dbService, _fileActionService);
         ScanLogVM = new ScanLogViewModel();
         SettingsVM = new SettingsViewModel(_settingsService, _dbService);
+        SettingsVM.UpdateService = _updateService;
         SettingsVM.MainVM = this;
         ScannerVM = new ScannerViewModel(this);
         FilesVM = new FilesViewModel(this);
@@ -78,6 +92,28 @@ public class MainViewModel : ObservableObject
         ExportFilesCsvCommand = new RelayCommand(async _ => await ExportFilesCsvAsync(), _ => !IsScanning);
         ExportDuplicatesCsvCommand = new RelayCommand(async _ => await ExportDuplicatesCsvAsync(), _ => !IsScanning);
         ExportJunkCsvCommand = new RelayCommand(async _ => await ExportJunkCsvAsync(), _ => !IsScanning);
+
+        StartUpdateCommand = new RelayCommand(async _ => await StartUpdateAsync(), _ => !IsUpdateDownloading);
+        DismissUpdateCommand = new RelayCommand(_ => IsUpdateBannerVisible = false);
+        RestartToUpdateCommand = new RelayCommand(_ => RestartToUpdate(), _ => IsUpdateReadyToRestart && !IsScanning);
+
+        // Non-blocking background update check
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(2500);
+                var response = await _updateService.CheckForUpdatesAsync();
+                if (response.Result == UpdateCheckResult.UpdateAvailable && response.Update != null)
+                {
+                    Application.Current?.Dispatcher?.Invoke(() =>
+                    {
+                        ShowUpdate(response.Update);
+                    });
+                }
+            }
+            catch { }
+        });
     }
 
     public OverviewViewModel OverviewVM { get; }
@@ -124,7 +160,14 @@ public class MainViewModel : ObservableObject
                 (ExportFilesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportDuplicatesCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (ExportJunkCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (RestartToUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 CommandManager.InvalidateRequerySuggested();
+
+                if (!value && _isUpdateWaitingForScan && IsUpdateReadyToRestart)
+                {
+                    UpdateStatusText = "Scan complete. Restart now to finish updating.";
+                    _isUpdateWaitingForScan = false;
+                }
             }
         }
     }
@@ -133,6 +176,60 @@ public class MainViewModel : ObservableObject
     {
         get => _customScanPath;
         set => SetProperty(ref _customScanPath, value);
+    }
+
+    public bool IsUpdateBannerVisible
+    {
+        get => _isUpdateBannerVisible;
+        set => SetProperty(ref _isUpdateBannerVisible, value);
+    }
+
+    public bool IsUpdateDownloading
+    {
+        get => _isUpdateDownloading;
+        set
+        {
+            if (SetProperty(ref _isUpdateDownloading, value))
+            {
+                (StartUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public double UpdateDownloadProgress
+    {
+        get => _updateDownloadProgress;
+        set => SetProperty(ref _updateDownloadProgress, value);
+    }
+
+    public bool IsUpdateReadyToRestart
+    {
+        get => _isUpdateReadyToRestart;
+        set
+        {
+            if (SetProperty(ref _isUpdateReadyToRestart, value))
+            {
+                (RestartToUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string UpdateStatusText
+    {
+        get => _updateStatusText;
+        set => SetProperty(ref _updateStatusText, value);
+    }
+
+    public string UpdateVersionText
+    {
+        get => _updateVersionText;
+        set => SetProperty(ref _updateVersionText, value);
+    }
+
+    public string UpdateNotesSummary
+    {
+        get => _updateNotesSummary;
+        set => SetProperty(ref _updateNotesSummary, value);
     }
 
     public ICommand StartScanCommand { get; }
@@ -144,6 +241,9 @@ public class MainViewModel : ObservableObject
     public ICommand ExportFilesCsvCommand { get; }
     public ICommand ExportDuplicatesCsvCommand { get; }
     public ICommand ExportJunkCsvCommand { get; }
+    public ICommand StartUpdateCommand { get; }
+    public ICommand DismissUpdateCommand { get; }
+    public ICommand RestartToUpdateCommand { get; }
 
     private bool _isTabLoading;
     private string _tabLoadingTitle = string.Empty;
@@ -719,5 +819,107 @@ public class MainViewModel : ObservableObject
     {
         if (IsScanning) return;
         await JunkCleanerVM.ExportCsvAsync();
+    }
+
+    public void ShowUpdate(UpdateInfo update)
+    {
+        _latestUpdateInfo = update;
+        UpdateVersionText = $"ArborGraph {update.TagName} is available";
+        UpdateNotesSummary = FormatNotesSummary(update.ReleaseNotes);
+        UpdateStatusText = string.Empty;
+        IsUpdateBannerVisible = true;
+    }
+
+    private static string FormatNotesSummary(string rawNotes)
+    {
+        if (string.IsNullOrWhiteSpace(rawNotes)) return "Official release update.";
+        var lines = rawNotes.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(l => !l.StartsWith('#') && !string.IsNullOrWhiteSpace(l))
+            .Take(2);
+        var joined = string.Join(" ", lines);
+        if (joined.Length > 160) joined = joined[..157] + "...";
+        return string.IsNullOrWhiteSpace(joined) ? "Official release update." : joined;
+    }
+
+    private async Task StartUpdateAsync()
+    {
+        if (_latestUpdateInfo == null || IsUpdateDownloading) return;
+
+        IsUpdateDownloading = true;
+        UpdateDownloadProgress = 0;
+
+        if (IsScanning)
+        {
+            _isUpdateWaitingForScan = true;
+            UpdateStatusText = "Downloading update in background. Installation will wait until scan completes...";
+        }
+        else
+        {
+            UpdateStatusText = "Downloading update package from GitHub Releases...";
+        }
+
+        var progress = new Progress<double>(pct =>
+        {
+            UpdateDownloadProgress = pct;
+            if (pct < 100)
+            {
+                UpdateStatusText = $"Downloading update: {pct:F0}%";
+            }
+            else
+            {
+                UpdateStatusText = "Verifying cryptographic SHA-256 integrity...";
+            }
+        });
+
+        try
+        {
+            bool success = await _updateService.DownloadAndVerifyUpdateAsync(_latestUpdateInfo, progress);
+            if (success)
+            {
+                IsUpdateReadyToRestart = true;
+                IsUpdateDownloading = false;
+
+                if (IsScanning)
+                {
+                    _isUpdateWaitingForScan = true;
+                    UpdateStatusText = "Update downloaded and verified. Waiting for active scan to finish before restart...";
+                }
+                else
+                {
+                    UpdateStatusText = "Update verified. Restart now to complete installation.";
+                }
+            }
+            else
+            {
+                IsUpdateDownloading = false;
+                UpdateStatusText = "Update verification failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            IsUpdateDownloading = false;
+            UpdateStatusText = $"Update failed: {ex.Message}";
+        }
+    }
+
+    private void RestartToUpdate()
+    {
+        if (_latestUpdateInfo == null) return;
+
+        if (IsScanning)
+        {
+            MessageBox.Show(
+                "A filesystem scan is currently in progress.\n\nPlease wait for or stop the scan before restarting.",
+                "Active Scan in Progress",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        bool launched = _updateService.ApplyUpdateAndRestart(_latestUpdateInfo);
+        if (!launched)
+        {
+            MessageBox.Show("Failed to launch update process. Please check app logs.", "ArborGraph Update Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }

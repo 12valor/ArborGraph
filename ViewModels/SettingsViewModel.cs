@@ -372,6 +372,7 @@ public class SettingsViewModel : ObservableObject
         if (res == MessageBoxResult.Yes)
         {
             _dbService.DeleteScanHistory();
+            MainVM?.LastScanService?.ClearLastScan();
             StatusMessage = "All scan history cleared.";
             MessageBox.Show("All scan history sessions were successfully removed.", "History Cleared", MessageBoxButton.OK, MessageBoxImage.Information);
         }

@@ -20,6 +20,7 @@ public class MainViewModel : ObservableObject
     private readonly ExportService _exportService;
     private readonly SettingsService _settingsService;
     private readonly IUpdateService _updateService;
+    private readonly LastScanService _lastScanService;
 
     private object _currentView;
     private string _currentTab = "Overview";
@@ -38,16 +39,17 @@ public class MainViewModel : ObservableObject
     private string _updateNotesSummary = string.Empty;
     private bool _isUpdateWaitingForScan;
 
-    public MainViewModel() : this(null, null)
+    public MainViewModel() : this(null, null, null)
     {
     }
 
-    public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null)
+    public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null, LastScanService? lastScanService = null)
     {
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();
 
         _settingsService = new SettingsService();
+        _lastScanService = lastScanService ?? new LastScanService();
         _updateService = updateService ?? new UpdateService();
         _scannerService = new ScannerService(_dbService, usnService: null, _settingsService);
         _diskService = new DiskService();
@@ -97,6 +99,9 @@ public class MainViewModel : ObservableObject
         DismissUpdateCommand = new RelayCommand(_ => IsUpdateBannerVisible = false);
         RestartToUpdateCommand = new RelayCommand(_ => RestartToUpdate(), _ => IsUpdateReadyToRestart && !IsScanning);
 
+        // Restore previously completed scan if available
+        RestoreLastScanIfAvailable();
+
         // Non-blocking background update check
         _ = Task.Run(async () =>
         {
@@ -115,6 +120,9 @@ public class MainViewModel : ObservableObject
             catch { }
         });
     }
+
+    public LastScanService LastScanService => _lastScanService;
+    public bool SuppressCompletionDialog { get; set; }
 
     public OverviewViewModel OverviewVM { get; }
     public AnalyticsViewModel AnalyticsVM { get; }
@@ -417,7 +425,10 @@ public class MainViewModel : ObservableObject
             else
             {
                 ScanLogVM.AddLog("ERROR", $"Custom folder path does not exist: {cleanCustomPath}");
-                MessageBox.Show($"The specified scan folder does not exist:\n{cleanCustomPath}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
+                if (Application.Current != null && !SuppressCompletionDialog)
+                {
+                    MessageBox.Show($"The specified scan folder does not exist:\n{cleanCustomPath}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
                 return;
             }
         }
@@ -518,27 +529,50 @@ public class MainViewModel : ObservableObject
 
             ScanLogVM.AddLog("INFO", statusMsg);
 
-            // Refresh data in all views on completion; for cancelled scans only refresh lightweight overview
-            if (finalStats.State != ScanState.Cancelled)
+            // Refresh data in all views on completion; for cancelled scans preserve previous completed scan
+            if (finalStats.State == ScanState.Completed)
             {
                 RefreshAllViews();
+
+                // Persist the completed scan and snapshot the database
+                try
+                {
+                    _dbService.BackupIndex(_lastScanService.BackupDbPath);
+                    var selectedDrives = OverviewVM.Drives.Where(d => d.IsSelected).Select(d => d.Name).ToList();
+                    var lastScan = LastScanInfo.FromScanStats(
+                        finalStats,
+                        rootsToScan,
+                        CustomScanPath,
+                        selectedDrives,
+                        statusMsg);
+                    _lastScanService.SaveLastScan(lastScan);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to persist completed scan: {ex.Message}");
+                }
             }
             else
             {
-                try { OverviewVM.GenerateStorageExplanation(); } catch { }
+                // Incomplete or cancelled scan: keep previous successful scan available
+                RestorePreviousCompletedScanOnCancellation();
             }
         }
         catch (OperationCanceledException)
         {
             OverviewVM.Stats.State = ScanState.Cancelled;
             ScanLogVM.AddLog("INFO", "Scan cancelled safely by user.");
-            try { OverviewVM.GenerateStorageExplanation(); } catch { }
+            RestorePreviousCompletedScanOnCancellation();
         }
         catch (Exception ex)
         {
             OverviewVM.Stats.State = ScanState.Failed;
             ScanLogVM.AddLog("ERROR", "Scan encountered an unhandled error", ex.Message);
-            MessageBox.Show($"Scan failed: {ex.Message}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
+            RestorePreviousCompletedScanOnCancellation();
+            if (Application.Current != null && !SuppressCompletionDialog)
+            {
+                MessageBox.Show($"Scan failed: {ex.Message}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         finally
         {
@@ -548,7 +582,7 @@ public class MainViewModel : ObservableObject
         }
 
         // Play completion sound and display modal popup upon successful scan
-        if (OverviewVM.Stats.State == ScanState.Completed)
+        if (OverviewVM.Stats.State == ScanState.Completed && Application.Current != null && !SuppressCompletionDialog)
         {
             try
             {
@@ -607,6 +641,128 @@ public class MainViewModel : ObservableObject
         try { OldFilesVM.RefreshData(); } catch { }
         try { PhotoshopVM.RefreshData(); } catch { }
         try { _ = DeveloperStorageVM.ScanIndexedStorageAsync(); } catch { }
+    }
+
+    public void RestoreLastScanIfAvailable()
+    {
+        try
+        {
+            var lastScan = _lastScanService.LoadLastScan();
+            if (lastScan == null)
+            {
+                // Fallback: Check if existing SQLite index has a completed scan session
+                var latestDbScan = _dbService.GetLatestCompletedScan();
+                var (filesInDb, bytesInDb) = _dbService.GetTotalIndexedStorage();
+                if (latestDbScan != null && filesInDb > 0)
+                {
+                    lastScan = new LastScanInfo
+                    {
+                        CompletedAtUtc = latestDbScan.FinishTime,
+                        TargetDescription = !string.IsNullOrWhiteSpace(latestDbScan.Roots) ? latestDbScan.Roots : "C:\\",
+                        CustomScanPath = (!string.IsNullOrWhiteSpace(latestDbScan.Roots) && Directory.Exists(latestDbScan.Roots)) ? latestDbScan.Roots : string.Empty,
+                        ScannedRoots = !string.IsNullOrWhiteSpace(latestDbScan.Roots) ? latestDbScan.Roots.Split(';').ToList() : new List<string>(),
+                        StatusMessage = $"Scan complete: {latestDbScan.FilesIndexed:N0} files indexed.",
+                        DirectoriesVisited = latestDbScan.DirectoriesVisited,
+                        DirectoriesProcessed = latestDbScan.DirectoriesProcessed,
+                        DirectoriesSkipped = latestDbScan.DirectoriesSkipped,
+                        FilesDiscovered = latestDbScan.FilesDiscovered,
+                        FilesIndexed = latestDbScan.FilesIndexed,
+                        FilesSkipped = latestDbScan.FilesSkipped,
+                        LogicalBytesIndexed = latestDbScan.LogicalBytesIndexed > 0 ? latestDbScan.LogicalBytesIndexed : bytesInDb,
+                        ElapsedMilliseconds = Math.Max(0, (long)(latestDbScan.FinishTime - latestDbScan.StartTime).TotalMilliseconds),
+                        FilesPerSecond = (latestDbScan.FinishTime - latestDbScan.StartTime).TotalSeconds > 0 ? latestDbScan.FilesIndexed / (latestDbScan.FinishTime - latestDbScan.StartTime).TotalSeconds : 0,
+                        BytesPerSecond = (latestDbScan.FinishTime - latestDbScan.StartTime).TotalSeconds > 0 ? latestDbScan.LogicalBytesIndexed / (latestDbScan.FinishTime - latestDbScan.StartTime).TotalSeconds : 0,
+                        CurrentDirectory = !string.IsNullOrWhiteSpace(latestDbScan.Roots) ? latestDbScan.Roots : "C:\\",
+                        State = ScanState.Completed.ToString()
+                    };
+                    _lastScanService.SaveLastScan(lastScan);
+                    _dbService.BackupIndex(_lastScanService.BackupDbPath);
+                }
+            }
+
+            if (lastScan == null)
+            {
+                return;
+            }
+
+            // Verify SQLite database has valid indexed records
+            var (totalFiles, totalBytes) = _dbService.GetTotalIndexedStorage();
+            if (totalFiles <= 0 && File.Exists(_lastScanService.BackupDbPath))
+            {
+                _dbService.RestoreIndex(_lastScanService.BackupDbPath);
+                (totalFiles, totalBytes) = _dbService.GetTotalIndexedStorage();
+            }
+
+            if (totalFiles <= 0)
+            {
+                return;
+            }
+
+            var stats = lastScan.ToScanStats();
+            if (stats.LogicalBytesIndexed <= 0 && totalBytes > 0)
+            {
+                stats.LogicalBytesIndexed = totalBytes;
+            }
+            if (stats.FilesIndexed <= 0 && totalFiles > 0)
+            {
+                stats.FilesIndexed = totalFiles;
+            }
+
+            OverviewVM.Stats = stats;
+
+            if (!string.IsNullOrWhiteSpace(lastScan.CustomScanPath))
+            {
+                CustomScanPath = lastScan.CustomScanPath;
+            }
+            else if (lastScan.SelectedDrives != null && lastScan.SelectedDrives.Count > 0)
+            {
+                foreach (var d in OverviewVM.Drives)
+                {
+                    d.IsSelected = lastScan.SelectedDrives.Contains(d.Name, StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            string feedMsg = !string.IsNullOrWhiteSpace(lastScan.StatusMessage)
+                ? lastScan.StatusMessage
+                : $"Previous scan restored: {stats.FilesIndexed:N0} files indexed in {stats.FormattedElapsed}.";
+
+            OverviewVM.ClearRecentDirectories();
+            OverviewVM.AddRecentDirectory(feedMsg, force: true);
+
+            OverviewVM.GenerateStorageExplanation();
+            OverviewVM.VerifyIntegrity();
+            RefreshAllViews();
+
+            ScanLogVM.AddLog("INFO", $"Restored previous completed scan: {stats.FilesIndexed:N0} files indexed ({stats.FormattedLogicalBytes}).");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RestoreLastScanIfAvailable error: {ex.Message}");
+        }
+    }
+
+    private void RestorePreviousCompletedScanOnCancellation()
+    {
+        try
+        {
+            var lastScan = _lastScanService.LoadLastScan();
+            if (lastScan != null && File.Exists(_lastScanService.BackupDbPath))
+            {
+                _dbService.RestoreIndex(_lastScanService.BackupDbPath);
+                OverviewVM.Stats = lastScan.ToScanStats();
+                RefreshAllViews();
+                ScanLogVM.AddLog("INFO", "Previous successful scan preserved.");
+            }
+            else
+            {
+                try { OverviewVM.GenerateStorageExplanation(); } catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RestorePreviousCompletedScanOnCancellation error: {ex.Message}");
+            try { OverviewVM.GenerateStorageExplanation(); } catch { }
+        }
     }
 
     private void BrowseCustomFolder()

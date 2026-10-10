@@ -1757,6 +1757,58 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public ScanHistoryItem? GetLatestCompletedScan()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, scan_start, scan_finish, roots, directories_visited, directories_processed,
+                           directories_skipped, files_discovered, files_indexed, files_skipped,
+                           logical_bytes_indexed, scan_status
+                    FROM scan_metadata
+                    WHERE scan_status = 'Completed'
+                    ORDER BY id DESC
+                    LIMIT 1;
+                ";
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    long startSec = reader.IsDBNull(1) ? 0 : (long)reader.GetDouble(1);
+                    long finishSec = reader.IsDBNull(2) ? 0 : (long)reader.GetDouble(2);
+                    long bytes = reader.IsDBNull(10) ? 0 : reader.GetInt64(10);
+
+                    return new ScanHistoryItem
+                    {
+                        Id = reader.GetInt64(0),
+                        StartTime = DateTimeOffset.FromUnixTimeSeconds(startSec).UtcDateTime,
+                        FinishTime = DateTimeOffset.FromUnixTimeSeconds(finishSec).UtcDateTime,
+                        Roots = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                        DirectoriesVisited = reader.IsDBNull(4) ? 0 : reader.GetInt64(4),
+                        DirectoriesProcessed = reader.IsDBNull(5) ? 0 : reader.GetInt64(5),
+                        DirectoriesSkipped = reader.IsDBNull(6) ? 0 : reader.GetInt64(6),
+                        FilesDiscovered = reader.IsDBNull(7) ? 0 : reader.GetInt64(7),
+                        FilesIndexed = reader.IsDBNull(8) ? 0 : reader.GetInt64(8),
+                        FilesSkipped = reader.IsDBNull(9) ? 0 : reader.GetInt64(9),
+                        LogicalBytesIndexed = bytes,
+                        ScanStatus = reader.IsDBNull(11) ? "Completed" : reader.GetString(11),
+                        GrowthBytes = 0
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetLatestCompletedScan error: {ex.Message}");
+            }
+
+            return null;
+        }
+    }
+
     public Dictionary<string, (long Size, long Count)> GetScanCategories(long scanId)
     {
         lock (_lock)
@@ -2296,6 +2348,72 @@ public class DatabaseService : IDisposable
             Category = reader.IsDBNull(8) ? FileCategory.Other : reader.GetString(8),
             Accessible = reader.GetInt32(9)
         };
+    }
+
+    public void BackupIndex(string backupPath)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using (var cpCmd = _connection!.CreateCommand())
+                {
+                    cpCmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                    cpCmd.ExecuteNonQuery();
+                }
+
+                if (File.Exists(backupPath))
+                {
+                    File.Delete(backupPath);
+                }
+
+                using (var vacCmd = _connection!.CreateCommand())
+                {
+                    vacCmd.CommandText = "VACUUM INTO $dest;";
+                    vacCmd.Parameters.AddWithValue("$dest", backupPath);
+                    vacCmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"BackupIndex error: {ex.Message}");
+            }
+        }
+    }
+
+    public void RestoreIndex(string backupPath)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                if (!File.Exists(backupPath)) return;
+
+                CancelActiveOperations();
+                if (_connection != null)
+                {
+                    try { _connection.Close(); } catch { }
+                    try { _connection.Dispose(); } catch { }
+                    _connection = null;
+                }
+                SqliteConnection.ClearAllPools();
+
+                string walPath = _dbPath + "-wal";
+                string shmPath = _dbPath + "-shm";
+                if (File.Exists(walPath)) { try { File.Delete(walPath); } catch { } }
+                if (File.Exists(shmPath)) { try { File.Delete(shmPath); } catch { } }
+
+                File.Copy(backupPath, _dbPath, overwrite: true);
+
+                Initialize();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RestoreIndex error: {ex.Message}");
+                try { Initialize(); } catch { }
+            }
+        }
     }
 
     private void EnsureOpen()

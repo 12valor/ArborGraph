@@ -5,6 +5,7 @@ using System.Text;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
+using DiskScope.ViewModels;
 
 namespace DiskScope.Tests;
 
@@ -26,6 +27,7 @@ public static class AutomatedTestSuites
         RegisterUsnJournalTests(runner);
         RegisterXamlAndUiTests(runner);
         RegisterUpdateSystemTests(runner);
+        RegisterScanHistoryTests(runner);
     }
 
     // =========================================================================
@@ -1847,6 +1849,212 @@ public static class AutomatedTestSuites
                 ctx.Assert(mainVm.IsUpdateBannerVisible, "Banner should be visible");
                 mainVm.DismissUpdateCommand.Execute(null);
                 ctx.Assert(!mainVm.IsUpdateBannerVisible, "Banner must be hidden after dismissing");
+
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // O. PERSISTENT SCAN HISTORY SUITE
+    // =========================================================================
+    private static void RegisterScanHistoryTests(TestRunner runner)
+    {
+        // TC-HIS-01: Persistent Last-Scan History Save & Restore on Reopen
+        runner.Register(new TestCase(
+            TestId: "TC-HIS-01",
+            FeatureId: "FEAT-15",
+            Title: "Persistent Last-Scan History Save and Automatic Restore",
+            Priority: "P0 / BLOCKER",
+            Category: "Scan History Persistence",
+            ProductionClass: "DiskScope.Services.LastScanService",
+            AuditRiskNote: "Verifies completed scan metadata and statistics are saved to local persistence and automatically restored when application is reopened.",
+            ExecuteAsync: async ctx =>
+            {
+                string tempDir = ctx.CreateTempDirectory("history_save_test");
+                string appDataDir = ctx.CreateTempDirectory("history_appdata");
+                string dbPath = Path.Combine(appDataDir, "scan_index.db");
+
+                // Create synthetic files
+                for (int i = 0; i < 5; i++)
+                {
+                    File.WriteAllText(Path.Combine(tempDir, $"doc_{i}.txt"), $"Content {i}");
+                }
+
+                var lastScanService = new LastScanService(appDataDir);
+                ctx.Assert(!lastScanService.HasLastScan(), "New instance should have no previous scan saved");
+
+                // 1. Initial run & scan
+                using (var db = new DatabaseService(dbPath))
+                {
+                    db.Initialize();
+                    var mainVm = new MainViewModel(db, null, lastScanService);
+                    mainVm.CustomScanPath = tempDir;
+                    await mainVm.StartScanAsync();
+
+                    ctx.AssertEqual(ScanState.Completed, mainVm.OverviewVM.Stats.State, "Scan should complete successfully");
+                    ctx.Assert(mainVm.OverviewVM.Stats.FilesIndexed >= 5, $"Indexed count should be at least 5, found {mainVm.OverviewVM.Stats.FilesIndexed}");
+                    ctx.Assert(lastScanService.HasLastScan(), "LastScanService must have saved the completed scan");
+
+                    var savedInfo = lastScanService.LoadLastScan();
+                    ctx.Assert(savedInfo != null, "Saved LastScanInfo should not be null");
+                    ctx.AssertEqual(tempDir, savedInfo!.CustomScanPath, "Saved custom path must match target");
+                    ctx.Assert(savedInfo.FilesIndexed >= 5, "Saved files indexed count must match");
+                }
+
+                // 2. Simulate closing and reopening application
+                using (var db2 = new DatabaseService(dbPath))
+                {
+                    db2.Initialize();
+                    var reopenedVm = new MainViewModel(db2, null, lastScanService);
+
+                    // Verify state restored automatically on launch
+                    ctx.AssertEqual(ScanState.Completed, reopenedVm.OverviewVM.Stats.State, "Restored state must be Completed");
+                    ctx.Assert(reopenedVm.OverviewVM.Stats.FilesIndexed >= 5, $"Restored files indexed should be >= 5, found {reopenedVm.OverviewVM.Stats.FilesIndexed}");
+                    ctx.AssertEqual(tempDir, reopenedVm.CustomScanPath, "Restored custom scan path must match");
+                    ctx.Assert(reopenedVm.OverviewVM.Explanation.HasScanData, "Overview explanation must have active scan data");
+                    ctx.Assert(reopenedVm.OverviewVM.RecentDirectories.Count > 0, "Recent directories must display scan completion summary");
+
+                    var pagedFiles = db2.GetFilesPaged(0, 10);
+                    ctx.Assert(pagedFiles.Count >= 5, "Database must still contain indexed file records");
+                }
+            }
+        ));
+
+        // TC-HIS-02: Cancelled Scan Does Not Overwrite Previous Completed Scan
+        runner.Register(new TestCase(
+            TestId: "TC-HIS-02",
+            FeatureId: "FEAT-15",
+            Title: "Cancelled Scan Preserves Previous Successful Scan",
+            Priority: "P0 / BLOCKER",
+            Category: "Scan History Persistence",
+            ProductionClass: "DiskScope.ViewModels.MainViewModel",
+            AuditRiskNote: "Verifies incomplete or cancelled scans do not overwrite or destroy previous successful scan history in persistence or database.",
+            ExecuteAsync: async ctx =>
+            {
+                string dir1 = ctx.CreateTempDirectory("history_scan1");
+                string dir2 = ctx.CreateTempDirectory("history_scan2");
+                string appDataDir = ctx.CreateTempDirectory("history_cancel_appdata");
+                string dbPath = Path.Combine(appDataDir, "scan_index.db");
+
+                for (int i = 0; i < 6; i++)
+                {
+                    File.WriteAllText(Path.Combine(dir1, $"file1_{i}.txt"), $"Dir1 data {i}");
+                }
+                for (int i = 0; i < 300; i++)
+                {
+                    File.WriteAllText(Path.Combine(dir2, $"file2_{i}.txt"), $"Dir2 data {i}");
+                }
+
+                var lastScanService = new LastScanService(appDataDir);
+
+                // 1. Run Scan 1 to completion
+                using (var db = new DatabaseService(dbPath))
+                {
+                    db.Initialize();
+                    var mainVm = new MainViewModel(db, null, lastScanService);
+                    mainVm.CustomScanPath = dir1;
+                    await mainVm.StartScanAsync();
+                    ctx.AssertEqual(ScanState.Completed, mainVm.OverviewVM.Stats.State, "Initial scan must complete");
+                    ctx.Assert(mainVm.OverviewVM.Stats.FilesIndexed >= 6, "Initial scan should index >= 6 files");
+                }
+
+                long initialCount = lastScanService.LoadLastScan()!.FilesIndexed;
+
+                // 2. Start Scan 2 on dir2, but cancel it actively during traversal
+                using (var db = new DatabaseService(dbPath))
+                {
+                    db.Initialize();
+                    var mainVm = new MainViewModel(db, null, lastScanService);
+                    mainVm.CustomScanPath = dir2;
+
+                    mainVm.OverviewVM.Stats.PropertyChanged += (s, e) =>
+                    {
+                        if (e.PropertyName == nameof(ScanStats.State) && mainVm.OverviewVM.Stats.State == ScanState.Scanning)
+                        {
+                            mainVm.StopScan();
+                        }
+                    };
+
+                    await mainVm.StartScanAsync();
+
+                    // Verify previous scan was preserved in memory
+                    ctx.AssertEqual(initialCount, mainVm.OverviewVM.Stats.FilesIndexed, "Stats should preserve previous completed scan file count");
+
+                    // Verify persistence was NOT overwritten
+                    var currentSaved = lastScanService.LoadLastScan();
+                    ctx.Assert(currentSaved != null, "LastScanInfo should remain available");
+                    ctx.AssertEqual(dir1, currentSaved!.CustomScanPath, "LastScanInfo path must remain dir1, not overwritten by cancelled dir2");
+                }
+
+                // 3. Reopen application and verify previous scan is still intact
+                using (var dbReopened = new DatabaseService(dbPath))
+                {
+                    dbReopened.Initialize();
+                    var mainVmReopened = new MainViewModel(dbReopened, null, lastScanService);
+                    ctx.AssertEqual(initialCount, mainVmReopened.OverviewVM.Stats.FilesIndexed, "Reopened app must still display previous completed scan");
+                    ctx.AssertEqual(dir1, mainVmReopened.CustomScanPath, "Reopened app must still target dir1");
+                }
+            }
+        ));
+
+        // TC-HIS-03: Default Behavior Preserved When No Previous Scan Exists
+        runner.Register(new TestCase(
+            TestId: "TC-HIS-03",
+            FeatureId: "FEAT-15",
+            Title: "Default Behavior Retained When No Scan Exists",
+            Priority: "P1 / CRITICAL",
+            Category: "Scan History Persistence",
+            ProductionClass: "DiskScope.ViewModels.MainViewModel",
+            AuditRiskNote: "Verifies application starts cleanly in default idle/ready state with no crashes when no previous scan exists.",
+            ExecuteAsync: async ctx =>
+            {
+                string appDataDir = ctx.CreateTempDirectory("history_fresh_appdata");
+                string dbPath = Path.Combine(appDataDir, "scan_index.db");
+
+                var lastScanService = new LastScanService(appDataDir);
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var mainVm = new MainViewModel(db, null, lastScanService);
+                ctx.AssertEqual(ScanState.Ready, mainVm.OverviewVM.Stats.State, "State should be Ready by default");
+                ctx.AssertEqual(0L, mainVm.OverviewVM.Stats.FilesIndexed, "FilesIndexed should be 0 by default");
+                ctx.Assert(!mainVm.OverviewVM.Explanation.HasScanData, "Explanation HasScanData should be false by default");
+                ctx.AssertEqual(string.Empty, mainVm.CustomScanPath, "CustomScanPath should be empty by default");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-HIS-04: Graceful Handling of Corrupted or Missing Persistence Data
+        runner.Register(new TestCase(
+            TestId: "TC-HIS-04",
+            FeatureId: "FEAT-15",
+            Title: "Corrupted Persistence Data Handled Gracefully",
+            Priority: "P1 / CRITICAL",
+            Category: "Scan History Persistence",
+            ProductionClass: "DiskScope.Services.LastScanService",
+            AuditRiskNote: "Verifies corrupted JSON, empty files, or missing DB do not throw exceptions or crash the app on startup.",
+            ExecuteAsync: async ctx =>
+            {
+                string appDataDir = ctx.CreateTempDirectory("history_corrupt_appdata");
+                string metaFile = Path.Combine(appDataDir, "last_scan.json");
+
+                // Write corrupted malformed JSON
+                File.WriteAllText(metaFile, "{ \"This is corrupted malformed json -- ");
+
+                var lastScanService = new LastScanService(appDataDir);
+                var loaded = lastScanService.LoadLastScan();
+                ctx.Assert(loaded == null, "Corrupted JSON should safely deserialize to null without throwing");
+
+                // Instantiate MainViewModel with corrupted file present
+                string dbPath = Path.Combine(appDataDir, "scan_index.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var mainVm = new MainViewModel(db, null, lastScanService);
+                ctx.AssertEqual(ScanState.Ready, mainVm.OverviewVM.Stats.State, "App should fall back cleanly to Ready state without crashing");
+                ctx.AssertEqual(0L, mainVm.OverviewVM.Stats.FilesIndexed, "FilesIndexed should fall back to 0");
 
                 await Task.CompletedTask;
             }

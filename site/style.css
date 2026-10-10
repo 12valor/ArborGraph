@@ -20,8 +20,8 @@
     /* Classic Windows Developer Blue Navbar (High Contrast Product Identity) */
     --win-blue-navbar:        #005A9E;
     --win-blue-navbar-border: #004578;
-    --win-blue-navbar-hover:  rgba(255, 255, 255, 0.12);
-    --win-blue-navbar-active: rgba(0, 0, 0, 0.18);
+    --win-blue-navbar-hover:  rgba(255, 255, 255, 0.22);
+    --win-blue-navbar-active: rgba(0, 0, 0, 0.26);
 
     /* Single Restrained Accent: Windows Precision Steel Blue */
     --color-accent:         #005FB8;
@@ -136,6 +136,16 @@ code, pre, .mono-text {
     gap: 10px;
     text-decoration: none;
     flex-shrink: 0;
+    padding: 4px 8px;
+    margin-left: -8px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.brand-group:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.36);
 }
 
 .brand-icon {
@@ -170,29 +180,42 @@ code, pre, .mono-text {
 .site-nav {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .nav-link {
-    color: rgba(255, 255, 255, 0.88);
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     font-size: 13.5px;
-    font-weight: 400;
-    padding: 6px 11px;
+    font-weight: 500;
+    padding: 5px 12px;
     border-radius: var(--radius-md);
-    transition: background-color 0.12s ease, color 0.12s ease;
+    border: 1px solid transparent;
+    transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
 }
 
 .nav-link:hover {
     color: #FFFFFF;
-    background-color: var(--win-blue-navbar-hover);
+    background-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.42);
+}
+
+.nav-link:active {
+    background-color: rgba(0, 0, 0, 0.32);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .nav-link.active {
     color: #FFFFFF;
-    font-weight: 500;
-    background-color: var(--win-blue-navbar-active);
+    font-weight: 600;
+    background-color: rgba(0, 0, 0, 0.24);
+    border-color: rgba(255, 255, 255, 0.20);
     box-shadow: inset 0 -2px 0 #FFFFFF;
+}
+
+.nav-link.active:hover {
+    background-color: rgba(0, 0, 0, 0.34);
+    border-color: rgba(255, 255, 255, 0.38);
 }
 
 /* Header Right Actions */
@@ -251,15 +274,18 @@ code, pre, .mono-text {
 .mobile-nav-link {
     padding: 9px 12px;
     font-size: 14px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
     border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
 }
 
 .mobile-nav-link:hover, .mobile-nav-link.active {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.40);
     color: #FFFFFF;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* =========================================================

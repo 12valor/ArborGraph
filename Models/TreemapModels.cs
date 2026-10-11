@@ -5,6 +5,54 @@ using DiskScope.Infrastructure;
 
 namespace DiskScope.Models;
 
+public enum TreemapColorMode
+{
+    Category,
+    Heatmap,
+    Depth
+}
+
+public static class TreemapVisualHelper
+{
+    public static string GetCategoryIcon(string? category, bool isDirectory)
+    {
+        if (isDirectory) return "📁";
+        return (category?.Trim().ToLowerInvariant()) switch
+        {
+            "video" or "videos" => "🎬",
+            "audio" => "🎵",
+            "images" or "image" => "🖼️",
+            "photoshop" => "🎨",
+            "code" or "developer" => "💻",
+            "executables" or "executable" => "⚡",
+            "archives" or "archive" or "compressed" => "📦",
+            "documents" or "document" => "📄",
+            "database" => "🗄️",
+            "system" => "⚙️",
+            _ => "📄"
+        };
+    }
+
+    public static string GetCategoryHexColor(string? category, bool isDirectory)
+    {
+        if (isDirectory) return "#0284C7";
+        return (category?.Trim().ToLowerInvariant()) switch
+        {
+            "video" or "videos" => "#8B5CF6",
+            "audio" => "#EC4899",
+            "images" or "image" => "#F97316",
+            "photoshop" => "#06B6D4",
+            "code" or "developer" => "#10B981",
+            "executables" or "executable" => "#EF4444",
+            "archives" or "archive" or "compressed" => "#F59E0B",
+            "documents" or "document" => "#3B82F6",
+            "database" => "#6366F1",
+            "system" => "#64748B",
+            _ => "#64748B"
+        };
+    }
+}
+
 public class TreemapItem
 {
     public string Path { get; set; } = string.Empty;
@@ -17,6 +65,10 @@ public class TreemapItem
     public int ChildCount { get; set; }
     public double Percentage { get; set; }
     public DateTime LastModified { get; set; }
+
+    public string CategoryIcon => TreemapVisualHelper.GetCategoryIcon(Category, IsDirectory);
+    public string CategoryBadgeColor => TreemapVisualHelper.GetCategoryHexColor(Category, IsDirectory);
+    public string FormattedPercentage => $"{Percentage:F1}%";
 }
 
 public class TreemapRect : INotifyPropertyChanged
@@ -31,8 +83,10 @@ public class TreemapRect : INotifyPropertyChanged
     public Brush FillBrush { get; set; } = Brushes.Gray;
     public Brush BorderBrush { get; set; } = Brushes.Transparent;
 
-    public bool ShowLabel => Width >= 45 && Height >= 24;
-    public bool ShowSubLabel => Width >= 70 && Height >= 40;
+    public bool ShowLabel => Width >= 42 && Height >= 20;
+    public bool ShowIcon => Width >= 52 && Height >= 26;
+    public bool ShowSubLabel => Width >= 65 && Height >= 36;
+    public bool ShowBadge => Width >= 105 && Height >= 48;
 
     public bool IsSelected
     {
@@ -61,3 +115,4 @@ public class BreadcrumbItem
     public string FullPath { get; set; } = string.Empty;
     public bool IsLast { get; set; }
 }
+

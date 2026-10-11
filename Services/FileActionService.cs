@@ -229,6 +229,20 @@ public class FileActionService
 
         try
         {
+            if (isDir)
+            {
+                ClearReadOnlyAttributes(path);
+            }
+            else if (isFile)
+            {
+                try
+                {
+                    var fi = new FileInfo(path);
+                    if (fi.IsReadOnly) fi.IsReadOnly = false;
+                }
+                catch { }
+            }
+
             // Primary method: Microsoft.VisualBasic.FileIO (official Windows Desktop API for Recycle Bin)
             if (isFile)
             {
@@ -326,7 +340,7 @@ public class FileActionService
             }
             else
             {
-                Directory.Delete(path, recursive: true);
+                ForceDeleteDirectory(path);
             }
             return true;
         }
@@ -335,6 +349,39 @@ public class FileActionService
             errorMessage = $"Permanent deletion failed: {ex.Message}";
             return false;
         }
+    }
+
+    private static void ClearReadOnlyAttributes(string path)
+    {
+        try
+        {
+            var di = new DirectoryInfo(path);
+            if (!di.Exists) return;
+
+            foreach (var file in di.EnumerateFiles("*", SearchOption.AllDirectories))
+            {
+                try { if (file.IsReadOnly) file.IsReadOnly = false; } catch { }
+            }
+
+            foreach (var dir in di.EnumerateDirectories("*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    if (dir.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    {
+                        dir.Attributes &= ~FileAttributes.ReadOnly;
+                    }
+                }
+                catch { }
+            }
+        }
+        catch { }
+    }
+
+    private static void ForceDeleteDirectory(string path)
+    {
+        ClearReadOnlyAttributes(path);
+        Directory.Delete(path, recursive: true);
     }
 
     public (int Succeeded, int Failed) DeleteFilesBatch(

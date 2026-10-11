@@ -411,11 +411,13 @@ public class CleanupCenterViewModel : ObservableObject
         StatusMessage = $"Cleaning {itemsToClean.Count:N0} items...";
 
         var result = new CleanupResultSummary { TotalProcessed = itemsToClean.Count };
+        var successfullyRemovedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         await Task.Run(() =>
         {
-            foreach (var item in itemsToClean)
+            for (int idx = 0; idx < itemsToClean.Count; idx++)
             {
+                var item = itemsToClean[idx];
                 bool success;
                 string? error;
 
@@ -425,13 +427,14 @@ public class CleanupCenterViewModel : ObservableObject
                 }
                 else
                 {
-                    success = _fileActionService.DeletePermanently(item.Path, out error);
+                    success = _fileActionService.DeletePermanently(item.Path, out error, skipConfirmation: true);
                 }
 
                 if (success)
                 {
                     result.SuccessfullyRemoved++;
                     result.RecoveredBytes += item.SizeBytes;
+                    successfullyRemovedPaths.Add(item.Path);
 
                     // Remove from database index
                     if (item.IsDirectory)
@@ -452,10 +455,9 @@ public class CleanupCenterViewModel : ObservableObject
         });
 
         // Remove successfully cleaned items from view model collection
-        var removedPaths = itemsToClean.Take(result.SuccessfullyRemoved).Select(i => i.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         for (int i = SelectedCategory.Items.Count - 1; i >= 0; i--)
         {
-            if (removedPaths.Contains(SelectedCategory.Items[i].Path))
+            if (successfullyRemovedPaths.Contains(SelectedCategory.Items[i].Path))
             {
                 SelectedCategory.Items.RemoveAt(i);
             }
@@ -467,6 +469,7 @@ public class CleanupCenterViewModel : ObservableObject
         ShowCompletionSummary = true;
         IsLoading = false;
 
-        StatusMessage = $"Cleanup complete: {result.SuccessfullyRemoved:N0} removed, {result.FormattedRecovered} recovered.";
+        string failureSummary = result.Failed > 0 ? $" ({result.Failed:N0} locked or in-use items skipped)" : "";
+        StatusMessage = $"Cleanup complete: {result.SuccessfullyRemoved:N0} removed, {result.FormattedRecovered} recovered{failureSummary}.";
     }
 }

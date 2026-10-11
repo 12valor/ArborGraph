@@ -7,7 +7,7 @@
              xmlns:models="clr-namespace:DiskScope.Models"
              xmlns:vm="clr-namespace:DiskScope.ViewModels"
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="1100">
+             d:DesignHeight="750" d:DesignWidth="1100">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -31,13 +31,74 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Treemap" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                <TextBlock Text="Proportional squarified space map. Double-click folders to zoom into contents." 
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Treemap Visualizer" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <Border Background="{StaticResource BrushAccentTint}" BorderBrush="{StaticResource BrushAccentTintBorder}" BorderThickness="1" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Interactive Space Map" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="Proportional squarified disk map. Double-click any folder to zoom into contents." 
                            FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="8,4" Margin="0,0,8,0">
+                <!-- Color Mode Segmented Pill Switcher -->
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="2" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Category" Command="{Binding SelectColorModeCommand}" CommandParameter="Category"
+                                FontSize="11" Padding="10,3" Cursor="Hand" BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCategoryMode}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="Heatmap" Command="{Binding SelectColorModeCommand}" CommandParameter="Heatmap"
+                                FontSize="11" Padding="10,3" Cursor="Hand" BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHeatmapMode}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Content="Depth" Command="{Binding SelectColorModeCommand}" CommandParameter="Depth"
+                                FontSize="11" Padding="10,3" Cursor="Hand" BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDepthMode}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource BrushAccentTint}" BorderBrush="{StaticResource BrushAccentTintBorder}" BorderThickness="1" CornerRadius="4" Padding="10,4" Margin="0,0,8,0">
                     <TextBlock Text="{Binding FormattedTotalBytes, StringFormat='View: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
                 </Border>
                 <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
@@ -45,7 +106,7 @@
         </Grid>
 
         <!-- 2. BREADCRUMBS & NAVIGATION -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,0,8">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -61,7 +122,7 @@
                     <ItemsControl ItemsSource="{Binding Breadcrumbs}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
@@ -88,7 +149,7 @@
                                         </Button.Style>
                                     </Button>
 
-                                    <TextBlock Text="/" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="3,0" VerticalAlignment="Center">
+                                    <TextBlock Text="/" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="4,0" VerticalAlignment="Center">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
@@ -105,55 +166,163 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <TextBlock Grid.Column="2" Text="{Binding TotalVisibleItems, StringFormat='{}{0:N0} items'}" 
-                           FontSize="11" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                <Border Grid.Column="2" Background="{StaticResource BrushBgCardHover}" CornerRadius="3" Padding="6,2" Margin="8,0,0,0">
+                    <TextBlock Text="{Binding TotalVisibleItems, StringFormat='{}{0:N0} items'}" 
+                               FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
+                </Border>
             </Grid>
         </Border>
 
-        <!-- 3. RESTYLED TONAL LEGEND -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,5" Margin="0,0,0,8">
-            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Categories:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <!-- 3. DYNAMIC MODERN LEGEND -->
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,6" Margin="0,0,0,8">
+            <Grid>
+                <!-- Category Legend (Default) -->
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center"
+                           Visibility="{Binding IsCategoryMode, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Categories:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#1F2937" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Folders" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <Border Background="#101E3A8A" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📁" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Folders" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#100D9488" BorderBrush="#2DD4BF" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="💻" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Code &amp; Dev" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#108B5CF6" BorderBrush="#C4B5FD" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🎬" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Videos" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#10EC4899" BorderBrush="#F472B6" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🎵" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Audio" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#10F97316" BorderBrush="#FB923C" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🖼️" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Images" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#100284C7" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🎨" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Design &amp; RAW" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#10EF4444" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚡" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Binaries &amp; Apps" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#10F59E0B" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Archives" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#103B82F6" BorderBrush="#93C5FD" BorderThickness="1" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📄" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Documents" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#1064748B" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Padding="6,2">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📁" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Other" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Heatmap Legend -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsHeatmapMode, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Space Heatmap Scale:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#0D9488" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="&lt; 10 MB" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#2563EB" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="10 – 50 MB" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#7C3AED" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="50 – 250 MB" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#D97706" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="250 MB – 1 GB" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#EA580C" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="1 – 5 GB" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Rectangle Width="10" Height="10" Fill="#DC2626" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="5 GB+ (Hot)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushDanger}"/>
+                    </StackPanel>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#374151" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Executables &amp; Binaries" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                <!-- Depth Legend -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsDepthMode, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="View Share Hierarchy:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#334155" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Code &amp; Scripts" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#1E3A8A" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="&lt; 2% Share" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#475569" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Images &amp; Creative" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#2563EB" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="2 – 5% Share" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#64748B" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Videos &amp; Audio" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#0284C7" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="5 – 10% Share" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Rectangle Width="9" Height="9" Fill="#6B7280" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Archives" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Rectangle Width="10" Height="10" Fill="#0D9488" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="10 – 25% Share" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Rectangle Width="9" Height="9" Fill="#4B5563" RadiusX="2" RadiusY="2" Margin="0,0,4,0"/>
-                    <TextBlock Text="Documents &amp; Other" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Rectangle Width="10" Height="10" Fill="#059669" RadiusX="2" RadiusY="2" Margin="0,0,5,0"/>
+                        <TextBlock Text="25%+ (Dominant)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushSuccess}"/>
+                    </StackPanel>
                 </StackPanel>
-            </WrapPanel>
+            </Grid>
         </Border>
 
         <!-- 4. TREEMAP CANVAS AREA -->
-        <Border Grid.Row="3" x:Name="TreemapContainer" Background="#1E293B" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+        <Border Grid.Row="3" x:Name="TreemapContainer" Background="#0B0F19" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
             <Grid>
                 <ItemsControl ItemsSource="{Binding Rectangles}">
                     <ItemsControl.ItemsPanel>
@@ -176,14 +345,18 @@
                             <Border Background="{Binding FillBrush}" 
                                     BorderBrush="{Binding BorderBrush}" 
                                     BorderThickness="1" 
-                                    CornerRadius="1"
-                                    Margin="0.5"
+                                    CornerRadius="3"
+                                    Margin="1"
                                     Cursor="Hand"
                                     MouseLeftButtonDown="Node_MouseLeftButtonDown">
 
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                <Setter Property="BorderThickness" Value="1.5"/>
+                                            </Trigger>
                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                 <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
                                                 <Setter Property="BorderThickness" Value="2"/>
@@ -192,59 +365,90 @@
                                     </Style>
                                 </Border.Style>
 
-                                <!-- Tooltip -->
+                                <!-- Modern Rich Tooltip -->
                                 <Border.ToolTip>
-                                    <ToolTip Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="10,8">
-                                        <StackPanel MaxWidth="360">
-                                            <TextBlock Text="{Binding Item.Name}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
-                                            <TextBlock Text="{Binding Item.Path}" FontSize="11" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,2,0,6"/>
-                                            <Separator Margin="0,2,0,6"/>
-                                            <Grid>
+                                    <ToolTip Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="12,10">
+                                        <StackPanel MaxWidth="380">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                <TextBlock Text="{Binding Item.CategoryIcon}" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Item.Name}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <TextBlock Text="{Binding Item.Path}" FontSize="10.5" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                            
+                                            <Separator Margin="0,0,0,8"/>
+
+                                            <Grid Margin="0,0,0,4">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Item.Category, StringFormat='Category: {0}'}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding Item.FormattedSize}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <Border Background="{StaticResource BrushBgCardHover}" CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Item.Category}" FontSize="10.5" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding Item.FormattedSize}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
                                             </Grid>
-                                            <TextBlock Text="{Binding Item.Percentage, StringFormat='Share of view: {0:F1}%'}" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Item.Percentage, StringFormat='Share of current view: {0:F2}%'}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                            </StackPanel>
+
+                                            <TextBlock Text="💡 Double-click folder to drill into contents" FontSize="10" Foreground="{StaticResource BrushTextMuted}" FontStyle="Italic" Margin="0,6,0,0"/>
                                         </StackPanel>
                                     </ToolTip>
                                 </Border.ToolTip>
 
-                                <!-- Text inside block -->
-                                <Grid Margin="3" ClipToBounds="True">
+                                <!-- Content inside block -->
+                                <Grid Margin="5,4" ClipToBounds="True">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Text="{Binding Item.Name}" 
-                                               FontSize="10" FontWeight="Medium" Foreground="#FFFFFF" 
-                                               TextTrimming="CharacterEllipsis"
-                                               Visibility="{Binding ShowLabel, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- Top: Icon & Name -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal"
+                                                Visibility="{Binding ShowLabel, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding Item.CategoryIcon}" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"
+                                                   Visibility="{Binding ShowIcon, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock Text="{Binding Item.Name}" 
+                                                   FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF" 
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    </StackPanel>
 
-                                    <TextBlock Grid.Row="1" Text="{Binding Item.FormattedSize}" 
-                                               FontSize="9" Foreground="#E2E8F0" Opacity="0.85" FontFamily="{StaticResource MonoFont}"
-                                               TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
-                                               Visibility="{Binding ShowSubLabel, Converter={StaticResource BoolToVis}}"/>
+                                    <!-- Bottom: Formatted Size & Percentage Pill -->
+                                    <Border Grid.Row="2" Background="#59000000" CornerRadius="3" Padding="4,1.5" HorizontalAlignment="Left"
+                                            Margin="0,2,0,0"
+                                            Visibility="{Binding ShowSubLabel, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Item.FormattedSize}" 
+                                                       FontSize="9.5" FontWeight="Medium" Foreground="#F8FAFC" FontFamily="{StaticResource MonoFont}"/>
+                                            <TextBlock Text="{Binding Item.FormattedPercentage, StringFormat='  ·  {0}'}" 
+                                                       FontSize="9" Foreground="#CBD5E1"
+                                                       Visibility="{Binding ShowBadge, Converter={StaticResource BoolToVis}}"/>
+                                        </StackPanel>
+                                    </Border>
                                 </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!-- Empty State -->
+                <!-- Empty State with Sprout Scout Mascot -->
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" 
                             Visibility="{Binding Rectangles.Count, Converter={StaticResource InverseBoolToVis}}">
-                    <TextBlock Text="No files found in this directory" FontSize="13" FontWeight="Medium" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Scan a drive or navigate to another folder to view storage." FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    <Image Source="pack://application:,,,/ArborGraph;component/Resources/arborgraph_sprout_bot.png" 
+                           Width="64" Height="64" HorizontalAlignment="Center" Margin="0,0,0,10" Opacity="0.85"/>
+                    <TextBlock Text="No files found in this directory" FontSize="13" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Scan a drive or navigate to another folder to view storage." FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 5. BOTTOM DETAILS & ACTION BAR -->
-        <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,8,0,0"
+        <!-- 5. BOTTOM DETAILS & ACTION INSPECTOR CARD -->
+        <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,8,0,0"
                 Visibility="{Binding HasSelectedNode, Converter={StaticResource BoolToVis}}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -253,26 +457,40 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding SelectedNode.Item.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
-                        <Border Background="{StaticResource BrushBgCardHover}" CornerRadius="3" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding SelectedNode.Item.Category}" FontSize="10" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{StaticResource BrushBgCardHover}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding SelectedNode.Item.CategoryIcon}" FontSize="12" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding SelectedNode.Item.Category}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
+                            </StackPanel>
                         </Border>
+                        <TextBlock Text="{Binding SelectedNode.Item.Name}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedNode.Item.Path}" FontSize="11" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                        <TextBlock Text="{Binding SelectedNode.Item.FormattedSize, StringFormat='Size: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
-                        <TextBlock Text="{Binding SelectedNode.Item.Percentage, StringFormat='  ({0:F2}% of view)'}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center"/>
+
+                    <TextBlock Text="{Binding SelectedNode.Item.Path}" FontSize="11" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0" VerticalAlignment="Center">
+                        <Border Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="6,2" Margin="0,0,8,0">
+                            <TextBlock Text="{Binding SelectedNode.Item.FormattedSize, StringFormat='Size: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
+                        </Border>
+                        <TextBlock Text="{Binding SelectedNode.Item.Percentage, StringFormat='{}{0:F2}% of view'}" FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushTextSecondary}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="•" FontSize="10" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding SelectedNode.Item.ChildCount, StringFormat='{}{0:N0} files inside'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center"
+                                   Visibility="{Binding SelectedNode.Item.IsDirectory, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="⤓ Zoom In (Folder)" Command="{Binding DrillDownSelectedCommand}" 
+                            Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Padding="12,5"
+                            Visibility="{Binding SelectedNode.Item.IsDirectory, Converter={StaticResource BoolToVis}}"/>
                     <Button Content="Open in Explorer" Command="{Binding OpenFileLocationCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="10,4"/>
+                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="10,5"/>
                     <Button Content="Copy Path" Command="{Binding CopyPathCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Padding="10,4"/>
+                            Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
                 </StackPanel>
             </Grid>
         </Border>
     </Grid>
 </UserControl>
+

@@ -93,9 +93,12 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
    - Context actions: reveal in Windows Explorer, copy file path, send to Recycle Bin, or delete permanently.
 
 4. **Treemap:**
-   - Squarified, color-coded visual space map of directory hierarchies.
-   - Interactive drilldown into nested folders with instant breadcrumb navigation.
-   - Mathematically exact folder rollup aggregation.
+   - Proportional squarified visual space map powered by the Bruls-Huizing-van Wijk layout algorithm with aspect ratio guards.
+   - **Multi-Mode Color System:** Switch dynamically between **Category Mode** (vibrant modern gradients and glowing borders for Code, Videos, Audio, Images, Design, Executables, Archives, and distinct jewel-toned folder cards), **Space Heatmap Mode** (hot/cold density scaling from cool cyan to hot crimson), and **Depth Mode** (view share hierarchy).
+   - Rich block typography with category icon glyphs, Cascadia Code size badges, view share percentages, and high-contrast dark tile backing.
+   - Interactive drilldown into nested folders with instant breadcrumb trail navigation, double-click zoom, and dedicated inspector actions.
+   - Comprehensive bottom inspector card with category badge chips, exact sizes, file counts, and one-click "Open in Explorer" or "Copy Path" commands.
+   - Empty state guidance featuring the Sprout Scout desktop companion.
 
 5. **Duplicates:**
    - 3-tier detection pipeline: exact file size match &rarr; 4 KB header verification &rarr; full SHA-256 chunked cryptographic hash.

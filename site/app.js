@@ -770,9 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const treemapCanvas = document.getElementById('treemapCanvas');
     const treemapBreadcrumbs = document.getElementById('treemapBreadcrumbs');
 
-    // Category slate colors matching TreemapLayoutEngine.cs
-    // Folder: #1F2937, Video: #64748B, Photos: #475569, Executables: #374151,
-    // Archives: #6B7280, Code: #334155, Cleanable: #06B6D4
+    // Upgraded vibrant category & jewel folder colors matching TreemapLayoutEngine.cs
     const treemapHierarchy = {
         id: "root",
         name: "C:\\",
@@ -784,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: "248.5 GB",
                 weight: 65,
                 category: "Folder",
-                color: "#1F2937",
+                color: "#1E3A8A",
                 children: [
                     {
                         id: "ag",
@@ -792,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         size: "214.2 GB",
                         weight: 86,
                         category: "User Directory",
-                        color: "#1F2937",
+                        color: "#312E81",
                         children: [
                             {
                                 id: "projects",
@@ -800,21 +798,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 size: "124.6 GB",
                                 weight: 58,
                                 category: "Source Workspace",
-                                color: "#1F2937",
+                                color: "#164E63",
                                 children: [
-                                    { id: "arborgraph", name: "ArborGraph", size: "38.4 GB", weight: 31, category: "C# / WPF (.NET 8)", color: "#334155" },
+                                    { id: "arborgraph", name: "ArborGraph", size: "38.4 GB", weight: 31, category: "C# / WPF (.NET 8)", color: "#0D9488" },
                                     { id: "nodemodules", name: "node_modules", size: "32.6 GB", weight: 26, category: "Cleanable Cache", color: "#06B6D4" },
-                                    { id: "unreal", name: "UnrealEngine", size: "29.1 GB", weight: 23, category: "3D / Shaders", color: "#475569" },
-                                    { id: "photoshop", name: "PhotoshopPSD", size: "24.5 GB", weight: 20, category: "RAW & PSD", color: "#64748B" }
+                                    { id: "unreal", name: "UnrealEngine", size: "29.1 GB", weight: 23, category: "3D / Shaders", color: "#EA580C" },
+                                    { id: "photoshop", name: "PhotoshopPSD", size: "24.5 GB", weight: 20, category: "RAW & PSD", color: "#0284C7" }
                                 ]
                             },
-                            { id: "appdata", name: "AppData", size: "48.2 GB", weight: 22, category: "Local Cache", color: "#374151" },
-                            { id: "downloads", name: "Downloads", size: "26.4 GB", weight: 12, category: "Archives", color: "#6B7280" },
-                            { id: "videos", name: "Videos", size: "15.0 GB", weight: 8, category: "Rendered Captures", color: "#64748B" }
+                            { id: "appdata", name: "AppData", size: "48.2 GB", weight: 22, category: "Local Cache", color: "#475569" },
+                            { id: "downloads", name: "Downloads", size: "26.4 GB", weight: 12, category: "Archives", color: "#F59E0B" },
+                            { id: "videos", name: "Videos", size: "15.0 GB", weight: 8, category: "Rendered Captures", color: "#8B5CF6" }
                         ]
                     },
-                    { id: "public", name: "Public", size: "33.1 GB", weight: 13, category: "Shared", color: "#475569" },
-                    { id: "defaultuser", name: "Default", size: "1.2 GB", weight: 1, category: "System", color: "#374151" }
+                    { id: "public", name: "Public", size: "33.1 GB", weight: 13, category: "Shared", color: "#3B82F6" },
+                    { id: "defaultuser", name: "Default", size: "1.2 GB", weight: 1, category: "System", color: "#475569" }
                 ]
             },
             {
@@ -823,11 +821,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: "52.1 GB",
                 weight: 14,
                 category: "Applications",
-                color: "#374151",
+                color: "#1E293B",
                 children: [
-                    { id: "adobe", name: "Adobe", size: "28.4 GB", weight: 55, category: "Design Apps", color: "#374151" },
-                    { id: "dotnet", name: "dotnet", size: "14.2 GB", weight: 27, category: "Runtimes", color: "#334155" },
-                    { id: "git", name: "Git", size: "9.5 GB", weight: 18, category: "Tools", color: "#4B5563" }
+                    { id: "adobe", name: "Adobe", size: "28.4 GB", weight: 55, category: "Design Apps", color: "#EF4444" },
+                    { id: "dotnet", name: "dotnet", size: "14.2 GB", weight: 27, category: "Runtimes", color: "#0D9488" },
+                    { id: "git", name: "Git", size: "9.5 GB", weight: 18, category: "Tools", color: "#0284C7" }
                 ]
             },
             {
@@ -836,11 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: "38.2 GB",
                 weight: 10,
                 category: "System OS",
-                color: "#334155",
+                color: "#064E3B",
                 children: [
-                    { id: "sys32", name: "System32", size: "18.4 GB", weight: 48, category: "Binaries", color: "#334155" },
+                    { id: "sys32", name: "System32", size: "18.4 GB", weight: 48, category: "Binaries", color: "#EF4444" },
                     { id: "winsxs", name: "WinSxS", size: "14.2 GB", weight: 37, category: "Side-by-Side Assemblies", color: "#475569" },
-                    { id: "sysother", name: "Other", size: "5.6 GB", weight: 15, category: "System", color: "#374151" }
+                    { id: "sysother", name: "Other", size: "5.6 GB", weight: 15, category: "System", color: "#64748B" }
                 ]
             },
             {
@@ -849,7 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: "16.0 GB",
                 weight: 4,
                 category: "Virtual Memory",
-                color: "#475569"
+                color: "#64748B"
             },
             {
                 id: "cleanable",
@@ -865,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: "12.4 GB",
                 weight: 3,
                 category: "Hibernation File",
-                color: "#6B7280"
+                color: "#475569"
             }
         ]
     };

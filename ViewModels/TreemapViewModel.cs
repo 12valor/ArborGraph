@@ -21,6 +21,7 @@ public class TreemapViewModel : ObservableObject
     private long _totalVisibleBytes;
     private int _totalVisibleItems;
     private List<TreemapItem> _currentItems = new();
+    private TreemapColorMode _colorMode = TreemapColorMode.Category;
 
     public TreemapViewModel(DatabaseService dbService, FileActionService fileActionService)
     {
@@ -31,12 +32,24 @@ public class TreemapViewModel : ObservableObject
         Breadcrumbs = new ObservableCollection<BreadcrumbItem>();
 
         DrillDownCommand = new RelayCommand(param => DrillDown(param as TreemapRect));
+        DrillDownSelectedCommand = new RelayCommand(_ => DrillDown(SelectedNode), _ => SelectedNode != null && SelectedNode.Item.IsDirectory);
         SelectNodeCommand = new RelayCommand(param => SelectNode(param as TreemapRect));
         NavigateBreadcrumbCommand = new RelayCommand(param => NavigateToBreadcrumb(param as BreadcrumbItem));
         NavigateUpCommand = new RelayCommand(_ => NavigateUp(), _ => !string.IsNullOrEmpty(CurrentPath));
         OpenFileLocationCommand = new RelayCommand(_ => OpenFileLocation(), _ => SelectedNode != null);
         CopyPathCommand = new RelayCommand(_ => CopyPath(), _ => SelectedNode != null);
         RefreshCommand = new RelayCommand(async _ => await LoadCurrentLevelAsync());
+        SelectColorModeCommand = new RelayCommand(param =>
+        {
+            if (param is TreemapColorMode mode)
+            {
+                ColorMode = mode;
+            }
+            else if (param is string s && Enum.TryParse<TreemapColorMode>(s, true, out var parsed))
+            {
+                ColorMode = parsed;
+            }
+        });
 
         UpdateBreadcrumbs();
     }
@@ -45,12 +58,33 @@ public class TreemapViewModel : ObservableObject
     public ObservableCollection<BreadcrumbItem> Breadcrumbs { get; }
 
     public ICommand DrillDownCommand { get; }
+    public ICommand DrillDownSelectedCommand { get; }
     public ICommand SelectNodeCommand { get; }
     public ICommand NavigateBreadcrumbCommand { get; }
     public ICommand NavigateUpCommand { get; }
     public ICommand OpenFileLocationCommand { get; }
     public ICommand CopyPathCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand SelectColorModeCommand { get; }
+
+    public TreemapColorMode ColorMode
+    {
+        get => _colorMode;
+        set
+        {
+            if (SetProperty(ref _colorMode, value))
+            {
+                OnPropertyChanged(nameof(IsCategoryMode));
+                OnPropertyChanged(nameof(IsHeatmapMode));
+                OnPropertyChanged(nameof(IsDepthMode));
+                RecomputeLayout();
+            }
+        }
+    }
+
+    public bool IsCategoryMode => ColorMode == TreemapColorMode.Category;
+    public bool IsHeatmapMode => ColorMode == TreemapColorMode.Heatmap;
+    public bool IsDepthMode => ColorMode == TreemapColorMode.Depth;
 
     public string CurrentPath
     {
@@ -84,6 +118,7 @@ public class TreemapViewModel : ObservableObject
                 OnPropertyChanged(nameof(HasSelectedNode));
                 (OpenFileLocationCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (CopyPathCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DrillDownSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -169,7 +204,7 @@ public class TreemapViewModel : ObservableObject
 
             double w = _canvasWidth > 50 ? _canvasWidth : 1000;
             double h = _canvasHeight > 50 ? _canvasHeight : 600;
-            var computed = await Task.Run(() => TreemapLayoutEngine.ComputeLayout(_currentItems, w, h));
+            var computed = await Task.Run(() => TreemapLayoutEngine.ComputeLayout(_currentItems, w, h, ColorMode));
 
             Rectangles.Clear();
             foreach (var rect in computed)
@@ -198,7 +233,7 @@ public class TreemapViewModel : ObservableObject
 
         try
         {
-            var computed = TreemapLayoutEngine.ComputeLayout(_currentItems, _canvasWidth, _canvasHeight);
+            var computed = TreemapLayoutEngine.ComputeLayout(_currentItems, _canvasWidth, _canvasHeight, ColorMode);
 
             Rectangles.Clear();
             foreach (var rect in computed)

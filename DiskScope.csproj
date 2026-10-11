@@ -13,7 +13,7 @@
     <Product>ArborGraph Filesystem Analytics &amp; Visualization</Product>
     <Description>ArborGraph Filesystem Analytics &amp; Visualization</Description>
     <Copyright>Copyright © 2026 AG DIAZ EVANGELISTA</Copyright>
-    <Version>1.1.3</Version>
+    <Version>1.1.4</Version>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 

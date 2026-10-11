@@ -1312,7 +1312,11 @@ public static class AutomatedTestSuites
                 ctx.Assert(File.Exists(eulaPath), $"eula.txt must exist at {eulaPath}");
 
                 // 6. Verify compiled installer output if present
-                string compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", $"ArborGraph-Setup-{expectedVersion}-x64.exe");
+                string compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", $"ArborGraph-Setup-v{expectedVersion}-x64.exe");
+                if (!File.Exists(compiledSetupPath))
+                {
+                    compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", $"ArborGraph-Setup-{expectedVersion}-x64.exe");
+                }
                 if (!File.Exists(compiledSetupPath))
                 {
                     compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");

@@ -11,6 +11,24 @@
 #define MyAppURL "https://github.com/12valor/ArborGraph"
 #define MyAppExeName "ArborGraph.exe"
 
+#ifndef SourceExe
+  #if FileExists("..\dist\publish\ArborGraph.exe")
+    #define SourceExe "..\dist\publish\ArborGraph.exe"
+  #elif FileExists("..\dist\ArborGraph.exe")
+    #define SourceExe "..\dist\ArborGraph.exe"
+  #else
+    #define SourceExe "..\ArborGraph.exe"
+  #endif
+#endif
+
+#ifndef OutputDir
+#define OutputDir "..\dist\setup"
+#endif
+
+#ifndef OutputBaseFilename
+#define OutputBaseFilename "ArborGraph-Setup-v" + MyAppVersion + "-x64"
+#endif
+
 [Setup]
 ; AppId preserved for seamless in-place upgrade from legacy installations
 AppId={{D37F7E1A-85F4-4BC3-9C1D-72810C24A59E}
@@ -25,8 +43,8 @@ DisableProgramGroupPage=yes
 ; Strict EULA consent enforcement: User must accept license before installation continues
 LicenseFile=eula.txt
 SetupIconFile=..\Resources\ArborGraph.ico
-OutputDir=..\dist\setup
-OutputBaseFilename=ArborGraph-Setup-{#MyAppVersion}-x64
+OutputDir={#OutputDir}
+OutputBaseFilename={#OutputBaseFilename}
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -43,7 +61,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
 
 [Files]
-Source: "..\ArborGraph.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "eula.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

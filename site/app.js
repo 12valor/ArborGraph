@@ -1171,6 +1171,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (Array.isArray(data.assets)) {
+                const setupAsset = data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
+                if (setupAsset) {
+                    const setupNameEl = document.getElementById('pkgSetupName');
+                    if (setupNameEl) setupNameEl.textContent = setupAsset.name;
+
+                    const setupSizeEl = document.getElementById('pkgSetupSize');
+                    if (setupSizeEl && setupAsset.size) {
+                        setupSizeEl.textContent = `${(setupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+
+                    const setupBtn = document.getElementById('btnDownloadSetup');
+                    if (setupBtn && setupAsset.browser_download_url) {
+                        setupBtn.href = setupAsset.browser_download_url;
+                    }
+                }
+
                 const exeAsset = data.assets.find(a => a.name === 'ArborGraph.exe');
                 if (exeAsset) {
                     const exeSizeEl = document.getElementById('pkgExeSize');
@@ -1207,6 +1223,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         if (offEl) offEl.textContent = hash;
                                         const btnExe = document.getElementById('btnCopyExeHash');
                                         if (btnExe) btnExe.setAttribute('data-hash', hash);
+                                    } else if (filename.startsWith('ArborGraph-Setup') && filename.endsWith('.exe')) {
+                                        const btnSetup = document.getElementById('btnCopySetupHash');
+                                        if (btnSetup) btnSetup.setAttribute('data-hash', hash);
                                     } else if (filename === 'ArborGraph.zip' || filename.endsWith('.zip')) {
                                         const btnZip = document.getElementById('btnCopyZipHash');
                                         if (btnZip) btnZip.setAttribute('data-hash', hash);

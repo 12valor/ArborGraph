@@ -70,12 +70,73 @@ jobs:
         run: |
           dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist/publish
 
+      - name: Install Inno Setup Compiler
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing Inno Setup via Chocolatey..."
+            choco install innosetup --no-progress --yes
+            $innoPath = "C:\Program Files (x86)\Inno Setup 6"
+            if (Test-Path $innoPath) {
+              Write-Host "Adding $innoPath to GITHUB_PATH"
+              "$innoPath" >> $env:GITHUB_PATH
+              $env:PATH = "$innoPath;$env:PATH"
+            }
+          }
+          $isccCmd = Get-Command iscc -ErrorAction SilentlyContinue
+          if (-not $isccCmd -and (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            $env:PATH = "C:\Program Files (x86)\Inno Setup 6;$env:PATH"
+            $isccCmd = Get-Command iscc -ErrorAction SilentlyContinue
+          }
+          if ($isccCmd) {
+            Write-Host "Inno Setup compiler verified at: $($isccCmd.Source)"
+          } else {
+            throw "Inno Setup compiler (iscc) not found after installation."
+          }
+
+      - name: Compile Windows Installer Package
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version_info.outputs.version }}"
+          $tag = "${{ steps.version_info.outputs.tag }}"
+          $publishDir = "dist/publish"
+          $setupDir = "dist/setup"
+          New-Item -ItemType Directory -Path $setupDir -Force | Out-Null
+
+          $exePath = (Resolve-Path (Join-Path $publishDir "ArborGraph.exe")).Path
+          if (-not (Test-Path $exePath)) {
+            throw "Source executable not found at $exePath"
+          }
+
+          $installerBaseName = "ArborGraph-Setup-$tag-x64"
+          $issPath = "installer/installer.iss"
+
+          Write-Host "Compiling Inno Setup installer for version $ver ($tag)..."
+          iscc /DMyAppVersion="$ver" /DSourceExe="$exePath" /O"$setupDir" /F"$installerBaseName" "$issPath"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed with exit code $LASTEXITCODE"
+          }
+
+          $setupExePath = Join-Path $setupDir "$installerBaseName.exe"
+          if (-not (Test-Path $setupExePath)) {
+            throw "Generated installer executable not found at $setupExePath"
+          }
+
+          $setupItem = Get-Item $setupExePath
+          if ($setupItem.Length -le 1048576) {
+            throw "Generated installer is suspiciously small ($($setupItem.Length) bytes). Expected > 1 MB."
+          }
+
+          $sizeMb = [math]::Round($setupItem.Length / 1048576, 2)
+          Write-Host "Successfully generated installer: $setupExePath ($sizeMb MB / $($setupItem.Length) bytes)"
+
       - name: Package Release Artifacts & Generate Checksums
         shell: pwsh
         run: |
           $ver = "${{ steps.version_info.outputs.version }}"
           $tag = "${{ steps.version_info.outputs.tag }}"
           $publishDir = "dist/publish"
+          $setupDir = "dist/setup"
           $releaseDir = "dist/release_artifacts"
           New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 
@@ -92,13 +153,29 @@ jobs:
           Compress-Archive -Path $exePath -DestinationPath $zipPath -Force
           Copy-Item -Path $zipPath -Destination $versionedZipPath
 
+          # Copy and verify Windows Installer executable
+          $installerName = "ArborGraph-Setup-$tag-x64.exe"
+          $setupSrcPath = Join-Path $setupDir $installerName
+          if (-not (Test-Path $setupSrcPath)) {
+            throw "Installer executable not found at $setupSrcPath"
+          }
+          $setupDestPath = Join-Path $releaseDir $installerName
+          Copy-Item -Path $setupSrcPath -Destination $setupDestPath
+
+          $setupItem = Get-Item $setupDestPath
+          if ($setupItem.Length -le 1048576) {
+            throw "Installer artifact is suspiciously small ($($setupItem.Length) bytes). Expected > 1 MB."
+          }
+
           # Compute SHA-256 Checksums
           $exeHash = (Get-FileHash (Join-Path $releaseDir "ArborGraph.exe") -Algorithm SHA256).Hash.ToUpper()
           $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToUpper()
+          $setupHash = (Get-FileHash $setupDestPath -Algorithm SHA256).Hash.ToUpper()
 
           $manifestLines = @(
             "$exeHash *ArborGraph.exe",
-            "$zipHash *ArborGraph.zip"
+            "$zipHash *ArborGraph.zip",
+            "$setupHash *$installerName"
           )
           $manifestPath = Join-Path $releaseDir "SHA256SUMS.txt"
           Set-Content -Path $manifestPath -Value $manifestLines -Encoding Ascii
@@ -127,6 +204,7 @@ jobs:
             (Join-Path $releaseDir "ArborGraph.exe"),
             (Join-Path $releaseDir "ArborGraph.zip"),
             (Join-Path $releaseDir "ArborGraph-$tag-portable.zip"),
+            (Join-Path $releaseDir "ArborGraph-Setup-$tag-x64.exe"),
             (Join-Path $releaseDir "SHA256SUMS.txt")
           )
 

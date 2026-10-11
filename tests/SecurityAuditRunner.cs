@@ -31,7 +31,7 @@ public class SecurityAuditRunner
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.WriteLine("==========================================================================");
-        Console.WriteLine("  ARBORGRAPH v1.0.0 — DEDICATED SECURITY & DATA-SAFETY AUDIT RUNNER");
+        Console.WriteLine($"  ARBORGRAPH {Program.GetAppVersionString()} — DEDICATED SECURITY & DATA-SAFETY AUDIT RUNNER");
         Console.WriteLine("==========================================================================");
         Console.WriteLine($"  OS Architecture: Windows {Environment.OSVersion} ({(Environment.Is64BitProcess ? "x64" : "x86")})");
         Console.WriteLine($"  Local Time:      {DateTime.Now:yyyy-MM-dd HH:mm:ss}");

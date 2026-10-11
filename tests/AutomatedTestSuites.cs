@@ -1279,6 +1279,19 @@ public static class AutomatedTestSuites
                 ctx.Assert(content.Contains("#define MyAppURL \"https://github.com/12valor/ArborGraph\""),
                     "MyAppURL must be defined as https://github.com/12valor/ArborGraph");
 
+                // 1b. Verify MyAppVersion is defined and matches the active application version in DiskScope.csproj
+                string csprojPath = Path.Combine(repoRoot!, "DiskScope.csproj");
+                ctx.Assert(File.Exists(csprojPath), $"DiskScope.csproj must exist at {csprojPath}");
+                string csprojContent = await File.ReadAllTextAsync(csprojPath);
+                var versionMatch = System.Text.RegularExpressions.Regex.Match(csprojContent, @"<Version>([^<]+)</Version>");
+                ctx.Assert(versionMatch.Success, "DiskScope.csproj must define <Version>");
+                string expectedVersion = versionMatch.Groups[1].Value.Trim();
+
+                var issVersionMatch = System.Text.RegularExpressions.Regex.Match(content, @"#define\s+MyAppVersion\s+""([^""]+)""");
+                ctx.Assert(issVersionMatch.Success, "installer.iss must define MyAppVersion");
+                string actualIssVersion = issVersionMatch.Groups[1].Value.Trim();
+                ctx.AssertEqual(expectedVersion, actualIssVersion, $"installer.iss MyAppVersion ('{actualIssVersion}') must match DiskScope.csproj Version ('{expectedVersion}')");
+
                 // 2. Verify legacy C-file-scanner repository is NOT present anywhere in installer script
                 ctx.Assert(!content.Contains("12valor/C-file-scanner"),
                     "installer.iss must not contain any references to obsolete repository '12valor/C-file-scanner'");
@@ -1299,7 +1312,11 @@ public static class AutomatedTestSuites
                 ctx.Assert(File.Exists(eulaPath), $"eula.txt must exist at {eulaPath}");
 
                 // 6. Verify compiled installer output if present
-                string compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
+                string compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", $"ArborGraph-Setup-{expectedVersion}-x64.exe");
+                if (!File.Exists(compiledSetupPath))
+                {
+                    compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
+                }
                 if (File.Exists(compiledSetupPath))
                 {
                     var fileInfo = new FileInfo(compiledSetupPath);

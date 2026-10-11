@@ -55,11 +55,17 @@ public class Program
         return await RunAutomatedHarnessAsync(args);
     }
 
+    internal static string GetAppVersionString()
+    {
+        var ver = typeof(DiskScope.App).Assembly.GetName().Version;
+        return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.1.4";
+    }
+
     private static async Task<int> RunAutomatedHarnessAsync(string[] args)
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.WriteLine("==========================================================================");
-        Console.WriteLine("  ARBORGRAPH v1.0.0 — AUTOMATED QA TEST HARNESS EXECUTION");
+        Console.WriteLine($"  ARBORGRAPH {GetAppVersionString()} — AUTOMATED QA TEST HARNESS EXECUTION");
         Console.WriteLine("==========================================================================");
         Console.WriteLine($"  OS Architecture: Windows {Environment.OSVersion} ({Environment.ProcessPath})");
         Console.WriteLine($"  Local Time:      {DateTime.Now:yyyy-MM-dd HH:mm:ss}");

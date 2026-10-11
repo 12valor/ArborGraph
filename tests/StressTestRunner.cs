@@ -39,7 +39,7 @@ public class StressTestRunner
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.WriteLine("==========================================================================");
-        Console.WriteLine("  ARBORGRAPH v1.0.0 — PERFORMANCE, MEMORY & STABILITY STRESS TEST");
+        Console.WriteLine($"  ARBORGRAPH {Program.GetAppVersionString()} — PERFORMANCE, MEMORY & STABILITY STRESS TEST");
         Console.WriteLine("==========================================================================");
         Console.WriteLine($"  OS Architecture: Windows {Environment.OSVersion} ({(Environment.Is64BitProcess ? "x64" : "x86")})");
         Console.WriteLine($"  Local Time:      {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
@@ -120,7 +120,7 @@ public class StressTestRunner
         Console.WriteLine($"  • GPU Devices:      NVIDIA GeForce RTX 3050 Laptop GPU / Intel(R) UHD Graphics");
         Console.WriteLine($"  • Primary Storage:  NVMe SSD (Drive C:\\, FileSystem: {driveC.DriveFormat})");
         Console.WriteLine($"  • Free Disk Space:  {driveC.AvailableFreeSpace / (1024.0 * 1024.0 * 1024.0):F2} GB available");
-        Console.WriteLine($"  • ArborGraph Build: v1.0.0 (Release x64)");
+        Console.WriteLine($"  • ArborGraph Build: {Program.GetAppVersionString()} (Release x64)");
         Console.WriteLine($"  • .NET Runtime:     {Environment.Version} (64-bit runtime)");
         Console.WriteLine();
     }

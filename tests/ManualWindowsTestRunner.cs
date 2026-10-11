@@ -43,7 +43,7 @@ public static class ManualWindowsTestRunner
         Directory.CreateDirectory(EvidenceDir);
 
         Console.WriteLine("==========================================================================");
-        Console.WriteLine("  ARBORGRAPH v1.0.0 — MANUAL WINDOWS QA TEST MATRIX RUNNER");
+        Console.WriteLine($"  ARBORGRAPH {Program.GetAppVersionString()} — MANUAL WINDOWS QA TEST MATRIX RUNNER");
         Console.WriteLine("==========================================================================");
         Console.WriteLine($"  OS Version:     {Environment.OSVersion}");
         Console.WriteLine($"  Architecture:   64-bit (Process: {(Environment.Is64BitProcess ? "x64" : "x86")})");

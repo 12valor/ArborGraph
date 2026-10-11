@@ -4,7 +4,9 @@
 ; =====================================================================
 
 #define MyAppName "ArborGraph"
-#define MyAppVersion "1.0.0"
+#ifndef MyAppVersion
+#define MyAppVersion "1.1.4"
+#endif
 #define MyAppPublisher "AG DIAZ EVANGELISTA"
 #define MyAppURL "https://github.com/12valor/ArborGraph"
 #define MyAppExeName "ArborGraph.exe"

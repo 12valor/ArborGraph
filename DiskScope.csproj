@@ -13,7 +13,7 @@
     <Product>ArborGraph Filesystem Analytics &amp; Visualization</Product>
     <Description>ArborGraph Filesystem Analytics &amp; Visualization</Description>
     <Copyright>Copyright © 2026 AG DIAZ EVANGELISTA</Copyright>
-    <Version>1.1.2</Version>
+    <Version>1.1.3</Version>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
@@ -21,6 +21,7 @@
     <Resource Include="Resources\ArborGraph.ico" />
     <Resource Include="Resources\DiskScope.ico" />
     <Resource Include="Resources\app.ico" />
+    <Resource Include="Resources\arborgraph_sprout_bot.png" />
     <Resource Include="Resources\Fonts\*.ttf" />
   </ItemGroup>
 

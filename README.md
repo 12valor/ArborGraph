@@ -1,13 +1,13 @@
 # ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
-[![Latest Release: v1.1.2](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
+[![Latest Release: v1.1.3](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
 [![Runtime: .NET 8.0](https://img.shields.io/badge/.NET-8.0%20WPF-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 [![Privacy: 100% Offline](https://img.shields.io/badge/Privacy-100%25%20Offline%20%2F%20Zero%20Telemetry-107C41)](LICENSE.md#3-local-architecture--privacy-commitment)
 [![License: EULA](https://img.shields.io/badge/License-ArborGraph%20EULA-gray)](LICENSE.md)
 
-**ArborGraph** is a high-performance Windows desktop filesystem analytics and storage utility built with C# and WPF on .NET 8. It catalogs local drives and folders into an embedded SQLite database in WAL mode, streams live traversal telemetry through an interactive directory feed, visualizes storage distribution with squarified treemaps, identifies duplicate files via cryptographic SHA-256 hashing, and cleans system, browser, and developer cache stores.
+**ArborGraph** is a high-performance Windows desktop filesystem analytics and storage utility built with C# and WPF on .NET 8. It catalogs local drives and folders into an embedded SQLite database in WAL mode, streams live traversal telemetry through an interactive directory feed, visualizes storage distribution with squarified treemaps, identifies duplicate files via cryptographic SHA-256 hashing, cleans system, browser, and developer cache stores, and features persistent last-scan history with the friendly **Sprout Scout** desktop companion.
 
 ArborGraph operates 100% offline with zero telemetry, zero cloud dependencies, and zero background services.
 
@@ -258,7 +258,7 @@ ArborGraph includes an Inno Setup script configured for packaging a standard Win
 
 ## Running Automated Tests
 
-The test suite validates the full operational lifecycle across 32 automated test suites: SQLite ingestion in WAL mode, recursive directory rollups, cryptographic duplicate detection, safe cancellation, junk file deletion, treemap layout, live directory feed buffer, XAML StaticResource integrity, and report exports.
+The test suite validates the full operational lifecycle across 40 automated test suites: SQLite ingestion in WAL mode, recursive directory rollups, cryptographic duplicate detection, safe cancellation, junk file deletion, treemap layout, live directory feed buffer, XAML StaticResource integrity, report exports, and persistent scan history lifecycle verification.
 
 Run the test suite via the launcher:
 ```cmd
@@ -277,11 +277,13 @@ dotnet run --project tests\DiskScope.Tests.csproj
 All runtime files are kept in standard local app data directories:
 
 - **Database Index:** `%LOCALAPPDATA%\ArborGraph\scan_index.db`
+- **Scan History Metadata:** `%LOCALAPPDATA%\ArborGraph\last_scan.json`
+- **Scan History Snapshot:** `%LOCALAPPDATA%\ArborGraph\last_scan.db`
 - **Application Log:** `%LOCALAPPDATA%\ArborGraph\app.log`
 - **Settings:** `%LOCALAPPDATA%\ArborGraph\settings.json`
 
 > [!NOTE]
-> **Automatic Migration:** On first run, ArborGraph automatically detects and migrates legacy databases and configuration from `%LOCALAPPDATA%\DiskScope` or `%LOCALAPPDATA%\DiskScopePro`, preserving all scan indexes and custom settings.
+> **Automatic Migration & Persistence:** On first run, ArborGraph automatically detects and migrates legacy databases and configuration from `%LOCALAPPDATA%\DiskScope` or `%LOCALAPPDATA%\DiskScopePro`. When reopening the application, previous completed scans are automatically restored from the local snapshot without requiring a rescan.
 
 ---
 

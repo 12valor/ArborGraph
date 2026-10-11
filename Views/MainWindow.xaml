@@ -25,48 +25,87 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- STREAMLINED SIDEBAR (9 Clear Items) -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0" Padding="6,12">
-                <StackPanel>
-                    <!-- Brand Header -->
-                    <StackPanel Orientation="Horizontal" Margin="6,2,6,12">
-                        <Image Source="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="ArborGraph" FontWeight="SemiBold" FontSize="13.5" Foreground="{StaticResource BrushTextPrimary}"/>
-                            <TextBlock Text="Filesystem Analytics" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0"/>
+            <!-- STREAMLINED SIDEBAR (9 Clear Items + Responsive Lower-Left Mascot) -->
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0" Padding="6,12,6,6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Navigation Menu (Scrollable if height is constrained) -->
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Focusable="False">
+                        <StackPanel Margin="0,0,0,4">
+                            <!-- Brand Header -->
+                            <StackPanel Orientation="Horizontal" Margin="6,2,6,12">
+                                <Image Source="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="ArborGraph" FontWeight="SemiBold" FontSize="13.5" Foreground="{StaticResource BrushTextPrimary}"/>
+                                    <TextBlock Text="Filesystem Analytics" FontSize="10" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Separator Background="{StaticResource BrushBorderLight}" Margin="6,0,6,10"/>
+
+                            <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Scanner" Command="{Binding NavigateCommand}" CommandParameter="Scanner" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Files" Command="{Binding NavigateCommand}" CommandParameter="Files" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Treemap" Command="{Binding NavigateCommand}" CommandParameter="Treemap" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Duplicates" Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Cleanup" Command="{Binding NavigateCommand}" CommandParameter="CleanupCenter" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Developer" Command="{Binding NavigateCommand}" CommandParameter="DeveloperStorage" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Button Content="Photoshop" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
+                                    Style="{StaticResource NavButtonStyle}"/>
+
+                            <Separator Background="{StaticResource BrushBorder}" Margin="6,8"/>
+
+                            <Button Content="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" 
+                                    Style="{StaticResource NavButtonStyle}"/>
                         </StackPanel>
-                    </StackPanel>
-                    <Separator Background="{StaticResource BrushBorderLight}" Margin="6,0,6,10"/>
+                    </ScrollViewer>
 
-                    <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Scanner" Command="{Binding NavigateCommand}" CommandParameter="Scanner" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Files" Command="{Binding NavigateCommand}" CommandParameter="Files" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Treemap" Command="{Binding NavigateCommand}" CommandParameter="Treemap" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Duplicates" Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Cleanup" Command="{Binding NavigateCommand}" CommandParameter="CleanupCenter" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Developer" Command="{Binding NavigateCommand}" CommandParameter="DeveloperStorage" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Button Content="Photoshop" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
-                            Style="{StaticResource NavButtonStyle}"/>
-
-                    <Separator Background="{StaticResource BrushBorder}" Margin="6,8"/>
-
-                    <Button Content="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" 
-                            Style="{StaticResource NavButtonStyle}"/>
-                </StackPanel>
+                    <!-- RESPONSIVE LOWER-LEFT MASCOT CARD -->
+                    <Border Grid.Row="1" Margin="2,6,2,0" 
+                            Background="{StaticResource BrushAccentTint}" 
+                            BorderBrush="{StaticResource BrushAccentTintBorder}" 
+                            BorderThickness="1" 
+                            CornerRadius="8" 
+                            Padding="8,8,8,8"
+                            ToolTip="Sprout Scout — ArborGraph Filesystem Companion">
+                        <StackPanel HorizontalAlignment="Center">
+                            <Image Source="pack://application:,,,/ArborGraph;component/Resources/arborgraph_sprout_bot.png" 
+                                   MaxWidth="76" MaxHeight="76" 
+                                   Stretch="Uniform"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+                                <Ellipse Width="6" Height="6" Fill="{StaticResource BrushSuccess}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Sprout Scout" 
+                                           FontSize="11" FontWeight="SemiBold" 
+                                           Foreground="{StaticResource BrushAccent}" 
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Filesystem Companion" 
+                                       FontSize="9.5" 
+                                       Foreground="{StaticResource BrushTextMuted}" 
+                                       HorizontalAlignment="Center"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
 
             <!-- ACTIVE VIEW CONTAINER & LOADING OVERLAY -->

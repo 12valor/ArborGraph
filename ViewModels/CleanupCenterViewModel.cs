@@ -423,7 +423,7 @@ public class CleanupCenterViewModel : ObservableObject
 
                 if (useRecycleBin)
                 {
-                    success = _fileActionService.MoveToRecycleBin(item.Path, out error);
+                    success = _fileActionService.MoveToRecycleBin(item.Path, out error, skipConfirmation: true);
                 }
                 else
                 {

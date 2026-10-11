@@ -203,7 +203,7 @@ public class FileActionService
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     private static extern int SHFileOperation(ref SHFILEOPSTRUCT FileOp);
 
-    public bool MoveToRecycleBin(string path, out string? errorMessage)
+    public bool MoveToRecycleBin(string path, out string? errorMessage, bool skipConfirmation = false)
     {
         errorMessage = null;
         if (string.IsNullOrWhiteSpace(path))
@@ -215,7 +215,10 @@ public class FileActionService
         if (IsProtectedPath(path))
         {
             errorMessage = $"Protected system or root path cannot be deleted:\n{path}";
-            MessageBox.Show(errorMessage, "Safety Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (!skipConfirmation)
+            {
+                MessageBox.Show(errorMessage, "Safety Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             return false;
         }
 

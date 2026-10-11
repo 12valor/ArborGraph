@@ -47,6 +47,11 @@ public class DeveloperStorageViewModel : ObservableObject
         MoveToRecycleBinCommand = new RelayCommand(async _ => await MoveSelectedToRecycleBinAsync(), _ => SelectedItem != null && !IsScanning);
         DeletePermanentlyCommand = new RelayCommand(async _ => await DeleteSelectedPermanentlyAsync(), _ => SelectedItem != null && !IsScanning);
         CleanEcosystemSafeCommand = new RelayCommand(async _ => await CleanSelectedEcosystemSafeAsync(), _ => SelectedEcosystem != null && SelectedEcosystem.TotalBytes > 0 && !IsScanning);
+
+        SelectAllCommand = new RelayCommand(_ => SelectAll(), _ => SelectedEcosystem != null && SelectedEcosystem.Items.Count > 0);
+        DeselectAllCommand = new RelayCommand(_ => DeselectAll(), _ => SelectedEcosystem != null && SelectedEcosystem.Items.Count > 0);
+        DeleteSelectedRecycleBinCommand = new RelayCommand(async _ => await DeleteBatchRecycleBinAsync(), _ => HasSelectedOrFocusedItems() && !IsScanning);
+        DeleteSelectedPermanentlyCommand = new RelayCommand(async _ => await DeleteBatchPermanentlyAsync(), _ => HasSelectedOrFocusedItems() && !IsScanning);
     }
 
     public ObservableCollection<DeveloperEcosystemSummary> Ecosystems { get; }
@@ -61,6 +66,10 @@ public class DeveloperStorageViewModel : ObservableObject
             {
                 UpdateDetailedItems();
                 (CleanEcosystemSafeCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (SelectAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeselectAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -76,6 +85,8 @@ public class DeveloperStorageViewModel : ObservableObject
                 (CopyPathCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -94,6 +105,8 @@ public class DeveloperStorageViewModel : ObservableObject
                 (MoveToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (DeletePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (CleanEcosystemSafeCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -145,6 +158,13 @@ public class DeveloperStorageViewModel : ObservableObject
     public ICommand MoveToRecycleBinCommand { get; }
     public ICommand DeletePermanentlyCommand { get; }
     public ICommand CleanEcosystemSafeCommand { get; }
+
+    public ICommand SelectAllCommand { get; }
+    public ICommand DeselectAllCommand { get; }
+    public ICommand DeleteSelectedRecycleBinCommand { get; }
+    public ICommand DeleteSelectedPermanentlyCommand { get; }
+    public ICommand DeleteSingleRecycleBinCommand => MoveToRecycleBinCommand;
+    public ICommand DeleteSinglePermanentlyCommand => DeletePermanentlyCommand;
 
     public async Task ScanIndexedStorageAsync()
     {
@@ -248,6 +268,37 @@ public class DeveloperStorageViewModel : ObservableObject
         SelectedItem = DetailedItems.FirstOrDefault();
     }
 
+    private bool HasSelectedOrFocusedItems()
+    {
+        return (SelectedEcosystem != null && SelectedEcosystem.Items.Any(i => i.IsSelected)) || SelectedItem != null;
+    }
+
+    private void SelectAll()
+    {
+        if (SelectedEcosystem != null)
+        {
+            foreach (var item in SelectedEcosystem.Items)
+            {
+                item.IsSelected = true;
+            }
+            (DeleteSelectedRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+    }
+
+    private void DeselectAll()
+    {
+        if (SelectedEcosystem != null)
+        {
+            foreach (var item in SelectedEcosystem.Items)
+            {
+                item.IsSelected = false;
+            }
+            (DeleteSelectedRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+    }
+
     private async Task MoveSelectedToRecycleBinAsync()
     {
         if (SelectedItem == null) return;
@@ -262,7 +313,7 @@ public class DeveloperStorageViewModel : ObservableObject
         if (confirm != MessageBoxResult.Yes) return;
 
         string? error = null;
-        bool success = await Task.Run(() => _fileActionService.MoveToRecycleBin(item.Path, out error));
+        bool success = await Task.Run(() => _fileActionService.MoveToRecycleBin(item.Path, out error, skipConfirmation: true));
         if (success)
         {
             RemoveItemFromUI(item);
@@ -288,7 +339,7 @@ public class DeveloperStorageViewModel : ObservableObject
         if (confirm != MessageBoxResult.Yes) return;
 
         string? error = null;
-        bool success = await Task.Run(() => _fileActionService.DeletePermanently(item.Path, out error));
+        bool success = await Task.Run(() => _fileActionService.DeletePermanently(item.Path, out error, skipConfirmation: true));
         if (success)
         {
             RemoveItemFromUI(item);
@@ -298,6 +349,100 @@ public class DeveloperStorageViewModel : ObservableObject
         {
             MessageBox.Show($"Failed to delete:\n{error}", "Operation Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private async Task DeleteBatchRecycleBinAsync()
+    {
+        var items = SelectedEcosystem?.Items.Where(i => i.IsSelected).ToList() ?? [];
+        if (items.Count == 0 && SelectedItem != null)
+        {
+            await MoveSelectedToRecycleBinAsync();
+            return;
+        }
+
+        if (items.Count == 0)
+        {
+            MessageBox.Show("No developer folders or caches are currently selected for Recycle Bin cleanup.", "No Items Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        long totalBytes = items.Sum(i => i.SizeBytes);
+        var confirm = MessageBox.Show(
+            $"Move {items.Count:N0} selected folder(s) ({SizeFormatter.Format(totalBytes)}) to the Windows Recycle Bin?",
+            "Confirm Recycle Bin Cleanup",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        int successCount = 0;
+        long recoveredBytes = 0;
+
+        await Task.Run(() =>
+        {
+            foreach (var item in items)
+            {
+                if (_fileActionService.MoveToRecycleBin(item.Path, out _, skipConfirmation: true))
+                {
+                    successCount++;
+                    recoveredBytes += item.SizeBytes;
+                    Application.Current.Dispatcher.Invoke(() => RemoveItemFromUI(item));
+                }
+            }
+        });
+
+        MessageBox.Show(
+            $"Successfully moved {successCount:N0} of {items.Count:N0} folder(s) to the Recycle Bin.\nSpace recovered: {SizeFormatter.Format(recoveredBytes)}",
+            "Cleanup Complete",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private async Task DeleteBatchPermanentlyAsync()
+    {
+        var items = SelectedEcosystem?.Items.Where(i => i.IsSelected).ToList() ?? [];
+        if (items.Count == 0 && SelectedItem != null)
+        {
+            await DeleteSelectedPermanentlyAsync();
+            return;
+        }
+
+        if (items.Count == 0)
+        {
+            MessageBox.Show("No developer folders or caches are currently selected for permanent removal.", "No Items Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        long totalBytes = items.Sum(i => i.SizeBytes);
+        var confirm = MessageBox.Show(
+            $"WARNING: Are you sure you want to PERMANENTLY delete {items.Count:N0} selected developer folder(s) ({SizeFormatter.Format(totalBytes)})?\n\nThis CANNOT be undone and will bypass the Recycle Bin.",
+            "Confirm Permanent Deletion",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        int successCount = 0;
+        long recoveredBytes = 0;
+
+        await Task.Run(() =>
+        {
+            foreach (var item in items)
+            {
+                if (_fileActionService.DeletePermanently(item.Path, out _, skipConfirmation: true))
+                {
+                    successCount++;
+                    recoveredBytes += item.SizeBytes;
+                    Application.Current.Dispatcher.Invoke(() => RemoveItemFromUI(item));
+                }
+            }
+        });
+
+        MessageBox.Show(
+            $"Permanently deleted {successCount:N0} of {items.Count:N0} folder(s).\nSpace recovered: {SizeFormatter.Format(recoveredBytes)}",
+            "Permanent Deletion Complete",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     private async Task CleanSelectedEcosystemSafeAsync()
@@ -327,7 +472,7 @@ public class DeveloperStorageViewModel : ObservableObject
         {
             foreach (var item in safeItems)
             {
-                if (_fileActionService.MoveToRecycleBin(item.Path, out _))
+                if (_fileActionService.MoveToRecycleBin(item.Path, out _, skipConfirmation: true))
                 {
                     successCount++;
                     recoveredBytes += item.SizeBytes;

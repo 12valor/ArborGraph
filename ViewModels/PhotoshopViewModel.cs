@@ -251,7 +251,7 @@ public class PhotoshopViewModel : ObservableObject
 
         foreach (var item in reclaimableList)
         {
-            if (_fileActionService.MoveToRecycleBin(item.File.Path, out _))
+            if (_fileActionService.MoveToRecycleBin(item.File.Path, out _, skipConfirmation: true))
             {
                 _dbService.RemoveFileFromIndex(item.File.Path);
                 cleaned++;

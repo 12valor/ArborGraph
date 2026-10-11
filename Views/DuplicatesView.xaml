@@ -144,6 +144,9 @@
                                             <Separator/>
                                             <MenuItem Header="Copy Absolute Path" Command="{Binding DataContext.CopyPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                             <MenuItem Header="Properties" Command="{Binding DataContext.ShowPropertiesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Move to Recycle Bin" Command="{Binding DataContext.MoveFileToRecycleBinCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                            <MenuItem Header="Permanently Delete..." Command="{Binding DataContext.DeleteFilePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>

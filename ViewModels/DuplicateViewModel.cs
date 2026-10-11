@@ -68,7 +68,18 @@ public class DuplicateViewModel : ObservableObject
     public FileRecord? SelectedFile
     {
         get => _selectedFile;
-        set => SetProperty(ref _selectedFile, value);
+        set
+        {
+            if (SetProperty(ref _selectedFile, value))
+            {
+                (OpenFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (OpenFileLocationCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (CopyPathCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ShowPropertiesCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (MoveFileToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (DeleteFilePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
     }
 
     public bool IsAnalyzing
@@ -133,6 +144,12 @@ public class DuplicateViewModel : ObservableObject
 
     public ICommand MoveFileToRecycleBinCommand { get; }
     public ICommand DeleteFilePermanentlyCommand { get; }
+
+    // Aliases to match DuplicatesView.xaml button bindings
+    public ICommand SelectKeepNewestCommand => KeepNewestCommand;
+    public ICommand SelectKeepOldestCommand => KeepOldestCommand;
+    public ICommand CleanSelectedRecycleBinCommand => MoveSelectedToRecycleBinCommand;
+    public ICommand CleanSelectedPermanentlyCommand => DeleteSelectedPermanentlyCommand;
 
     private enum SelectionStrategy
     {
@@ -212,7 +229,7 @@ public class DuplicateViewModel : ObservableObject
 
         foreach (var file in selectedFiles)
         {
-            if (_fileActionService.MoveToRecycleBin(file.Path, out _))
+            if (_fileActionService.MoveToRecycleBin(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
                 recoveredBytes += file.Size;
@@ -268,7 +285,7 @@ public class DuplicateViewModel : ObservableObject
 
         foreach (var file in selectedFiles)
         {
-            if (_fileActionService.DeletePermanently(file.Path, out _))
+            if (_fileActionService.DeletePermanently(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
                 recoveredBytes += file.Size;
@@ -305,7 +322,7 @@ public class DuplicateViewModel : ObservableObject
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
-        if (_fileActionService.MoveToRecycleBin(file.Path, out string? error))
+        if (_fileActionService.MoveToRecycleBin(file.Path, out string? error, skipConfirmation: true))
         {
             RemoveFileFromGroups(file);
             RefreshTotals();
@@ -329,7 +346,7 @@ public class DuplicateViewModel : ObservableObject
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
-        if (_fileActionService.DeletePermanently(file.Path, out string? error))
+        if (_fileActionService.DeletePermanently(file.Path, out string? error, skipConfirmation: true))
         {
             RemoveFileFromGroups(file);
             RefreshTotals();

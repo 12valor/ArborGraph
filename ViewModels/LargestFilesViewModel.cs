@@ -370,7 +370,7 @@ public class LargestFilesViewModel : ObservableObject
         try
         {
             string? err = null;
-            bool success = await Task.Run(() => _fileActionService.MoveToRecycleBin(targetPath, out err));
+            bool success = await Task.Run(() => _fileActionService.MoveToRecycleBin(targetPath, out err, skipConfirmation: true));
 
             if (success)
             {

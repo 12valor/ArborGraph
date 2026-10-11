@@ -129,8 +129,9 @@ if ($PublishGitHub) {
     $assets = @($exePath, $zipPath, $versionedZipPath, $manifestPath)
     
     # Check if release exists
-    $existing = & gh release view $Tag 2>$null
-    if ($LASTEXITCODE -eq 0) {
+    $allReleases = & gh release list
+    $releaseExists = ($allReleases -match "\b$Tag\b").Count -gt 0
+    if ($releaseExists) {
         Write-Host "Release $Tag already exists on GitHub. Uploading updated assets..." -ForegroundColor Yellow
         & gh release upload $Tag $assets --clobber
     } else {

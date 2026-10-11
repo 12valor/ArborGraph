@@ -92,7 +92,7 @@
                                         <polyline points="7 10 12 15 17 10"></polyline>
                                         <line x1="12" y1="15" x2="12" y2="3"></line>
                                     </svg>
-                                    <span>Download ArborGraph v1.1.4</span>
+                                    <span id="heroDownloadText">Download ArborGraph v1.1.4</span>
                                 </a>
                                 <a href="#docs" class="btn-secondary">Documentation</a>
                                 <a href="#diagnostics" class="btn-secondary">Run Diagnostics Demo</a>
@@ -145,7 +145,7 @@
                 <div class="section-header">
                     <div class="section-num-lead">01</div>
                     <h2 class="section-title">Official Distribution Packages</h2>
-                    <p class="section-desc">Download standalone single-file executables, portable archives, and setup compilers for v1.1.4.</p>
+                    <p class="section-desc">Download standalone single-file executables, portable archives, and setup compilers <span id="downloadVersionDesc">for v1.1.4</span>.</p>
                 </div>
 
                 <div class="downloads-table-container">
@@ -165,16 +165,16 @@
                                 <td><span class="file-name-cell">ArborGraph.exe</span></td>
                                 <td>Single-File Standalone</td>
                                 <td>Windows 10 / 11 (x64)</td>
-                                <td>73.4 MB</td>
-                                <td><button class="btn-mini copy-hash-btn" data-hash="65418FFCDFC74B41307266F2E0AC03D2DA6C96D0DE8F835597953E668CD8A87B">Copy SHA-256</button></td>
+                                <td id="pkgExeSize">70.3 MB</td>
+                                <td><button class="btn-mini copy-hash-btn" id="btnCopyExeHash" data-hash="1B01E35639761DBA1BB8DCB333878ABE5E81FF36E8F665FCDD63FA4ACD765A61">Copy SHA-256</button></td>
                                 <td><a href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.exe" class="btn-primary" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
                             </tr>
                             <tr>
                                 <td><span class="file-name-cell">ArborGraph.zip</span></td>
                                 <td>Portable Zip Archive</td>
                                 <td>Windows 10 / 11 (x64)</td>
-                                <td>67.8 MB</td>
-                                <td><button class="btn-mini copy-hash-btn" data-hash="B973F6A251BC78330E3C84D8463AB414A3FDFD3907C8358F66D3DADD9FDAA51C">Copy SHA-256</button></td>
+                                <td id="pkgZipSize">64.9 MB</td>
+                                <td><button class="btn-mini copy-hash-btn" id="btnCopyZipHash" data-hash="D5DA842ED6B49CC14445A9511C6900FAF40FB250CC005556836C1FBFA6C1F45E">Copy SHA-256</button></td>
                                 <td><a href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.zip" class="btn-action" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
                             </tr>
                             <tr>
@@ -644,7 +644,7 @@
                     <div class="verify-panel">
                         <div class="verify-label">OFFICIAL SHA-256 CHECKSUM (ArborGraph.exe):</div>
                         <div class="hash-copy-bar">
-                            <span class="hash-text" id="officialHash">65418FFCDFC74B41307266F2E0AC03D2DA6C96D0DE8F835597953E668CD8A87B</span>
+                            <span class="hash-text" id="officialHash">1B01E35639761DBA1BB8DCB333878ABE5E81FF36E8F665FCDD63FA4ACD765A61</span>
                             <button type="button" class="btn-secondary" id="copyOfficialHashBtn">Copy SHA-256</button>
                         </div>
 

@@ -7,7 +7,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const OFFICIAL_HASH = '65418FFCDFC74B41307266F2E0AC03D2DA6C96D0DE8F835597953E668CD8A87B';
+    let currentOfficialHash = '1B01E35639761DBA1BB8DCB333878ABE5E81FF36E8F665FCDD63FA4ACD765A61';
+    const STATIC_FALLBACK_HASH = currentOfficialHash;
 
     // =========================================================================
     // 1. TOAST NOTIFICATION HELPER
@@ -1016,10 +1017,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (copyOfficialHashBtn) {
         copyOfficialHashBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(OFFICIAL_HASH).then(() => {
+            navigator.clipboard.writeText(currentOfficialHash).then(() => {
                 showToast('Official SHA-256 digest copied to clipboard!');
             }).catch(() => {
-                showToast(`Hash: ${OFFICIAL_HASH}`);
+                showToast(`Hash: ${currentOfficialHash}`);
             });
         });
     }
@@ -1033,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             verifyResult.style.display = 'block';
-            if (entered === OFFICIAL_HASH) {
+            if (entered === currentOfficialHash) {
                 verifyResult.className = 'verify-status-banner match';
                 verifyResult.innerHTML = `
                     <div style="font-weight: 600; color: var(--color-success); font-size: 12.5px;">✓ INTEGRITY VERIFIED: Cryptographic Match Confirmed</div>
@@ -1044,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 verifyResult.className = 'verify-status-banner mismatch';
                 verifyResult.innerHTML = `
                     <div style="font-weight: 600; color: var(--color-danger); font-size: 12.5px;">✕ CHECKSUM MISMATCH DETECTED</div>
-                    <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;">Entered hash does not match official digest. Expected: ${OFFICIAL_HASH.substring(0, 16)}...</div>
+                    <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;">Entered hash does not match official digest. Expected: ${currentOfficialHash.substring(0, 16)}...</div>
                 `;
                 showToast('Hash mismatch: Binary may be corrupted or modified.');
             }
@@ -1125,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     document.querySelectorAll('.copy-hash-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const hash = btn.getAttribute('data-hash') || OFFICIAL_HASH;
+            const hash = btn.getAttribute('data-hash') || currentOfficialHash;
             navigator.clipboard.writeText(hash).then(() => {
                 showToast('SHA-256 checksum copied to clipboard!');
             }).catch(() => {
@@ -1149,6 +1150,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // =========================================================================
+    // 13. DYNAMIC RELEASE SYNC VIA GITHUB RELEASES API
+    // Real-time synchronization of tag version, file sizes, and SHA-256 hashes
+    // =========================================================================
+    async function initDynamicReleaseInfo() {
+        try {
+            const response = await fetch('https://api.github.com/repos/12valor/ArborGraph/releases/latest', {
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            const tagName = data.tag_name || '';
+
+            if (tagName) {
+                const heroText = document.getElementById('heroDownloadText');
+                if (heroText) heroText.textContent = `Download ArborGraph ${tagName}`;
+                const verDesc = document.getElementById('downloadVersionDesc');
+                if (verDesc) verDesc.textContent = `for ${tagName}`;
+            }
+
+            if (Array.isArray(data.assets)) {
+                const exeAsset = data.assets.find(a => a.name === 'ArborGraph.exe');
+                if (exeAsset) {
+                    const exeSizeEl = document.getElementById('pkgExeSize');
+                    if (exeSizeEl && exeAsset.size) {
+                        exeSizeEl.textContent = `${(exeAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+                }
+
+                const zipAsset = data.assets.find(a => a.name === 'ArborGraph.zip' || a.name.endsWith('-portable.zip'));
+                if (zipAsset) {
+                    const zipSizeEl = document.getElementById('pkgZipSize');
+                    if (zipSizeEl && zipAsset.size) {
+                        zipSizeEl.textContent = `${(zipAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+                }
+
+                const sumsAsset = data.assets.find(a => a.name === 'SHA256SUMS.txt');
+                if (sumsAsset && sumsAsset.browser_download_url) {
+                    try {
+                        const sumsResp = await fetch(sumsAsset.browser_download_url);
+                        if (sumsResp.ok) {
+                            const sumsText = await sumsResp.text();
+                            const lines = sumsText.split('\n');
+                            lines.forEach(line => {
+                                const trimmed = line.trim();
+                                if (!trimmed) return;
+                                const match = trimmed.match(/^([a-fA-F0-9]{64})\s+[* ]?(.+)$/);
+                                if (match) {
+                                    const hash = match[1].toUpperCase();
+                                    const filename = match[2].trim();
+                                    if (filename === 'ArborGraph.exe') {
+                                        currentOfficialHash = hash;
+                                        const offEl = document.getElementById('officialHash');
+                                        if (offEl) offEl.textContent = hash;
+                                        const btnExe = document.getElementById('btnCopyExeHash');
+                                        if (btnExe) btnExe.setAttribute('data-hash', hash);
+                                    } else if (filename === 'ArborGraph.zip' || filename.endsWith('.zip')) {
+                                        const btnZip = document.getElementById('btnCopyZipHash');
+                                        if (btnZip) btnZip.setAttribute('data-hash', hash);
+                                    }
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        // Keep fallback hash
+                    }
+                }
+            }
+        } catch (e) {
+            // Keep fallback static attributes on network or API limits
+        }
+    }
+
     // Initial URL Hash Support
     if (window.location.hash) {
         const hash = window.location.hash.replace('#', '');
@@ -1163,7 +1238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize Setup Stepper UI
+    // Initialize Setup Stepper UI & Real-Time Sync
     updateWizardUI();
     updateDriveDisplay("C:");
+    initDynamicReleaseInfo();
 });

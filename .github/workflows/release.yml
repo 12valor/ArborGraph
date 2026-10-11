@@ -1,0 +1,141 @@
+name: Release ArborGraph
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.1.4)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, Verify & Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Resolve Release Tag & Version
+        id: version_info
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          if (-not $tag) {
+            $tag = "${{ github.ref_name }}"
+          }
+          if (-not $tag -or -not ($tag.StartsWith("v"))) {
+            [xml]$xml = Get-Content DiskScope.csproj
+            $ver = $xml.Project.PropertyGroup.Version
+            $tag = "v$ver"
+          }
+          $cleanVersion = $tag.TrimStart('v', 'V')
+          Write-Host "Resolved release tag: $tag (Version: $cleanVersion)"
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$cleanVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore Project Dependencies
+        run: |
+          dotnet restore DiskScope.csproj
+          dotnet restore tests/DiskScope.Tests.csproj
+
+      - name: Build Application & Test Suites
+        run: |
+          dotnet build DiskScope.csproj -c Release --no-restore
+          dotnet build tests/DiskScope.Tests.csproj -c Release --no-restore
+
+      - name: Run 40-Stage Automated QA Regression Suite
+        run: |
+          dotnet run --project tests/DiskScope.Tests.csproj -c Release --no-build
+
+      - name: Run Security & Data-Safety Audits
+        run: |
+          dotnet run --project tests/DiskScope.Tests.csproj -c Release --no-build -- --security
+
+      - name: Publish Standalone Binary (win-x64)
+        run: |
+          dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist/publish
+
+      - name: Package Release Artifacts & Generate Checksums
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version_info.outputs.version }}"
+          $tag = "${{ steps.version_info.outputs.tag }}"
+          $publishDir = "dist/publish"
+          $releaseDir = "dist/release_artifacts"
+          New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+
+          # Copy standalone executable
+          $exePath = Join-Path $publishDir "ArborGraph.exe"
+          if (-not (Test-Path $exePath)) {
+            throw "Compiled executable not found at $exePath"
+          }
+          Copy-Item -Path $exePath -Destination (Join-Path $releaseDir "ArborGraph.exe")
+
+          # Create portable ZIP archives
+          $zipPath = Join-Path $releaseDir "ArborGraph.zip"
+          $versionedZipPath = Join-Path $releaseDir "ArborGraph-$tag-portable.zip"
+          Compress-Archive -Path $exePath -DestinationPath $zipPath -Force
+          Copy-Item -Path $zipPath -Destination $versionedZipPath
+
+          # Compute SHA-256 Checksums
+          $exeHash = (Get-FileHash (Join-Path $releaseDir "ArborGraph.exe") -Algorithm SHA256).Hash.ToUpper()
+          $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToUpper()
+
+          $manifestLines = @(
+            "$exeHash *ArborGraph.exe",
+            "$zipHash *ArborGraph.zip"
+          )
+          $manifestPath = Join-Path $releaseDir "SHA256SUMS.txt"
+          Set-Content -Path $manifestPath -Value $manifestLines -Encoding Ascii
+
+          Write-Host "Generated SHA256SUMS.txt:"
+          Get-Content $manifestPath
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version_info.outputs.tag }}"
+          $title = "ArborGraph $tag"
+          $releaseDir = "dist/release_artifacts"
+
+          $notesFile = "dist/RELEASE_NOTES_$tag.md"
+          $notesArg = @()
+          if (Test-Path $notesFile) {
+            $notesArg = @("--notes-file", $notesFile)
+          } else {
+            $notesArg = @("--generate-notes")
+          }
+
+          $assets = @(
+            (Join-Path $releaseDir "ArborGraph.exe"),
+            (Join-Path $releaseDir "ArborGraph.zip"),
+            (Join-Path $releaseDir "ArborGraph-$tag-portable.zip"),
+            (Join-Path $releaseDir "SHA256SUMS.txt")
+          )
+
+          # If release already exists, upload assets to it; otherwise create it
+          $existing = gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag exists. Uploading assets with clobber..."
+            gh release upload $tag $assets --clobber
+          } else {
+            Write-Host "Creating release $tag..."
+            gh release create $tag $assets --title $title @notesArg
+          }

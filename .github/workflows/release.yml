@@ -10,6 +10,11 @@ on:
         description: 'Release tag (e.g. v1.1.4)'
         required: false
         default: ''
+      publish:
+        description: 'Publish release to GitHub Releases (set false for dry-run verification)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -34,14 +39,22 @@ jobs:
         id: version_info
         shell: pwsh
         run: |
+          $isPublish = "${{ github.event.inputs.publish }}" -eq "true"
           $tag = "${{ github.event.inputs.tag }}"
-          if (-not $tag) {
-            $tag = "${{ github.ref_name }}"
+          if ($tag -and -not $tag.StartsWith("v")) {
+            $tag = "v$tag"
           }
-          if (-not $tag -or -not ($tag.StartsWith("v"))) {
-            [xml]$xml = Get-Content DiskScope.csproj
-            $ver = $xml.Project.PropertyGroup.Version
-            $tag = "v$ver"
+          if (-not $tag) {
+            if ($env:GITHUB_EVENT_NAME -eq "push") {
+              $tag = "${{ github.ref_name }}"
+            } elseif ($isPublish) {
+              throw "A valid release tag (e.g. v1.1.4) is required when triggering manual publication (publish: true)."
+            } else {
+              # For dry-run packaging, derive target version from DiskScope.csproj
+              [xml]$xml = Get-Content DiskScope.csproj
+              $ver = $xml.Project.PropertyGroup.Version
+              $tag = "v$ver"
+            }
           }
           $cleanVersion = $tag.TrimStart('v', 'V')
           Write-Host "Resolved release tag: $tag (Version: $cleanVersion)"
@@ -183,7 +196,94 @@ jobs:
           Write-Host "Generated SHA256SUMS.txt:"
           Get-Content $manifestPath
 
+      - name: Validate Release Artifacts & Checksums
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version_info.outputs.tag }}"
+          $releaseDir = "dist/release_artifacts"
+          $setupExe = "ArborGraph-Setup-$tag-x64.exe"
+
+          $expectedFiles = @(
+            "ArborGraph.exe",
+            "ArborGraph.zip",
+            "ArborGraph-$tag-portable.zip",
+            $setupExe,
+            "SHA256SUMS.txt"
+          )
+
+          Write-Host "Verifying existence and size of all expected release assets..."
+          foreach ($f in $expectedFiles) {
+            $fullPath = Join-Path $releaseDir $f
+            if (-not (Test-Path $fullPath)) {
+              throw "Validation failed: Expected asset '$f' was not found at $fullPath"
+            }
+            $item = Get-Item $fullPath
+            if ($item.Length -le 0) {
+              throw "Validation failed: Asset '$f' has zero file size."
+            }
+            if ($f -eq $setupExe -and $item.Length -le 1048576) {
+              throw "Validation failed: Installer executable '$f' is suspiciously small ($($item.Length) bytes, expected > 1 MB)."
+            }
+            $sizeMb = [math]::Round($item.Length / 1048576, 2)
+            Write-Host "  [OK] $f ($sizeMb MB / $($item.Length) bytes)"
+          }
+
+          # Checksum Manifest Round-Trip Verification
+          $manifestPath = Join-Path $releaseDir "SHA256SUMS.txt"
+          $manifestContent = Get-Content $manifestPath
+          if (-not $manifestContent) {
+            throw "Validation failed: SHA256SUMS.txt is empty."
+          }
+
+          $trackedAssets = @(
+            "ArborGraph.exe",
+            "ArborGraph.zip",
+            $setupExe
+          )
+
+          $parsedEntries = @{}
+          foreach ($line in $manifestContent) {
+            $trimmed = $line.Trim()
+            if (-not $trimmed) { continue }
+            if ($trimmed -match '^([a-fA-F0-9]{64})\s+\*?(.+)$') {
+              $hash = $matches[1].ToUpper()
+              $filename = $matches[2].Trim()
+              $parsedEntries[$filename] = $hash
+            } else {
+              throw "Validation failed: Malformed line in SHA256SUMS.txt: '$trimmed'"
+            }
+          }
+
+          foreach ($asset in $trackedAssets) {
+            if (-not $parsedEntries.ContainsKey($asset)) {
+              throw "Validation failed: SHA256SUMS.txt is missing an entry for required tracked asset '$asset'."
+            }
+            $filePath = Join-Path $releaseDir $asset
+            $actualHash = (Get-FileHash $filePath -Algorithm SHA256).Hash.ToUpper()
+            $manifestHash = $parsedEntries[$asset]
+            if ($actualHash -ne $manifestHash) {
+              throw "Validation failed: SHA-256 mismatch for '$asset'! Manifest: $manifestHash, Actual: $actualHash"
+            }
+            Write-Host "  [VERIFIED] $asset -> $actualHash"
+          }
+          Write-Host "All release assets and cryptographic checksums verified cleanly!"
+
+      - name: Upload Dry-Run Packaging Artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.publish == false || inputs.publish == 'false' || inputs.publish == '') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: arborgraph-${{ steps.version_info.outputs.tag }}-dry-run-artifacts
+          path: |
+            dist/release_artifacts/ArborGraph.exe
+            dist/release_artifacts/ArborGraph.zip
+            dist/release_artifacts/ArborGraph-${{ steps.version_info.outputs.tag }}-portable.zip
+            dist/release_artifacts/ArborGraph-Setup-${{ steps.version_info.outputs.tag }}-x64.exe
+            dist/release_artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Publish GitHub Release
+        if: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && (inputs.publish == true || inputs.publish == 'true')) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh

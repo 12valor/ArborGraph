@@ -1317,10 +1317,6 @@ public static class AutomatedTestSuites
                 {
                     compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", $"ArborGraph-Setup-{expectedVersion}-x64.exe");
                 }
-                if (!File.Exists(compiledSetupPath))
-                {
-                    compiledSetupPath = Path.Combine(repoRoot!, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
-                }
                 if (File.Exists(compiledSetupPath))
                 {
                     var fileInfo = new FileInfo(compiledSetupPath);

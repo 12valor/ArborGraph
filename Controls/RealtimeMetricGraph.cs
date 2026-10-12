@@ -171,8 +171,10 @@ public class RealtimeMetricGraph : FrameworkElement
             return;
         }
 
-        var geometry = new StreamGeometry();
-        using (var ctx = geometry.Open())
+        var strokeGeometry = new StreamGeometry();
+        var fillGeometry = new StreamGeometry();
+
+        using (var ctx = strokeGeometry.Open())
         {
             double startX = width - (count - 1) * step;
             double startY = height - 2 - ((Math.Clamp(values[0], min, max) - min) / range) * usableHeight;
@@ -185,8 +187,32 @@ public class RealtimeMetricGraph : FrameworkElement
                 ctx.LineTo(new Point(x, y), true, false);
             }
         }
-        geometry.Freeze();
+        strokeGeometry.Freeze();
 
-        dc.DrawGeometry(null, GetLinePen(), geometry);
+        using (var ctx = fillGeometry.Open())
+        {
+            double startX = width - (count - 1) * step;
+            double startY = height - 2 - ((Math.Clamp(values[0], min, max) - min) / range) * usableHeight;
+            ctx.BeginFigure(new Point(startX, height - 1), true, true);
+            ctx.LineTo(new Point(startX, startY), true, false);
+
+            for (int i = 1; i < count; i++)
+            {
+                double x = width - (count - 1 - i) * step;
+                double y = height - 2 - ((Math.Clamp(values[i], min, max) - min) / range) * usableHeight;
+                ctx.LineTo(new Point(x, y), true, false);
+            }
+            ctx.LineTo(new Point(width, height - 1), true, false);
+        }
+        fillGeometry.Freeze();
+
+        var fillBrush = new LinearGradientBrush(
+            Color.FromArgb(38, LineColor.R, LineColor.G, LineColor.B),
+            Color.FromArgb(4, LineColor.R, LineColor.G, LineColor.B),
+            90.0);
+        fillBrush.Freeze();
+
+        dc.DrawGeometry(fillBrush, null, fillGeometry);
+        dc.DrawGeometry(null, GetLinePen(), strokeGeometry);
     }
 }

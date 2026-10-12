@@ -6,11 +6,58 @@ using System.Windows.Media;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 
 namespace DiskScope.ViewModels;
 
 public class AnalyticsViewModel : ObservableObject
 {
+    // LiveCharts2 Series & Axes
+    private ISeries[] _growthSeries = Array.Empty<ISeries>();
+    private Axis[] _growthXAxes = Array.Empty<Axis>();
+    private Axis[] _growthYAxes = Array.Empty<Axis>();
+    private ISeries[] _categorySeries = Array.Empty<ISeries>();
+    private ISeries[] _ageSeries = Array.Empty<ISeries>();
+    private Axis[] _ageXAxes = Array.Empty<Axis>();
+
+    public ISeries[] GrowthSeries
+    {
+        get => _growthSeries;
+        private set => SetProperty(ref _growthSeries, value);
+    }
+
+    public Axis[] GrowthXAxes
+    {
+        get => _growthXAxes;
+        private set => SetProperty(ref _growthXAxes, value);
+    }
+
+    public Axis[] GrowthYAxes
+    {
+        get => _growthYAxes;
+        private set => SetProperty(ref _growthYAxes, value);
+    }
+
+    public ISeries[] CategorySeries
+    {
+        get => _categorySeries;
+        private set => SetProperty(ref _categorySeries, value);
+    }
+
+    public ISeries[] AgeSeries
+    {
+        get => _ageSeries;
+        private set => SetProperty(ref _ageSeries, value);
+    }
+
+    public Axis[] AgeXAxes
+    {
+        get => _ageXAxes;
+        private set => SetProperty(ref _ageXAxes, value);
+    }
     private readonly DatabaseService _dbService;
     private readonly DiskService _diskService;
     private readonly FileActionService _fileActionService;
@@ -525,6 +572,7 @@ public class AnalyticsViewModel : ObservableObject
 
             // Build Growth Points for Chart
             BuildGrowthChart(data.history, data.totalIndexedBytes, data.totalIndexedFiles);
+            BuildLiveCharts(data.history, data.totalIndexedBytes, data.totalIndexedFiles, data.catList, data.ageList);
 
             LastRefreshedText = $"Updated {DateTime.Now:HH:mm:ss}";
         }
@@ -639,5 +687,124 @@ public class AnalyticsViewModel : ObservableObject
 
         PolylinePoints = poly;
         PolygonPoints = polyFill;
+    }
+
+    private void BuildLiveCharts(List<ScanHistoryItem> history, long currentIndexedBytes, long currentFiles, List<FileTypeItem> catList, List<FileAgeBucket> ageList)
+    {
+        try
+        {
+            // 1. Growth Series
+            var growthItems = new List<(string Label, double Gigabytes)>();
+            if (history.Count == 0 && currentIndexedBytes > 0)
+            {
+                growthItems.Add(("Current", Math.Round(currentIndexedBytes / (1024.0 * 1024.0 * 1024.0), 2)));
+            }
+            else
+            {
+                foreach (var h in history)
+                {
+                    double gb = Math.Round(h.LogicalBytesIndexed / (1024.0 * 1024.0 * 1024.0), 2);
+                    growthItems.Add((h.StartTime.ToLocalTime().ToString("MM/dd HH:mm"), gb));
+                }
+            }
+
+            if (growthItems.Count > 0)
+            {
+                GrowthSeries = new ISeries[]
+                {
+                    new LineSeries<double>
+                    {
+                        Values = growthItems.Select(g => g.Gigabytes).ToArray(),
+                        Name = "Storage (GB)",
+                        Stroke = new SolidColorPaint(SKColor.Parse("#005FB8")) { StrokeThickness = 2.5f },
+                        Fill = new LinearGradientPaint(
+                            new[] { SKColor.Parse("#35005FB8"), SKColor.Parse("#05005FB8") },
+                            new SKPoint(0.5f, 0),
+                            new SKPoint(0.5f, 1)),
+                        GeometrySize = 7,
+                        GeometryStroke = new SolidColorPaint(SKColor.Parse("#005FB8")) { StrokeThickness = 2f },
+                        GeometryFill = new SolidColorPaint(SKColors.White)
+                    }
+                };
+
+                GrowthXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = growthItems.Select(g => g.Label).ToArray(),
+                        LabelsPaint = new SolidColorPaint(SKColor.Parse("#64748B")),
+                        TextSize = 10
+                    }
+                };
+            }
+            else
+            {
+                GrowthSeries = Array.Empty<ISeries>();
+                GrowthXAxes = Array.Empty<Axis>();
+            }
+
+            // 2. Category Pie Series
+            if (catList.Count > 0)
+            {
+                var topCats = catList.OrderByDescending(c => c.LogicalBytes).Take(6).ToList();
+                string[] catColors = ["#005FB8", "#2563EB", "#0284C7", "#0D9488", "#16A34A", "#64748B"];
+                var pSeries = new List<ISeries>();
+                int idx = 0;
+                foreach (var cat in topCats)
+                {
+                    double gb = Math.Round(cat.LogicalBytes / (1024.0 * 1024.0 * 1024.0), 2);
+                    if (gb <= 0.01) gb = 0.01;
+                    pSeries.Add(new PieSeries<double>
+                    {
+                        Values = new double[] { gb },
+                        Name = cat.Category,
+                        Fill = new SolidColorPaint(SKColor.Parse(catColors[idx % catColors.Length])),
+                        InnerRadius = 38
+                    });
+                    idx++;
+                }
+                CategorySeries = pSeries.ToArray();
+            }
+            else
+            {
+                CategorySeries = Array.Empty<ISeries>();
+            }
+
+            // 3. Age Column Series
+            if (ageList.Count > 0)
+            {
+                AgeSeries = new ISeries[]
+                {
+                    new ColumnSeries<double>
+                    {
+                        Values = ageList.Select(a => Math.Round(a.TotalBytes / (1024.0 * 1024.0 * 1024.0), 2)).ToArray(),
+                        Name = "Storage (GB)",
+                        Fill = new SolidColorPaint(SKColor.Parse("#005FB8")),
+                        MaxBarWidth = 28,
+                        Rx = 3,
+                        Ry = 3
+                    }
+                };
+
+                AgeXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = ageList.Select(a => a.Name).ToArray(),
+                        LabelsPaint = new SolidColorPaint(SKColor.Parse("#64748B")),
+                        TextSize = 10
+                    }
+                };
+            }
+            else
+            {
+                AgeSeries = Array.Empty<ISeries>();
+                AgeXAxes = Array.Empty<Axis>();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LiveCharts build error: {ex.Message}");
+        }
     }
 }

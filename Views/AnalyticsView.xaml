@@ -5,6 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:infra="clr-namespace:DiskScope.Infrastructure"
              xmlns:vm="clr-namespace:DiskScope.ViewModels"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="1200" d:DesignWidth="1100">
 
@@ -104,59 +106,11 @@
                             <TextBlock Grid.Column="1" Text="Scan Checkpoints" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushTextMuted}"/>
                         </Grid>
 
-                        <!-- Growth Chart Area -->
-                        <Grid Height="110" Margin="0,8,0,4">
-                            <!-- Horizontal Guide Lines -->
-                            <Border BorderBrush="#F1F5F9" BorderThickness="0,1,0,0" VerticalAlignment="Top" Margin="10,12,10,0"/>
-                            <Border BorderBrush="#F1F5F9" BorderThickness="0,1,0,0" VerticalAlignment="Center" Margin="10,0,10,0"/>
-                            <Border BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" VerticalAlignment="Bottom" Margin="10,0,10,12"/>
-
-                            <Canvas x:Name="ChartCanvas" ClipToBounds="True">
-                                <!-- Area fill -->
-                                <Polygon Points="{Binding PolygonPoints}" Opacity="0.12">
-                                    <Polygon.Fill>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                            <GradientStop Color="#0067C0" Offset="0"/>
-                                            <GradientStop Color="#FFFFFF" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Polygon.Fill>
-                                </Polygon>
-
-                                <!-- Trend Polyline -->
-                                <Polyline Points="{Binding PolylinePoints}" Stroke="#0067C0" StrokeThickness="2.5" 
-                                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-
-                                <!-- Interactive Data Point Dots -->
-                                <ItemsControl ItemsSource="{Binding GrowthPoints}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <Canvas/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemContainerStyle>
-                                        <Style TargetType="ContentPresenter">
-                                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                                        </Style>
-                                    </ItemsControl.ItemContainerStyle>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="-6,-6,0,0" ToolTipService.ShowDuration="10000" Cursor="Hand">
-                                                <Grid.ToolTip>
-                                                    <ToolTip Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
-                                                        <StackPanel Margin="4">
-                                                            <TextBlock Text="{Binding DateLabel}" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
-                                                            <TextBlock Text="{Binding FormattedBytes, StringFormat='Indexed: {0}'}" FontSize="11" Foreground="#0067C0" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="{Binding FormattedFiles, StringFormat='Files: {0}'}" FontSize="11" Foreground="#475569"/>
-                                                        </StackPanel>
-                                                    </ToolTip>
-                                                </Grid.ToolTip>
-                                                <Ellipse Width="12" Height="12" Fill="#FFFFFF" Stroke="#0067C0" StrokeThickness="2.5"/>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Canvas>
+                        <!-- Growth Chart Area (LiveCharts2 Fluent SkiaSharp) -->
+                        <Grid Height="120" Margin="0,8,0,4">
+                            <lvc:CartesianChart Series="{Binding GrowthSeries}" XAxes="{Binding GrowthXAxes}" YAxes="{Binding GrowthYAxes}"
+                                                TooltipPosition="Top"
+                                                LegendPosition="Hidden"/>
                         </Grid>
 
                         <TextBlock Text="{Binding GrowthTrendMessage}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,4,0,0"/>
@@ -230,7 +184,12 @@
                 <!-- Left: File Age Distribution -->
                 <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
-                        <TextBlock Text="FILE AGE DISTRIBUTION (BY MODIFICATION)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,12"/>
+                        <TextBlock Text="FILE AGE DISTRIBUTION (BY MODIFICATION)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,10"/>
+
+                        <!-- File Age Column Chart -->
+                        <Grid Height="90" Margin="0,0,0,10">
+                            <lvc:CartesianChart Series="{Binding AgeSeries}" XAxes="{Binding AgeXAxes}" TooltipPosition="Top" LegendPosition="Hidden"/>
+                        </Grid>
 
                         <ItemsControl ItemsSource="{Binding AgeBuckets}">
                             <ItemsControl.ItemTemplate>
@@ -271,38 +230,49 @@
                 <!-- Right: File Type Breakdown -->
                 <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
-                        <TextBlock Text="FILE CATEGORIES &amp; FORMAT BREAKDOWN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,12"/>
+                        <TextBlock Text="FILE CATEGORIES &amp; FORMAT BREAKDOWN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushAccent}" Margin="0,0,0,10"/>
 
-                        <ItemsControl ItemsSource="{Binding CategoryBreakdown}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,2,0,6">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="5"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Interactive Category Donut Chart -->
+                            <lvc:PieChart Grid.Column="0" Series="{Binding CategorySeries}" Height="110" Width="110" LegendPosition="Hidden" InitialRotation="-90"/>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Category}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
+                            <!-- Category Progress Bars -->
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding CategoryBreakdown}" Margin="10,0,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2,0,6">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="5"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedCount, StringFormat='{}{0} files'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="6,1,0,0"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Category}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
 
-                                        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                                            <TextBlock Text="{Binding FormattedSize}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,8,0"/>
-                                            <TextBlock Text="{Binding FormattedPercentage}" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
-                                        </StackPanel>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FormattedCount, StringFormat='{}{0} files'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="4,1,0,0"/>
 
-                                        <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="4" Margin="0,3,0,0"
-                                                     Value="{Binding StoragePercentage}" Maximum="100"
-                                                     Foreground="#3B82F6" Background="{StaticResource BrushBgCardHover}" BorderThickness="0"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding FormattedSize}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,6,0"/>
+                                                <TextBlock Text="{Binding FormattedPercentage}" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
+                                            </StackPanel>
+
+                                            <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Height="4" Margin="0,3,0,0"
+                                                         Value="{Binding StoragePercentage}" Maximum="100"
+                                                         Foreground="#3B82F6" Background="{StaticResource BrushBgCardHover}" BorderThickness="0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
                     </StackPanel>
                 </Border>
             </Grid>

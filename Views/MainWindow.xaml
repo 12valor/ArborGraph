@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:DiskScope.ViewModels"
         xmlns:views="clr-namespace:DiskScope.Views"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         mc:Ignorable="d"
         Title="ArborGraph — Filesystem Analytics &amp; Visualization" 
         Icon="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico"
@@ -46,34 +47,79 @@
                             </StackPanel>
                             <Separator Background="{StaticResource BrushBorderLight}" Margin="6,0,6,10"/>
 
-                            <Button Content="Overview" Command="{Binding NavigateCommand}" CommandParameter="Overview" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Overview" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Home24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Overview" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Scanner" Command="{Binding NavigateCommand}" CommandParameter="Scanner" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Scanner" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Search24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Scanner" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Files" Command="{Binding NavigateCommand}" CommandParameter="Files" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Files" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Folder24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Files" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Treemap" Command="{Binding NavigateCommand}" CommandParameter="Treemap" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Treemap" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Grid24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Treemap" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Duplicates" Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Duplicates" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="DocumentCopy24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Duplicates" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Cleanup" Command="{Binding NavigateCommand}" CommandParameter="CleanupCenter" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="CleanupCenter" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Broom24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Cleanup" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Developer" Command="{Binding NavigateCommand}" CommandParameter="DeveloperStorage" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="DeveloperStorage" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Code24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Developer" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
-                            <Button Content="Photoshop" Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Photoshop" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Image24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Photoshop" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
 
                             <Separator Background="{StaticResource BrushBorder}" Margin="6,8"/>
 
-                            <Button Content="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" 
-                                    Style="{StaticResource NavButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Settings" 
+                                    Style="{StaticResource NavButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Settings24" FontSize="16" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </ScrollViewer>
 

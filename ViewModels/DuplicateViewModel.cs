@@ -388,6 +388,25 @@ public class DuplicateViewModel : ObservableObject
         }
     }
 
+    public Task PrepareViewAsync(DatabaseService db)
+    {
+        return Task.Run(() =>
+        {
+            if (DuplicateGroups.Count == 0 && !IsAnalyzing)
+            {
+                var overview = db.GetDuplicateOverview();
+                if (overview.CandidateGroups > 0)
+                {
+                    StatusMessage = $"{overview.CandidateGroups:N0} candidate collision groups detected (~{SizeFormatter.Format(overview.PotentialWastedBytes)} unverified). Click 'Start Analysis' to verify duplicates.";
+                }
+                else
+                {
+                    StatusMessage = "Ready to analyze duplicates across indexed files. Click 'Start Analysis' to scan.";
+                }
+            }
+        });
+    }
+
     public async Task RunAnalysisAsync()
     {
         if (IsAnalyzing) return;
@@ -404,23 +423,37 @@ public class DuplicateViewModel : ObservableObject
         {
             var results = await _analyzer.FindDuplicatesAsync(
                 minSize: 1024,
-                maxCandidates: 1000,
+                maxCandidates: 250,
                 statusProgress: progress,
+                onDuplicateFound: group =>
+                {
+                    System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
+                    {
+                        DuplicateGroups.Add(group);
+                        TotalWastedBytes += group.WastedBytes;
+                        TotalDuplicateFiles += group.FileCount;
+                        if (SelectedGroup == null)
+                        {
+                            SelectedGroup = group;
+                        }
+                        (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (KeepNewestCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (KeepOldestCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (KeepShortestPathCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (DeselectAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (MoveSelectedToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    });
+                },
                 cancellationToken: _cts.Token);
 
-            foreach (var g in results)
-            {
-                DuplicateGroups.Add(g);
-            }
-
-            TotalWastedBytes = results.Sum(g => g.WastedBytes);
-            TotalDuplicateFiles = results.Sum(g => g.FileCount);
-            SelectedGroup = DuplicateGroups.FirstOrDefault();
+            SelectedGroup ??= DuplicateGroups.FirstOrDefault();
+            StatusMessage = $"Analysis complete. Found {DuplicateGroups.Count:N0} duplicate groups ({SizeFormatter.Format(TotalWastedBytes)} wasted).";
             (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Duplicate analysis was stopped.";
+            StatusMessage = $"Analysis stopped. Retained {DuplicateGroups.Count:N0} duplicate groups found so far ({SizeFormatter.Format(TotalWastedBytes)} wasted).";
         }
         catch (Exception ex)
         {

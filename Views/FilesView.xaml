@@ -18,20 +18,27 @@
         <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="20,10">
             <StackPanel Orientation="Horizontal">
                 <RadioButton Content="Largest Files" 
+                             GroupName="FilesSubTabs"
                              Command="{Binding SelectSubTabCommand}" CommandParameter="LargestFiles"
-                             IsChecked="True"
+                             IsChecked="{Binding IsLargestFilesSelected, Mode=TwoWay}"
                              Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
 
                 <RadioButton Content="Largest Folders" 
+                             GroupName="FilesSubTabs"
                              Command="{Binding SelectSubTabCommand}" CommandParameter="LargestFolders"
+                             IsChecked="{Binding IsLargestFoldersSelected, Mode=TwoWay}"
                              Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
 
                 <RadioButton Content="File Types" 
+                             GroupName="FilesSubTabs"
                              Command="{Binding SelectSubTabCommand}" CommandParameter="FileTypes"
+                             IsChecked="{Binding IsFileTypesSelected, Mode=TwoWay}"
                              Style="{StaticResource SegmentedTabButtonStyle}" Margin="0,0,6,0"/>
 
                 <RadioButton Content="Old Files" 
+                             GroupName="FilesSubTabs"
                              Command="{Binding SelectSubTabCommand}" CommandParameter="OldFiles"
+                             IsChecked="{Binding IsOldFilesSelected, Mode=TwoWay}"
                              Style="{StaticResource SegmentedTabButtonStyle}"/>
             </StackPanel>
         </Border>
@@ -44,7 +51,7 @@
                     <Style TargetType="views:LargestFilesView">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="LargestFiles">
+                            <DataTrigger Binding="{Binding DataContext.SelectedSubTab, RelativeSource={RelativeSource AncestorType=views:FilesView}}" Value="LargestFiles">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -58,7 +65,7 @@
                     <Style TargetType="views:LargestFoldersView">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="LargestFolders">
+                            <DataTrigger Binding="{Binding DataContext.SelectedSubTab, RelativeSource={RelativeSource AncestorType=views:FilesView}}" Value="LargestFolders">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -72,7 +79,7 @@
                     <Style TargetType="views:FileTypesView">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="FileTypes">
+                            <DataTrigger Binding="{Binding DataContext.SelectedSubTab, RelativeSource={RelativeSource AncestorType=views:FilesView}}" Value="FileTypes">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -86,7 +93,7 @@
                     <Style TargetType="views:OldFilesView">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedSubTab}" Value="OldFiles">
+                            <DataTrigger Binding="{Binding DataContext.SelectedSubTab, RelativeSource={RelativeSource AncestorType=views:FilesView}}" Value="OldFiles">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>

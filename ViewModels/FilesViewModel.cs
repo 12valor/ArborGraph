@@ -32,29 +32,62 @@ public class FilesViewModel : ObservableObject
         {
             if (SetProperty(ref _selectedSubTab, value))
             {
+                OnPropertyChanged(nameof(IsLargestFilesSelected));
+                OnPropertyChanged(nameof(IsLargestFoldersSelected));
+                OnPropertyChanged(nameof(IsFileTypesSelected));
+                OnPropertyChanged(nameof(IsOldFilesSelected));
                 OnSubTabChanged(value);
             }
         }
     }
 
+    public bool IsLargestFilesSelected
+    {
+        get => SelectedSubTab == "LargestFiles";
+        set { if (value) SelectedSubTab = "LargestFiles"; }
+    }
+
+    public bool IsLargestFoldersSelected
+    {
+        get => SelectedSubTab == "LargestFolders";
+        set { if (value) SelectedSubTab = "LargestFolders"; }
+    }
+
+    public bool IsFileTypesSelected
+    {
+        get => SelectedSubTab == "FileTypes";
+        set { if (value) SelectedSubTab = "FileTypes"; }
+    }
+
+    public bool IsOldFilesSelected
+    {
+        get => SelectedSubTab == "OldFiles";
+        set { if (value) SelectedSubTab = "OldFiles"; }
+    }
+
     public ICommand SelectSubTabCommand { get; }
+
+    public async Task RefreshCurrentSubTabAsync()
+    {
+        switch (SelectedSubTab)
+        {
+            case "LargestFiles":
+                await LargestFilesVM.RefreshDataAsync();
+                break;
+            case "LargestFolders":
+                await LargestFoldersVM.RefreshDataAsync(_mainVm.OverviewVM.Stats.LogicalBytesIndexed);
+                break;
+            case "FileTypes":
+                await FileTypesVM.RefreshDataAsync();
+                break;
+            case "OldFiles":
+                await OldFilesVM.RefreshDataAsync();
+                break;
+        }
+    }
 
     private void OnSubTabChanged(string tab)
     {
-        switch (tab)
-        {
-            case "LargestFiles":
-                _ = LargestFilesVM.RefreshDataAsync();
-                break;
-            case "LargestFolders":
-                _ = LargestFoldersVM.RefreshDataAsync(_mainVm.OverviewVM.Stats.LogicalBytesIndexed);
-                break;
-            case "FileTypes":
-                _ = FileTypesVM.RefreshDataAsync();
-                break;
-            case "OldFiles":
-                _ = OldFilesVM.RefreshDataAsync();
-                break;
-        }
+        _ = RefreshCurrentSubTabAsync();
     }
 }

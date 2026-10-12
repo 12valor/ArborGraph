@@ -2254,6 +2254,42 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public List<FileRecord> GetTemporaryAndLogFiles(int limit = 500)
+    {
+        lock (_lock)
+        {
+            var list = new List<FileRecord>();
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files
+                    WHERE (extension IN ('.tmp', '.log', '.bak', '.old', '.dmp', '.chk', '.wbk')
+                       OR name LIKE 'temp_%'
+                       OR name LIKE 'cache_%')
+                      AND path NOT LIKE '%Adobe%'
+                      AND path NOT LIKE '%Photoshop%'
+                      AND path NOT LIKE '%node_modules%'
+                    ORDER BY size DESC
+                    LIMIT $limit;
+                ";
+                cmd.Parameters.AddWithValue("$limit", limit);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(ReadRecord(reader));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetTemporaryAndLogFiles error: {ex.Message}");
+            }
+            return list;
+        }
+    }
+
     public List<FileRecord> GetLargestPhotoshopFiles(int limit = 5)
     {
         lock (_lock)

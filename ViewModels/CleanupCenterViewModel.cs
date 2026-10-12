@@ -71,6 +71,8 @@ public class CleanupCenterViewModel : ObservableObject
         set => SetProperty(ref _statusMessage, value);
     }
 
+    public event EventHandler<long>? PotentiallyReclaimableBytesChanged;
+
     public long PotentiallyReclaimableBytes
     {
         get => _potentiallyReclaimableBytes;
@@ -79,6 +81,7 @@ public class CleanupCenterViewModel : ObservableObject
             if (SetProperty(ref _potentiallyReclaimableBytes, value))
             {
                 OnPropertyChanged(nameof(FormattedPotentiallyReclaimable));
+                PotentiallyReclaimableBytesChanged?.Invoke(this, value);
             }
         }
     }
@@ -187,11 +190,31 @@ public class CleanupCenterViewModel : ObservableObject
                         claimedPaths.Add(item.Path);
                     }
                 }
+
+                // Also include indexed top-level developer build artifacts (bin, obj, node_modules, target)
+                var indexedDev = _dbService.GetDirectoriesByNames(DeveloperStorageService.CandidateDirectoryNames);
+                foreach (var cand in indexedDev)
+                {
+                    if (IsClaimed(cand.Path)) continue;
+                    devCat.Items.Add(new CleanupCandidateItem
+                    {
+                        Path = cand.Path,
+                        Name = cand.Name,
+                        IsDirectory = true,
+                        SizeBytes = cand.Size,
+                        FileCount = (int)cand.FileCount,
+                        LastModified = DateTime.UtcNow,
+                        Reason = "Indexed project build artifact / dependency folder",
+                        IsSelected = true
+                    });
+                    claimedPaths.Add(cand.Path);
+                }
+
                 devCat.RefreshTotals();
                 if (devCat.Items.Count > 0) list.Add(devCat);
 
                 // 2. Duplicate Redundancy (Non-overlapping copies)
-                var dupCandidates = _dbService.GetDuplicateSizeCandidates(minCount: 2, minSize: 1024, limit: 150);
+                var dupCandidates = _dbService.GetDuplicateSizeCandidates(minCount: 2, minSize: 1024, limit: 250);
                 var dupCat = new CleanupCategory
                 {
                     Id = "duplicates",
@@ -230,57 +253,32 @@ public class CleanupCenterViewModel : ObservableObject
                 dupCat.RefreshTotals();
                 if (dupCat.Items.Count > 0) list.Add(dupCat);
 
-                // 3. Temporary & Log Files (Excluding items inside developer or claimed folders)
+                // 3. Temporary & Log Files (Covering .tmp, .log, .bak, .old, .dmp, .chk, .wbk)
                 var tempCat = new CleanupCategory
                 {
                     Id = "temp_logs",
                     Name = "Temporary & Log Files",
-                    Description = "Residual .tmp, .log, .bak, and crash dump files",
+                    Description = "Residual .tmp, .log, .bak, .old, and crash dump files",
                     Icon = "🗑",
                     SafetyBadge = "Safe to Clean"
                 };
-                _dbService.StreamFilteredFiles(
-                    onRecord: f =>
+                var tempFiles = _dbService.GetTemporaryAndLogFiles(limit: 500);
+                foreach (var f in tempFiles)
+                {
+                    if (IsClaimed(f.Path)) continue;
+                    tempCat.Items.Add(new CleanupCandidateItem
                     {
-                        if (IsClaimed(f.Path)) return;
-                        tempCat.Items.Add(new CleanupCandidateItem
-                        {
-                            Path = f.Path,
-                            Name = f.Name,
-                            IsDirectory = false,
-                            SizeBytes = f.Size,
-                            FileCount = 1,
-                            LastModified = f.ModifiedDate,
-                            Reason = "Temporary file",
-                            IsSelected = true
-                        });
-                        claimedPaths.Add(f.Path);
-                    },
-                    minSize: 1024,
-                    search: ".tmp",
-                    ct: ct);
-
-                _dbService.StreamFilteredFiles(
-                    onRecord: f =>
-                    {
-                        if (IsClaimed(f.Path)) return;
-                        tempCat.Items.Add(new CleanupCandidateItem
-                        {
-                            Path = f.Path,
-                            Name = f.Name,
-                            IsDirectory = false,
-                            SizeBytes = f.Size,
-                            FileCount = 1,
-                            LastModified = f.ModifiedDate,
-                            Reason = "Log / Dump file",
-                            IsSelected = true
-                        });
-                        claimedPaths.Add(f.Path);
-                    },
-                    minSize: 1024,
-                    search: ".log",
-                    ct: ct);
-
+                        Path = f.Path,
+                        Name = f.Name,
+                        IsDirectory = false,
+                        SizeBytes = f.Size,
+                        FileCount = 1,
+                        LastModified = f.ModifiedDate,
+                        Reason = $"Residual {f.Extension} temporary / dump file",
+                        IsSelected = true
+                    });
+                    claimedPaths.Add(f.Path);
+                }
                 tempCat.RefreshTotals();
                 if (tempCat.Items.Count > 0) list.Add(tempCat);
 

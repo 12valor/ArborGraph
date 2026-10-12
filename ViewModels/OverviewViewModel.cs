@@ -69,6 +69,7 @@ public class OverviewViewModel : ObservableObject
     public ICommand ResetDrilldownCommand { get; }
     public ICommand? ReviewCleanupCommand { get; set; }
     public ICommand? StartScanCommand { get; set; }
+    public Action<long>? OnReclaimableCalculated { get; set; }
 
     public ScanStats Stats
     {
@@ -163,6 +164,7 @@ public class OverviewViewModel : ObservableObject
             // Deterministic reclaimable total from actual scan data
             var (_, totalReclaimable) = _dbService.GetReclaimableStorageBreakdown();
             Explanation.PotentiallyReclaimableBytes = totalReclaimable;
+            OnReclaimableCalculated?.Invoke(totalReclaimable);
 
             Explanation.LargestContributors.Clear();
             DrilldownItems.Clear();

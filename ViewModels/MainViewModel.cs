@@ -82,6 +82,19 @@ public class MainViewModel : ObservableObject
         OverviewVM.ReviewCleanupCommand = new RelayCommand(_ => NavigateTo("CleanupCenter"));
         OverviewVM.StartScanCommand = new RelayCommand(async _ => await StartScanAsync(), _ => !IsScanning);
 
+        OverviewVM.OnReclaimableCalculated = bytes =>
+        {
+            if (CleanupCenterVM.Categories.Count == 0 || CleanupCenterVM.PotentiallyReclaimableBytes == 0)
+            {
+                CleanupCenterVM.PotentiallyReclaimableBytes = bytes;
+            }
+        };
+
+        CleanupCenterVM.PotentiallyReclaimableBytesChanged += (s, bytes) =>
+        {
+            OverviewVM.Explanation.PotentiallyReclaimableBytes = bytes;
+        };
+
         _currentView = OverviewVM;
 
         StartScanCommand = new RelayCommand(async _ => await StartScanAsync(), _ => !IsScanning);
@@ -308,37 +321,20 @@ public class MainViewModel : ObservableObject
                 _ => OverviewVM
             };
 
-            // Lightweight, instant, or active-scanning states do not block with full loading card
-            if (IsScanning || tabName == "Scanner" || tabName == "Files" || tabName == "ScanLog" || tabName == "Duplicates")
-            {
-                IsTabLoading = false;
-                return;
-            }
-
-            if (tabName == "Settings")
-            {
-                SettingsVM.LoadFromService();
-                IsTabLoading = false;
-                return;
-            }
-
-            if (tabName == "Overview")
-            {
-                OverviewVM.OnViewLoaded();
-                IsTabLoading = false;
-                return;
-            }
-
-            // Heavy data tabs: Activate loading state first
+            // Loading state for every tab switch
             TabLoadingTitle = GetTabFriendlyTitle(tabName);
             TabLoadingMessage = GetTabLoadingMessage(tabName);
             IsTabLoading = true;
 
             // Allow the UI thread to immediately paint the loading indicator
             await Task.Yield();
+            var minDelayTask = Task.Delay(180);
 
             Task? refreshTask = tabName switch
             {
+                "Overview" => Task.Run(() => OverviewVM.OnViewLoaded()),
+                "Scanner" => Task.CompletedTask,
+                "Files" => FilesVM.RefreshCurrentSubTabAsync(),
                 "Analytics" => AnalyticsVM.RefreshDataAsync(),
                 "CleanupCenter" => CleanupCenterVM.LoadCleanupCategoriesAsync(),
                 "DeveloperStorage" => DeveloperStorageVM.ScanIndexedStorageAsync(),
@@ -346,20 +342,27 @@ public class MainViewModel : ObservableObject
                 "LargestFolders" => LargestFoldersVM.RefreshDataAsync(OverviewVM.Stats.LogicalBytesIndexed),
                 "FileTypes" => FileTypesVM.RefreshDataAsync(),
                 "OldFiles" => OldFilesVM.RefreshDataAsync(),
+                "Duplicates" => DuplicatesVM.PrepareViewAsync(_dbService),
                 "Photoshop" => PhotoshopVM.RefreshDataAsync(),
                 "JunkCleaner" => Task.Run(() => JunkCleanerVM.RefreshData()),
                 "Treemap" => TreemapVM.LoadCurrentLevelAsync(),
+                "ScanLog" => Task.CompletedTask,
+                "Settings" => Task.Run(() => SettingsVM.LoadFromService()),
                 _ => Task.CompletedTask
             };
 
             if (refreshTask != null)
             {
-                // 10-second safety timeout guard against any deadlock or hanging I/O
-                var completed = await Task.WhenAny(refreshTask, Task.Delay(10000));
-                if (completed != refreshTask)
+                var combined = Task.WhenAll(refreshTask, minDelayTask);
+                var completed = await Task.WhenAny(combined, Task.Delay(10000));
+                if (completed != combined)
                 {
                     ScanLogVM.AddLog("WARN", $"Loading view '{tabName}' timed out after 10 seconds.");
                 }
+            }
+            else
+            {
+                await minDelayTask;
             }
         }
         catch (Exception ex)
@@ -377,6 +380,9 @@ public class MainViewModel : ObservableObject
 
     private static string GetTabFriendlyTitle(string tabName) => tabName switch
     {
+        "Overview" => "Storage Overview",
+        "Scanner" => "Filesystem Scanner",
+        "Files" => "Files Explorer",
         "Analytics" => "Storage Analytics",
         "CleanupCenter" => "Cleanup Center",
         "DeveloperStorage" => "Developer Storage Hub",
@@ -389,12 +395,15 @@ public class MainViewModel : ObservableObject
         "JunkCleaner" => "Junk & Cache Cleaner",
         "Treemap" => "Interactive Space Treemap",
         "ScanLog" => "Scan Diagnostics",
-        "Settings" => "Settings & Rules",
+        "Settings" => "Settings & Preferences",
         _ => "Storage Overview"
     };
 
     private static string GetTabLoadingMessage(string tabName) => tabName switch
     {
+        "Overview" => "Refreshing drive utilization and system telemetry...",
+        "Scanner" => "Preparing scanner controls and system targets...",
+        "Files" => "Loading indexed files and directory hierarchy...",
         "Analytics" => "Analyzing storage trends, age buckets, and reclaimable space...",
         "CleanupCenter" => "Scanning developer caches and potential cleanup opportunities...",
         "DeveloperStorage" => "Inspecting package caches, build targets, and container storage...",
@@ -402,10 +411,12 @@ public class MainViewModel : ObservableObject
         "LargestFolders" => "Aggregating directory sizes and hierarchy metrics...",
         "FileTypes" => "Calculating category breakdowns and file type distribution...",
         "OldFiles" => "Identifying files untouched for 180+ days...",
-        "Duplicates" => "Preparing duplicate file detection engine...",
+        "Duplicates" => "Analyzing size collisions and duplicate candidate groups...",
         "Photoshop" => "Inspecting PSD/PSB files and Adobe cache trees...",
         "JunkCleaner" => "Checking system temp folders and browser caches...",
         "Treemap" => "Computing squarified layout for proportional visualization...",
+        "ScanLog" => "Retrieving diagnostic activity logs...",
+        "Settings" => "Loading application preferences and configuration...",
         _ => "Loading view data..."
     };
 

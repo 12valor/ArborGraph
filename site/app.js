@@ -1126,7 +1126,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     document.querySelectorAll('.copy-hash-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            if (btn.id === 'btnCopySetupHash') {
+                const setupHash = btn.getAttribute('data-hash');
+                if (!setupHash) {
+                    showToast('Installer checksum is not yet available for this release.');
+                    return;
+                }
+                navigator.clipboard.writeText(setupHash).then(() => {
+                    showToast('Installer SHA-256 checksum copied to clipboard!');
+                }).catch(() => {
+                    showToast(`Hash: ${setupHash}`);
+                });
+                return;
+            }
+
             const hash = btn.getAttribute('data-hash') || currentOfficialHash;
+            if (!hash) return;
             navigator.clipboard.writeText(hash).then(() => {
                 showToast('SHA-256 checksum copied to clipboard!');
             }).catch(() => {
@@ -1203,6 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                let foundSetupHash = false;
                 const sumsAsset = data.assets.find(a => a.name === 'SHA256SUMS.txt');
                 if (sumsAsset && sumsAsset.browser_download_url) {
                     try {
@@ -1224,8 +1240,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                         const btnExe = document.getElementById('btnCopyExeHash');
                                         if (btnExe) btnExe.setAttribute('data-hash', hash);
                                     } else if (filename.startsWith('ArborGraph-Setup') && filename.endsWith('.exe')) {
+                                        foundSetupHash = true;
                                         const btnSetup = document.getElementById('btnCopySetupHash');
-                                        if (btnSetup) btnSetup.setAttribute('data-hash', hash);
+                                        if (btnSetup) {
+                                            btnSetup.setAttribute('data-hash', hash);
+                                            btnSetup.removeAttribute('disabled');
+                                            btnSetup.textContent = 'Copy SHA-256';
+                                            btnSetup.title = 'Copy SHA-256 checksum for installer';
+                                            btnSetup.style.opacity = '1';
+                                            btnSetup.style.cursor = 'pointer';
+                                        }
                                     } else if (filename === 'ArborGraph.zip' || filename.endsWith('.zip')) {
                                         const btnZip = document.getElementById('btnCopyZipHash');
                                         if (btnZip) btnZip.setAttribute('data-hash', hash);
@@ -1237,9 +1261,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Keep fallback hash
                     }
                 }
+
+                if (!foundSetupHash) {
+                    const btnSetup = document.getElementById('btnCopySetupHash');
+                    if (btnSetup) {
+                        btnSetup.setAttribute('disabled', 'disabled');
+                        btnSetup.removeAttribute('data-hash');
+                        btnSetup.textContent = 'Unavailable';
+                        btnSetup.title = 'Installer SHA-256 digest is unavailable until an official setup release is published';
+                        btnSetup.style.opacity = '0.55';
+                        btnSetup.style.cursor = 'not-allowed';
+                    }
+                }
             }
         } catch (e) {
             // Keep fallback static attributes on network or API limits
+            const btnSetup = document.getElementById('btnCopySetupHash');
+            if (btnSetup && !btnSetup.getAttribute('data-hash')) {
+                btnSetup.setAttribute('disabled', 'disabled');
+                btnSetup.removeAttribute('data-hash');
+                btnSetup.textContent = 'Unavailable';
+                btnSetup.title = 'Installer SHA-256 digest is unavailable until an official setup release is published';
+                btnSetup.style.opacity = '0.55';
+                btnSetup.style.cursor = 'not-allowed';
+            }
         }
     }
 

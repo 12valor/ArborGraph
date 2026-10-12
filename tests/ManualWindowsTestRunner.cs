@@ -140,7 +140,12 @@ public static class ManualWindowsTestRunner
     private static async Task RunInstallerTestsAsync(List<ManualTestReport> reports)
     {
         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
-        string installerPath = Path.Combine(projectRoot, "dist", "setup", "ArborGraph-Setup-1.0.0-x64.exe");
+        string version = Program.GetAppVersionString().TrimStart('v', 'V');
+        string installerPath = Path.Combine(projectRoot, "dist", "setup", $"ArborGraph-Setup-v{version}-x64.exe");
+        if (!File.Exists(installerPath))
+        {
+            installerPath = Path.Combine(projectRoot, "dist", "setup", $"ArborGraph-Setup-{version}-x64.exe");
+        }
         string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string installDir = Path.Combine(localAppData, "Programs", "ArborGraph");
@@ -196,9 +201,9 @@ public static class ManualWindowsTestRunner
                 string instLoc = key.GetValue("InstallLocation")?.ToString() ?? "";
                 string uninstStr = key.GetValue("UninstallString")?.ToString() ?? "";
 
-                bool valid = dispName.Contains("ArborGraph", StringComparison.OrdinalIgnoreCase) && dispVer == "1.0.0" && publisher.Contains("EVANGELISTA") && instLoc.Contains("ArborGraph");
+                bool valid = dispName.Contains("ArborGraph", StringComparison.OrdinalIgnoreCase) && (dispVer == version || dispVer == $"v{version}") && publisher.Contains("EVANGELISTA") && instLoc.Contains("ArborGraph");
                 reports.Add(new ManualTestReport("TC-INS-01", "Fresh Installation Verification", "Installer", valid ? "PASS" : "FAIL", sw.Elapsed,
-                    "Display name contains ArborGraph, Version 1.0.0, Publisher AG DIAZ EVANGELISTA, valid InstallLocation and UninstallString",
+                    $"Display name contains ArborGraph, Version {version}, Publisher AG DIAZ EVANGELISTA, valid InstallLocation and UninstallString",
                     $"DisplayName='{dispName}', Version='{dispVer}', Publisher='{publisher}', InstallLoc='{instLoc}', Uninstall='{uninstStr}'"));
             }
             else

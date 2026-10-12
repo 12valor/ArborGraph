@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             eulaVersion: "1.0",
             accepted: true,
             acceptedAt: new Date().toISOString(),
-            applicationVersion: "1.1.2",
+            applicationVersion: "1.1.6",
             architecture: "win-x64",
             publisher: "AG DIAZ EVANGELISTA",
             offlineStorage: "%LocalAppData%\\ArborGraph"

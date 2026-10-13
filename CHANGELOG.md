@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] - Fluent 2 Modernization
+## [Unreleased]
+
+---
+
+## [1.2.0] - 2026-10-13
 
 ### Added
 - **Windows 11 Fluent 2 Design System Integration:** Integrated `WPF-UI` (v4.3.0) and `LiveChartsCore.SkiaSharpView.WPF` (v2.0.5) libraries.

@@ -58,7 +58,7 @@ public class Program
     internal static string GetAppVersionString()
     {
         var ver = typeof(DiskScope.App).Assembly.GetName().Version;
-        return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.1.6";
+        return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.2.0";
     }
 
     private static async Task<int> RunAutomatedHarnessAsync(string[] args)

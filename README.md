@@ -165,7 +165,7 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
 ```
 
 - **Runtime:** .NET 8.0 Windows Desktop SDK (`net8.0-windows`, x64).
-- **Presentation:** Windows Presentation Foundation (WPF) with custom styling and asynchronous UI binding.
+- **Presentation:** Windows Presentation Foundation (WPF) with Windows 11 Fluent 2 design language (`WPF-UI`), Mica material window backdrop, vector symbol glyphs, LiveCharts2 analytical series, and real-time GPU-accelerated metric graph rendering.
 - **Persistence:** Local SQLite database via `Microsoft.Data.Sqlite` in Write-Ahead Logging (`WAL`) mode with `synchronous=NORMAL` and cache sizing pragmas.
 - **Concurrency:** Bounded `System.Threading.Channels` pipeline streaming file records from multi-threaded traversal tasks directly into bulk SQLite transaction workers.
 

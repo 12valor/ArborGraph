@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
     <Grid Margin="20">
@@ -23,13 +24,18 @@
                 <TextBlock Text="Largest Folders" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}"/>
                 <TextBlock Text="Aggregated storage totals per parent directory calculated without double-counting" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
-            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+            <Button Grid.Column="1" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,5">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="12" Margin="0,0,5,0"/>
+                    <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
         </Grid>
 
         <!-- Deletion Progress Banner -->
         <Border Grid.Row="1" Visibility="{Binding IsDeleting, Converter={StaticResource BoolToVis}}" 
                 Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" 
-                CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+                CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <StackPanel>
                 <TextBlock Text="{Binding DeletionStatus}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
                 <ProgressBar Height="3" IsIndeterminate="True" Foreground="{StaticResource BrushAccent}" Background="{StaticResource BrushBgCardHover}" BorderThickness="0" Margin="0,6,0,0"/>
@@ -116,7 +122,7 @@
         </DataGrid>
 
         <!-- Selected Folder Panel -->
-        <Border Grid.Row="3" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8">
+        <Border Grid.Row="3" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -131,14 +137,34 @@
                                    FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
                     </StackPanel>
                     <TextBlock Text="{Binding SelectedFolder.Path, FallbackValue='—'}" 
-                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open Folder" Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Copy Path" Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3"/>
+                    <Button Command="{Binding OpenFolderCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="FolderOpen24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Open Folder" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding CopyFolderPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Copy24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Copy Path" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Delete24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Recycle Bin" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,4">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="DeleteDismiss24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Delete..." VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

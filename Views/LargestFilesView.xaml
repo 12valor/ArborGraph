@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
     <Grid Margin="20">
@@ -25,14 +26,29 @@
                 <TextBlock Text="Sorted by logical file size descending" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Clear Filters" Command="{Binding ClearFiltersCommand}" Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                <Button Command="{Binding ClearFiltersCommand}" Style="{StaticResource GhostButtonStyle}" Margin="0,0,6,0" Padding="10,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" Margin="0,0,4,0"/>
+                        <TextBlock Text="Clear Filters" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Export CSV" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- Compact Filters Toolbar -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -163,7 +179,7 @@
         </DataGrid>
 
         <!-- Pagination Controls -->
-        <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1,0,1,1" Padding="10,6">
+        <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1,0,1,1" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -174,14 +190,24 @@
                 <TextBlock Grid.Column="0" Text="{Binding PageSummary}" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="11"/>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="◀ Prev" Command="{Binding PrevPageCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,2" Margin="0,0,6,0"/>
-                    <Button Content="Next ▶" Command="{Binding NextPageCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,2"/>
+                    <Button Command="{Binding PrevPageCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ChevronLeft24" FontSize="11" Margin="0,0,3,0"/>
+                            <TextBlock Text="Prev" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding NextPageCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="10,3">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Next" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                            <ui:SymbolIcon Symbol="ChevronRight24" FontSize="11"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Selected File Detail Strip -->
-        <Border Grid.Row="4" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8">
+        <Border Grid.Row="4" Margin="0,10,0,0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
             <StackPanel>
                 <Grid Visibility="{Binding IsDeleting, Converter={StaticResource BoolToVis}}" Margin="0,0,0,6">
                     <Grid.RowDefinitions>
@@ -198,26 +224,51 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a file to inspect details'}" 
-                                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding SelectedFile.FormattedSize, FallbackValue='—', StringFormat='  ({0})'}" 
-                                   FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Select a file to inspect details'}" 
+                                       FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding SelectedFile.FormattedSize, FallbackValue='—', StringFormat='  ({0})'}" 
+                                       FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushAccent}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
+                                   FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedFile.Path, FallbackValue='—'}" 
-                               FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
-                </StackPanel>
 
-                <!-- Actions -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Open" Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Reveal" Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Recycle Bin" Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,3"/>
-                    <Button Content="Delete..." Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,3"/>
-                </StackPanel>
-            </Grid>
+                    <!-- Actions -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding OpenFileCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Open24" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Open" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding OpenFileLocationCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Reveal" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding CopyPathCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Copy24" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Copy Path" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding MoveToRecycleBinCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,4,0" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Delete24" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Recycle Bin" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding DeletePermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="DeleteDismiss24" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="Delete..." VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
             </StackPanel>
         </Border>
     </Grid>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1050">
     <Grid Margin="20">
@@ -25,13 +26,23 @@
                            FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Scan Storage" Command="{Binding ScanIndexedCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Browse Folder..." Command="{Binding BrowseWorkspaceCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                <Button Command="{Binding ScanIndexedCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowSync24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Scan Storage" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding BrowseWorkspaceCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="FolderOpen24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Browse Folder..." VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- Summary Strip -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -60,21 +71,21 @@
             </Grid.ColumnDefinitions>
 
             <!-- Left: Ecosystems Breakdown List -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8">
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="ECOSYSTEMS &amp; CACHES" Style="{StaticResource SectionHeadingStyle}" Margin="4,2,0,6"/>
+                    <TextBlock Grid.Row="0" Text="ECOSYSTEMS &amp; CACHES" Style="{StaticResource SectionHeadingStyle}" Margin="4,2,0,8"/>
 
                     <ListBox Grid.Row="1" ItemsSource="{Binding Ecosystems}" SelectedItem="{Binding SelectedEcosystem, Mode=TwoWay}"
                              Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="8,6" Margin="0,1" Background="Transparent">
+                                <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="8,8" Margin="0,1" Background="Transparent" CornerRadius="4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -82,7 +93,7 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontWeight="Medium" Foreground="{StaticResource BrushTextPrimary}" FontSize="12"/>
-                                            <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} folder(s)'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,1,0,0"/>
+                                            <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} folder(s)'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="0,2,0,0"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding FormattedTotalSize}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" FontFamily="{StaticResource MonoFont}" VerticalAlignment="Center"/>
                                     </Grid>
@@ -94,7 +105,7 @@
             </Border>
 
             <!-- Right: Candidate Targets Table -->
-            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10">
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -102,7 +113,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Ecosystem Actions Bar -->
-                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -114,10 +125,30 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="Select All" Command="{Binding SelectAllCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="6,2" Margin="0,0,4,0"/>
-                            <Button Content="Deselect" Command="{Binding DeselectAllCommand}" Style="{StaticResource GhostButtonStyle}" FontSize="11" Padding="6,2" Margin="0,0,6,0"/>
-                            <Button Content="Recycle Selected" Command="{Binding DeleteSelectedRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,4,0"/>
-                            <Button Content="Delete..." Command="{Binding DeleteSelectedPermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,3"/>
+                            <Button Command="{Binding SelectAllCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,3" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="SelectAllOn24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Select All" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding DeselectAllCommand}" Style="{StaticResource GhostButtonStyle}" FontSize="11" Padding="8,3" Margin="0,0,6,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="SelectAllOff24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Deselect" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding DeleteSelectedRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Recycle Selected" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding DeleteSelectedPermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,3">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="DeleteDismiss24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Delete..." VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
 

@@ -6,6 +6,7 @@
              xmlns:infra="clr-namespace:DiskScope.Infrastructure"
              xmlns:models="clr-namespace:DiskScope.Models"
              xmlns:vm="clr-namespace:DiskScope.ViewModels"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1100">
 
@@ -37,29 +38,58 @@
 
             <!-- Actions Bar -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Select All" Command="{Binding SelectAllCommand}" 
-                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Deselect" Command="{Binding DeselectAllCommand}" 
-                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,10,0"/>
+                <Button Command="{Binding SelectAllCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="10,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="SelectAllOn24" FontSize="12" Margin="0,0,4,0"/>
+                        <TextBlock Text="Select All" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding DeselectAllCommand}" 
+                        Style="{StaticResource GhostButtonStyle}" Margin="0,0,10,0" Padding="10,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="SelectAllOff24" FontSize="12" Margin="0,0,4,0"/>
+                        <TextBlock Text="Deselect" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
-                <Button Content="Scan Caches" Command="{Binding ScanCommand}" 
-                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                <Button Command="{Binding ScanCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowSync24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Scan Caches" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
-                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" 
-                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0"/>
+                <Button Command="{Binding ExportCsvCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Export CSV" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
-                <Button Content="{Binding FormattedPotentialBytes, StringFormat='Clean Selected ({0})'}" 
-                        Command="{Binding CleanCommand}" 
-                        Style="{StaticResource PrimaryButtonStyle}" Padding="14,6"/>
+                <Button Command="{Binding CleanCommand}" 
+                        Style="{StaticResource PrimaryButtonStyle}" Padding="14,6">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Delete24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding FormattedPotentialBytes, StringFormat='Clean Selected ({0})'}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
-                <Button Content="Cancel" Command="{Binding CancelCommand}" 
-                        Style="{StaticResource DangerButtonStyle}" Margin="6,0,0,0"
-                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                <Button Command="{Binding CancelCommand}" 
+                        Style="{StaticResource DangerButtonStyle}" Margin="6,0,0,0" Padding="12,5"
+                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" Margin="0,0,4,0"/>
+                        <TextBlock Text="Cancel" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- SUMMARY STRIP -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -85,7 +115,7 @@
         </Border>
 
         <!-- PROGRESS BAR -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10"
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,10"
                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
             <StackPanel>
                 <Grid Margin="0,0,0,4">
@@ -101,7 +131,7 @@
             <ItemsControl ItemsSource="{Binding CategoryGroups}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:JunkCategoryGroup}">
-                        <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,10" Padding="12">
+                        <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="14">
                             <StackPanel>
                                 <!-- Category Header -->
                                 <Grid Margin="0,0,0,8">
@@ -118,7 +148,7 @@
                                         <TextBlock Text="{Binding TotalFiles, StringFormat=' ({0:N0} files)'}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </StackPanel>
 
-                                    <Border Grid.Column="2" Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="6,2">
+                                    <Border Grid.Column="2" Background="{StaticResource BrushAccentTint}" CornerRadius="6" Padding="8,3">
                                         <TextBlock Text="{Binding FormattedTotalBytes}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
                                     </Border>
                                 </Grid>
@@ -129,7 +159,7 @@
                                 <ItemsControl ItemsSource="{Binding Targets}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type models:JunkTarget}">
-                                            <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Margin="0,0,0,4" Padding="6,4">
+                                            <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Margin="0,0,0,4" Padding="6,6">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
@@ -141,8 +171,8 @@
 
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
-                                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                                                        <TextBlock Text="{Binding Path}" FontSize="10" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"/>
+                                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,1,0,0"/>
+                                                        <TextBlock Text="{Binding Path}" FontSize="10" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextMuted}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                                     </StackPanel>
 
                                                     <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource BrushTextPrimary}" VerticalAlignment="Center"/>

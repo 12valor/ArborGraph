@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
     <Grid Margin="20">
@@ -25,14 +26,29 @@
                            FontSize="12" Foreground="{StaticResource BrushTextSecondary}" Margin="0,2,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Start Analysis" Command="{Binding StartAnalysisCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Stop" Command="{Binding CancelAnalysisCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                <Button Command="{Binding StartAnalysisCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Play24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Start Analysis" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding CancelAnalysisCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,6,0" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Stop24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding ExportCsvCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Export CSV" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- Status & Recoverable Space Bar -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -56,21 +72,21 @@
             </Grid.ColumnDefinitions>
 
             <!-- Left: Duplicate Groups List -->
-            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8">
+            <Border Grid.Column="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="DUPLICATE GROUPS" Style="{StaticResource SectionHeadingStyle}" Margin="4,2,0,6"/>
+                    <TextBlock Grid.Row="0" Text="DUPLICATE GROUPS" Style="{StaticResource SectionHeadingStyle}" Margin="4,2,0,8"/>
 
                     <ListBox Grid.Row="1" ItemsSource="{Binding DuplicateGroups}" SelectedItem="{Binding SelectedGroup, Mode=TwoWay}"
                              Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="8,6" Margin="0,1" Background="Transparent">
+                                <Border BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="8,8" Margin="0,1" Background="Transparent" CornerRadius="4">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -85,7 +101,7 @@
                                             <TextBlock Grid.Column="1" Text="{Binding FormattedWasted, StringFormat='Wasting {0}'}" 
                                                        FontWeight="Medium" Foreground="{StaticResource BrushWarning}" FontSize="11" FontFamily="{StaticResource MonoFont}"/>
                                         </Grid>
-                                        <Grid Grid.Row="1" Margin="0,2,0,0">
+                                        <Grid Grid.Row="1" Margin="0,3,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -103,7 +119,7 @@
             </Border>
 
             <!-- Right: Files in Selected Group -->
-            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="10">
+            <Border Grid.Column="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -111,7 +127,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Selection & Cleaning Actions -->
-                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -120,14 +136,39 @@
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Select: " Foreground="{StaticResource BrushTextSecondary}" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <Button Content="Keep Oldest" Command="{Binding SelectKeepOldestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="6,2" Margin="0,0,4,0"/>
-                            <Button Content="Keep Newest" Command="{Binding SelectKeepNewestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="6,2" Margin="0,0,4,0"/>
-                            <Button Content="Deselect" Command="{Binding DeselectAllCommand}" Style="{StaticResource GhostButtonStyle}" FontSize="11" Padding="6,2"/>
+                            <Button Command="{Binding SelectKeepOldestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,3" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="History24" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Keep Oldest" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding SelectKeepNewestCommand}" Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,3" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Clock24" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Keep Newest" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding DeselectAllCommand}" Style="{StaticResource GhostButtonStyle}" FontSize="11" Padding="8,3">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="SelectAllOff24" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Deselect" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="Recycle Selected" Command="{Binding CleanSelectedRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,4,0"/>
-                            <Button Content="Delete..." Command="{Binding CleanSelectedPermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,3"/>
+                            <Button Command="{Binding CleanSelectedRecycleBinCommand}" Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Delete24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Recycle Selected" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding CleanSelectedPermanentlyCommand}" Style="{StaticResource DangerButtonStyle}" FontSize="11" Padding="10,3">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="DeleteDismiss24" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Delete..." VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
 

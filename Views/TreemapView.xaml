@@ -6,6 +6,7 @@
              xmlns:infra="clr-namespace:DiskScope.Infrastructure"
              xmlns:models="clr-namespace:DiskScope.Models"
              xmlns:vm="clr-namespace:DiskScope.ViewModels"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="1100">
 
@@ -43,7 +44,7 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- Color Mode Segmented Pill Switcher -->
-                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="2" Margin="0,0,12,0">
+                <Border Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="2" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <Button Content="Category" Command="{Binding SelectColorModeCommand}" CommandParameter="Category"
                                 FontSize="11" Padding="10,3" Cursor="Hand" BorderThickness="0">
@@ -98,15 +99,20 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="{StaticResource BrushAccentTint}" BorderBrush="{StaticResource BrushAccentTintBorder}" BorderThickness="1" CornerRadius="4" Padding="10,4" Margin="0,0,8,0">
+                <Border Background="{StaticResource BrushAccentTint}" BorderBrush="{StaticResource BrushAccentTintBorder}" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="0,0,8,0">
                     <TextBlock Text="{Binding FormattedTotalBytes, StringFormat='View: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" FontFamily="{StaticResource MonoFont}"/>
                 </Border>
-                <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}"/>
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource ActionButtonStyle}" Padding="12,5">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="12" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- 2. BREADCRUMBS & NAVIGATION -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="8,5" Margin="0,0,0,8">
+        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,0,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -114,8 +120,13 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Content="⮤ Up" Command="{Binding NavigateUpCommand}" 
-                        Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="8,2" Margin="0,0,8,0"/>
+                <Button Grid.Column="0" Command="{Binding NavigateUpCommand}" 
+                        Style="{StaticResource ActionButtonStyle}" FontSize="11" Padding="10,3" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowUp24" FontSize="11" Margin="0,0,4,0"/>
+                        <TextBlock Text="Up" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- Breadcrumb trail -->
                 <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -174,7 +185,7 @@
         </Border>
 
         <!-- 3. DYNAMIC MODERN LEGEND -->
-        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="4" Padding="12,6" Margin="0,0,0,8">
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,0,8">
             <Grid>
                 <!-- Category Legend (Default) -->
                 <WrapPanel Orientation="Horizontal" VerticalAlignment="Center"
@@ -322,7 +333,7 @@
         </Border>
 
         <!-- 4. TREEMAP CANVAS AREA -->
-        <Border Grid.Row="3" x:Name="TreemapContainer" Background="#0B0F19" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+        <Border Grid.Row="3" x:Name="TreemapContainer" Background="#0B0F19" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
             <Grid>
                 <ItemsControl ItemsSource="{Binding Rectangles}">
                     <ItemsControl.ItemsPanel>
@@ -448,7 +459,7 @@
         </Border>
 
         <!-- 5. BOTTOM DETAILS & ACTION INSPECTOR CARD -->
-        <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,8,0,0"
+        <Border Grid.Row="4" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,8,0,0"
                 Visibility="{Binding HasSelectedNode, Converter={StaticResource BoolToVis}}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -481,13 +492,28 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="⤓ Zoom In (Folder)" Command="{Binding DrillDownSelectedCommand}" 
+                    <Button Command="{Binding DrillDownSelectedCommand}" 
                             Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Padding="12,5"
-                            Visibility="{Binding SelectedNode.Item.IsDirectory, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Open in Explorer" Command="{Binding OpenFileLocationCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="10,5"/>
-                    <Button Content="Copy Path" Command="{Binding CopyPathCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
+                            Visibility="{Binding SelectedNode.Item.IsDirectory, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ZoomIn24" FontSize="12" Margin="0,0,5,0"/>
+                            <TextBlock Text="Zoom In" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenFileLocationCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,6,0" Padding="10,5">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="FolderOpen24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Open in Explorer" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding CopyPathCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Padding="10,5">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Copy24" FontSize="11" Margin="0,0,4,0"/>
+                            <TextBlock Text="Copy Path" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

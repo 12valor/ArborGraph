@@ -94,6 +94,8 @@ Write-Host "[OK] Packaged: ArborGraph-$Tag-portable.zip" -ForegroundColor Green
 $isccCmd = $null
 if (Get-Command iscc -ErrorAction SilentlyContinue) {
     $isccCmd = (Get-Command iscc).Source
+} elseif (Test-Path "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") {
+    $isccCmd = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
 } elseif (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
     $isccCmd = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 } elseif (Test-Path "C:\Program Files\Inno Setup 6\ISCC.exe") {

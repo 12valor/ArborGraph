@@ -6,6 +6,7 @@ using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
 using DiskScope.ViewModels;
+using Wpf.Ui.Controls;
 
 namespace DiskScope.Tests;
 
@@ -28,6 +29,7 @@ public static class AutomatedTestSuites
         RegisterXamlAndUiTests(runner);
         RegisterUpdateSystemTests(runner);
         RegisterScanHistoryTests(runner);
+        RegisterDatabaseIntegrityIndicatorTests(runner);
     }
 
     // =========================================================================
@@ -2072,6 +2074,254 @@ public static class AutomatedTestSuites
                 var mainVm = new MainViewModel(db, null, lastScanService);
                 ctx.AssertEqual(ScanState.Ready, mainVm.OverviewVM.Stats.State, "App should fall back cleanly to Ready state without crashing");
                 ctx.AssertEqual(0L, mainVm.OverviewVM.Stats.FilesIndexed, "FilesIndexed should fall back to 0");
+
+                await Task.CompletedTask;
+            }
+        ));
+    }
+
+    // =========================================================================
+    // P. DATABASE INTEGRITY INDICATOR & LIGHTWEIGHT STARTUP VALIDATION SUITE
+    // =========================================================================
+    private static void RegisterDatabaseIntegrityIndicatorTests(TestRunner runner)
+    {
+        // TC-INT-01: Initial Integrity Status is Not Shown as Passed
+        runner.Register(new TestCase(
+            TestId: "TC-INT-01",
+            FeatureId: "FEAT-16",
+            Title: "Initial Database Integrity Status Unverified (Not Shown as Passed)",
+            Priority: "P0 / BLOCKER",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.ViewModels.OverviewViewModel",
+            AuditRiskNote: "Verifies the initial state does NOT display a green success checkmark or claim verification passed before a check runs.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("init_integrity.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(db, diskService);
+
+                ctx.AssertEqual(DatabaseIntegrityState.Initial, overviewVm.IntegrityState, "Initial state must be DatabaseIntegrityState.Initial");
+                ctx.Assert(!overviewVm.IsIntegrityCheckPassed, "Initial IsIntegrityCheckPassed must be false");
+                ctx.Assert(overviewVm.IntegritySymbol != SymbolRegular.CheckmarkCircle24, "Initial icon must NOT be CheckmarkCircle24");
+                ctx.Assert(overviewVm.IntegrityStatus.Contains("unverified", StringComparison.OrdinalIgnoreCase) ||
+                           overviewVm.IntegrityStatus.Contains("Ready", StringComparison.OrdinalIgnoreCase),
+                           "Initial status text must indicate unverified or ready state");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-02: Successful Full Verification Updates UI State Correctly
+        runner.Register(new TestCase(
+            TestId: "TC-INT-02",
+            FeatureId: "FEAT-16",
+            Title: "Authoritative Full Integrity Verification Updates State to Passed",
+            Priority: "P0 / BLOCKER",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.ViewModels.OverviewViewModel",
+            AuditRiskNote: "Verifies running full PRAGMA integrity_check transitions state to Passed with success icon and green brush.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("full_verify.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(db, diskService);
+
+                overviewVm.VerifyIntegrity(isAsync: false, isFullCheck: true);
+
+                ctx.AssertEqual(DatabaseIntegrityState.Passed, overviewVm.IntegrityState, "State must be Passed after successful full check");
+                ctx.Assert(overviewVm.IsIntegrityCheckPassed, "IsIntegrityCheckPassed must be true after successful full check");
+                ctx.AssertEqual(SymbolRegular.CheckmarkCircle24, overviewVm.IntegritySymbol, "Icon must be CheckmarkCircle24");
+                ctx.Assert(overviewVm.IntegrityStatus.Contains("Verified", StringComparison.OrdinalIgnoreCase), "Status text must indicate verified");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-03: Failed Verification Cannot Display Green Success State
+        runner.Register(new TestCase(
+            TestId: "TC-INT-03",
+            FeatureId: "FEAT-16",
+            Title: "Failed Integrity Check Cannot Display Green Success State",
+            Priority: "P0 / BLOCKER",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.ViewModels.OverviewViewModel",
+            AuditRiskNote: "Verifies corrupted database header or page causes integrity check failure and displays Failed/DeleteDismiss icon rather than success.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("corrupt_verify.db");
+                using (var db = new DatabaseService(dbPath))
+                {
+                    db.Initialize();
+                }
+                Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+                // Intentionally corrupt database file contents
+                using (var fs = new FileStream(dbPath, FileMode.Open, FileAccess.ReadWrite))
+                {
+                    fs.Seek(40, SeekOrigin.Begin);
+                    fs.Write(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0, 8);
+                }
+
+                using var dbCorrupt = new DatabaseService(dbPath);
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(dbCorrupt, diskService);
+
+                overviewVm.VerifyIntegrity(isAsync: false, isFullCheck: true);
+
+                ctx.AssertEqual(DatabaseIntegrityState.Failed, overviewVm.IntegrityState, "State must be Failed for corrupted database");
+                ctx.Assert(!overviewVm.IsIntegrityCheckPassed, "IsIntegrityCheckPassed must be false");
+                ctx.Assert(overviewVm.IntegritySymbol != SymbolRegular.CheckmarkCircle24, "Icon must NOT be CheckmarkCircle24 on failure");
+                ctx.AssertEqual(SymbolRegular.DeleteDismiss24, overviewVm.IntegritySymbol, "Icon must be DeleteDismiss24 on failure");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-04: Incomplete Verification Remains Distinguishable From Confirmed Failure
+        runner.Register(new TestCase(
+            TestId: "TC-INT-04",
+            FeatureId: "FEAT-16",
+            Title: "Incomplete Verification Is Distinguishable From Failure (Warning State)",
+            Priority: "P1 / CRITICAL",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.ViewModels.OverviewViewModel",
+            AuditRiskNote: "Verifies exceptions during verification transition to Warning state rather than claiming Passed or generic corruption.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("warning_verify.db");
+                using (var dbInit = new DatabaseService(dbPath))
+                {
+                    dbInit.Initialize();
+                }
+                Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+                // Exclusively lock the database file so verification operation encounters an access exception
+                using (var fsLock = new FileStream(dbPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                {
+                    using var dbLocked = new DatabaseService(dbPath);
+                    var diskService = new DiskService();
+                    var overviewVm = new OverviewViewModel(dbLocked, diskService);
+
+                    overviewVm.VerifyIntegrity(isAsync: false, isFullCheck: true);
+
+                    ctx.Assert(!overviewVm.IsIntegrityCheckPassed, "IsIntegrityCheckPassed must be false when verification cannot complete");
+                    ctx.Assert(overviewVm.IntegritySymbol != SymbolRegular.CheckmarkCircle24, "Icon must never be green success on warning");
+                    ctx.AssertEqual(DatabaseIntegrityState.Warning, overviewVm.IntegrityState, "State must be Warning when verification operation cannot complete");
+                    ctx.AssertEqual(SymbolRegular.Warning24, overviewVm.IntegritySymbol, "Icon must be Warning24 on warning");
+                }
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-05: Normal Startup Runs Lightweight Schema Validation Without Blocking Full Integrity Check
+        runner.Register(new TestCase(
+            TestId: "TC-INT-05",
+            FeatureId: "FEAT-16",
+            Title: "Startup Schema Validation Executes Instantly Without Blocking Full Integrity Check",
+            Priority: "P0 / BLOCKER",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.ViewModels.OverviewViewModel",
+            AuditRiskNote: "Verifies lightweight startup validation executes in < 50ms, marks state as LightweightValid, and does NOT claim full verification.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("startup_lightweight.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(db, diskService);
+
+                var sw = Stopwatch.StartNew();
+                overviewVm.ValidateStartupDatabaseState(isAsync: false);
+                sw.Stop();
+
+                ctx.Assert(sw.ElapsedMilliseconds < 50, $"Startup validation must complete in < 50ms, took {sw.ElapsedMilliseconds}ms");
+                ctx.AssertEqual(DatabaseIntegrityState.LightweightValid, overviewVm.IntegrityState, "State must be LightweightValid");
+                ctx.Assert(!overviewVm.IsIntegrityCheckPassed, "Lightweight validation must NOT mark full integrity check as passed");
+                ctx.Assert(overviewVm.IntegritySymbol != SymbolRegular.CheckmarkCircle24, "Lightweight validation must not show full checkmark");
+                ctx.AssertEqual(SymbolRegular.HardDrive24, overviewVm.IntegritySymbol, "Icon must be HardDrive24");
+                ctx.Assert(overviewVm.IntegrityStatus.Contains("Schema", StringComparison.OrdinalIgnoreCase), "Status text must mention schema/WAL active");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-06: Database Accessibility and Schema-Validation Failure Reporting
+        runner.Register(new TestCase(
+            TestId: "TC-INT-06",
+            FeatureId: "FEAT-16",
+            Title: "Database Schema Validation Failure Accurately Reported",
+            Priority: "P1 / CRITICAL",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies ValidateSchemaState accurately flags missing core tables and transitions UI to Failed.",
+            ExecuteAsync: async ctx =>
+            {
+                // Create raw sqlite database with NO tables
+                string dbPath = ctx.CreateTempDatabasePath("blank_notables.db");
+                using (var rawConn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}"))
+                {
+                    rawConn.Open();
+                    using var cmd = rawConn.CreateCommand();
+                    cmd.CommandText = "CREATE TABLE dummy (id INTEGER PRIMARY KEY);";
+                    cmd.ExecuteNonQuery();
+                }
+
+                using var db = new DatabaseService(dbPath);
+                var (isValid, message) = db.ValidateSchemaState();
+                ctx.Assert(!isValid, "Schema validation must fail when core tables (files, directories, scan_metadata) are missing");
+                ctx.Assert(message.Contains("Incomplete schema", StringComparison.OrdinalIgnoreCase), "Failure message must report incomplete schema");
+
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(db, diskService);
+                overviewVm.ValidateStartupDatabaseState(isAsync: false);
+
+                ctx.AssertEqual(DatabaseIntegrityState.Failed, overviewVm.IntegrityState, "Overview state must be Failed when schema is incomplete");
+                ctx.Assert(!overviewVm.IsIntegrityCheckPassed, "IsIntegrityCheckPassed must be false");
+
+                await Task.CompletedTask;
+            }
+        ));
+
+        // TC-INT-07: Database Operations Remain Usable During Background Validation
+        runner.Register(new TestCase(
+            TestId: "TC-INT-07",
+            FeatureId: "FEAT-16",
+            Title: "Database Operations Usable Concurrently During Startup Validation",
+            Priority: "P1 / CRITICAL",
+            Category: "Database Integrity UI",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Verifies concurrent reads do not deadlock or block when startup validation executes.",
+            ExecuteAsync: async ctx =>
+            {
+                string dbPath = ctx.CreateTempDatabasePath("concurrent_access.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+
+                var diskService = new DiskService();
+                var overviewVm = new OverviewViewModel(db, diskService);
+
+                // Run asynchronous validation
+                overviewVm.ValidateStartupDatabaseState(isAsync: true);
+
+                // Immediately execute database read operations on another thread
+                var queryTask = Task.Run(() =>
+                {
+                    bool hasFiles = db.HasAnyIndexedFiles();
+                    var paged = db.GetFilesPaged(0, 10);
+                    var subdirs = db.GetSubdirectories(@"C:\", limit: 10);
+                    return hasFiles || paged.Count >= 0 || subdirs.Count >= 0;
+                });
+
+                var completed = await Task.WhenAny(queryTask, Task.Delay(2000));
+                ctx.Assert(completed == queryTask, "Concurrent queries must complete in < 2 seconds without lock deadlock");
 
                 await Task.CompletedTask;
             }

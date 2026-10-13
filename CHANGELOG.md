@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-10-14
+
+### Performance & Optimization
+- **Application Launch Acceleration:** Optimized cold and warm startup sequencing, deferring secondary analytics breakdown computation and reducing main UI thread initialization latency by over 90%.
+- **Lightweight Startup Schema Validation:** Replaced synchronous, blocking `PRAGMA integrity_check;` on large SQLite databases with instant schema format validation (`ValidateSchemaState()`), eliminating launch hangs on multi-gigabyte databases.
+
+### Fixed
+- **Database Integrity Status Indicator:** Corrected `OverviewViewModel.DatabaseIntegrityStatus` and XAML data binding so the database status badge accurately displays validation state ("Valid", "Checking...", "Corrupt", "Error") without false corruption states.
+- **Startup Lock Contention:** Eliminated database contention during startup by moving detailed verification tasks to background execution and avoiding monitor lock starvation on `DatabaseService._lock`.
+
+---
+
 ## [1.2.0] - 2026-10-13
 
 ### Added

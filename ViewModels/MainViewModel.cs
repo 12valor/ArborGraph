@@ -532,7 +532,7 @@ public class MainViewModel : ObservableObject
                 ScanLogVM.AddSkippedFile(file, reason);
             }
 
-            OverviewVM.VerifyIntegrity();
+            OverviewVM.ValidateStartupDatabaseState(isAsync: true);
 
             string statusMsg = finalStats.State == ScanState.Cancelled
                 ? "Scan cancelled safely by user."
@@ -745,7 +745,7 @@ public class MainViewModel : ObservableObject
             OverviewVM.AddRecentDirectory(feedMsg, force: true);
 
             OverviewVM.GenerateStorageExplanation(asyncReclaimable: true);
-            OverviewVM.VerifyIntegrity(isAsync: true);
+            OverviewVM.ValidateStartupDatabaseState(isAsync: true);
 
             ScanLogVM.AddLog("INFO", $"Restored previous completed scan: {stats.FilesIndexed:N0} files indexed ({stats.FormattedLogicalBytes}).");
         }

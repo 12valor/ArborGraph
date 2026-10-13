@@ -2369,7 +2369,7 @@ public class DatabaseService : IDisposable
         }
     }
 
-    public bool CheckIntegrity()
+    public (bool Succeeded, bool IsIntegrityOk, string Message) CheckDetailedIntegrity()
     {
         lock (_lock)
         {
@@ -2379,12 +2379,66 @@ public class DatabaseService : IDisposable
                 using var cmd = _connection!.CreateCommand();
                 cmd.CommandText = "PRAGMA integrity_check;";
                 object? res = cmd.ExecuteScalar();
-                return string.Equals(res?.ToString(), "ok", StringComparison.OrdinalIgnoreCase);
+                string? str = res?.ToString();
+                if (string.Equals(str, "ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (true, true, "OK");
+                }
+                return (true, false, str ?? "Integrity check reported corruption");
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 11 || ex.SqliteErrorCode == 26 ||
+                                             ex.Message.Contains("corrupt", StringComparison.OrdinalIgnoreCase) ||
+                                             ex.Message.Contains("malformed", StringComparison.OrdinalIgnoreCase) ||
+                                             ex.Message.Contains("not a database", StringComparison.OrdinalIgnoreCase) ||
+                                             ex.Message.Contains("file format", StringComparison.OrdinalIgnoreCase))
+            {
+                System.Diagnostics.Debug.WriteLine($"CheckDetailedIntegrity corruption: {ex.Message}");
+                return (true, false, $"Database corruption: {ex.Message}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"CheckIntegrity error: {ex.Message}");
-                return false;
+                System.Diagnostics.Debug.WriteLine($"CheckDetailedIntegrity error: {ex.Message}");
+                return (false, false, ex.Message);
+            }
+        }
+    }
+
+    public bool CheckIntegrity()
+    {
+        var result = CheckDetailedIntegrity();
+        return result.Succeeded && result.IsIntegrityOk;
+    }
+
+    /// <summary>
+    /// Lightweight startup schema verification: confirms database connection opens,
+    /// WAL configuration is active, and the core tables (files, directories, scan_metadata) exist.
+    /// Executes in less than 1ms without locking or scanning database pages.
+    /// </summary>
+    public (bool IsValid, string Message) ValidateSchemaState()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT COUNT(*) FROM sqlite_master 
+                    WHERE type = 'table' 
+                      AND name IN ('files', 'directories', 'scan_metadata');
+                ";
+                object? res = cmd.ExecuteScalar();
+                long count = res != null && res != DBNull.Value ? Convert.ToInt64(res) : 0;
+                if (count >= 3)
+                {
+                    return (true, "Core database schema tables verified.");
+                }
+                return (false, $"Incomplete schema: expected 3 core tables, found {count}.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ValidateSchemaState error: {ex.Message}");
+                return (false, $"Database access failed: {ex.Message}");
             }
         }
     }

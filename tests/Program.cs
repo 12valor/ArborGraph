@@ -450,7 +450,13 @@ public class Program
                 sw.Stop();
                 Console.WriteLine($"  • db.HasAnyIndexedFiles() (O(1) LIMIT 1 probe): {sw.ElapsedMilliseconds} ms (Present: {hasFiles})");
 
-                // 6. OverviewVM Creation
+                // 6. Database schema validation probe: O(1) in-memory sqlite_master probe
+                sw.Restart();
+                var (isSchemaValid, schemaMsg) = db.ValidateSchemaState();
+                sw.Stop();
+                Console.WriteLine($"  • db.ValidateSchemaState() (O(1) schema probe): {sw.ElapsedMilliseconds} ms (Valid: {isSchemaValid})");
+
+                // 7. OverviewVM Creation
                 sw.Restart();
                 var overviewVm = new OverviewViewModel(db, diskService);
                 sw.Stop();

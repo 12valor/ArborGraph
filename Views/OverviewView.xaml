@@ -391,11 +391,18 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="14" Foreground="{StaticResource BrushSuccess}" Margin="0,0,6,0"/>
+                        <ui:SymbolIcon Symbol="{Binding IntegritySymbol}" FontSize="14" Foreground="{Binding IntegrityBrush}" Margin="0,0,6,0"/>
                         <TextBlock Text="INTEGRITY: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBlock Text="{Binding IntegrityStatus}" FontSize="11" Foreground="{StaticResource BrushAccent}"/>
+                        <TextBlock Text="{Binding IntegrityStatus}" FontSize="11" Foreground="{Binding IntegrityBrush}"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="Offline, Deterministic SQLite Index" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Offline SQLite Index" FontSize="11" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Command="{Binding VerifyFullIntegrityCommand}"
+                                Content="Verify Full Integrity"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Padding="8,3" FontSize="10"
+                                ToolTip="Run deliberate PRAGMA integrity_check across all SQLite database pages"/>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>

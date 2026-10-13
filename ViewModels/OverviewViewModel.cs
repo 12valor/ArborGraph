@@ -1,14 +1,39 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DiskScope.Infrastructure;
 using DiskScope.Models;
 using DiskScope.Services;
+using Wpf.Ui.Controls;
 
 namespace DiskScope.ViewModels;
 
+public enum DatabaseIntegrityState
+{
+    Initial,          // Default unverified / ready state: neutral gray
+    Verifying,        // In-progress: neutral steel blue
+    Passed,           // Full PRAGMA integrity_check passed: green success
+    LightweightValid, // Lightweight startup validation passed: steel blue
+    Warning,          // Verification incomplete or non-fatal warning: amber
+    Failed            // Actual integrity failure or schema error: red danger
+}
+
 public class OverviewViewModel : ObservableObject
 {
+    private static readonly SolidColorBrush BrushSuccess = CreateFrozenBrush(0x15, 0x80, 0x3D);   // #15803D (Passed)
+    private static readonly SolidColorBrush BrushWarning = CreateFrozenBrush(0xB4, 0x53, 0x09);   // #B45309 (Warning)
+    private static readonly SolidColorBrush BrushDanger  = CreateFrozenBrush(0xDC, 0x26, 0x26);   // #DC2626 (Failed)
+    private static readonly SolidColorBrush BrushAccent  = CreateFrozenBrush(0x00, 0x5F, 0xB8);   // #005FB8 (Verifying / Validated)
+    private static readonly SolidColorBrush BrushSecondary = CreateFrozenBrush(0x4B, 0x55, 0x63); // #4B5563 (Initial / Neutral)
+
+    private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     private readonly DatabaseService _dbService;
     private readonly DiskService _diskService;
     private readonly ProcessMonitorService _monitorService;
@@ -18,8 +43,9 @@ public class OverviewViewModel : ObservableObject
     private long _usedDriveBytes;
     private long _freeDriveBytes;
     private double _overallPercentUsed;
-    private bool _isIntegrityCheckPassed = true;
-    private string _integrityStatus = "Ready for scan";
+    private DatabaseIntegrityState _integrityState = DatabaseIntegrityState.Initial;
+    private bool _isIntegrityCheckPassed = false;
+    private string _integrityStatus = "Ready for scan (Integrity unverified)";
 
     private string _currentCpuText = "—";
     private string _currentRamText = "—";
@@ -53,6 +79,9 @@ public class OverviewViewModel : ObservableObject
         });
         DrillUpCommand = new RelayCommand(_ => DrillUp(), _ => Breadcrumbs.Count > 1);
         ResetDrilldownCommand = new RelayCommand(_ => ResetDrilldown());
+        VerifyFullIntegrityCommand = new RelayCommand(
+            _ => VerifyIntegrity(isAsync: true, isFullCheck: true),
+            _ => IntegrityState != DatabaseIntegrityState.Verifying);
 
         // Initial sample
         var initialSample = _monitorService.CaptureSample();
@@ -67,9 +96,43 @@ public class OverviewViewModel : ObservableObject
     public ICommand DrilldownCommand { get; }
     public ICommand DrillUpCommand { get; }
     public ICommand ResetDrilldownCommand { get; }
+    public ICommand VerifyFullIntegrityCommand { get; }
     public ICommand? ReviewCleanupCommand { get; set; }
     public ICommand? StartScanCommand { get; set; }
     public Action<long>? OnReclaimableCalculated { get; set; }
+
+    public DatabaseIntegrityState IntegrityState
+    {
+        get => _integrityState;
+        private set
+        {
+            if (SetProperty(ref _integrityState, value))
+            {
+                OnPropertyChanged(nameof(IntegritySymbol));
+                OnPropertyChanged(nameof(IntegrityBrush));
+            }
+        }
+    }
+
+    public SymbolRegular IntegritySymbol => IntegrityState switch
+    {
+        DatabaseIntegrityState.Passed => SymbolRegular.CheckmarkCircle24,
+        DatabaseIntegrityState.LightweightValid => SymbolRegular.HardDrive24,
+        DatabaseIntegrityState.Verifying => SymbolRegular.ArrowSync24,
+        DatabaseIntegrityState.Warning => SymbolRegular.Warning24,
+        DatabaseIntegrityState.Failed => SymbolRegular.DeleteDismiss24,
+        _ => SymbolRegular.HardDrive24
+    };
+
+    public Brush IntegrityBrush => IntegrityState switch
+    {
+        DatabaseIntegrityState.Passed => BrushSuccess,
+        DatabaseIntegrityState.LightweightValid => BrushAccent,
+        DatabaseIntegrityState.Verifying => BrushAccent,
+        DatabaseIntegrityState.Warning => BrushWarning,
+        DatabaseIntegrityState.Failed => BrushDanger,
+        _ => BrushSecondary
+    };
 
     public ScanStats Stats
     {
@@ -107,13 +170,13 @@ public class OverviewViewModel : ObservableObject
     public bool IsIntegrityCheckPassed
     {
         get => _isIntegrityCheckPassed;
-        set => SetProperty(ref _isIntegrityCheckPassed, value);
+        private set => SetProperty(ref _isIntegrityCheckPassed, value);
     }
 
     public string IntegrityStatus
     {
         get => _integrityStatus;
-        set => SetProperty(ref _integrityStatus, value);
+        private set => SetProperty(ref _integrityStatus, value);
     }
 
     public string FormattedTotalDrive => SizeFormatter.Format(_totalDriveBytes);
@@ -499,48 +562,27 @@ public class OverviewViewModel : ObservableObject
         RamHistory = _monitorService.GetRamHistory();
     }
 
-    public void VerifyIntegrity(bool isAsync = false)
+    /// <summary>
+    /// Fast startup database validation: confirms database accessibility and presence of required schema tables
+    /// without performing an exhaustive, lock-holding page-by-page B-tree scan.
+    /// </summary>
+    public void ValidateStartupDatabaseState(bool isAsync = true)
     {
         if (isAsync)
         {
+            IntegrityState = DatabaseIntegrityState.Verifying;
+            IntegrityStatus = "Validating database schema and accessibility...";
+
             _ = Task.Run(() =>
             {
                 try
                 {
-                    bool dbOk = _dbService.CheckIntegrity();
-                    var action = new Action(() =>
-                    {
-                        IsIntegrityCheckPassed = dbOk;
-                        IntegrityStatus = dbOk
-                            ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
-                            : "Warning: SQLite integrity verification reported an issue";
-                    });
-
-                    if (System.Windows.Application.Current?.Dispatcher != null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
-                    {
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(action);
-                    }
-                    else
-                    {
-                        action();
-                    }
+                    var (isValid, message) = _dbService.ValidateSchemaState();
+                    UpdateIntegrityFromValidation(isValid, message);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    var failAction = new Action(() =>
-                    {
-                        IsIntegrityCheckPassed = false;
-                        IntegrityStatus = "Integrity check could not complete.";
-                    });
-
-                    if (System.Windows.Application.Current?.Dispatcher != null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
-                    {
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(failAction);
-                    }
-                    else
-                    {
-                        failAction();
-                    }
+                    UpdateIntegrityFromValidation(false, $"Validation exception: {ex.Message}");
                 }
             });
         }
@@ -548,17 +590,143 @@ public class OverviewViewModel : ObservableObject
         {
             try
             {
-                bool dbOk = _dbService.CheckIntegrity();
-                IsIntegrityCheckPassed = dbOk;
-                IntegrityStatus = dbOk
-                    ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
-                    : "Warning: SQLite integrity verification reported an issue";
+                var (isValid, message) = _dbService.ValidateSchemaState();
+                UpdateIntegrityFromValidation(isValid, message);
             }
-            catch
+            catch (Exception ex)
             {
-                IsIntegrityCheckPassed = false;
-                IntegrityStatus = "Integrity check could not complete.";
+                UpdateIntegrityFromValidation(false, $"Validation exception: {ex.Message}");
             }
+        }
+    }
+
+    private void UpdateIntegrityFromValidation(bool isValid, string message)
+    {
+        DispatchAction(() =>
+        {
+            if (isValid)
+            {
+                IntegrityState = DatabaseIntegrityState.LightweightValid;
+                IntegrityStatus = "Database Schema & WAL Active (Full check on demand)";
+                IsIntegrityCheckPassed = false; // Lightweight validation is NOT full PRAGMA integrity_check!
+            }
+            else
+            {
+                IntegrityState = DatabaseIntegrityState.Failed;
+                IntegrityStatus = $"Schema validation failed: {message}";
+                IsIntegrityCheckPassed = false;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Performs database integrity verification. If isFullCheck is true, executes PRAGMA integrity_check.
+    /// Otherwise runs lightweight schema validation.
+    /// </summary>
+    public void VerifyIntegrity(bool isAsync = false, bool isFullCheck = true)
+    {
+        if (!isFullCheck)
+        {
+            ValidateStartupDatabaseState(isAsync);
+            return;
+        }
+
+        if (isAsync)
+        {
+            IntegrityState = DatabaseIntegrityState.Verifying;
+            IntegrityStatus = "Running exhaustive PRAGMA integrity_check...";
+            (VerifyFullIntegrityCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var (succeeded, isOk, message) = _dbService.CheckDetailedIntegrity();
+                    DispatchAction(() =>
+                    {
+                        if (!succeeded)
+                        {
+                            IntegrityState = DatabaseIntegrityState.Warning;
+                            IntegrityStatus = $"Integrity verification incomplete: {message}";
+                            IsIntegrityCheckPassed = false;
+                        }
+                        else if (isOk)
+                        {
+                            IntegrityState = DatabaseIntegrityState.Passed;
+                            IntegrityStatus = "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)";
+                            IsIntegrityCheckPassed = true;
+                        }
+                        else
+                        {
+                            IntegrityState = DatabaseIntegrityState.Failed;
+                            IntegrityStatus = $"Database integrity check failed: {message}";
+                            IsIntegrityCheckPassed = false;
+                        }
+                        (VerifyFullIntegrityCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    DispatchAction(() =>
+                    {
+                        IntegrityState = DatabaseIntegrityState.Warning;
+                        IntegrityStatus = $"Integrity check could not complete: {ex.Message}";
+                        IsIntegrityCheckPassed = false;
+                        (VerifyFullIntegrityCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    });
+                }
+            });
+        }
+        else
+        {
+            try
+            {
+                IntegrityState = DatabaseIntegrityState.Verifying;
+                IntegrityStatus = "Running exhaustive PRAGMA integrity_check...";
+
+                var (succeeded, isOk, message) = _dbService.CheckDetailedIntegrity();
+                if (!succeeded)
+                {
+                    IntegrityState = DatabaseIntegrityState.Warning;
+                    IntegrityStatus = $"Integrity verification incomplete: {message}";
+                    IsIntegrityCheckPassed = false;
+                }
+                else if (isOk)
+                {
+                    IntegrityState = DatabaseIntegrityState.Passed;
+                    IntegrityStatus = "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)";
+                    IsIntegrityCheckPassed = true;
+                }
+                else
+                {
+                    IntegrityState = DatabaseIntegrityState.Failed;
+                    IntegrityStatus = $"Database integrity check failed: {message}";
+                    IsIntegrityCheckPassed = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                IntegrityState = DatabaseIntegrityState.Warning;
+                IntegrityStatus = $"Integrity check could not complete: {ex.Message}";
+                IsIntegrityCheckPassed = false;
+            }
+            finally
+            {
+                (VerifyFullIntegrityCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    private void DispatchAction(Action action)
+    {
+        if (System.Windows.Application.Current?.Dispatcher != null &&
+            !System.Windows.Application.Current.Dispatcher.CheckAccess())
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(action);
+        }
+        else
+        {
+            action();
         }
     }
 

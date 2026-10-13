@@ -1,4 +1,4 @@
-<Window x:Class="DiskScope.Views.MainWindow"
+<ui:FluentWindow x:Class="DiskScope.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -11,16 +11,24 @@
         Icon="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico"
         Height="720" Width="1100" MinHeight="580" MinWidth="850"
         WindowStartupLocation="CenterScreen"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True"
         d:DataContext="{d:DesignInstance vm:MainViewModel}">
 
     <Grid Background="{StaticResource BrushBgCanvas}">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
+        <!-- WINDOW TITLE BAR (Windows 11 Fluent 2) -->
+        <ui:TitleBar Grid.Row="0"
+                     Title="ArborGraph — Filesystem Analytics &amp; Visualization"
+                     Icon="pack://application:,,,/ArborGraph;component/Resources/ArborGraph.ico" />
+
         <!-- MAIN WORKSPACE -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="180"/>
                 <ColumnDefinition Width="*"/>
@@ -161,13 +169,15 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- UPDATE NOTIFICATION BANNER -->
+                <!-- UPDATE NOTIFICATION CARD (Windows 11 Fluent 2 InfoBar) -->
                 <Border Grid.Row="0"
                         Visibility="{Binding IsUpdateBannerVisible, Converter={StaticResource BoolToVis}}"
                         Background="{StaticResource BrushBgSurface}"
-                        BorderBrush="{StaticResource BrushAccent}"
-                        BorderThickness="0,0,0,2"
-                        Padding="16,10"
+                        BorderBrush="{StaticResource BrushAccentTintBorder}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Margin="16,12,16,6"
+                        Padding="16,12"
                         Panel.ZIndex="50">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -177,20 +187,24 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Icon Badge -->
-                        <Border Grid.Column="0" Background="{StaticResource BrushAccent}" CornerRadius="3" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center">
-                            <TextBlock Text="UPDATE" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        <Border Grid.Column="0" Background="{StaticResource BrushAccentTint}" CornerRadius="6" Padding="8" Margin="0,0,14,0" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="18" Foreground="{StaticResource BrushAccent}"/>
                         </Border>
 
                         <!-- Info & Progress -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding UpdateVersionText}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource BrushTextPrimary}"/>
-                                <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="12,0,0,0" FontWeight="Medium"/>
+                                <Border Background="{StaticResource BrushAccentTint}" CornerRadius="4" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="11" Foreground="{StaticResource BrushAccent}" FontWeight="SemiBold"/>
+                                </Border>
                             </StackPanel>
-                            <TextBlock Text="{Binding UpdateNotesSummary}" FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                            <TextBlock Text="{Binding UpdateNotesSummary}" FontSize="11.5" Foreground="{StaticResource BrushTextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
 
-                            <ProgressBar Height="3" Margin="0,6,0,0" Value="{Binding UpdateDownloadProgress}" Maximum="100"
+                            <ProgressBar Height="4" Margin="0,8,0,0" Value="{Binding UpdateDownloadProgress}" Maximum="100"
                                          Foreground="{StaticResource BrushAccent}"
+                                         Background="{StaticResource BrushBgCardHover}"
+                                         BorderThickness="0"
                                          Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BoolToVis}}"/>
                         </StackPanel>
 
@@ -199,7 +213,7 @@
                             <!-- Update Now Button -->
                             <Button Content="Update Now" 
                                     Command="{Binding StartUpdateCommand}"
-                                    Padding="12,4" Margin="0,0,6,0">
+                                    Padding="14,6" Margin="0,0,8,0">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
                                         <Setter Property="Visibility" Value="Visible"/>
@@ -219,14 +233,14 @@
                             <Button Content="Restart Now" 
                                     Command="{Binding RestartToUpdateCommand}"
                                     Style="{StaticResource PrimaryButtonStyle}"
-                                    Padding="12,4" Margin="0,0,6,0"
+                                    Padding="14,6" Margin="0,0,8,0"
                                     Visibility="{Binding IsUpdateReadyToRestart, Converter={StaticResource BoolToVis}}"/>
 
                             <!-- Later / Dismiss Button -->
                             <Button Content="Later" 
                                     Command="{Binding DismissUpdateCommand}"
                                     Style="{StaticResource ActionButtonStyle}"
-                                    Padding="10,4"/>
+                                    Padding="12,6"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -313,8 +327,8 @@
             </Grid>
         </Grid>
 
-        <!-- BOTTOM STATUS BAR -->
-        <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Padding="12,2">
+        <!-- BOTTOM STATUS BAR (Windows 11 Fluent 2 Status Bar) -->
+        <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Padding="14,3">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -323,33 +337,54 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- State Indicator -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" MinWidth="75">
-                    <Ellipse Width="6" Height="6" Margin="0,0,6,0">
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="{StaticResource BrushTextMuted}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Scanning">
-                                        <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Stopping">
-                                        <Setter Property="Fill" Value="{StaticResource BrushWarning}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Completed">
-                                        <Setter Property="Fill" Value="{StaticResource BrushAccent}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Failed">
-                                        <Setter Property="Fill" Value="{StaticResource BrushDanger}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
-                    <TextBlock Text="{Binding OverviewVM.Stats.State}" FontWeight="Medium" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
-                </StackPanel>
+                <!-- State Indicator Pill -->
+                <Border Grid.Column="0" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Scanning">
+                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Stopping">
+                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Completed">
+                                    <Setter Property="Background" Value="#EFF6FF"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Failed">
+                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Margin="0,0,6,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource BrushTextMuted}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Scanning">
+                                            <Setter Property="Fill" Value="{StaticResource BrushSuccess}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Stopping">
+                                            <Setter Property="Fill" Value="{StaticResource BrushWarning}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Completed">
+                                            <Setter Property="Fill" Value="{StaticResource BrushAccent}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding OverviewVM.Stats.State}" Value="Failed">
+                                            <Setter Property="Fill" Value="{StaticResource BrushDanger}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding OverviewVM.Stats.State}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+                </Border>
 
-                <!-- Current Directory Text -->
+                <!-- Current Directory Path -->
                 <TextBlock Grid.Column="2" Text="{Binding OverviewVM.Stats.CurrentDirectory}" 
                            FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}" 
                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
@@ -359,7 +394,7 @@
                     <TextBlock Text="{Binding OverviewVM.Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}, StringFormat='Files: {0}'}" 
                                FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,12,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedLogicalBytes, StringFormat='Indexed: {0}'}" 
-                               FontSize="11" FontWeight="Medium" Foreground="{StaticResource BrushAccent}" Margin="0,0,12,0"/>
+                               FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}" Margin="0,0,12,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedFilesPerSecond}" 
                                FontSize="11" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,12,0"/>
                     <TextBlock Text="{Binding OverviewVM.Stats.FormattedElapsed, StringFormat='Elapsed: {0}'}" 
@@ -368,4 +403,4 @@
             </Grid>
         </Border>
     </Grid>
-</Window>
+</ui:FluentWindow>

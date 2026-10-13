@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="1000">
 
@@ -22,7 +23,7 @@
             </StackPanel>
 
             <!-- 2. SCAN TARGET & CONTROLS -->
-            <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="18,14" Margin="0,0,0,16">
+            <Border Grid.Row="1" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18,14" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -36,6 +37,7 @@
 
                     <!-- Drives Selector -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="HardDrive24" FontSize="14" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Drives:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
                         <ItemsControl ItemsSource="{Binding OverviewVM.Drives}" VerticalAlignment="Center">
                             <ItemsControl.ItemsPanel>
@@ -54,27 +56,48 @@
                     </StackPanel>
 
                     <!-- Custom Folder Input -->
-                    <TextBlock Grid.Column="2" Text="Folder:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" Margin="0,0,8,0"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <ui:SymbolIcon Symbol="Folder24" FontSize="14" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Folder:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                    </StackPanel>
+
                     <TextBox Grid.Column="3" Text="{Binding CustomScanPath, UpdateSourceTrigger=PropertyChanged}" 
-                             VerticalContentAlignment="Center" Height="28" Padding="8,0" FontSize="11" FontFamily="{StaticResource MonoFont}"/>
-                    <Button Grid.Column="4" Content="Browse..." Command="{Binding BrowseCustomFolderCommand}" 
-                            Style="{StaticResource ActionButtonStyle}" Height="28" Padding="12,0" Margin="6,0,0,0"/>
+                             VerticalContentAlignment="Center" Height="30" Padding="8,0" FontSize="11.5" FontFamily="{StaticResource MonoFont}"/>
+
+                    <Button Grid.Column="4" Command="{Binding BrowseCustomFolderCommand}" 
+                            Style="{StaticResource ActionButtonStyle}" Height="30" Padding="12,0" Margin="6,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="FolderOpen24" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Browse..." VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
                     <!-- Scan Action Controls -->
                     <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                        <Button Command="{Binding StartScanCommand}" 
                                 Foreground="#FFFFFF"
                                 Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
-                                Style="{StaticResource PrimaryButtonStyle}" Height="28" Width="100"/>
-                        <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                                Style="{StaticResource PrimaryButtonStyle}" Height="30" Padding="16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock Text="Start Scan" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding StopScanCommand}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
-                                Style="{StaticResource DangerButtonStyle}" Height="28" Width="100"/>
+                                Style="{StaticResource DangerButtonStyle}" Height="30" Padding="16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Stop24" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock Text="Stop Scan" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- 3. STATUS CARD / METRICS -->
-            <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,0,0,16">
+            <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,16">
                 <StackPanel>
                     <!-- Target & State Line -->
                     <Grid Margin="0,0,0,14">
@@ -86,8 +109,49 @@
                             <TextBlock Text="TARGET: " FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushTextSecondary}" DockPanel.Dock="Left"/>
                             <TextBlock Text="{Binding CurrentTargetDescription}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}" FontFamily="{StaticResource MonoFont}" TextTrimming="CharacterEllipsis"/>
                         </DockPanel>
-                        <Border Grid.Column="1" Background="{StaticResource BrushAccentTint}" CornerRadius="3" Padding="8,3" MinWidth="75">
-                            <TextBlock Text="{Binding Stats.State}" FontWeight="SemiBold" FontSize="11" Foreground="{StaticResource BrushAccent}" HorizontalAlignment="Center"/>
+
+                        <!-- State Indicator Pill -->
+                        <Border Grid.Column="1" CornerRadius="10" Padding="10,3" MinWidth="85">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Stats.State}" Value="Scanning">
+                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Stats.State}" Value="Stopping">
+                                            <Setter Property="Background" Value="#FEF3C7"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Stats.State}" Value="Completed">
+                                            <Setter Property="Background" Value="#EFF6FF"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Stats.State}" Value="Failed">
+                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding Stats.State}" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Stats.State}" Value="Scanning">
+                                                <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Stats.State}" Value="Stopping">
+                                                <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Stats.State}" Value="Completed">
+                                                <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Stats.State}" Value="Failed">
+                                                <Setter Property="Foreground" Value="{StaticResource BrushDanger}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Border>
                     </Grid>
 
@@ -108,32 +172,52 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Files Scanned -->
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Files scanned" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                            <TextBlock Text="{Binding Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}}" 
-                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
-                        </StackPanel>
+                        <Border Grid.Column="0" Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,0,6,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Document24" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Files scanned" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Stats.FilesIndexed, Converter={StaticResource NumberFormatConverter}}" 
+                                           FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Folders -->
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Folders" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                            <TextBlock Text="{Binding Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}}" 
-                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
-                        </StackPanel>
+                        <Border Grid.Column="1" Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="4,0,4,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Folder24" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Folders processed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Stats.DirectoriesProcessed, Converter={StaticResource NumberFormatConverter}}" 
+                                           FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Speed -->
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Speed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                            <TextBlock Text="{Binding Stats.FormattedFilesPerSecond}" 
-                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
-                        </StackPanel>
+                        <Border Grid.Column="2" Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="4,0,4,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="TopSpeed24" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Speed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Stats.FormattedFilesPerSecond}" 
+                                           FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Elapsed Time -->
-                        <StackPanel Grid.Column="3">
-                            <TextBlock Text="Elapsed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
-                            <TextBlock Text="{Binding Stats.FormattedElapsed}" 
-                                       FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,2,0,0"/>
-                        </StackPanel>
+                        <Border Grid.Column="3" Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="6,0,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Timer24" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Elapsed" FontSize="11" Foreground="{StaticResource BrushTextSecondary}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Stats.FormattedElapsed}" 
+                                           FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
                     </Grid>
 
                     <!-- Secondary Metric Line -->
@@ -144,11 +228,11 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Storage indexed: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
                             <TextBlock Text="{Binding Stats.FormattedLogicalBytes}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrushAccent}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Skipped: " FontSize="12" Foreground="{StaticResource BrushTextSecondary}"/>
                             <TextBlock Text="{Binding Stats.FilesSkipped, Converter={StaticResource NumberFormatConverter}, StringFormat='{}{0} files'}" FontSize="12" Foreground="{StaticResource BrushTextMuted}"/>
                         </StackPanel>
@@ -158,30 +242,50 @@
 
                     <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Start Scan" Command="{Binding StartScanCommand}" 
+                        <Button Command="{Binding StartScanCommand}" 
                                 Foreground="#FFFFFF"
                                 Style="{StaticResource PrimaryButtonStyle}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource InverseBoolToVis}}"
-                                MinWidth="110" Padding="18,6" Margin="0,0,8,0"/>
+                                MinWidth="110" Padding="18,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock Text="Start Scan" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="Stop Scan" Command="{Binding StopScanCommand}" 
+                        <Button Command="{Binding StopScanCommand}" 
                                 Style="{StaticResource DangerButtonStyle}" 
                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVis}}"
-                                MinWidth="110" Padding="18,6" Margin="0,0,8,0"/>
+                                MinWidth="110" Padding="18,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Stop24" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock Text="Stop Scan" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="Explore Files" Command="{Binding ExploreFilesCommand}" 
+                        <Button Command="{Binding ExploreFilesCommand}" 
                                 Style="{StaticResource ActionButtonStyle}" 
-                                Padding="14,6" Margin="0,0,8,0"/>
+                                Padding="14,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="FolderSearch24" FontSize="13" Margin="0,0,6,0"/>
+                                <TextBlock Text="Explore Files" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="Review Cleanup" Command="{Binding ReviewCleanupCommand}" 
+                        <Button Command="{Binding ReviewCleanupCommand}" 
                                 Style="{StaticResource ActionButtonStyle}" 
-                                Padding="14,6"/>
+                                Padding="14,6">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Broom24" FontSize="13" Margin="0,0,6,0"/>
+                                <TextBlock Text="Review Cleanup" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <!-- 4. LIVE DIRECTORY FEED (Prominent, Always-Visible Traversal Console) -->
-            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="6" Padding="20">
+            <Border Grid.Row="3" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="20">
                 <StackPanel>
                     <!-- Feed Header -->
                     <Grid Margin="0,0,0,10">
@@ -190,6 +294,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Feed24" FontSize="14" Foreground="{StaticResource BrushAccent}" Margin="0,0,8,0"/>
                             <TextBlock Text="LIVE DIRECTORY FEED" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource BrushTextPrimary}"/>
                             <TextBlock Text=" (real-time traversal buffer)" FontSize="11" Foreground="{StaticResource BrushTextMuted}" Margin="6,0,0,0"/>
                         </StackPanel>
@@ -197,14 +302,14 @@
                                    FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextMuted}"/>
                     </Grid>
 
-                    <!-- Current Directory Path -->
-                    <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,10">
+                    <!-- Current Directory Path Banner -->
+                    <Border Background="{StaticResource BrushBgCanvas}" BorderBrush="{StaticResource BrushBorderLight}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="CURRENT:" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource BrushTextMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ui:SymbolIcon Symbol="Navigation24" FontSize="12" Foreground="{StaticResource BrushAccent}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Text="{Binding Stats.CurrentDirectory, FallbackValue='—'}" 
                                        FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource BrushTextPrimary}" 
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>

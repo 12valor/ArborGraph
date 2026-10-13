@@ -2323,6 +2323,26 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public bool HasAnyIndexedFiles()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                EnsureOpen();
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "SELECT 1 FROM files LIMIT 1;";
+                var result = cmd.ExecuteScalar();
+                return result != null && result != DBNull.Value;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"HasAnyIndexedFiles error: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
     public (long TotalFiles, long TotalBytes) GetTotalIndexedStorage()
     {
         lock (_lock)

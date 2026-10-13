@@ -50,7 +50,8 @@ public partial class App : Application
             }
 
             Log("Creating MainWindow...");
-            var win = new Views.MainWindow();
+            var mainVm = new ViewModels.MainViewModel(null, null, null, settingsService);
+            var win = new Views.MainWindow(mainVm);
             MainWindow = win;
             ShutdownMode = ShutdownMode.OnMainWindowClose;
             Log("Showing MainWindow...");
@@ -116,6 +117,16 @@ public partial class App : Application
         {
             string? dir = Path.GetDirectoryName(LogFile);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            if (File.Exists(LogFile) && new FileInfo(LogFile).Length > 5 * 1024 * 1024)
+            {
+                try
+                {
+                    string oldFile = LogFile + ".old";
+                    if (File.Exists(oldFile)) File.Delete(oldFile);
+                    File.Move(LogFile, oldFile);
+                }
+                catch { }
+            }
             File.AppendAllText(LogFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}");
         }
         catch { }

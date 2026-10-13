@@ -53,6 +53,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         try
         {
+            if (File.Exists(LogFile) && new FileInfo(LogFile).Length > 5 * 1024 * 1024)
+            {
+                try
+                {
+                    string oldFile = LogFile + ".old";
+                    if (File.Exists(oldFile)) File.Delete(oldFile);
+                    File.Move(LogFile, oldFile);
+                }
+                catch { }
+            }
             File.AppendAllText(LogFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}");
         }
         catch { }

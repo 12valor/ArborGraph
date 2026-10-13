@@ -30,6 +30,11 @@ public class Program
             return await RunLegacyIntegrationSuiteAsync();
         }
 
+        if (args.Length > 0 && (args[0] == "--benchmark-startup" || args[0] == "--startup-benchmark"))
+        {
+            return await RunStartupBenchmarkAsync();
+        }
+
         if (args.Length > 0 && args[0] == "--benchmark")
         {
             int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 10000;
@@ -385,6 +390,113 @@ public class Program
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
 
+        return await tcs.Task;
+    }
+
+    private static async Task<int> RunStartupBenchmarkAsync()
+    {
+        Console.WriteLine("==========================================================================");
+        Console.WriteLine("  ARBORGRAPH — APPLICATION STARTUP PERFORMANCE BENCHMARK");
+        Console.WriteLine("==========================================================================");
+
+        var tcs = new TaskCompletionSource<int>();
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var app = System.Windows.Application.Current ?? new System.Windows.Application();
+                if (app.Resources.MergedDictionaries.Count == 0)
+                {
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/Wpf.Ui;component/Resources/Theme/Light.xaml") });
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/Wpf.Ui;component/Resources/Wpf.Ui.xaml") });
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/ArborGraph;component/Resources/Colors.xaml") });
+                    app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/ArborGraph;component/Resources/Styles.xaml") });
+                }
+
+                Console.WriteLine("\n[PHASE 1: ISOLATED INITIALIZATION TIMINGS]");
+                var sw = Stopwatch.StartNew();
+
+                // 1. Settings
+                sw.Restart();
+                var settingsService = new SettingsService();
+                var settings = settingsService.CurrentSettings;
+                sw.Stop();
+                Console.WriteLine($"  • SettingsService (load settings.json): {sw.ElapsedMilliseconds} ms");
+
+                // 2. DatabaseService Init
+                sw.Restart();
+                var db = new DatabaseService();
+                db.Initialize();
+                sw.Stop();
+                Console.WriteLine($"  • DatabaseService.Initialize(): {sw.ElapsedMilliseconds} ms");
+
+                // 3. DiskService.GetSystemDrives
+                sw.Restart();
+                var diskService = new DiskService();
+                var drives = diskService.GetSystemDrives().ToList();
+                sw.Stop();
+                Console.WriteLine($"  • DiskService.GetSystemDrives ({drives.Count} drives): {sw.ElapsedMilliseconds} ms");
+
+                // 4. LastScanService
+                sw.Restart();
+                var lastScanService = new LastScanService();
+                var lastScan = lastScanService.LoadLastScan();
+                sw.Stop();
+                Console.WriteLine($"  • LastScanService.LoadLastScan: {sw.ElapsedMilliseconds} ms (Indexed: {lastScan?.FilesIndexed:N0} files)");
+
+                // 5. Database presence probe: O(1) vs full table scan
+                sw.Restart();
+                bool hasFiles = db.HasAnyIndexedFiles();
+                sw.Stop();
+                Console.WriteLine($"  • db.HasAnyIndexedFiles() (O(1) LIMIT 1 probe): {sw.ElapsedMilliseconds} ms (Present: {hasFiles})");
+
+                // 6. OverviewVM Creation
+                sw.Restart();
+                var overviewVm = new OverviewViewModel(db, diskService);
+                sw.Stop();
+                Console.WriteLine($"  • OverviewViewModel ctor: {sw.ElapsedMilliseconds} ms");
+
+                sw.Restart();
+                overviewVm.GenerateStorageExplanation(asyncReclaimable: true);
+                sw.Stop();
+                Console.WriteLine($"  • OverviewVM.GenerateStorageExplanation(asyncReclaimable: true): {sw.ElapsedMilliseconds} ms (HasScanData: {overviewVm.Explanation.HasScanData})");
+
+                // 7. Full MainViewModel ctor
+                Console.WriteLine("\n[PHASE 2: FULL MainViewModel() CONSTRUCTOR END-TO-END]");
+                sw.Restart();
+                var mainVm = new MainViewModel(null, null, lastScanService, settingsService);
+                sw.Stop();
+                Console.WriteLine($"  • new MainViewModel() Total UI Thread Execution: {sw.ElapsedMilliseconds} ms");
+
+                Console.WriteLine("\n[PHASE 3: MainWindow INSTANTIATION & RENDER]");
+                sw.Restart();
+                var win = new MainWindow(mainVm);
+                sw.Stop();
+                Console.WriteLine($"  • new MainWindow(mainVm) (XAML InitializeComponent): {sw.ElapsedMilliseconds} ms");
+
+                sw.Restart();
+                win.Show();
+                var frame = new System.Windows.Threading.DispatcherFrame();
+                app.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() => frame.Continue = false));
+                System.Windows.Threading.Dispatcher.PushFrame(frame);
+                sw.Stop();
+                Console.WriteLine($"  • win.Show() + WPF Initial Layout & Render (Loaded event): {sw.ElapsedMilliseconds} ms");
+                win.Close();
+
+                Console.WriteLine("\n==========================================================================");
+                Console.WriteLine("  BENCHMARK EXECUTION COMPLETE");
+                Console.WriteLine("==========================================================================");
+                tcs.SetResult(0);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BENCHMARK ERROR] {ex}");
+                tcs.SetException(ex);
+            }
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
         return await tcs.Task;
     }
 }

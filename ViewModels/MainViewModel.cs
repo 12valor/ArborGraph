@@ -39,16 +39,16 @@ public class MainViewModel : ObservableObject
     private string _updateNotesSummary = string.Empty;
     private bool _isUpdateWaitingForScan;
 
-    public MainViewModel() : this(null, null, null)
+    public MainViewModel() : this(null, null, null, null)
     {
     }
 
-    public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null, LastScanService? lastScanService = null)
+    public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null, LastScanService? lastScanService = null, SettingsService? settingsService = null)
     {
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();
 
-        _settingsService = new SettingsService();
+        _settingsService = settingsService ?? new SettingsService();
         _lastScanService = lastScanService ?? new LastScanService();
         _updateService = updateService ?? new UpdateService();
         _scannerService = new ScannerService(_dbService, usnService: null, _settingsService);
@@ -696,27 +696,31 @@ public class MainViewModel : ObservableObject
                 return;
             }
 
-            // Verify SQLite database has valid indexed records
-            var (totalFiles, totalBytes) = _dbService.GetTotalIndexedStorage();
-            if (totalFiles <= 0 && File.Exists(_lastScanService.BackupDbPath))
+            // Verify SQLite database has valid indexed records using rapid probe
+            bool hasRecords = _dbService.HasAnyIndexedFiles();
+            if (!hasRecords && File.Exists(_lastScanService.BackupDbPath))
             {
                 _dbService.RestoreIndex(_lastScanService.BackupDbPath);
-                (totalFiles, totalBytes) = _dbService.GetTotalIndexedStorage();
+                hasRecords = _dbService.HasAnyIndexedFiles();
             }
 
-            if (totalFiles <= 0)
+            if (!hasRecords)
             {
                 return;
             }
 
             var stats = lastScan.ToScanStats();
-            if (stats.LogicalBytesIndexed <= 0 && totalBytes > 0)
+            if (stats.LogicalBytesIndexed <= 0 || stats.FilesIndexed <= 0)
             {
-                stats.LogicalBytesIndexed = totalBytes;
-            }
-            if (stats.FilesIndexed <= 0 && totalFiles > 0)
-            {
-                stats.FilesIndexed = totalFiles;
+                var (totalFiles, totalBytes) = _dbService.GetTotalIndexedStorage();
+                if (stats.LogicalBytesIndexed <= 0 && totalBytes > 0)
+                {
+                    stats.LogicalBytesIndexed = totalBytes;
+                }
+                if (stats.FilesIndexed <= 0 && totalFiles > 0)
+                {
+                    stats.FilesIndexed = totalFiles;
+                }
             }
 
             OverviewVM.Stats = stats;
@@ -740,9 +744,8 @@ public class MainViewModel : ObservableObject
             OverviewVM.ClearRecentDirectories();
             OverviewVM.AddRecentDirectory(feedMsg, force: true);
 
-            OverviewVM.GenerateStorageExplanation();
-            OverviewVM.VerifyIntegrity();
-            RefreshAllViews();
+            OverviewVM.GenerateStorageExplanation(asyncReclaimable: true);
+            OverviewVM.VerifyIntegrity(isAsync: true);
 
             ScanLogVM.AddLog("INFO", $"Restored previous completed scan: {stats.FilesIndexed:N0} files indexed ({stats.FormattedLogicalBytes}).");
         }

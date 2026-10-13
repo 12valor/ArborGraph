@@ -148,7 +148,7 @@ public class OverviewViewModel : ObservableObject
         catch { }
     }
 
-    public void GenerateStorageExplanation()
+    public void GenerateStorageExplanation(bool asyncReclaimable = true)
     {
         try
         {
@@ -161,18 +161,13 @@ public class OverviewViewModel : ObservableObject
             Explanation.UsedBytes = targetDrive?.UsedBytes ?? UsedDriveBytes;
             Explanation.FreeBytes = targetDrive?.FreeBytes ?? FreeDriveBytes;
 
-            // Deterministic reclaimable total from actual scan data
-            var (_, totalReclaimable) = _dbService.GetReclaimableStorageBreakdown();
-            Explanation.PotentiallyReclaimableBytes = totalReclaimable;
-            OnReclaimableCalculated?.Invoke(totalReclaimable);
-
             Explanation.LargestContributors.Clear();
             DrilldownItems.Clear();
             Breadcrumbs.Clear();
             Breadcrumbs.Add(rootClean);
             CurrentDrilldownPath = rootClean;
 
-            // Top subdirectories under drive root
+            // Top subdirectories under drive root (rapid indexed probe)
             var topDirs = _dbService.GetSubdirectories(rootClean, limit: 10);
             long usedB = Math.Max(1L, Explanation.UsedBytes);
 
@@ -217,6 +212,39 @@ public class OverviewViewModel : ObservableObject
             }
 
             (DrillUpCommand as RelayCommand)?.RaiseCanExecuteChanged();
+
+            // Reclaimable breakdown can be heavy on multi-gigabyte databases; compute asynchronously without blocking UI
+            if (asyncReclaimable)
+            {
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        var (_, totalReclaimable) = _dbService.GetReclaimableStorageBreakdown();
+                        var updateAction = new Action(() =>
+                        {
+                            Explanation.PotentiallyReclaimableBytes = totalReclaimable;
+                            OnReclaimableCalculated?.Invoke(totalReclaimable);
+                        });
+
+                        if (System.Windows.Application.Current?.Dispatcher != null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
+                        {
+                            System.Windows.Application.Current.Dispatcher.BeginInvoke(updateAction);
+                        }
+                        else
+                        {
+                            updateAction();
+                        }
+                    }
+                    catch { }
+                });
+            }
+            else
+            {
+                var (_, totalReclaimable) = _dbService.GetReclaimableStorageBreakdown();
+                Explanation.PotentiallyReclaimableBytes = totalReclaimable;
+                OnReclaimableCalculated?.Invoke(totalReclaimable);
+            }
         }
         catch (Exception ex)
         {
@@ -471,20 +499,66 @@ public class OverviewViewModel : ObservableObject
         RamHistory = _monitorService.GetRamHistory();
     }
 
-    public void VerifyIntegrity()
+    public void VerifyIntegrity(bool isAsync = false)
     {
-        try
+        if (isAsync)
         {
-            bool dbOk = _dbService.CheckIntegrity();
-            IsIntegrityCheckPassed = dbOk;
-            IntegrityStatus = dbOk
-                ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
-                : "Warning: SQLite integrity verification reported an issue";
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    bool dbOk = _dbService.CheckIntegrity();
+                    var action = new Action(() =>
+                    {
+                        IsIntegrityCheckPassed = dbOk;
+                        IntegrityStatus = dbOk
+                            ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
+                            : "Warning: SQLite integrity verification reported an issue";
+                    });
+
+                    if (System.Windows.Application.Current?.Dispatcher != null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
+                    {
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(action);
+                    }
+                    else
+                    {
+                        action();
+                    }
+                }
+                catch
+                {
+                    var failAction = new Action(() =>
+                    {
+                        IsIntegrityCheckPassed = false;
+                        IntegrityStatus = "Integrity check could not complete.";
+                    });
+
+                    if (System.Windows.Application.Current?.Dispatcher != null && !System.Windows.Application.Current.Dispatcher.CheckAccess())
+                    {
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(failAction);
+                    }
+                    else
+                    {
+                        failAction();
+                    }
+                }
+            });
         }
-        catch
+        else
         {
-            IsIntegrityCheckPassed = false;
-            IntegrityStatus = "Integrity check could not complete.";
+            try
+            {
+                bool dbOk = _dbService.CheckIntegrity();
+                IsIntegrityCheckPassed = dbOk;
+                IntegrityStatus = dbOk
+                    ? "Authoritative SQLite Index Verified (PRAGMA integrity_check = OK)"
+                    : "Warning: SQLite integrity verification reported an issue";
+            }
+            catch
+            {
+                IsIntegrityCheckPassed = false;
+                IntegrityStatus = "Integrity check could not complete.";
+            }
         }
     }
 

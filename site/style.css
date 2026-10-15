@@ -580,90 +580,72 @@ code, pre, .mono-text {
     background-color: var(--color-success);
 }
 
-/* Hero Mascot Companion Card */
+/* Hero Mascot Shadow Silhouette (Integrated Container Graphic) */
+.hero-box {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 38px 42px;
+}
+
 .hero-content-flex {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 32px;
+    position: relative;
+    z-index: 2;
 }
-.hero-mascot-card {
-    flex-shrink: 0;
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+.hero-headline-group {
+    max-width: 760px;
+    position: relative;
+    z-index: 2;
 }
-.hero-mascot-card:hover {
-    border-color: var(--color-accent-border);
-    box-shadow: 0 4px 12px rgba(0, 95, 184, 0.08);
-}
-.hero-silhouette-badge {
-    width: 88px;
-    height: 88px;
+
+.hero-mascot-shadow-container {
+    position: absolute;
+    right: 18px;
+    top: 0;
+    bottom: 0;
+    width: 440px;
+    height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--color-text-primary);
-    background: var(--color-bg-canvas);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-md);
-    margin-bottom: 10px;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    justify-content: flex-end;
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
 }
-.hero-mascot-card:hover .hero-silhouette-badge {
-    border-color: var(--color-accent-border);
+
+.hero-mascot-shadow-img {
+    width: auto;
+    height: 100%;
+    max-height: 96%;
+    object-fit: contain;
+    object-position: right center;
+    opacity: 0.16;
+    filter: drop-shadow(0 14px 32px rgba(15, 23, 42, 0.06));
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hero-box:hover .hero-mascot-shadow-img {
+    opacity: 0.24;
     transform: scale(1.02);
 }
-.hero-silhouette-svg {
-    width: 76px;
-    height: 76px;
-    display: block;
-}
-.hero-mascot-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    letter-spacing: -0.01em;
-}
-.hero-mascot-desc {
-    font-size: 11px;
-    color: var(--color-text-secondary);
-    margin-top: 3px;
-    font-family: var(--font-sans);
-}
-.hero-mascot-badge-tag {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-success);
-    background: #F0FDF4;
-    border: 1px solid #BBF7D0;
-    border-radius: var(--radius-sm);
-    padding: 2px 7px;
-    margin-top: 8px;
-    display: inline-block;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-@media (max-width: 860px) {
-    .hero-content-flex {
-        flex-direction: column-reverse;
-        align-items: flex-start;
+
+@media (max-width: 960px) {
+    .hero-mascot-shadow-container {
+        width: 280px;
+        opacity: 0.12;
     }
-    .hero-mascot-card {
-        align-self: center;
+}
+
+@media (max-width: 640px) {
+    .hero-mascot-shadow-container {
+        display: none;
     }
 }
 

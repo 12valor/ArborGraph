@@ -1122,8 +1122,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 12. GLOBAL COPY BUTTONS
+    // 12. GLOBAL COPY BUTTONS WITH IN-PLACE TACTILE FEEDBACK
     // =========================================================================
+    function triggerCopyFeedback(btn, label = 'Copied') {
+        if (!btn) return;
+        if (!btn.dataset.origHtml) {
+            btn.dataset.origHtml = btn.innerHTML;
+        }
+        btn.classList.add('is-copied');
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; display: inline-block; vertical-align: -1px;"><polyline points="20 6 9 17 4 12"></polyline></svg>${label}`;
+
+        if (btn._copyTimer) clearTimeout(btn._copyTimer);
+        btn._copyTimer = setTimeout(() => {
+            btn.innerHTML = btn.dataset.origHtml;
+            btn.classList.remove('is-copied');
+            delete btn._copyTimer;
+        }, 1600);
+    }
+
     document.querySelectorAll('.copy-hash-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.id === 'btnCopySetupHash') {
@@ -1133,8 +1149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 navigator.clipboard.writeText(setupHash).then(() => {
+                    triggerCopyFeedback(btn, 'Copied');
                     showToast('Installer SHA-256 checksum copied to clipboard!');
                 }).catch(() => {
+                    triggerCopyFeedback(btn, 'Copied');
                     showToast(`Hash: ${setupHash}`);
                 });
                 return;
@@ -1143,8 +1161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const hash = btn.getAttribute('data-hash') || currentOfficialHash;
             if (!hash) return;
             navigator.clipboard.writeText(hash).then(() => {
+                triggerCopyFeedback(btn, 'Copied');
                 showToast('SHA-256 checksum copied to clipboard!');
             }).catch(() => {
+                triggerCopyFeedback(btn, 'Copied');
                 showToast(`Hash: ${hash}`);
             });
         });
@@ -1157,8 +1177,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetEl) {
                 const text = targetEl.textContent.trim();
                 navigator.clipboard.writeText(text).then(() => {
+                    triggerCopyFeedback(btn, 'Copied');
                     showToast('Command copied to clipboard!');
                 }).catch(() => {
+                    triggerCopyFeedback(btn, 'Copied');
                     showToast(`Copied: ${text}`);
                 });
             }

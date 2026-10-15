@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    let currentOfficialHash = 'E60D92D335DF559F87BD6026B3D4C85B51BF62B365A4B18BEA0B416D4EF3862E';
+    let currentOfficialHash = 'E7EEC1445ED5974CD36C6DD62158630169A803028F986E69CE3459F1D31ACBC6';
     const STATIC_FALLBACK_HASH = currentOfficialHash;
 
     // =========================================================================

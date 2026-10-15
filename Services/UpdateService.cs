@@ -321,26 +321,33 @@ public class UpdateService : IUpdateService
         }
 
         // PowerShell detached replacement script
+        string safeSource = stagedPath.Replace("'", "''");
+        string safeTarget = currentProcessPath.Replace("'", "''");
         string psScript = 
-$@"param([int]$waitPid, [string]$source, [string]$target)
+$@"$waitPid = {currentPid}
+$source = '{safeSource}'
+$target = '{safeTarget}'
 try {{
     Wait-Process -Id $waitPid -Timeout 30 -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 400
-    Copy-Item -LiteralPath $target -Destination ""$target.bak"" -Force
+    Start-Sleep -Milliseconds 500
+    Copy-Item -LiteralPath $target -Destination ""$target.bak"" -Force -ErrorAction SilentlyContinue
     Move-Item -LiteralPath $source -Destination $target -Force
     Remove-Item -LiteralPath ""$target.bak"" -Force -ErrorAction SilentlyContinue
     Start-Process -FilePath $target
 }} catch {{
     if (Test-Path ""$target.bak"") {{
-        Move-Item -LiteralPath ""$target.bak"" -Destination $target -Force
+        Move-Item -LiteralPath ""$target.bak"" -Destination $target -Force -ErrorAction SilentlyContinue
     }}
     Start-Process -FilePath $target
 }}";
 
+        byte[] scriptBytes = System.Text.Encoding.Unicode.GetBytes(psScript);
+        string encodedCommand = Convert.ToBase64String(scriptBytes);
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"{EscapeForPowerShellCommand(psScript, currentPid, stagedPath, currentProcessPath)}\"",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand {encodedCommand}",
             UseShellExecute = true,
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden
@@ -368,18 +375,6 @@ try {{
         });
 
         return true;
-    }
-
-    private static string EscapeForPowerShellCommand(string script, int pid, string source, string target)
-    {
-        // Replace parameters inline in script to avoid shell quotation escaping issues
-        string inlineScript = script
-            .Replace("$waitPid", pid.ToString())
-            .Replace("$source", $"'{source.Replace("'", "''")}'")
-            .Replace("$target", $"'{target.Replace("'", "''")}'");
-
-        // Convert to single line
-        return inlineScript.Replace("\r\n", "; ").Replace("\n", "; ");
     }
 
     private static async Task<string?> FetchExpectedHashAsync(string manifestUrl, CancellationToken ct)

@@ -45,8 +45,10 @@ public class MainViewModel : ObservableObject
 
     public MainViewModel(DatabaseService? dbService, IUpdateService? updateService = null, LastScanService? lastScanService = null, SettingsService? settingsService = null)
     {
+        App.Log("MainViewModel: initializing DatabaseService...");
         _dbService = dbService ?? new DatabaseService();
         _dbService.Initialize();
+        App.Log("MainViewModel: DatabaseService initialized.");
 
         _settingsService = settingsService ?? new SettingsService();
         _lastScanService = lastScanService ?? new LastScanService();
@@ -59,7 +61,9 @@ public class MainViewModel : ObservableObject
         _exportService = new ExportService();
         var developerStorageService = new DeveloperStorageService(_dbService);
 
+        App.Log("MainViewModel: instantiating sub-viewmodels...");
         OverviewVM = new OverviewViewModel(_dbService, _diskService);
+        App.Log("MainViewModel: OverviewViewModel instantiated.");
         AnalyticsVM = new AnalyticsViewModel(_dbService, _diskService, _fileActionService);
         CleanupCenterVM = new CleanupCenterViewModel(_dbService, developerStorageService, _fileActionService, () => _ = StartScanAsync());
         DeveloperStorageVM = new DeveloperStorageViewModel(developerStorageService, _fileActionService);
@@ -113,7 +117,9 @@ public class MainViewModel : ObservableObject
         RestartToUpdateCommand = new RelayCommand(_ => RestartToUpdate(), _ => IsUpdateReadyToRestart && !IsScanning);
 
         // Restore previously completed scan if available
+        App.Log("MainViewModel: Calling RestoreLastScanIfAvailable()...");
         RestoreLastScanIfAvailable();
+        App.Log("MainViewModel: RestoreLastScanIfAvailable() completed.");
 
         // Non-blocking background update check
         _ = Task.Run(async () =>

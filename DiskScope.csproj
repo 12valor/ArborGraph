@@ -23,6 +23,7 @@
     <Resource Include="Resources\DiskScope.ico" />
     <Resource Include="Resources\app.ico" />
     <Resource Include="Resources\arborgraph_sprout_bot.png" />
+    <Resource Include="Resources\splash.png" />
     <Resource Include="Resources\Fonts\*.ttf" />
   </ItemGroup>
 

@@ -27,8 +27,7 @@ for ($i = 0; $i -lt 1200; $i++) {
 
 $start = [Diagnostics.ProcessStartInfo]::new()
 $start.FileName = $exe
-$start.ArgumentList.Add('--data-dir')
-$start.ArgumentList.Add($dataRoot)
+$start.Arguments = "--data-dir `"$dataRoot`""
 $start.UseShellExecute = $false
 $start.RedirectStandardInput = $true
 $start.RedirectStandardOutput = $true

@@ -35,6 +35,7 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
 | `getScanHistory` | Limit up to 100 | Stored scan metadata in newest-first order |
 | `compareScans` | Two completed scan IDs, oldest first | Indexed byte, file, and category deltas for identical targets |
+| `getFileInsights` | Age threshold and item limit | File age buckets, old indexed files, and Photoshop-associated indexed files |
 | `startScan` | `roots`: 1–16 existing, distinct directories | Acceptance response, then `scanProgress` and `scanFinished` or `scanFailed` events |
 | `cancelScan` | None | Cancellation acknowledgment, or `NO_ACTIVE_SCAN` |
 | `shutdown` | None | Acknowledgment; cancels an active scan and exits |
@@ -46,6 +47,8 @@ Directory children use the scanner's `directories` rollup table for folder sizes
 The treemap shows immediate children only and groups unshown nonzero bytes into a remainder tile. The Analytics folder ranking can include overlapping parent and child totals; identical-size ancestors are hidden to reduce repetition. These totals must not be added together. Empty folders with no indexed files have no area in the treemap.
 
 Scan comparisons require the exact same stored target string and two completed scans. They report differences in indexed totals, not verified file additions or removals. A coverage warning appears when either scan skipped files or directories, or skipped counts changed. Per-directory historical deltas are unavailable in the current schema.
+
+Photoshop results are classified from indexed paths and extensions. The summary is occupied logical storage for identified files, not a measurement of Photoshop's live scratch activity or performance. Old-file results use modification time and do not imply that a file is safe to delete.
 
 ## Next boundaries
 

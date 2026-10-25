@@ -15,7 +15,10 @@ $nestedRoot = Join-Path $scanRoot 'nested'
 [IO.Directory]::CreateDirectory($nestedRoot) | Out-Null
 for ($i = 0; $i -lt 1200; $i++) {
     $parent = if ($i -lt 20) { $nestedRoot } else { $scanRoot }
-    [IO.File]::WriteAllText((Join-Path $parent "file_$i.txt"), "ArborGraph engine test $i")
+    $extension = if ($i -eq 0) { '.psd' } elseif ($i -eq 1) { '.psb' } else { '.txt' }
+    $filePath = Join-Path $parent "file_$i$extension"
+    [IO.File]::WriteAllText($filePath, "ArborGraph engine test $i")
+    if ($i -lt 5) { [IO.File]::SetLastWriteTimeUtc($filePath, [DateTime]::UtcNow.AddDays(-400)) }
 }
 
 $start = [Diagnostics.ProcessStartInfo]::new()
@@ -124,6 +127,18 @@ try {
     $reply = Expect-Response 'relativeDirectory'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative directory was accepted.' }
 
+    Send-Request @{ id = 'insights'; command = 'getFileInsights'; daysOld = 180; limit = 100 }
+    $reply = Expect-Response 'insights'
+    if (-not $reply.ok -or $reply.data.oldFiles.Count -lt 5 -or $reply.data.photoshop.Count -ne 2 -or
+        $reply.data.photoshopSummary.psdCount -ne 1 -or $reply.data.photoshopSummary.psbCount -ne 1 -or
+        ($reply.data.ageBuckets | Measure-Object -Property fileCount -Sum).Sum -ne 1200) {
+        throw 'File age or Photoshop index summaries are incorrect.'
+    }
+
+    Send-Request @{ id = 'badInsights'; command = 'getFileInsights'; daysOld = -1 }
+    $reply = Expect-Response 'badInsights'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Invalid file age threshold was accepted.' }
+
     Send-Request @{ id = 'history'; command = 'getScanHistory'; limit = 5 }
     $reply = Expect-Response 'history'
     if (-not $reply.ok -or $reply.data.Count -ne 1 -or $reply.data[0].filesIndexed -ne 1200) {
@@ -187,7 +202,7 @@ try {
     if (-not $reply.ok) { throw 'Shutdown response failed.' }
     $process.StandardInput.Close()
     if (-not $process.WaitForExit(10000) -or $process.ExitCode -ne 0) { throw 'Engine host did not exit cleanly.' }
-    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, history comparison, event order, duplicate scan rejection, cancellation, shutdown.'
+    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, file insights, history comparison, event order, duplicate scan rejection, cancellation, shutdown.'
 }
 finally {
     if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit() }

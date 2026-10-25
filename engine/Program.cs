@@ -151,6 +151,9 @@ internal sealed class EngineHost : IDisposable
                     case "compareScans":
                         CompareScans(id, root);
                         break;
+                    case "getFileInsights":
+                        GetFileInsights(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -307,6 +310,38 @@ internal sealed class EngineHost : IDisposable
             previousFiles = older.FilesIndexed, currentFiles = newer.FilesIndexed,
             deltaFiles = newer.FilesIndexed - older.FilesIndexed,
             categories });
+    }
+
+    private void GetFileInsights(string id, JsonElement root)
+    {
+        int daysOld = ReadInt(root, "daysOld", 180, 1, 3650);
+        int limit = ReadInt(root, "limit", 100, 1, 200);
+        var ageBuckets = _database.GetFileAgeBreakdown().Select(bucket => new
+        {
+            name = bucket.Name, description = bucket.Description,
+            fileCount = bucket.Count, logicalBytes = bucket.TotalBytes
+        }).ToList();
+        var oldFiles = _database.GetOldFiles(daysOld, limit).Select(file => new
+        {
+            path = file.Path, name = file.Name, logicalBytes = file.Size,
+            modifiedTime = file.ModifiedTime, category = file.Category
+        }).ToList();
+        var photoshop = _database.GetPhotoshopDetailedItems(limit).Select(item => new
+        {
+            path = item.File.Path, name = item.File.Name, logicalBytes = item.File.Size,
+            type = item.TypeLabel, modifiedTime = item.File.ModifiedTime
+        }).ToList();
+        var psStats = _database.GetPhotoshopStats();
+        Respond(id, new
+        {
+            daysOld, ageBuckets, oldFiles, photoshop,
+            photoshopSummary = new
+            {
+                psdCount = psStats.PsdCount, psbCount = psStats.PsbCount,
+                otherCount = psStats.OtherCount, identifiedLogicalBytes = psStats.TotalBytes,
+                psdBytes = psStats.PsdBytes, psbBytes = psStats.PsbBytes
+            }
+        });
     }
 
     private void StartScan(string id, JsonElement request)

@@ -1202,25 +1202,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (tagName) {
                 const heroText = document.getElementById('heroDownloadText');
-                if (heroText) heroText.textContent = `Download ArborGraph ${tagName}`;
+                if (heroText) heroText.textContent = `Download ArborGraph ${tagName} (Installer)`;
                 const verDesc = document.getElementById('downloadVersionDesc');
                 if (verDesc) verDesc.textContent = `for ${tagName}`;
             }
 
             if (Array.isArray(data.assets)) {
-                const setupAsset = data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
-                if (setupAsset) {
+                // Primary Desktop Setup Installer (Electron + Engine Host from dist/desktop-setup)
+                const desktopSetupAsset = data.assets.find(a => a.name.includes('Desktop-Preview-Setup') && a.name.endsWith('.exe'))
+                    || data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
+                if (desktopSetupAsset) {
                     const setupNameEl = document.getElementById('pkgSetupName');
-                    if (setupNameEl) setupNameEl.textContent = setupAsset.name;
+                    if (setupNameEl) setupNameEl.textContent = desktopSetupAsset.name;
 
                     const setupSizeEl = document.getElementById('pkgSetupSize');
-                    if (setupSizeEl && setupAsset.size) {
-                        setupSizeEl.textContent = `${(setupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                    if (setupSizeEl && desktopSetupAsset.size) {
+                        setupSizeEl.textContent = `${(desktopSetupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
                     }
 
                     const setupBtn = document.getElementById('btnDownloadSetup');
-                    if (setupBtn && setupAsset.browser_download_url) {
-                        setupBtn.href = setupAsset.browser_download_url;
+                    if (setupBtn && desktopSetupAsset.browser_download_url) {
+                        setupBtn.href = desktopSetupAsset.browser_download_url;
+                    }
+
+                    const heroBtn = document.querySelector('.hero-cta-bar a.btn-primary');
+                    if (heroBtn && desktopSetupAsset.browser_download_url) {
+                        heroBtn.href = desktopSetupAsset.browser_download_url;
+                    }
+                }
+
+                // Classic WPF Setup Installer
+                const classicSetupAsset = data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
+                if (classicSetupAsset) {
+                    const classicNameEl = document.getElementById('pkgClassicSetupName');
+                    if (classicNameEl) classicNameEl.textContent = classicSetupAsset.name;
+
+                    const classicSizeEl = document.getElementById('pkgClassicSetupSize');
+                    if (classicSizeEl && classicSetupAsset.size) {
+                        classicSizeEl.textContent = `${(classicSetupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                    }
+
+                    const classicBtn = document.getElementById('btnDownloadClassicSetup');
+                    if (classicBtn && classicSetupAsset.browser_download_url) {
+                        classicBtn.href = classicSetupAsset.browser_download_url;
                     }
                 }
 
@@ -1261,16 +1285,26 @@ document.addEventListener('DOMContentLoaded', () => {
                                         if (offEl) offEl.textContent = hash;
                                         const btnExe = document.getElementById('btnCopyExeHash');
                                         if (btnExe) btnExe.setAttribute('data-hash', hash);
-                                    } else if (filename.startsWith('ArborGraph-Setup') && filename.endsWith('.exe')) {
+                                    } else if (filename.includes('Desktop-Preview-Setup') && filename.endsWith('.exe')) {
                                         foundSetupHash = true;
                                         const btnSetup = document.getElementById('btnCopySetupHash');
                                         if (btnSetup) {
                                             btnSetup.setAttribute('data-hash', hash);
                                             btnSetup.removeAttribute('disabled');
                                             btnSetup.textContent = 'Copy SHA-256';
-                                            btnSetup.title = 'Copy SHA-256 checksum for installer';
+                                            btnSetup.title = 'Copy SHA-256 checksum for desktop installer';
                                             btnSetup.style.opacity = '1';
                                             btnSetup.style.cursor = 'pointer';
+                                        }
+                                    } else if (filename.startsWith('ArborGraph-Setup') && filename.endsWith('.exe')) {
+                                        const btnClassic = document.getElementById('btnCopyClassicSetupHash');
+                                        if (btnClassic) {
+                                            btnClassic.setAttribute('data-hash', hash);
+                                            btnClassic.removeAttribute('disabled');
+                                            btnClassic.textContent = 'Copy SHA-256';
+                                            btnClassic.title = 'Copy SHA-256 checksum for classic WPF installer';
+                                            btnClassic.style.opacity = '1';
+                                            btnClassic.style.cursor = 'pointer';
                                         }
                                     } else if (filename === 'ArborGraph.zip' || filename.endsWith('.zip')) {
                                         const btnZip = document.getElementById('btnCopyZipHash');

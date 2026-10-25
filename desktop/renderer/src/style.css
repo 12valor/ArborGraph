@@ -210,5 +210,10 @@ h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
 .report-panel { margin-top: 18px; }
 .report-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 0 24px 22px; }
 .report-actions span { min-width: 0; overflow-wrap: anywhere; color: #39786e; font-size: 11px; }
+.diagnostics-panel { margin-bottom: 18px; }
+.diagnostic-counts { display: flex; gap: 45px; padding: 0 24px 22px; }
+.diagnostic-counts div { display: grid; gap: 5px; }
+.diagnostic-counts span { color: #72838c; font-size: 11px; }
+.diagnostic-counts strong { font-size: 19px; }
 @media (max-width: 1150px) { .content { padding: 26px 25px; } .sidebar { width: 190px; flex-basis: 190px; } .drive-meter { width: 95px; } .metric strong { font-size: 20px; } }
 @media (max-width: 1150px) { .analytics-columns, .map-lower { grid-template-columns: 1fr; } }

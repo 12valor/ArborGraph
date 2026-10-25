@@ -625,7 +625,10 @@ internal sealed class EngineHost : IDisposable
                 state = result.State.ToString(), filesDiscovered = result.FilesDiscovered,
                 filesIndexed = result.FilesIndexed, directoriesProcessed = result.DirectoriesProcessed,
                 directoriesSkipped = result.DirectoriesSkipped, filesSkipped = result.FilesSkipped,
-                indexedLogicalBytes = result.LogicalBytesIndexed, elapsedMilliseconds = (long)result.Elapsed.TotalMilliseconds });
+                indexedLogicalBytes = result.LogicalBytesIndexed, elapsedMilliseconds = (long)result.Elapsed.TotalMilliseconds,
+                skippedDirectories = _scanner.SkippedDirectories.Take(500).Select(item => new { path = item.Path, reason = item.Reason }).ToList(),
+                skippedFiles = _scanner.SkippedFiles.Take(500).Select(item => new { path = item.Path, reason = item.Reason }).ToList(),
+                skippedDetailsTruncated = result.DirectoriesSkipped > 500 || result.FilesSkipped > 500 });
         }
         catch (Exception ex)
         {

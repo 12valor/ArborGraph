@@ -10,8 +10,9 @@ import { DuplicatesPage } from './DuplicatesPage'
 import { LegalGate } from './LegalGate'
 import { SettingsPage } from './SettingsPage'
 import { DeveloperPage } from './DeveloperPage'
+import { ScanLogPage, type DiagnosticEntry, type SkippedScanItem } from './ScanLogPage'
 
-type Page = 'overview' | 'scanner' | 'files' | 'treemap' | 'analytics' | 'history' | 'types' | 'old' | 'photoshop' | 'duplicates' | 'settings' | 'developer'
+type Page = 'overview' | 'scanner' | 'files' | 'treemap' | 'analytics' | 'history' | 'logs' | 'types' | 'old' | 'photoshop' | 'duplicates' | 'settings' | 'developer'
 type ScanStatus = 'Ready' | 'Scanning' | 'Stopping' | 'Completed' | 'Cancelled' | 'Failed'
 
 function App() {
@@ -37,8 +38,12 @@ function Workspace() {
   const [error, setError] = useState<string | null>(null)
   const [engineConnected, setEngineConnected] = useState(true)
   const [activity, setActivity] = useState<string[]>([])
+  const [diagnostics, setDiagnostics] = useState<DiagnosticEntry[]>([])
+  const [skippedItems, setSkippedItems] = useState<SkippedScanItem[]>([])
+  const [skippedTruncated, setSkippedTruncated] = useState(false)
   const [reportExporting, setReportExporting] = useState(false)
   const [reportMessage, setReportMessage] = useState('')
+  const addDiagnostic = (entry: DiagnosticEntry) => setDiagnostics((old) => [...old, entry].slice(-500))
 
   const refresh = async () => {
     const [newDrives, newOverview] = await Promise.all([window.arbor.listDrives(), window.arbor.getOverview()])
@@ -68,10 +73,14 @@ function Workspace() {
       if (event.currentDirectory) setActivity((old) => [event.currentDirectory!, ...old].slice(0, 8))
       if (event.eventName === 'scanFinished') {
         setStatus(event.state as ScanStatus)
+        addDiagnostic({ timestamp: Date.now(), level: event.state === 'Completed' ? 'INFO' : 'WARN', message: `Scan ${event.state?.toLowerCase() ?? 'finished'}: ${(event.filesIndexed ?? 0).toLocaleString()} files indexed, ${(event.filesSkipped ?? 0).toLocaleString()} files and ${(event.directoriesSkipped ?? 0).toLocaleString()} folders skipped.` })
+        setSkippedItems([...(event.skippedDirectories ?? []).map((item) => ({ ...item, category: 'Directory' as const })), ...(event.skippedFiles ?? []).map((item) => ({ ...item, category: 'File' as const }))])
+        setSkippedTruncated(!!event.skippedDetailsTruncated)
         void window.arbor.getOverview().then(setOverview).catch((cause) => setError(String(cause)))
       } else if (event.eventName === 'scanFailed' || event.eventName === 'engineExited') {
         setStatus('Failed')
         setError(event.message ?? 'The scan stopped unexpectedly.')
+        addDiagnostic({ timestamp: Date.now(), level: 'ERROR', message: event.message ?? 'The scan stopped unexpectedly.' })
         if (event.eventName === 'engineExited') setEngineConnected(false)
       }
     })
@@ -96,6 +105,9 @@ function Workspace() {
     setStatus('Scanning')
     setScan(null)
     setActivity([])
+    setSkippedItems([])
+    setSkippedTruncated(false)
+    addDiagnostic({ timestamp: Date.now(), level: 'INFO', message: `Started scan for ${roots.join(', ')}.` })
     setPage('scanner')
     try {
       await window.arbor.startScan(roots)
@@ -103,7 +115,7 @@ function Workspace() {
   }
 
   const stopScan = async () => {
-    try { setStatus('Stopping'); await window.arbor.cancelScan() }
+    try { setStatus('Stopping'); addDiagnostic({ timestamp: Date.now(), level: 'INFO', message: 'Stop requested; waiting for the scanner to finish safely.' }); await window.arbor.cancelScan() }
     catch (cause) { setStatus('Failed'); setError(cause instanceof Error ? cause.message : String(cause)) }
   }
 
@@ -129,6 +141,7 @@ function Workspace() {
         <button className={page === 'treemap' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('treemap')}><span>▧</span> Treemap</button>
         <button className={page === 'analytics' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('analytics')}><span>▥</span> Analytics</button>
         <button className={page === 'history' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('history')}><span>◷</span> History</button>
+        <button className={page === 'logs' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('logs')}><span>≡</span> Scan logs</button>
         <button className={page === 'types' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('types')}><span>▦</span> File types</button>
         <button className={page === 'old' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('old')}><span>◴</span> Old files</button>
         <button className={page === 'photoshop' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('photoshop')}><span>▧</span> Photoshop</button>
@@ -163,7 +176,7 @@ function Workspace() {
           <section className="panel scan-targets"><div className="section-heading"><div><h2>Scan target</h2><p>Choose drives or use a specific folder.</p></div></div><div className="target-options">{drives.map((drive) => <label key={drive.path}><input type="checkbox" checked={selected.includes(drive.path)} disabled={!!folder || status === 'Scanning' || status === 'Stopping'} onChange={(event) => setSelected((old) => event.target.checked ? [...old, drive.path] : old.filter((x) => x !== drive.path))} />{drive.label || 'Local disk'} <span>{drive.path}</span></label>)}</div><div className="folder-row"><button className="secondary-button" onClick={() => void chooseFolder()} disabled={status === 'Scanning' || status === 'Stopping'}>Choose folder</button><span title={folder ?? ''}>{folder ?? 'No custom folder selected'}</span>{folder && <button className="text-button" onClick={() => setFolder(null)}>Clear</button>}</div><div className="scan-actions"><button className="primary-button" onClick={() => void startScan()} disabled={status === 'Scanning' || status === 'Stopping'}>Start scan</button><button className="secondary-button" onClick={() => void stopScan()} disabled={status !== 'Scanning'}>Stop scan</button></div></section>
           <div className="scan-grid"><div className="metric"><span>Files discovered</span><strong>{(scan?.filesDiscovered ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Files indexed</span><strong>{(scan?.filesIndexed ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Folders processed</span><strong>{(scan?.directoriesProcessed ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Elapsed</span><strong>{duration(scan?.elapsedMilliseconds ?? 0)}</strong></div></div>
           <section className="panel progress-panel"><div className="section-heading"><div><h2>Scan activity</h2><p>{status === 'Scanning' ? 'Indexing files and building directory totals…' : status === 'Stopping' ? 'Finishing database work and cancelling…' : 'Start a scan to see live progress.'}</p></div></div><div className="scan-details"><div><span>Indexed logical bytes</span><strong>{bytes(scan?.indexedLogicalBytes ?? 0)}</strong></div><div><span>Skipped folders</span><strong>{(scan?.directoriesSkipped ?? 0).toLocaleString()}</strong></div><div><span>Skipped files</span><strong>{(scan?.filesSkipped ?? 0).toLocaleString()}</strong></div></div><div className="current-path"><small>CURRENT DIRECTORY</small><span>{scan?.currentDirectory || 'Waiting for scan activity'}</span></div><div className="activity-list">{activity.map((item, index) => <div key={`${item}-${index}`}>{item}</div>)}</div></section>
-        </> : page === 'files' ? <FilesPage overview={overview} /> : page === 'treemap' ? <TreemapPage /> : page === 'analytics' ? <AnalyticsPage /> : page === 'history' ? <HistoryPage /> : page === 'types' ? <FileTypesPage overview={overview} /> : page === 'old' ? <OldFilesPage /> : page === 'photoshop' ? <PhotoshopPage /> : page === 'duplicates' ? <DuplicatesPage /> : page === 'settings' ? <SettingsPage /> : <DeveloperPage />}
+        </> : page === 'files' ? <FilesPage overview={overview} /> : page === 'treemap' ? <TreemapPage /> : page === 'analytics' ? <AnalyticsPage /> : page === 'history' ? <HistoryPage /> : page === 'logs' ? <ScanLogPage entries={diagnostics} skipped={skippedItems} scan={scan} truncated={skippedTruncated} clear={() => { setDiagnostics([]); setSkippedItems([]); setSkippedTruncated(false) }} /> : page === 'types' ? <FileTypesPage overview={overview} /> : page === 'old' ? <OldFilesPage /> : page === 'photoshop' ? <PhotoshopPage /> : page === 'duplicates' ? <DuplicatesPage /> : page === 'settings' ? <SettingsPage /> : <DeveloperPage />}
       </div>
     </main>
   </div>

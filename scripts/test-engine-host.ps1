@@ -124,6 +124,11 @@ try {
         $finished.directoriesProcessed -lt 1) {
         throw 'Scan completion totals did not match the test data.'
     }
+    if ('skippedDirectories' -notin $finished.PSObject.Properties.Name -or
+        'skippedFiles' -notin $finished.PSObject.Properties.Name -or
+        'skippedDetailsTruncated' -notin $finished.PSObject.Properties.Name) {
+        throw 'Scan completion omitted bounded skipped-path diagnostics.'
+    }
 
     Send-Request @{ id = 'addExclusion'; command = 'addExclusion'; path = $nestedRoot }
     $reply = Expect-Response 'addExclusion'

@@ -194,4 +194,7 @@ export interface ScanEvent {
   groupCount?: number
   duplicateFiles?: number
   potentialRedundantBytes?: number
+  skippedDirectories?: Array<{ path: string; reason: string }>
+  skippedFiles?: Array<{ path: string; reason: string }>
+  skippedDetailsTruncated?: boolean
 }

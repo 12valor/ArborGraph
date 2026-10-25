@@ -26,6 +26,23 @@ export interface LegalStatus {
   acceptedAt: string | null
 }
 
+export interface DesktopSettings {
+  workerCount: number
+  followJunctions: boolean
+  includeHiddenFiles: boolean
+  includeSystemFiles: boolean
+  excludedPaths: string[]
+  protectedExclusions: string[]
+  retentionDays: number
+  maxScanSessionsToKeep: number
+  logLevel: string
+  defaultToRecycleBin: boolean
+  requireConfirmationForRecycleBin: boolean
+  requireConfirmationForPermanent: boolean
+}
+
+export type ScanSettings = Pick<DesktopSettings, 'workerCount' | 'followJunctions' | 'includeHiddenFiles' | 'includeSystemFiles'>
+
 export interface FileQuery {
   offset?: number
   limit?: number

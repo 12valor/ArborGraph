@@ -155,6 +155,18 @@ internal sealed class EngineHost : IDisposable
                             throw new IOException("License acceptance could not be saved.");
                         Respond(id, new { accepted = true, version = "1.0" });
                         break;
+                    case "getSettings":
+                        RespondSettings(id);
+                        break;
+                    case "setScanSettings":
+                        SetScanSettings(id, root);
+                        break;
+                    case "addExclusion":
+                        ChangeExclusion(id, root, add: true);
+                        break;
+                    case "removeExclusion":
+                        ChangeExclusion(id, root, add: false);
+                        break;
                     case "listDrives":
                         Respond(id, _disks.GetSystemDrives().Select(d => new
                         {
@@ -272,6 +284,57 @@ internal sealed class EngineHost : IDisposable
         if (value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
             throw new ArgumentException($"{name} must be a boolean.");
         return value.GetBoolean();
+    }
+
+    private void RespondSettings(string id)
+    {
+        var settings = _settings.CurrentSettings;
+        Respond(id, new { workerCount = settings.WorkerCount, followJunctions = settings.FollowJunctions,
+            includeHiddenFiles = settings.IncludeHiddenFiles, includeSystemFiles = settings.IncludeSystemFiles,
+            excludedPaths = settings.ExcludedPaths.ToList(), protectedExclusions = ProtectedExclusions(), retentionDays = settings.RetentionDays,
+            maxScanSessionsToKeep = settings.MaxScanSessionsToKeep, logLevel = settings.LogLevel,
+            defaultToRecycleBin = settings.DefaultToRecycleBin,
+            requireConfirmationForRecycleBin = settings.RequireConfirmationForRecycleBin,
+            requireConfirmationForPermanent = settings.RequireConfirmationForPermanent });
+    }
+
+    private void SetScanSettings(string id, JsonElement root)
+    {
+        if (_scanCancellation != null) throw new ArgumentException("Wait for the active scan before changing settings.");
+        var settings = _settings.CurrentSettings;
+        settings.WorkerCount = ReadInt(root, "workerCount", settings.WorkerCount, 0, 64);
+        settings.FollowJunctions = ReadBool(root, "followJunctions", settings.FollowJunctions);
+        settings.IncludeHiddenFiles = ReadBool(root, "includeHiddenFiles", settings.IncludeHiddenFiles);
+        settings.IncludeSystemFiles = ReadBool(root, "includeSystemFiles", settings.IncludeSystemFiles);
+        _settings.SaveSettings(settings);
+        var saved = _settings.LoadSettings();
+        if (saved.WorkerCount != settings.WorkerCount || saved.FollowJunctions != settings.FollowJunctions ||
+            saved.IncludeHiddenFiles != settings.IncludeHiddenFiles || saved.IncludeSystemFiles != settings.IncludeSystemFiles ||
+            !saved.HasAcceptedEula)
+            throw new IOException("Scan settings could not be saved.");
+        RespondSettings(id);
+    }
+
+    private void ChangeExclusion(string id, JsonElement root, bool add)
+    {
+        if (_scanCancellation != null) throw new ArgumentException("Wait for the active scan before changing exclusions.");
+        string path = ReadText(root, "path", 32767) ?? throw new ArgumentException("path is required.");
+        if (!Path.IsPathFullyQualified(path)) throw new ArgumentException("path must be absolute.");
+        if (add && !Directory.Exists(path)) throw new ArgumentException("Choose an existing folder to exclude.");
+        if (!add && ProtectedExclusions().Any(item => string.Equals(item.TrimEnd('\\', '/'), path.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("Built-in safety exclusions cannot be removed.");
+        bool changed = add ? _settings.AddExclusion(path) : _settings.RemoveExclusion(path);
+        bool present = _settings.LoadSettings().ExcludedPaths.Any(existing =>
+            string.Equals(existing.TrimEnd('\\', '/'), path.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase));
+        if (changed && present != add)
+            throw new IOException("Exclusion change could not be saved.");
+        RespondSettings(id);
+    }
+
+    private static List<string> ProtectedExclusions()
+    {
+        string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows).TrimEnd('\\', '/');
+        return string.IsNullOrEmpty(windows) ? [@"C:\$Recycle.Bin"] : [windows, @"C:\$Recycle.Bin"];
     }
 
     private void GetFiles(string id, JsonElement root)

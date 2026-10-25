@@ -1,6 +1,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } = require('../dist/main/validation.js')
+const { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots, validateScanSettings } = require('../dist/main/validation.js')
 
 test('scan targets must come from a trusted picker or drive list', () => {
   const allowed = new Set(['c:\\', 'c:\\chosen'])
@@ -32,6 +32,14 @@ test('duplicate result pages stay within protocol bounds', () => {
   assert.deepEqual(validateDuplicatePage(0, 25), { offset: 0, limit: 25 })
   assert.throws(() => validateDuplicatePage(-1, 25))
   assert.throws(() => validateDuplicatePage(0, 51))
+})
+
+test('scan settings require a complete bounded payload', () => {
+  const valid = { workerCount: 2, followJunctions: false, includeHiddenFiles: true, includeSystemFiles: true }
+  assert.deepEqual(validateScanSettings(valid), valid)
+  assert.throws(() => validateScanSettings({ ...valid, workerCount: 65 }))
+  assert.throws(() => validateScanSettings({ ...valid, arbitrary: true }))
+  assert.throws(() => validateScanSettings({ workerCount: 2 }))
 })
 
 test('indexed queries accept bounded filters and indexed directory paths', () => {

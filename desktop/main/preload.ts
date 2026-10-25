@@ -1,10 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from './contracts'
+import type { DesktopSettings, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from './contracts'
 
 const api = {
   getLegal: (): Promise<LegalStatus> => ipcRenderer.invoke('arbor:get-legal'),
   acceptEula: (accepted: boolean): Promise<{ accepted: boolean; version: string }> => ipcRenderer.invoke('arbor:accept-eula', accepted),
   declineEula: (): Promise<void> => ipcRenderer.invoke('arbor:decline-eula'),
+  getSettings: (): Promise<DesktopSettings> => ipcRenderer.invoke('arbor:get-settings'),
+  setScanSettings: (value: ScanSettings): Promise<DesktopSettings> => ipcRenderer.invoke('arbor:set-scan-settings', value),
+  addExclusion: (): Promise<DesktopSettings | null> => ipcRenderer.invoke('arbor:add-exclusion'),
+  removeExclusion: (path: string): Promise<DesktopSettings> => ipcRenderer.invoke('arbor:remove-exclusion', path),
   listDrives: (): Promise<Drive[]> => ipcRenderer.invoke('arbor:list-drives'),
   getOverview: (): Promise<Overview> => ipcRenderer.invoke('arbor:get-overview'),
   getFiles: (query: FileQuery): Promise<FilePage> => ipcRenderer.invoke('arbor:get-files', query),

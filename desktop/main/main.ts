@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session } from 'electron'
 import path from 'node:path'
 import { EngineClient, findEngineExecutable } from './engine-client'
-import { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
+import { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots, validateScanSettings } from './validation'
 import type { Drive, ScanEvent } from './contracts'
 
 let window: BrowserWindow | null = null
@@ -33,6 +33,25 @@ function registerIpc(): void {
   ipcMain.handle('arbor:decline-eula', (event) => {
     requireWindowSender(event.sender.id)
     app.quit()
+  })
+  ipcMain.handle('arbor:get-settings', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getSettings')
+  })
+  ipcMain.handle('arbor:set-scan-settings', (event, value: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('setScanSettings', validateScanSettings(value))
+  })
+  ipcMain.handle('arbor:add-exclusion', async (event) => {
+    requireWindowSender(event.sender.id)
+    const result = await dialog.showOpenDialog(window!, { properties: ['openDirectory'], title: 'Choose a folder to exclude from scans' })
+    if (result.canceled || result.filePaths.length !== 1) return null
+    return engineRequest('addExclusion', { path: path.resolve(result.filePaths[0]) })
+  })
+  ipcMain.handle('arbor:remove-exclusion', (event, excludedPath: unknown) => {
+    requireWindowSender(event.sender.id)
+    if (typeof excludedPath !== 'string' || excludedPath.length > 32767 || !path.isAbsolute(excludedPath)) throw new Error('Invalid exclusion path.')
+    return engineRequest('removeExclusion', { path: excludedPath })
   })
   ipcMain.handle('arbor:list-drives', async (event) => {
     requireWindowSender(event.sender.id)

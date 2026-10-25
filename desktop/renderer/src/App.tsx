@@ -8,8 +8,9 @@ import { HistoryPage } from './HistoryPage'
 import { FileTypesPage, OldFilesPage, PhotoshopPage } from './InsightsPages'
 import { DuplicatesPage } from './DuplicatesPage'
 import { LegalGate } from './LegalGate'
+import { SettingsPage } from './SettingsPage'
 
-type Page = 'overview' | 'scanner' | 'files' | 'treemap' | 'analytics' | 'history' | 'types' | 'old' | 'photoshop' | 'duplicates'
+type Page = 'overview' | 'scanner' | 'files' | 'treemap' | 'analytics' | 'history' | 'types' | 'old' | 'photoshop' | 'duplicates' | 'settings'
 type ScanStatus = 'Ready' | 'Scanning' | 'Stopping' | 'Completed' | 'Cancelled' | 'Failed'
 
 function App() {
@@ -118,6 +119,7 @@ function Workspace() {
         <button className={page === 'old' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('old')}><span>◴</span> Old files</button>
         <button className={page === 'photoshop' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('photoshop')}><span>▧</span> Photoshop</button>
         <button className={page === 'duplicates' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('duplicates')}><span>▣</span> Duplicates</button>
+        <button className={page === 'settings' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('settings')}><span>⚙</span> Settings</button>
       </nav>
       <div className="sidebar-bottom"><span className="status-dot" /> {engineConnected ? 'Engine connected through local process' : 'Engine disconnected'}</div>
     </aside>
@@ -145,7 +147,7 @@ function Workspace() {
           <section className="panel scan-targets"><div className="section-heading"><div><h2>Scan target</h2><p>Choose drives or use a specific folder.</p></div></div><div className="target-options">{drives.map((drive) => <label key={drive.path}><input type="checkbox" checked={selected.includes(drive.path)} disabled={!!folder || status === 'Scanning' || status === 'Stopping'} onChange={(event) => setSelected((old) => event.target.checked ? [...old, drive.path] : old.filter((x) => x !== drive.path))} />{drive.label || 'Local disk'} <span>{drive.path}</span></label>)}</div><div className="folder-row"><button className="secondary-button" onClick={() => void chooseFolder()} disabled={status === 'Scanning' || status === 'Stopping'}>Choose folder</button><span title={folder ?? ''}>{folder ?? 'No custom folder selected'}</span>{folder && <button className="text-button" onClick={() => setFolder(null)}>Clear</button>}</div><div className="scan-actions"><button className="primary-button" onClick={() => void startScan()} disabled={status === 'Scanning' || status === 'Stopping'}>Start scan</button><button className="secondary-button" onClick={() => void stopScan()} disabled={status !== 'Scanning'}>Stop scan</button></div></section>
           <div className="scan-grid"><div className="metric"><span>Files discovered</span><strong>{(scan?.filesDiscovered ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Files indexed</span><strong>{(scan?.filesIndexed ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Folders processed</span><strong>{(scan?.directoriesProcessed ?? 0).toLocaleString()}</strong></div><div className="metric"><span>Elapsed</span><strong>{duration(scan?.elapsedMilliseconds ?? 0)}</strong></div></div>
           <section className="panel progress-panel"><div className="section-heading"><div><h2>Scan activity</h2><p>{status === 'Scanning' ? 'Indexing files and building directory totals…' : status === 'Stopping' ? 'Finishing database work and cancelling…' : 'Start a scan to see live progress.'}</p></div></div><div className="scan-details"><div><span>Indexed logical bytes</span><strong>{bytes(scan?.indexedLogicalBytes ?? 0)}</strong></div><div><span>Skipped folders</span><strong>{(scan?.directoriesSkipped ?? 0).toLocaleString()}</strong></div><div><span>Skipped files</span><strong>{(scan?.filesSkipped ?? 0).toLocaleString()}</strong></div></div><div className="current-path"><small>CURRENT DIRECTORY</small><span>{scan?.currentDirectory || 'Waiting for scan activity'}</span></div><div className="activity-list">{activity.map((item, index) => <div key={`${item}-${index}`}>{item}</div>)}</div></section>
-        </> : page === 'files' ? <FilesPage overview={overview} /> : page === 'treemap' ? <TreemapPage /> : page === 'analytics' ? <AnalyticsPage /> : page === 'history' ? <HistoryPage /> : page === 'types' ? <FileTypesPage overview={overview} /> : page === 'old' ? <OldFilesPage /> : page === 'photoshop' ? <PhotoshopPage /> : <DuplicatesPage />}
+        </> : page === 'files' ? <FilesPage overview={overview} /> : page === 'treemap' ? <TreemapPage /> : page === 'analytics' ? <AnalyticsPage /> : page === 'history' ? <HistoryPage /> : page === 'types' ? <FileTypesPage overview={overview} /> : page === 'old' ? <OldFilesPage /> : page === 'photoshop' ? <PhotoshopPage /> : page === 'duplicates' ? <DuplicatesPage /> : <SettingsPage />}
       </div>
     </main>
   </div>

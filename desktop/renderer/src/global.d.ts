@@ -1,9 +1,13 @@
-import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from '../../main/contracts'
+import type { DesktopSettings, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from '../../main/contracts'
 
 interface ArborApi {
   getLegal(): Promise<LegalStatus>
   acceptEula(accepted: boolean): Promise<{ accepted: boolean; version: string }>
   declineEula(): Promise<void>
+  getSettings(): Promise<DesktopSettings>
+  setScanSettings(value: ScanSettings): Promise<DesktopSettings>
+  addExclusion(): Promise<DesktopSettings | null>
+  removeExclusion(path: string): Promise<DesktopSettings>
   listDrives(): Promise<Drive[]>
   getOverview(): Promise<Overview>
   getFiles(query: FileQuery): Promise<FilePage>

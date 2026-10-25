@@ -1,5 +1,5 @@
 import path from 'node:path'
-import type { FileQuery } from './contracts'
+import type { FileQuery, ScanSettings } from './contracts'
 
 export function validateFileQuery(value: unknown): FileQuery {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid file query.')
@@ -70,6 +70,17 @@ export function validateDuplicatePage(offset: unknown, limit: unknown): { offset
   if (!Number.isInteger(offset) || (offset as number) < 0 || (offset as number) > 10_000) throw new Error('Invalid duplicate page offset.')
   if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 50) throw new Error('Invalid duplicate page size.')
   return { offset: offset as number, limit: limit as number }
+}
+
+export function validateScanSettings(value: unknown): ScanSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid scan settings.')
+  const settings = value as Record<string, unknown>
+  const keys = ['workerCount', 'followJunctions', 'includeHiddenFiles', 'includeSystemFiles']
+  if (Object.keys(settings).length !== keys.length || Object.keys(settings).some((key) => !keys.includes(key))) throw new Error('Unsupported scan settings.')
+  if (!Number.isInteger(settings.workerCount) || (settings.workerCount as number) < 0 || (settings.workerCount as number) > 64 ||
+      typeof settings.followJunctions !== 'boolean' || typeof settings.includeHiddenFiles !== 'boolean' ||
+      typeof settings.includeSystemFiles !== 'boolean') throw new Error('Invalid scan settings values.')
+  return settings as ScanSettings
 }
 
 export function validateScanRoots(value: unknown, allowedRoots: ReadonlySet<string>): string[] {

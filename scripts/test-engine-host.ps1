@@ -81,6 +81,15 @@ try {
         throw 'EULA consent was not persisted in the existing settings format.'
     }
 
+    Send-Request @{ id = 'settings'; command = 'getSettings' }
+    $reply = Expect-Response 'settings'
+    if (-not $reply.ok -or -not $reply.data.includeHiddenFiles) { throw 'Shared scan settings were not returned.' }
+    Send-Request @{ id = 'setSettings'; command = 'setScanSettings'; workerCount = 2; followJunctions = $false; includeHiddenFiles = $false; includeSystemFiles = $true }
+    $reply = Expect-Response 'setSettings'
+    if (-not $reply.ok -or $reply.data.workerCount -ne 2 -or $reply.data.includeHiddenFiles) { throw 'Scan settings update failed.' }
+    $savedSettings = Get-Content -LiteralPath (Join-Path $dataRoot 'settings.json') -Raw | ConvertFrom-Json
+    if (-not $savedSettings.HasAcceptedEula -or $savedSettings.WorkerCount -ne 2) { throw 'Saving scan settings lost EULA consent.' }
+
     Send-Request @{ id = 'bad'; command = 'runAnything' }
     $reply = Expect-Response 'bad'
     if ($reply.ok -or $reply.error.code -ne 'UNKNOWN_COMMAND') { throw 'Command allowlist failed.' }
@@ -114,6 +123,13 @@ try {
         $finished.directoriesProcessed -lt 1) {
         throw 'Scan completion totals did not match the test data.'
     }
+
+    Send-Request @{ id = 'addExclusion'; command = 'addExclusion'; path = $nestedRoot }
+    $reply = Expect-Response 'addExclusion'
+    if (-not $reply.ok -or $nestedRoot -notin $reply.data.excludedPaths) { throw 'Selected exclusion was not saved.' }
+    Send-Request @{ id = 'removeExclusion'; command = 'removeExclusion'; path = $nestedRoot }
+    $reply = Expect-Response 'removeExclusion'
+    if (-not $reply.ok -or $nestedRoot -in $reply.data.excludedPaths) { throw 'Exclusion was not removed.' }
 
     Send-Request @{ id = 'overview'; command = 'getOverview' }
     $reply = Expect-Response 'overview'

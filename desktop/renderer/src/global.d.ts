@@ -11,6 +11,7 @@ interface ArborApi {
   listDrives(): Promise<Drive[]>
   getOverview(): Promise<Overview>
   getFiles(query: FileQuery): Promise<FilePage>
+  exportFilesCsv(query: FileQuery): Promise<{ saved: boolean; filePath: string; fileBytes: number } | null>
   getLargestFolders(limit: number): Promise<IndexedFolder[]>
   getDirectoryContents(path: string | null, limit?: number): Promise<DirectoryContents>
   getScanHistory(limit: number): Promise<ScanHistoryItem[]>

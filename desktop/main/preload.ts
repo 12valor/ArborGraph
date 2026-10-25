@@ -12,6 +12,7 @@ const api = {
   listDrives: (): Promise<Drive[]> => ipcRenderer.invoke('arbor:list-drives'),
   getOverview: (): Promise<Overview> => ipcRenderer.invoke('arbor:get-overview'),
   getFiles: (query: FileQuery): Promise<FilePage> => ipcRenderer.invoke('arbor:get-files', query),
+  exportFilesCsv: (query: FileQuery): Promise<{ saved: boolean; filePath: string; fileBytes: number } | null> => ipcRenderer.invoke('arbor:export-files-csv', query),
   getLargestFolders: (limit: number): Promise<IndexedFolder[]> => ipcRenderer.invoke('arbor:get-largest-folders', limit),
   getDirectoryContents: (path: string | null, limit = 100): Promise<DirectoryContents> => ipcRenderer.invoke('arbor:get-directory-contents', { path, limit }),
   getScanHistory: (limit: number): Promise<ScanHistoryItem[]> => ipcRenderer.invoke('arbor:get-scan-history', limit),

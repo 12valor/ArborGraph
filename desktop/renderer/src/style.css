@@ -206,5 +206,6 @@ h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
 .settings-message { color: #39786e; font-size: 12px; }
 .legal-review { padding: 20px 24px; font-size: 12px; }.legal-review summary { cursor: pointer; font-weight: 700; }.legal-review pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 Segoe UI, sans-serif; }
 .developer-panel { margin-bottom: 18px; }
+.page-actions { display: flex; align-items: center; gap: 12px; }
 @media (max-width: 1150px) { .content { padding: 26px 25px; } .sidebar { width: 190px; flex-basis: 190px; } .drive-meter { width: 95px; } .metric strong { font-size: 20px; } }
 @media (max-width: 1150px) { .analytics-columns, .map-lower { grid-template-columns: 1fr; } }

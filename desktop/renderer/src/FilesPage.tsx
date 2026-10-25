@@ -19,6 +19,8 @@ export function FilesPage({ overview }: { overview: Overview | null }) {
   const [selected, setSelected] = useState<IndexedFile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState('')
 
   useEffect(() => {
     let active = true
@@ -36,9 +38,19 @@ export function FilesPage({ overview }: { overview: Overview | null }) {
   const submit = (event: FormEvent) => { event.preventDefault(); setOffset(0); setSearch(draft.trim()); setExtension(extensionDraft.trim()); setLocation(locationDraft.trim()) }
   const changeCategory = (value: string) => { setCategory(value); setOffset(0) }
   const changeSort = (value: 'size' | 'name' | 'modified_time') => { setSortBy(value); setOffset(0) }
+  const exportCsv = async () => {
+    setExporting(true); setError(null); setExportMessage('')
+    try {
+      const saved = await window.arbor.exportFilesCsv({ search, category, extension,
+        locationPrefix: location, sortBy, sortDesc })
+      if (saved) setExportMessage(`CSV saved to ${saved.filePath}`)
+    } catch (cause) { setError(String(cause)) }
+    finally { setExporting(false) }
+  }
 
   return <>
-    <div className="page-heading"><div><p className="eyebrow">INDEXED FILES</p><h1>Explore files</h1><p className="subhead">Search and sort the current scan index. Sizes are logical file bytes.</p></div><span className="muted">{(result?.total ?? 0).toLocaleString()} {result?.total === 1 ? 'match' : 'matches'}</span></div>
+    <div className="page-heading"><div><p className="eyebrow">INDEXED FILES</p><h1>Explore files</h1><p className="subhead">Search and sort the current scan index. Sizes are logical file bytes.</p></div><div className="page-actions"><span className="muted">{(result?.total ?? 0).toLocaleString()} {result?.total === 1 ? 'match' : 'matches'}</span><button className="secondary-button" disabled={exporting || loading} onClick={() => void exportCsv()}>{exporting ? 'Exporting…' : 'Export matching CSV'}</button></div></div>
+    {exportMessage && <p className="settings-message" role="status">{exportMessage}</p>}
     <section className="panel explorer-panel">
       <form className="explorer-filters" onSubmit={submit}>
         <label>Search name or path<input value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={200} placeholder="Search indexed files" /></label>

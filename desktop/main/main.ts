@@ -67,6 +67,20 @@ function registerIpc(): void {
     requireWindowSender(event.sender.id)
     return engineRequest('getFiles', { ...validateFileQuery(query) })
   })
+  ipcMain.handle('arbor:export-files-csv', async (event, query: unknown) => {
+    requireWindowSender(event.sender.id)
+    const valid = validateFileQuery(query)
+    const result = await dialog.showSaveDialog(window!, {
+      title: 'Export matching indexed files to CSV',
+      defaultPath: `arborgraph_files_${new Date().toISOString().slice(0, 10)}.csv`,
+      filters: [{ name: 'CSV files', extensions: ['csv'] }],
+    })
+    if (result.canceled || !result.filePath) return null
+    if (path.extname(result.filePath).toLowerCase() !== '.csv') throw new Error('Choose a CSV destination.')
+    return engineRequest('exportFilesCsv', { filePath: result.filePath,
+      search: valid.search, category: valid.category, extension: valid.extension,
+      locationPrefix: valid.locationPrefix, sortBy: valid.sortBy, sortDesc: valid.sortDesc }, 120_000)
+  })
   ipcMain.handle('arbor:get-largest-folders', (event, limit: unknown) => {
     requireWindowSender(event.sender.id)
     return engineRequest('getLargestFolders', { limit: validateFolderLimit(limit) })

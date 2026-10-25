@@ -246,6 +246,9 @@ internal sealed class EngineHost : IDisposable
                                 itemsTruncated = ecosystem.ItemCount > items.Count };
                         }).ToList());
                         break;
+                    case "exportFilesCsv":
+                        await ExportFilesCsvAsync(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -379,6 +382,28 @@ internal sealed class EngineHost : IDisposable
                 category = file.Category, accessible = file.Accessible == 1
             }).ToList();
         Respond(id, new { total, offset, limit, files });
+    }
+
+    private async Task ExportFilesCsvAsync(string id, JsonElement root)
+    {
+        if (_scanCancellation != null) throw new ArgumentException("Wait for the active scan before exporting files.");
+        string filePath = ReadText(root, "filePath", 32767) ?? throw new ArgumentException("filePath is required.");
+        if (!Path.IsPathFullyQualified(filePath) || !string.Equals(Path.GetExtension(filePath), ".csv", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Choose an absolute CSV destination.");
+        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            throw new ArgumentException("The export folder is unavailable.");
+        string? search = ReadText(root, "search", 200);
+        string? category = ReadText(root, "category", 80);
+        string? extension = ReadText(root, "extension", 32);
+        string? location = ReadText(root, "locationPrefix", 32767);
+        string sortBy = ReadText(root, "sortBy", 32) ?? "size";
+        if (sortBy is not ("size" or "name" or "path" or "modified_time" or "category" or "extension"))
+            throw new ArgumentException("sortBy is not supported.");
+        bool sortDesc = ReadBool(root, "sortDesc", true);
+        await new ExportService().StreamQueryToCsvAsync(_database, filePath, category: category,
+            search: search, sortBy: sortBy, sortDesc: sortDesc,
+            extension: extension, locationPrefix: location);
+        Respond(id, new { saved = true, filePath, fileBytes = new FileInfo(filePath).Length });
     }
 
     private void GetDirectoryContents(string id, JsonElement root)

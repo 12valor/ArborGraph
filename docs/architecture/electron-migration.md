@@ -2,11 +2,11 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
-The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, logical-size rankings, stored scan comparisons, file age analysis, Photoshop-associated file analysis, read-only duplicate verification, and indexed developer project findings. It has Overview, Scanner, Files, Treemap, Analytics, Scan History, File Types, Old Files, Photoshop, Duplicates, scanner Settings, and Developer Storage screens, plus a first-run license gate; there is no installer or release artifact for it.
+The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search and CSV export, directory treemap drilldown, logical-size rankings, stored scan comparisons, file age analysis, Photoshop-associated file analysis, read-only duplicate verification, and indexed developer project findings. It has Overview, Scanner, Files, Treemap, Analytics, Scan History, File Types, Old Files, Photoshop, Duplicates, scanner Settings, and Developer Storage screens, plus a first-run license gate; there is no installer or release artifact for it.
 
 For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
 
-This host currently references `DiskScope.csproj`, so it still requires the Windows Desktop runtime and is **not yet a WPF-independent core library**. Moving reusable services and models into a separate library is a later stage, after parity tests cover their behavior. The host does not provide cleanup, deletion, update, export, or general file browsing commands yet.
+This host currently references `DiskScope.csproj`, so it still requires the Windows Desktop runtime and is **not yet a WPF-independent core library**. Moving reusable services and models into a separate library is a later stage, after parity tests cover their behavior. The host does not provide cleanup, deletion, update, or general file browsing commands yet.
 
 ## Run locally
 
@@ -35,6 +35,7 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `listDrives` | None | Available drive geometry |
 | `getOverview` | None | Current indexed file count, logical bytes, and categories |
 | `getFiles` | Bounded page, search, category, extension, location, and sort | File count and up to 200 indexed file records |
+| `exportFilesCsv` | Absolute CSV destination and bounded file filters | Streams all matching indexed files through the existing C# exporter |
 | `getLargestFolders` | Limit up to 100 | Largest rolled-up folder sizes and file counts |
 | `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
 | `getScanHistory` | Limit up to 100 | Stored scan metadata in newest-first order |
@@ -67,6 +68,8 @@ Photoshop results are classified from indexed paths and extensions. The summary 
 The duplicate overview counts equal-size candidates of at least 1 KB, before content verification. The background analyzer checks at most 250 size groups using the existing partial signature and full SHA-256 pipeline. Confirmed groups are kept only in engine memory for this session and cleared by a new scan. Redundant byte estimates assume retaining one copy per group; no deletion or space reclamation occurs in this preview.
 
 Developer Storage applies the existing project context checks to indexed directory names and rollups. It excludes global package caches in this stage and reports indexed logical bytes, not reclaimable space. No cleanup commands are exposed.
+
+The Files screen exports all rows matching its applied filters, independent of the current page. Electron main chooses the destination with a native Save dialog; the renderer cannot provide an arbitrary output path. Export is unavailable during an active scan. The result describes indexed files and is not a filesystem inventory.
 
 ## Next boundaries
 

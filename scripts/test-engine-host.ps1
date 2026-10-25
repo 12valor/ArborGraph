@@ -148,6 +148,18 @@ try {
         throw 'Paged file query did not match the index.'
     }
 
+    $csvPath = Join-Path $testRoot 'matching.csv'
+    Send-Request @{ id = 'exportCsv'; command = 'exportFilesCsv'; filePath = $csvPath; search = 'file_10'; sortBy = 'name'; sortDesc = $false }
+    $reply = Expect-Response 'exportCsv'
+    if (-not $reply.ok -or -not $reply.data.saved -or -not (Test-Path -LiteralPath $csvPath)) { throw 'Filtered CSV export failed.' }
+    $csvRows = @(Import-Csv -LiteralPath $csvPath)
+    if ($csvRows.Count -ne 111 -or ($csvRows | Where-Object { $_.Name -notlike '*file_10*' }).Count -ne 0) {
+        throw 'CSV rows did not match the selected file filter.'
+    }
+    Send-Request @{ id = 'badExport'; command = 'exportFilesCsv'; filePath = 'relative.csv' }
+    $reply = Expect-Response 'badExport'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative CSV export path was accepted.' }
+
     Send-Request @{ id = 'folders'; command = 'getLargestFolders'; limit = 5 }
     $reply = Expect-Response 'folders'
     if (-not $reply.ok -or $reply.data.Count -lt 1) { throw 'Largest folder query returned no index data.' }

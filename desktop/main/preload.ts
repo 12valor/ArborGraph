@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DirectoryContents, Drive, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from './contracts'
+import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from './contracts'
 
 const api = {
   listDrives: (): Promise<Drive[]> => ipcRenderer.invoke('arbor:list-drives'),
@@ -11,6 +11,11 @@ const api = {
   compareScans: (olderId: number, newerId: number): Promise<ScanComparison> => ipcRenderer.invoke('arbor:compare-scans', olderId, newerId),
   getFileAgeInsights: (daysOld: number, limit: number): Promise<FileAgeInsights> => ipcRenderer.invoke('arbor:get-file-age-insights', daysOld, limit),
   getPhotoshopInsights: (limit: number): Promise<PhotoshopInsights> => ipcRenderer.invoke('arbor:get-photoshop-insights', limit),
+  getDuplicateOverview: (): Promise<DuplicateOverview> => ipcRenderer.invoke('arbor:get-duplicate-overview'),
+  getDuplicateStatus: (): Promise<DuplicateStatus> => ipcRenderer.invoke('arbor:get-duplicate-status'),
+  startDuplicateAnalysis: (): Promise<{ accepted: boolean }> => ipcRenderer.invoke('arbor:start-duplicate-analysis'),
+  cancelDuplicateAnalysis: (): Promise<{ cancelling: boolean }> => ipcRenderer.invoke('arbor:cancel-duplicate-analysis'),
+  getDuplicateResults: (offset: number, limit: number): Promise<DuplicateResults> => ipcRenderer.invoke('arbor:get-duplicate-results', offset, limit),
   chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('arbor:choose-folder'),
   startScan: (roots: string[]): Promise<{ accepted: boolean; roots: string[] }> => ipcRenderer.invoke('arbor:start-scan', roots),
   cancelScan: (): Promise<{ cancelling: boolean }> => ipcRenderer.invoke('arbor:cancel-scan'),

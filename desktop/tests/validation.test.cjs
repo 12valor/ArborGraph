@@ -1,6 +1,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { validateDirectoryQuery, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } = require('../dist/main/validation.js')
+const { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } = require('../dist/main/validation.js')
 
 test('scan targets must come from a trusted picker or drive list', () => {
   const allowed = new Set(['c:\\', 'c:\\chosen'])
@@ -26,6 +26,12 @@ test('file insights are bounded before reaching the engine', () => {
   assert.deepEqual(validateFileInsightsQuery(180, 100), { daysOld: 180, limit: 100 })
   assert.throws(() => validateFileInsightsQuery(0, 100))
   assert.throws(() => validateFileInsightsQuery(180, 201))
+})
+
+test('duplicate result pages stay within protocol bounds', () => {
+  assert.deepEqual(validateDuplicatePage(0, 25), { offset: 0, limit: 25 })
+  assert.throws(() => validateDuplicatePage(-1, 25))
+  assert.throws(() => validateDuplicatePage(0, 51))
 })
 
 test('indexed queries accept bounded filters and indexed directory paths', () => {

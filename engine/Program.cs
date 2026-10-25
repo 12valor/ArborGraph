@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DiskScope.Models;
 using DiskScope.Services;
 
 namespace ArborGraph.EngineHost;
@@ -66,6 +67,11 @@ internal sealed class EngineHost : IDisposable
     private readonly DiskService _disks = new();
     private CancellationTokenSource? _scanCancellation;
     private Task? _scanTask;
+    private CancellationTokenSource? _duplicateCancellation;
+    private Task? _duplicateTask;
+    private readonly object _duplicateLock = new();
+    private List<DuplicateGroup> _duplicateGroups = [];
+    private bool _duplicateHasRun;
     private long _eventSequence;
 
     public EngineHost(TextReader input, TextWriter output, string? dataDir)
@@ -157,6 +163,26 @@ internal sealed class EngineHost : IDisposable
                     case "getPhotoshopInsights":
                         GetPhotoshopInsights(id, root);
                         break;
+                    case "getDuplicateOverview":
+                        var overview = _database.GetDuplicateOverview();
+                        Respond(id, new { candidateGroups = overview.CandidateGroups,
+                            candidateFiles = overview.CandidateFiles,
+                            potentialRedundantBytes = overview.PotentialWastedBytes });
+                        break;
+                    case "getDuplicateStatus":
+                        lock (_duplicateLock) Respond(id, new { running = _duplicateCancellation != null,
+                            hasResults = _duplicateHasRun });
+                        break;
+                    case "startDuplicateAnalysis":
+                        StartDuplicateAnalysis(id);
+                        break;
+                    case "cancelDuplicateAnalysis":
+                        if (_duplicateCancellation == null) RespondError(id, "NO_ACTIVE_ANALYSIS", "No duplicate analysis is running.");
+                        else { _duplicateCancellation.Cancel(); Respond(id, new { cancelling = true }); }
+                        break;
+                    case "getDuplicateResults":
+                        GetDuplicateResults(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -167,6 +193,7 @@ internal sealed class EngineHost : IDisposable
                     case "shutdown":
                         Respond(id, new { stopping = true });
                         await StopScanAsync();
+                        await StopDuplicateAnalysisAsync();
                         return;
                     default:
                         RespondError(id, "UNKNOWN_COMMAND", "Command is not allowed.");
@@ -365,6 +392,11 @@ internal sealed class EngineHost : IDisposable
 
     private void StartScan(string id, JsonElement request)
     {
+        if (_duplicateCancellation != null)
+        {
+            RespondError(id, "ANALYSIS_IN_PROGRESS", "Finish duplicate analysis before scanning.");
+            return;
+        }
         if (_scanCancellation != null)
         {
             RespondError(id, "SCAN_IN_PROGRESS", "A scan is already running.");
@@ -399,6 +431,7 @@ internal sealed class EngineHost : IDisposable
         }
 
         var cancellation = new CancellationTokenSource();
+        lock (_duplicateLock) { _duplicateGroups = []; _duplicateHasRun = false; }
         _scanCancellation = cancellation;
         Respond(id, new { accepted = true, roots });
         var progress = new InlineProgress<ScanProgressReport>(p => Write(new
@@ -443,6 +476,97 @@ internal sealed class EngineHost : IDisposable
         if (_scanTask != null) await _scanTask;
     }
 
+    private void StartDuplicateAnalysis(string id)
+    {
+        if (_scanCancellation != null || _duplicateCancellation != null)
+        {
+            RespondError(id, "WORK_IN_PROGRESS", "Finish the active scan or analysis first.");
+            return;
+        }
+        var cancellation = new CancellationTokenSource();
+        _duplicateCancellation = cancellation;
+        lock (_duplicateLock) { _duplicateGroups = []; _duplicateHasRun = false; }
+        Respond(id, new { accepted = true });
+        _duplicateTask = RunDuplicateAnalysisAsync(cancellation);
+    }
+
+    private async Task RunDuplicateAnalysisAsync(CancellationTokenSource cancellation)
+    {
+        try
+        {
+            var analyzer = new DuplicateAnalyzer(_database);
+            var progress = new InlineProgress<string>(message => Write(new
+            {
+                type = "event", eventName = "duplicateProgress",
+                sequence = Interlocked.Increment(ref _eventSequence), message
+            }));
+            var results = await analyzer.FindDuplicatesAsync(statusProgress: progress,
+                cancellationToken: cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested();
+            lock (_duplicateLock) { _duplicateGroups = results; _duplicateHasRun = true; }
+            Write(new { type = "event", eventName = "duplicateFinished",
+                sequence = Interlocked.Increment(ref _eventSequence), state = "Completed",
+                groupCount = results.Count, duplicateFiles = results.Sum(group => group.FileCount),
+                potentialRedundantBytes = results.Sum(group => group.WastedBytes) });
+        }
+        catch (OperationCanceledException)
+        {
+            Write(new { type = "event", eventName = "duplicateFinished",
+                sequence = Interlocked.Increment(ref _eventSequence), state = "Cancelled" });
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            Write(new { type = "event", eventName = "duplicateFailed",
+                sequence = Interlocked.Increment(ref _eventSequence), message = "Duplicate analysis failed." });
+        }
+        finally
+        {
+            _duplicateCancellation = null;
+            cancellation.Dispose();
+        }
+    }
+
+    private void GetDuplicateResults(string id, JsonElement root)
+    {
+        if (_duplicateCancellation != null)
+        {
+            RespondError(id, "ANALYSIS_IN_PROGRESS", "Results are available after analysis completes.");
+            return;
+        }
+        int offset = ReadInt(root, "offset", 0, 0, 10_000);
+        int limit = ReadInt(root, "limit", 25, 1, 50);
+        lock (_duplicateLock)
+        {
+            int remainingPathCharacters = 500_000;
+            var groups = _duplicateGroups.Skip(offset).Take(limit).Select(group =>
+            {
+                var files = new List<object>();
+                foreach (var file in group.Files.Take(100))
+                {
+                    if (file.Path.Length > remainingPathCharacters) break;
+                    remainingPathCharacters -= file.Path.Length;
+                    files.Add(new { path = file.Path, name = file.Name, modifiedTime = file.ModifiedTime });
+                }
+                return new
+                {
+                    exactSize = group.ExactSize, sha256 = group.Sha256,
+                    fileCount = group.FileCount, potentialRedundantBytes = group.WastedBytes,
+                    filesTruncated = group.FileCount > files.Count,
+                    files
+                };
+            }).ToList();
+            Respond(id, new { total = _duplicateGroups.Count, offset, limit,
+                groups });
+        }
+    }
+
+    private async Task StopDuplicateAnalysisAsync()
+    {
+        _duplicateCancellation?.Cancel();
+        if (_duplicateTask != null) await _duplicateTask;
+    }
+
     private async Task<(string? Line, bool Oversized)> ReadBoundedLineAsync()
     {
         var buffer = new char[1];
@@ -473,6 +597,7 @@ internal sealed class EngineHost : IDisposable
     public void Dispose()
     {
         _scanCancellation?.Cancel();
+        _duplicateCancellation?.Cancel();
         _database.Dispose();
     }
 }

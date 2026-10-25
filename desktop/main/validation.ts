@@ -66,6 +66,12 @@ export function validateFileInsightsQuery(daysOld: unknown, limit: unknown): { d
   return { daysOld: daysOld as number, limit: limit as number }
 }
 
+export function validateDuplicatePage(offset: unknown, limit: unknown): { offset: number; limit: number } {
+  if (!Number.isInteger(offset) || (offset as number) < 0 || (offset as number) > 10_000) throw new Error('Invalid duplicate page offset.')
+  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 50) throw new Error('Invalid duplicate page size.')
+  return { offset: offset as number, limit: limit as number }
+}
+
 export function validateScanRoots(value: unknown, allowedRoots: ReadonlySet<string>): string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 16) {
     throw new Error('Select between 1 and 16 scan targets.')

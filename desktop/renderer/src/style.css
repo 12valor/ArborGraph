@@ -171,5 +171,18 @@ h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
 .category-choice-list small { color: #81929a; font-size: 10px; margin-top: 3px; }
 .category-choice-list b { font-size: 12px; }
 .category-choice-list .bar { grid-column: 1 / -1; height: 4px; }
+.duplicate-controls, .duplicate-results { margin-bottom: 18px; }
+.duplicate-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 0 24px 22px; }
+.duplicate-actions span { color: #71868d; font-size: 12px; }
+.duplicate-groups { display: grid; gap: 12px; padding: 0 24px 20px; }
+.duplicate-group { border: 1px solid #e4eceb; border-radius: 7px; padding: 14px; min-width: 0; }
+.duplicate-group-heading { display: flex; justify-content: space-between; gap: 15px; font-size: 12px; color: #283f45; }
+.duplicate-group-heading span { color: #457c6e; white-space: nowrap; }
+.duplicate-group > small { display: block; overflow: hidden; text-overflow: ellipsis; margin: 7px 0; color: #91a0a5; font: 10px Consolas, monospace; }
+.duplicate-group ul { list-style: none; margin: 0; padding: 0; }
+.duplicate-group li { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 9px; padding: 7px 0; border-top: 1px solid #eff2f2; font-size: 11px; }
+.duplicate-group li span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #778a92; }
+.duplicate-group li time { white-space: nowrap; color: #8b9ba1; }
+.duplicate-group p { color: #8b9ba1; font-size: 11px; }
 @media (max-width: 1150px) { .content { padding: 26px 25px; } .sidebar { width: 190px; flex-basis: 190px; } .drive-meter { width: 95px; } .metric strong { font-size: 20px; } }
 @media (max-width: 1150px) { .analytics-columns, .map-lower { grid-template-columns: 1fr; } }

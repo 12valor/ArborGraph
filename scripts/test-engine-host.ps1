@@ -20,6 +20,9 @@ for ($i = 0; $i -lt 1200; $i++) {
     [IO.File]::WriteAllText($filePath, "ArborGraph engine test $i")
     if ($i -lt 5) { [IO.File]::SetLastWriteTimeUtc($filePath, [DateTime]::UtcNow.AddDays(-400)) }
 }
+[IO.File]::WriteAllText((Join-Path $scanRoot 'file_100.txt'), ('D' * 2048))
+[IO.File]::WriteAllText((Join-Path $scanRoot 'file_101.txt'), ('D' * 2048))
+[IO.File]::WriteAllText((Join-Path $scanRoot 'file_102.txt'), ('E' * 2048))
 
 $start = [Diagnostics.ProcessStartInfo]::new()
 $start.FileName = $exe
@@ -146,6 +149,30 @@ try {
     Send-Request @{ id = 'badInsights'; command = 'getFileAgeInsights'; daysOld = -1 }
     $reply = Expect-Response 'badInsights'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Invalid file age threshold was accepted.' }
+
+    Send-Request @{ id = 'duplicateOverview'; command = 'getDuplicateOverview' }
+    $reply = Expect-Response 'duplicateOverview'
+    if (-not $reply.ok -or $reply.data.candidateGroups -lt 1 -or $reply.data.candidateFiles -lt 3) {
+        throw 'Duplicate size candidates were not reported.'
+    }
+    Send-Request @{ id = 'duplicateStart'; command = 'startDuplicateAnalysis' }
+    $reply = Expect-Response 'duplicateStart'
+    if (-not $reply.ok -or -not $reply.data.accepted) { throw 'Duplicate analysis was not accepted.' }
+    $duplicateFinished = $null
+    for ($attempt = 0; $attempt -lt 1000; $attempt++) {
+        $message = Read-Message
+        if ($message.eventName -eq 'duplicateFinished') { $duplicateFinished = $message; break }
+        if ($message.eventName -eq 'duplicateFailed') { throw 'Duplicate analysis failed.' }
+    }
+    if ($null -eq $duplicateFinished -or $duplicateFinished.state -ne 'Completed' -or $duplicateFinished.groupCount -lt 1) {
+        throw 'Verified duplicate result was not reported.'
+    }
+    Send-Request @{ id = 'duplicateResults'; command = 'getDuplicateResults'; offset = 0; limit = 25 }
+    $reply = Expect-Response 'duplicateResults'
+    $verified = @($reply.data.groups | Where-Object { $_.exactSize -eq 2048 -and $_.fileCount -eq 2 })
+    if (-not $reply.ok -or $verified.Count -ne 1 -or $verified[0].potentialRedundantBytes -ne 2048) {
+        throw 'Full-hash duplicate verification did not separate same-size different files.'
+    }
 
     Send-Request @{ id = 'history'; command = 'getScanHistory'; limit = 5 }
     $reply = Expect-Response 'history'

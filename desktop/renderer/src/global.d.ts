@@ -1,4 +1,4 @@
-import type { DirectoryContents, Drive, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from '../../main/contracts'
+import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from '../../main/contracts'
 
 interface ArborApi {
   listDrives(): Promise<Drive[]>
@@ -10,6 +10,11 @@ interface ArborApi {
   compareScans(olderId: number, newerId: number): Promise<ScanComparison>
   getFileAgeInsights(daysOld: number, limit: number): Promise<FileAgeInsights>
   getPhotoshopInsights(limit: number): Promise<PhotoshopInsights>
+  getDuplicateOverview(): Promise<DuplicateOverview>
+  getDuplicateStatus(): Promise<DuplicateStatus>
+  startDuplicateAnalysis(): Promise<{ accepted: boolean }>
+  cancelDuplicateAnalysis(): Promise<{ cancelling: boolean }>
+  getDuplicateResults(offset: number, limit: number): Promise<DuplicateResults>
   chooseFolder(): Promise<string | null>
   startScan(roots: string[]): Promise<{ accepted: boolean; roots: string[] }>
   cancelScan(): Promise<{ cancelling: boolean }>

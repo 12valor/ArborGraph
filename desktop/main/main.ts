@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session } from 'electron'
 import path from 'node:path'
 import { EngineClient, findEngineExecutable } from './engine-client'
-import { validateDirectoryQuery, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
+import { validateDirectoryQuery, validateDuplicatePage, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
 import type { Drive, ScanEvent } from './contracts'
 
 let window: BrowserWindow | null = null
@@ -58,6 +58,26 @@ function registerIpc(): void {
   ipcMain.handle('arbor:get-photoshop-insights', (event, limit: unknown) => {
     requireWindowSender(event.sender.id)
     return engineRequest('getPhotoshopInsights', { limit: validateFileInsightsQuery(180, limit).limit }, 60_000)
+  })
+  ipcMain.handle('arbor:get-duplicate-overview', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getDuplicateOverview')
+  })
+  ipcMain.handle('arbor:get-duplicate-status', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getDuplicateStatus')
+  })
+  ipcMain.handle('arbor:start-duplicate-analysis', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('startDuplicateAnalysis')
+  })
+  ipcMain.handle('arbor:cancel-duplicate-analysis', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('cancelDuplicateAnalysis')
+  })
+  ipcMain.handle('arbor:get-duplicate-results', (event, offset: unknown, limit: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getDuplicateResults', validateDuplicatePage(offset, limit))
   })
   ipcMain.handle('arbor:choose-folder', async (event) => {
     requireWindowSender(event.sender.id)

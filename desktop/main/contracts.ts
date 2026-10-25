@@ -122,8 +122,32 @@ export interface PhotoshopInsights {
   photoshopSummary: { psdCount: number; psbCount: number; otherCount: number; identifiedLogicalBytes: number; psdBytes: number; psbBytes: number }
 }
 
+export interface DuplicateOverview {
+  candidateGroups: number
+  candidateFiles: number
+  potentialRedundantBytes: number
+}
+
+export interface DuplicateStatus { running: boolean; hasResults: boolean }
+
+export interface DuplicateGroup {
+  exactSize: number
+  sha256: string
+  fileCount: number
+  potentialRedundantBytes: number
+  filesTruncated: boolean
+  files: Array<{ path: string; name: string; modifiedTime: number }>
+}
+
+export interface DuplicateResults {
+  total: number
+  offset: number
+  limit: number
+  groups: DuplicateGroup[]
+}
+
 export interface ScanEvent {
-  eventName: 'scanProgress' | 'scanFinished' | 'scanFailed' | 'engineExited'
+  eventName: 'scanProgress' | 'scanFinished' | 'scanFailed' | 'engineExited' | 'duplicateProgress' | 'duplicateFinished' | 'duplicateFailed'
   sequence?: number
   state?: string
   filesDiscovered?: number
@@ -135,4 +159,7 @@ export interface ScanEvent {
   elapsedMilliseconds?: number
   currentDirectory?: string
   message?: string
+  groupCount?: number
+  duplicateFiles?: number
+  potentialRedundantBytes?: number
 }

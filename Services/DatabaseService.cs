@@ -933,6 +933,73 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public (long TotalBytes, long TotalItems, List<DirectoryRecord> Folders, List<FileRecord> Files)
+        GetDirectoryContents(string? parentPath, int limit = 150)
+    {
+        if (limit is < 1 or > 150) throw new ArgumentOutOfRangeException(nameof(limit));
+        lock (_lock)
+        {
+            EnsureOpen();
+            using (var count = _connection!.CreateCommand())
+            {
+                count.CommandText = "SELECT COUNT(*) FROM directories;";
+                if (Convert.ToInt64(count.ExecuteScalar()) == 0) BuildDirectoryRollup();
+            }
+
+            string parent = string.IsNullOrWhiteSpace(parentPath) ? string.Empty : NormalizeDirPath(parentPath);
+            long totalBytes;
+            if (parent.Length == 0)
+            {
+                using var total = _connection!.CreateCommand();
+                total.CommandText = "SELECT COALESCE(SUM(total_size), 0) FROM directories WHERE parent = '';";
+                totalBytes = Convert.ToInt64(total.ExecuteScalar());
+            }
+            else
+            {
+                using var total = _connection!.CreateCommand();
+                total.CommandText = "SELECT total_size FROM directories WHERE path = $path;";
+                total.Parameters.AddWithValue("$path", parent);
+                object? value = total.ExecuteScalar();
+                if (value == null) throw new ArgumentException("Directory is not in the current index.", nameof(parentPath));
+                totalBytes = Convert.ToInt64(value);
+            }
+
+            var folders = new List<DirectoryRecord>();
+            using (var command = _connection!.CreateCommand())
+            {
+                command.CommandText = @"SELECT path, name, parent, total_size, total_files, subfolder_count
+                    FROM directories WHERE parent = $parent ORDER BY total_size DESC LIMIT $limit;";
+                command.Parameters.AddWithValue("$parent", parent);
+                command.Parameters.AddWithValue("$limit", limit);
+                using var reader = command.ExecuteReader();
+                while (reader.Read()) folders.Add(new DirectoryRecord
+                {
+                    Path = reader.GetString(0), Name = reader.GetString(1), Parent = reader.GetString(2),
+                    Size = reader.GetInt64(3), FileCount = reader.GetInt64(4), SubfolderCount = reader.GetInt64(5)
+                });
+            }
+
+            var files = new List<FileRecord>();
+            if (parent.Length > 0)
+            {
+                using var command = _connection!.CreateCommand();
+                command.CommandText = @"SELECT id, path, name, parent, size, modified_time, created_time, extension, category, accessible
+                    FROM files WHERE parent = $parent ORDER BY size DESC LIMIT $limit;";
+                command.Parameters.AddWithValue("$parent", parent);
+                command.Parameters.AddWithValue("$limit", limit);
+                using var reader = command.ExecuteReader();
+                while (reader.Read()) files.Add(ReadRecord(reader));
+            }
+
+            using var itemCount = _connection!.CreateCommand();
+            itemCount.CommandText = parent.Length == 0
+                ? "SELECT COUNT(*) FROM directories WHERE parent = $parent;"
+                : "SELECT (SELECT COUNT(*) FROM directories WHERE parent = $parent) + (SELECT COUNT(*) FROM files WHERE parent = $parent);";
+            itemCount.Parameters.AddWithValue("$parent", parent);
+            return (totalBytes, Convert.ToInt64(itemCount.ExecuteScalar()), folders, files);
+        }
+    }
+
     public List<DirectoryRecord> GetLargestFolders(int limit = 100, bool excludeDriveRoots = true)
     {
         lock (_lock)
@@ -1541,6 +1608,10 @@ public class DatabaseService : IDisposable
                     {
                         type = PhotoshopItemType.UserDocument;
                     }
+                    else if (ext == ".abr" || ext == ".asl" || ext == ".atn" || ext == ".pat" || ext == ".grd")
+                    {
+                        type = PhotoshopItemType.PresetOrAsset;
+                    }
                     else if (path.Contains("Temp", StringComparison.OrdinalIgnoreCase) || 
                              path.Contains("Scratch", StringComparison.OrdinalIgnoreCase) || 
                              ext == ".tmp" || ext == ".dmp")
@@ -1553,10 +1624,6 @@ public class DatabaseService : IDisposable
                              path.Contains("Cache", StringComparison.OrdinalIgnoreCase))
                     {
                         type = PhotoshopItemType.AdobeCache;
-                    }
-                    else if (ext == ".abr" || ext == ".asl" || ext == ".atn" || ext == ".pat" || ext == ".grd")
-                    {
-                        type = PhotoshopItemType.PresetOrAsset;
                     }
                     else
                     {
@@ -1591,7 +1658,7 @@ public class DatabaseService : IDisposable
                     SELECT 
                         SUM(CASE WHEN LOWER(extension) = '.psd' THEN 1 ELSE 0 END),
                         SUM(CASE WHEN LOWER(extension) = '.psb' THEN 1 ELSE 0 END),
-                        SUM(CASE WHEN LOWER(extension) NOT IN ('.psd', '.psb') AND (category = 'Photoshop' OR path LIKE '%Adobe%Photoshop%') THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN COALESCE(LOWER(extension), '') NOT IN ('.psd', '.psb') THEN 1 ELSE 0 END),
                         SUM(size),
                         SUM(CASE WHEN LOWER(extension) = '.psd' THEN size ELSE 0 END),
                         SUM(CASE WHEN LOWER(extension) = '.psb' THEN size ELSE 0 END)

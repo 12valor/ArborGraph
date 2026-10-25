@@ -136,6 +136,8 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
 
 ## Core Architecture
 
+An experimental headless engine host now lives in [`engine/`](engine/). It exposes a small JSON-lines process protocol for a future Electron desktop client. The existing WPF application, installer, and release workflow remain the supported distribution. See [the migration notes](docs/architecture/electron-migration.md) for the current contract and limitations.
+
 ```
 +-------------------------------------------------------------------------------+
 |                           WPF Desktop UI (XAML)                               |

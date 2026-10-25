@@ -216,7 +216,8 @@ internal sealed class EngineHost : IDisposable
         {
             var result = await _scanner.ScanDrivesAsync(roots, progress, cancellation.Token, enableIncremental: false);
             Write(new { type = "event", eventName = "scanFinished", sequence = Interlocked.Increment(ref _eventSequence),
-                state = result.State.ToString(), filesIndexed = result.FilesIndexed,
+                state = result.State.ToString(), filesDiscovered = result.FilesDiscovered,
+                filesIndexed = result.FilesIndexed, directoriesProcessed = result.DirectoriesProcessed,
                 directoriesSkipped = result.DirectoriesSkipped, filesSkipped = result.FilesSkipped,
                 indexedLogicalBytes = result.LogicalBytesIndexed, elapsedMilliseconds = (long)result.Elapsed.TotalMilliseconds });
         }

@@ -30,6 +30,7 @@
   <ItemGroup>
     <Compile Remove="tests\**" />
     <Compile Remove="engine\**" />
+    <Compile Remove="desktop\**" />
   </ItemGroup>
 
   <ItemGroup>

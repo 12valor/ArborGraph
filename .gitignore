@@ -5,6 +5,7 @@ obj/
 *.log
 .vs/
 dist/
+node_modules/
 DiskScope.exe
 PrismDrive.exe
 site/downloads/

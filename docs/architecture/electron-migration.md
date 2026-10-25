@@ -2,6 +2,10 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
+The next stage adds `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, and error states. It is limited to Overview and Scanner; there is no installer or release artifact for it.
+
+For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
+
 This host currently references `DiskScope.csproj`, so it still requires the Windows Desktop runtime and is **not yet a WPF-independent core library**. Moving reusable services and models into a separate library is a later stage, after parity tests cover their behavior. The host does not provide cleanup, deletion, update, export, or general file browsing commands yet.
 
 ## Run locally
@@ -9,9 +13,13 @@ This host currently references `DiskScope.csproj`, so it still requires the Wind
 ```powershell
 & "$env:USERPROFILE\.dotnet\dotnet.exe" build engine/ArborGraph.EngineHost.csproj -c Release
 ./scripts/test-engine-host.ps1
+Set-Location desktop
+npm ci
+npm test
+npm start
 ```
 
-For an isolated test database, launch `engine/bin/Release/net8.0-windows/ArborGraph.EngineHost.exe --data-dir <directory>`. Without `--data-dir`, the existing `%LOCALAPPDATA%\ArborGraph` database and settings are used. In that mode, the host acquires WPF's existing single-instance mutex and refuses to start if WPF owns it. Electron main must also own the host process and enforce one active application instance.
+For an isolated test database, launch `engine/bin/Release/net8.0-windows/ArborGraph.EngineHost.exe --data-dir <directory>`, or set `ARBORGRAPH_DEV_DATA_DIR` before `npm start`. Without an override, the existing `%LOCALAPPDATA%\ArborGraph` database and settings are used. In that mode, the host acquires WPF's existing single-instance mutex and refuses to start if WPF owns it. Electron main owns the host process and enforces one active application instance.
 
 ## Protocol version 1
 
@@ -31,6 +39,5 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 ## Next boundaries
 
 - Extract the reusable services and transport DTOs from the WPF project while keeping existing data files and tests compatible.
-- Add Electron main and a narrow preload bridge. Validate every IPC command, block arbitrary navigation and Node access, and allow scan targets only after trusted drive selection or an OS folder picker.
 - Add renderer screens incrementally and compare each workflow with WPF on the same fixtures.
 - Preserve the existing installer and update path until the new package passes clean-install, upgrade, and data-recovery tests.

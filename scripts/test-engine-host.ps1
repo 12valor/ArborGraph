@@ -79,7 +79,9 @@ try {
         if ($message.eventName -eq 'scanFinished') { $finished = $message; break }
         if ($message.eventName -eq 'scanFailed') { throw "Scan failed: $($message.message)" }
     }
-    if ($null -eq $finished -or $finished.state -ne 'Completed' -or $finished.filesIndexed -ne 1200) {
+    if ($null -eq $finished -or $finished.state -ne 'Completed' -or
+        $finished.filesDiscovered -ne 1200 -or $finished.filesIndexed -ne 1200 -or
+        $finished.directoriesProcessed -lt 1) {
         throw 'Scan completion totals did not match the test data.'
     }
 

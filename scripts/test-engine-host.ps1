@@ -124,6 +124,40 @@ try {
     $reply = Expect-Response 'relativeDirectory'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative directory was accepted.' }
 
+    Send-Request @{ id = 'history'; command = 'getScanHistory'; limit = 5 }
+    $reply = Expect-Response 'history'
+    if (-not $reply.ok -or $reply.data.Count -ne 1 -or $reply.data[0].filesIndexed -ne 1200) {
+        throw 'Completed scan history did not match the test scan.'
+    }
+    $firstScanId = $reply.data[0].id
+
+    Send-Request @{ id = 'repeat'; command = 'startScan'; roots = @($scanRoot) }
+    $reply = Expect-Response 'repeat'
+    if (-not $reply.ok) { throw 'Repeat scan was not accepted.' }
+    $repeatFinished = $null
+    for ($attempt = 0; $attempt -lt 10000; $attempt++) {
+        $message = Read-Message
+        if ($message.eventName -eq 'scanFinished') { $repeatFinished = $message; break }
+        if ($message.eventName -eq 'scanFailed') { throw "Repeat scan failed: $($message.message)" }
+    }
+    if ($null -eq $repeatFinished -or $repeatFinished.state -ne 'Completed') { throw 'Repeat scan did not finish.' }
+
+    Send-Request @{ id = 'historyAgain'; command = 'getScanHistory'; limit = 5 }
+    $reply = Expect-Response 'historyAgain'
+    if (-not $reply.ok -or $reply.data.Count -ne 2) { throw 'Repeat scan is missing from history.' }
+    $secondScanId = $reply.data[0].id
+
+    Send-Request @{ id = 'compare'; command = 'compareScans'; olderId = $firstScanId; newerId = $secondScanId }
+    $reply = Expect-Response 'compare'
+    if (-not $reply.ok -or $reply.data.deltaBytes -ne 0 -or $reply.data.deltaFiles -ne 0 -or
+        $reply.data.coverageWarning -or $reply.data.categories.Count -lt 1) {
+        throw 'Identical-target scan comparison is incorrect.'
+    }
+
+    Send-Request @{ id = 'badCompare'; command = 'compareScans'; olderId = $secondScanId; newerId = $firstScanId }
+    $reply = Expect-Response 'badCompare'
+    if ($reply.ok -or $reply.error.code -ne 'NOT_COMPARABLE') { throw 'Reverse-order scan comparison was accepted.' }
+
     Send-Request @{ id = 'secondScan'; command = 'startScan'; roots = @($scanRoot) }
     $reply = Expect-Response 'secondScan'
     if (-not $reply.ok) { throw 'Second scan was not accepted.' }
@@ -153,7 +187,7 @@ try {
     if (-not $reply.ok) { throw 'Shutdown response failed.' }
     $process.StandardInput.Close()
     if (-not $process.WaitForExit(10000) -or $process.ExitCode -ne 0) { throw 'Engine host did not exit cleanly.' }
-    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, event order, duplicate scan rejection, cancellation, shutdown.'
+    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, history comparison, event order, duplicate scan rejection, cancellation, shutdown.'
 }
 finally {
     if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit() }

@@ -145,6 +145,12 @@ internal sealed class EngineHost : IDisposable
                     case "getDirectoryContents":
                         GetDirectoryContents(id, root);
                         break;
+                    case "getScanHistory":
+                        GetScanHistory(id, root);
+                        break;
+                    case "compareScans":
+                        CompareScans(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -245,6 +251,62 @@ internal sealed class EngineHost : IDisposable
             isDirectory = false, fileCount = 1L, category = file.Category
         })).OrderByDescending(item => item.logicalBytes).Take(limit).ToList();
         Respond(id, new { path, logicalBytes = contents.TotalBytes, totalItems = contents.TotalItems, items });
+    }
+
+    private static long ReadPositiveLong(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Number ||
+            !value.TryGetInt64(out long result) || result < 1)
+            throw new ArgumentException($"{name} must be a positive scan ID.");
+        return result;
+    }
+
+    private void GetScanHistory(string id, JsonElement root)
+    {
+        int limit = ReadInt(root, "limit", 30, 1, 100);
+        Respond(id, _database.GetScanHistory(limit).OrderByDescending(item => item.Id).Select(item => new
+        {
+            id = item.Id, startedAt = new DateTimeOffset(item.StartTime, TimeSpan.Zero).ToUnixTimeMilliseconds(),
+            finishedAt = new DateTimeOffset(item.FinishTime, TimeSpan.Zero).ToUnixTimeMilliseconds(),
+            roots = item.Roots, state = item.ScanStatus,
+            filesDiscovered = item.FilesDiscovered, filesIndexed = item.FilesIndexed,
+            filesSkipped = item.FilesSkipped, directoriesProcessed = item.DirectoriesProcessed,
+            directoriesSkipped = item.DirectoriesSkipped, indexedLogicalBytes = item.LogicalBytesIndexed
+        }).ToList());
+    }
+
+    private void CompareScans(string id, JsonElement root)
+    {
+        long olderId = ReadPositiveLong(root, "olderId");
+        long newerId = ReadPositiveLong(root, "newerId");
+        var history = _database.GetScanHistory(100);
+        var older = history.FirstOrDefault(item => item.Id == olderId);
+        var newer = history.FirstOrDefault(item => item.Id == newerId);
+        if (older == null || newer == null || older.Id >= newer.Id || older.ScanStatus != "Completed" ||
+            newer.ScanStatus != "Completed" || !string.Equals(older.Roots, newer.Roots, StringComparison.OrdinalIgnoreCase))
+        {
+            RespondError(id, "NOT_COMPARABLE", "Choose two completed scans with the same targets, oldest first.");
+            return;
+        }
+        var before = _database.GetScanCategories(older.Id);
+        var after = _database.GetScanCategories(newer.Id);
+        var categories = before.Keys.Union(after.Keys, StringComparer.OrdinalIgnoreCase).Select(category =>
+        {
+            before.TryGetValue(category, out var oldValue);
+            after.TryGetValue(category, out var newValue);
+            return new { category, previousBytes = oldValue.Size, currentBytes = newValue.Size,
+                deltaBytes = newValue.Size - oldValue.Size, previousFiles = oldValue.Count,
+                currentFiles = newValue.Count, deltaFiles = newValue.Count - oldValue.Count };
+        }).OrderByDescending(item => Math.Abs(item.deltaBytes)).ToList();
+        bool coverageWarning = older.FilesSkipped != newer.FilesSkipped ||
+            older.DirectoriesSkipped != newer.DirectoriesSkipped || older.FilesSkipped > 0 || newer.FilesSkipped > 0 ||
+            older.DirectoriesSkipped > 0 || newer.DirectoriesSkipped > 0;
+        Respond(id, new { olderId, newerId, roots = newer.Roots, coverageWarning,
+            previousBytes = older.LogicalBytesIndexed, currentBytes = newer.LogicalBytesIndexed,
+            deltaBytes = newer.LogicalBytesIndexed - older.LogicalBytesIndexed,
+            previousFiles = older.FilesIndexed, currentFiles = newer.FilesIndexed,
+            deltaFiles = newer.FilesIndexed - older.FilesIndexed,
+            categories });
     }
 
     private void StartScan(string id, JsonElement request)

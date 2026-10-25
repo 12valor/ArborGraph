@@ -33,6 +33,8 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `getFiles` | Bounded page, search, category, extension, location, and sort | File count and up to 200 indexed file records |
 | `getLargestFolders` | Limit up to 100 | Largest rolled-up folder sizes and file counts |
 | `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
+| `getScanHistory` | Limit up to 100 | Stored scan metadata in newest-first order |
+| `compareScans` | Two completed scan IDs, oldest first | Indexed byte, file, and category deltas for identical targets |
 | `startScan` | `roots`: 1–16 existing, distinct directories | Acceptance response, then `scanProgress` and `scanFinished` or `scanFailed` events |
 | `cancelScan` | None | Cancellation acknowledgment, or `NO_ACTIVE_SCAN` |
 | `shutdown` | None | Acknowledgment; cancels an active scan and exits |
@@ -42,6 +44,8 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 Directory children use the scanner's `directories` rollup table for folder sizes and direct `files` rows for file sizes. Each level reports the full logical byte total even when the item list is capped. The queries only read the current index; they do not enumerate arbitrary paths on disk.
 
 The treemap shows immediate children only and groups unshown nonzero bytes into a remainder tile. The Analytics folder ranking can include overlapping parent and child totals; identical-size ancestors are hidden to reduce repetition. These totals must not be added together. Empty folders with no indexed files have no area in the treemap.
+
+Scan comparisons require the exact same stored target string and two completed scans. They report differences in indexed totals, not verified file additions or removals. A coverage warning appears when either scan skipped files or directories, or skipped counts changed. Per-directory historical deltas are unavailable in the current schema.
 
 ## Next boundaries
 

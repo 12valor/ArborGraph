@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session } from 'electron'
 import path from 'node:path'
 import { EngineClient, findEngineExecutable } from './engine-client'
-import { validateScanRoots } from './validation'
+import { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateScanRoots } from './validation'
 import type { Drive, ScanEvent } from './contracts'
 
 let window: BrowserWindow | null = null
@@ -30,6 +30,18 @@ function registerIpc(): void {
   ipcMain.handle('arbor:get-overview', (event) => {
     requireWindowSender(event.sender.id)
     return engineRequest('getOverview')
+  })
+  ipcMain.handle('arbor:get-files', (event, query: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getFiles', { ...validateFileQuery(query) })
+  })
+  ipcMain.handle('arbor:get-largest-folders', (event, limit: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getLargestFolders', { limit: validateFolderLimit(limit) })
+  })
+  ipcMain.handle('arbor:get-directory-contents', (event, query: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getDirectoryContents', validateDirectoryQuery(query))
   })
   ipcMain.handle('arbor:choose-folder', async (event) => {
     requireWindowSender(event.sender.id)

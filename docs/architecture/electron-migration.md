@@ -2,7 +2,7 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
-The next stage adds `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, and error states. It is limited to Overview and Scanner; there is no installer or release artifact for it.
+The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, and logical-size rankings. It has Overview, Scanner, Files, Treemap, and Analytics screens; there is no installer or release artifact for it.
 
 For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
 
@@ -40,6 +40,8 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 `startScan` uses a full scan. A second active scan returns `SCAN_IN_PROGRESS`. Invalid or oversized messages and unknown commands receive errors. The scan event reports logical indexed bytes, discovered/indexed counts, skipped counts, elapsed time, and state. It does not imply physical disk allocation or complete filesystem coverage.
 
 Directory children use the scanner's `directories` rollup table for folder sizes and direct `files` rows for file sizes. Each level reports the full logical byte total even when the item list is capped. The queries only read the current index; they do not enumerate arbitrary paths on disk.
+
+The treemap shows immediate children only and groups unshown nonzero bytes into a remainder tile. The Analytics folder ranking can include overlapping parent and child totals; identical-size ancestors are hidden to reduce repetition. These totals must not be added together. Empty folders with no indexed files have no area in the treemap.
 
 ## Next boundaries
 

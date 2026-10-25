@@ -1,6 +1,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { validateScanRoots } = require('../dist/main/validation.js')
+const { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateScanRoots } = require('../dist/main/validation.js')
 
 test('scan targets must come from a trusted picker or drive list', () => {
   const allowed = new Set(['c:\\', 'c:\\chosen'])
@@ -11,4 +11,17 @@ test('scan targets must come from a trusted picker or drive list', () => {
   assert.throws(() => validateScanRoots([], allowed))
   assert.throws(() => validateScanRoots(Array(17).fill('C:\\chosen'), allowed))
   assert.throws(() => validateScanRoots([42], allowed))
+})
+
+test('indexed queries accept bounded filters and indexed directory paths', () => {
+  assert.deepEqual(validateFileQuery({ limit: 25, search: 'project', sortBy: 'name' }).limit, 25)
+  assert.throws(() => validateFileQuery({ limit: 201 }))
+  assert.throws(() => validateFileQuery({ search: 'x'.repeat(201) }))
+  assert.throws(() => validateFileQuery({ sortBy: 'DROP TABLE files' }))
+  assert.throws(() => validateFileQuery({ extra: true }))
+  assert.deepEqual(validateDirectoryQuery({ path: 'C:\\indexed', limit: 100 }), { path: 'C:\\indexed', limit: 100 })
+  assert.throws(() => validateDirectoryQuery({ path: '..\\private' }))
+  assert.throws(() => validateDirectoryQuery({ path: 'C:\\indexed', limit: 151 }))
+  assert.equal(validateFolderLimit(20), 20)
+  assert.throws(() => validateFolderLimit(101))
 })

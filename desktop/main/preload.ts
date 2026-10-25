@@ -1,9 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Drive, Overview, ScanEvent } from './contracts'
+import type { DirectoryContents, Drive, FilePage, FileQuery, IndexedFolder, Overview, ScanEvent } from './contracts'
 
 const api = {
   listDrives: (): Promise<Drive[]> => ipcRenderer.invoke('arbor:list-drives'),
   getOverview: (): Promise<Overview> => ipcRenderer.invoke('arbor:get-overview'),
+  getFiles: (query: FileQuery): Promise<FilePage> => ipcRenderer.invoke('arbor:get-files', query),
+  getLargestFolders: (limit: number): Promise<IndexedFolder[]> => ipcRenderer.invoke('arbor:get-largest-folders', limit),
+  getDirectoryContents: (path: string | null, limit = 100): Promise<DirectoryContents> => ipcRenderer.invoke('arbor:get-directory-contents', { path, limit }),
   chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('arbor:choose-folder'),
   startScan: (roots: string[]): Promise<{ accepted: boolean; roots: string[] }> => ipcRenderer.invoke('arbor:start-scan', roots),
   cancelScan: (): Promise<{ cancelling: boolean }> => ipcRenderer.invoke('arbor:cancel-scan'),

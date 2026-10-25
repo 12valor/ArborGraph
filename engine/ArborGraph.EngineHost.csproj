@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\DiskScope.csproj" />
+    <EmbeddedResource Include="..\LICENSE.md" LogicalName="ArborGraph.EngineHost.LICENSE.md" />
   </ItemGroup>
 </Project>

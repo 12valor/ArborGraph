@@ -1,7 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from './contracts'
+import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from './contracts'
 
 const api = {
+  getLegal: (): Promise<LegalStatus> => ipcRenderer.invoke('arbor:get-legal'),
+  acceptEula: (accepted: boolean): Promise<{ accepted: boolean; version: string }> => ipcRenderer.invoke('arbor:accept-eula', accepted),
+  declineEula: (): Promise<void> => ipcRenderer.invoke('arbor:decline-eula'),
   listDrives: (): Promise<Drive[]> => ipcRenderer.invoke('arbor:list-drives'),
   getOverview: (): Promise<Overview> => ipcRenderer.invoke('arbor:get-overview'),
   getFiles: (query: FileQuery): Promise<FilePage> => ipcRenderer.invoke('arbor:get-files', query),

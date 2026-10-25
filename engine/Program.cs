@@ -64,6 +64,7 @@ internal sealed class EngineHost : IDisposable
     private readonly object _writeLock = new();
     private readonly DatabaseService _database;
     private readonly ScannerService _scanner;
+    private readonly SettingsService _settings;
     private readonly DiskService _disks = new();
     private CancellationTokenSource? _scanCancellation;
     private Task? _scanTask;
@@ -82,7 +83,8 @@ internal sealed class EngineHost : IDisposable
         string? settingsPath = dataDir == null ? null : Path.Combine(dataDir, "settings.json");
         _database = new DatabaseService(databasePath);
         _database.Initialize();
-        _scanner = new ScannerService(_database, settingsService: new SettingsService(settingsPath));
+        _settings = new SettingsService(settingsPath);
+        _scanner = new ScannerService(_database, settingsService: _settings);
     }
 
     public async Task RunAsync()
@@ -118,10 +120,40 @@ internal sealed class EngineHost : IDisposable
                     continue;
                 }
 
+                if (!_settings.CurrentSettings.HasAcceptedEula &&
+                    command is not ("ping" or "getLegal" or "acceptEula" or "shutdown"))
+                {
+                    RespondError(id, "EULA_REQUIRED", "Accept the license agreement before using ArborGraph.");
+                    continue;
+                }
+
                 switch (command)
                 {
                     case "ping":
                         Respond(id, new { protocolVersion = 1, engine = "ArborGraph" });
+                        break;
+                    case "getLegal":
+                        using (var stream = typeof(EngineHost).Assembly.GetManifestResourceStream("ArborGraph.EngineHost.LICENSE.md")
+                            ?? throw new InvalidOperationException("License text is missing."))
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var settings = _settings.CurrentSettings;
+                            Respond(id, new { text = reader.ReadToEnd(), version = "1.0",
+                                accepted = settings.HasAcceptedEula,
+                                acceptedAt = settings.EulaAcceptedDate });
+                        }
+                        break;
+                    case "acceptEula":
+                        if (!root.TryGetProperty("accepted", out var consent) || consent.ValueKind != JsonValueKind.True)
+                            throw new ArgumentException("accepted must be true.");
+                        var current = _settings.CurrentSettings;
+                        current.HasAcceptedEula = true;
+                        current.EulaAcceptedVersion = "1.0";
+                        current.EulaAcceptedDate = DateTime.UtcNow;
+                        _settings.SaveSettings(current);
+                        if (!_settings.LoadSettings().HasAcceptedEula)
+                            throw new IOException("License acceptance could not be saved.");
+                        Respond(id, new { accepted = true, version = "1.0" });
                         break;
                     case "listDrives":
                         Respond(id, _disks.GetSystemDrives().Select(d => new

@@ -60,6 +60,27 @@ try {
     $reply = Expect-Response 'ping'
     if (-not $reply.ok -or $reply.data.protocolVersion -ne 1) { throw 'Ping contract failed.' }
 
+    Send-Request @{ id = 'legal'; command = 'getLegal' }
+    $reply = Expect-Response 'legal'
+    if (-not $reply.ok -or $reply.data.accepted -or $reply.data.version -ne '1.0' -or
+        $reply.data.text -notlike '*License Grant*') { throw 'Embedded first-run EULA is unavailable.' }
+
+    Send-Request @{ id = 'beforeConsent'; command = 'getOverview' }
+    $reply = Expect-Response 'beforeConsent'
+    if ($reply.ok -or $reply.error.code -ne 'EULA_REQUIRED') { throw 'Analysis was available before EULA acceptance.' }
+
+    Send-Request @{ id = 'invalidConsent'; command = 'acceptEula'; accepted = $false }
+    $reply = Expect-Response 'invalidConsent'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'False EULA consent was accepted.' }
+
+    Send-Request @{ id = 'accept'; command = 'acceptEula'; accepted = $true }
+    $reply = Expect-Response 'accept'
+    if (-not $reply.ok -or -not $reply.data.accepted) { throw 'First-run EULA acceptance failed.' }
+    $savedSettings = Get-Content -LiteralPath (Join-Path $dataRoot 'settings.json') -Raw | ConvertFrom-Json
+    if (-not $savedSettings.HasAcceptedEula -or $savedSettings.EulaAcceptedVersion -ne '1.0') {
+        throw 'EULA consent was not persisted in the existing settings format.'
+    }
+
     Send-Request @{ id = 'bad'; command = 'runAnything' }
     $reply = Expect-Response 'bad'
     if ($reply.ok -or $reply.error.code -ne 'UNKNOWN_COMMAND') { throw 'Command allowlist failed.' }

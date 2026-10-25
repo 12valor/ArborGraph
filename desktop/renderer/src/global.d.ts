@@ -1,6 +1,9 @@
-import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from '../../main/contracts'
+import type { DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem } from '../../main/contracts'
 
 interface ArborApi {
+  getLegal(): Promise<LegalStatus>
+  acceptEula(accepted: boolean): Promise<{ accepted: boolean; version: string }>
+  declineEula(): Promise<void>
   listDrives(): Promise<Drive[]>
   getOverview(): Promise<Overview>
   getFiles(query: FileQuery): Promise<FilePage>

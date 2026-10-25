@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Drive, Overview, ScanEvent } from '../../main/contracts'
+import type { Drive, LegalStatus, Overview, ScanEvent } from '../../main/contracts'
 import { bytes, duration } from './format'
 import { FilesPage } from './FilesPage'
 import { TreemapPage } from './TreemapPage'
@@ -7,11 +7,24 @@ import { AnalyticsPage } from './AnalyticsPage'
 import { HistoryPage } from './HistoryPage'
 import { FileTypesPage, OldFilesPage, PhotoshopPage } from './InsightsPages'
 import { DuplicatesPage } from './DuplicatesPage'
+import { LegalGate } from './LegalGate'
 
 type Page = 'overview' | 'scanner' | 'files' | 'treemap' | 'analytics' | 'history' | 'types' | 'old' | 'photoshop' | 'duplicates'
 type ScanStatus = 'Ready' | 'Scanning' | 'Stopping' | 'Completed' | 'Cancelled' | 'Failed'
 
 function App() {
+  const [legal, setLegal] = useState<LegalStatus | null>(null)
+  const [startupError, setStartupError] = useState<string | null>(null)
+  useEffect(() => {
+    void window.arbor.getLegal().then(setLegal).catch((cause) => setStartupError(String(cause)))
+  }, [])
+  if (startupError) return <main className="legal-shell"><div className="legal-card" role="alert">{startupError}</div></main>
+  if (!legal) return <main className="legal-shell" role="status">Loading ArborGraph…</main>
+  if (!legal.accepted) return <LegalGate legal={legal} onAccepted={() => setLegal({ ...legal, accepted: true })} />
+  return <Workspace />
+}
+
+function Workspace() {
   const [page, setPage] = useState<Page>('overview')
   const [drives, setDrives] = useState<Drive[]>([])
   const [overview, setOverview] = useState<Overview | null>(null)

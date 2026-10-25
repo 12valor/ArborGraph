@@ -19,6 +19,13 @@ export interface Overview {
   categories: Category[]
 }
 
+export interface LegalStatus {
+  text: string
+  version: string
+  accepted: boolean
+  acceptedAt: string | null
+}
+
 export interface FileQuery {
   offset?: number
   limit?: number

@@ -21,6 +21,19 @@ function engineRequest(command: string, args: Record<string, unknown> = {}, time
 }
 
 function registerIpc(): void {
+  ipcMain.handle('arbor:get-legal', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getLegal')
+  })
+  ipcMain.handle('arbor:accept-eula', (event, accepted: unknown) => {
+    requireWindowSender(event.sender.id)
+    if (accepted !== true) throw new Error('Check the license agreement before continuing.')
+    return engineRequest('acceptEula', { accepted: true })
+  })
+  ipcMain.handle('arbor:decline-eula', (event) => {
+    requireWindowSender(event.sender.id)
+    app.quit()
+  })
   ipcMain.handle('arbor:list-drives', async (event) => {
     requireWindowSender(event.sender.id)
     const result = await engineRequest('listDrives') as Drive[]

@@ -1,6 +1,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateScanRoots } = require('../dist/main/validation.js')
+const { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } = require('../dist/main/validation.js')
 
 test('scan targets must come from a trusted picker or drive list', () => {
   const allowed = new Set(['c:\\', 'c:\\chosen'])
@@ -11,6 +11,15 @@ test('scan targets must come from a trusted picker or drive list', () => {
   assert.throws(() => validateScanRoots([], allowed))
   assert.throws(() => validateScanRoots(Array(17).fill('C:\\chosen'), allowed))
   assert.throws(() => validateScanRoots([42], allowed))
+})
+
+test('scan history comparisons require ordered positive IDs', () => {
+  assert.deepEqual(validateScanIds(1, 2), { olderId: 1, newerId: 2 })
+  assert.throws(() => validateScanIds(2, 1))
+  assert.throws(() => validateScanIds(1, 1))
+  assert.throws(() => validateScanIds(-1, 2))
+  assert.equal(validateHistoryLimit(30), 30)
+  assert.throws(() => validateHistoryLimit(101))
 })
 
 test('indexed queries accept bounded filters and indexed directory paths', () => {

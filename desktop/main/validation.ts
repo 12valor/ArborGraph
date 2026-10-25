@@ -47,6 +47,19 @@ export function validateFolderLimit(value: unknown): number {
   return value as number
 }
 
+export function validateHistoryLimit(value: unknown): number {
+  if (!Number.isInteger(value) || (value as number) < 1 || (value as number) > 100) throw new Error('Invalid history limit.')
+  return value as number
+}
+
+export function validateScanIds(olderId: unknown, newerId: unknown): { olderId: number; newerId: number } {
+  if (!Number.isSafeInteger(olderId) || !Number.isSafeInteger(newerId) ||
+      (olderId as number) < 1 || (newerId as number) < 1 || (olderId as number) >= (newerId as number)) {
+    throw new Error('Choose two scan IDs in chronological order.')
+  }
+  return { olderId: olderId as number, newerId: newerId as number }
+}
+
 export function validateScanRoots(value: unknown, allowedRoots: ReadonlySet<string>): string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 16) {
     throw new Error('Select between 1 and 16 scan targets.')

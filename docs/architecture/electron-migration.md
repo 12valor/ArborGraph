@@ -2,7 +2,7 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
-The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, and logical-size rankings. It has Overview, Scanner, Files, Treemap, and Analytics screens; there is no installer or release artifact for it.
+The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, logical-size rankings, and stored scan comparisons. It has Overview, Scanner, Files, Treemap, Analytics, and Scan History screens; there is no installer or release artifact for it.
 
 For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
 

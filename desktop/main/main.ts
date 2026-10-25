@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session } from 'electron'
 import path from 'node:path'
 import { EngineClient, findEngineExecutable } from './engine-client'
-import { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateScanRoots } from './validation'
+import { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
 import type { Drive, ScanEvent } from './contracts'
 
 let window: BrowserWindow | null = null
@@ -42,6 +42,14 @@ function registerIpc(): void {
   ipcMain.handle('arbor:get-directory-contents', (event, query: unknown) => {
     requireWindowSender(event.sender.id)
     return engineRequest('getDirectoryContents', validateDirectoryQuery(query))
+  })
+  ipcMain.handle('arbor:get-scan-history', (event, limit: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getScanHistory', { limit: validateHistoryLimit(limit) })
+  })
+  ipcMain.handle('arbor:compare-scans', (event, olderId: unknown, newerId: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('compareScans', { ...validateScanIds(olderId, newerId) })
   })
   ipcMain.handle('arbor:choose-folder', async (event) => {
     requireWindowSender(event.sender.id)

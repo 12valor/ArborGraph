@@ -73,6 +73,44 @@ export interface DirectoryContents {
   items: DirectoryItem[]
 }
 
+export interface ScanHistoryItem {
+  id: number
+  startedAt: number
+  finishedAt: number
+  roots: string
+  state: string
+  filesDiscovered: number
+  filesIndexed: number
+  filesSkipped: number
+  directoriesProcessed: number
+  directoriesSkipped: number
+  indexedLogicalBytes: number
+}
+
+export interface CategoryComparison {
+  category: string
+  previousBytes: number
+  currentBytes: number
+  deltaBytes: number
+  previousFiles: number
+  currentFiles: number
+  deltaFiles: number
+}
+
+export interface ScanComparison {
+  olderId: number
+  newerId: number
+  roots: string
+  coverageWarning: boolean
+  previousBytes: number
+  currentBytes: number
+  deltaBytes: number
+  previousFiles: number
+  currentFiles: number
+  deltaFiles: number
+  categories: CategoryComparison[]
+}
+
 export interface ScanEvent {
   eventName: 'scanProgress' | 'scanFinished' | 'scanFailed' | 'engineExited'
   sequence?: number

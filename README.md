@@ -138,7 +138,7 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
 
 An experimental headless engine host now lives in [`engine/`](engine/). It exposes a small JSON-lines process protocol for a future Electron desktop client. The existing WPF application, installer, and release workflow remain the supported distribution. See [the migration notes](docs/architecture/electron-migration.md) for the current contract and limitations.
 
-The experimental Electron/React shell lives in [`desktop/`](desktop/). It currently implements Overview, Scanner, Files, Treemap, and Analytics using real engine data; the other WPF features have not been migrated. Build the engine host in Release, then run `npm ci`, `npm run build`, and `npm start` from `desktop/` to inspect it. Close WPF first because both versions use the same local SQLite index. This preview is not a distributable replacement.
+The experimental Electron/React shell lives in [`desktop/`](desktop/). It currently implements Overview, Scanner, Files, Treemap, Analytics, and Scan History using real engine data; the other WPF features have not been migrated. Build the engine host in Release, then run `npm ci`, `npm run build`, and `npm start` from `desktop/` to inspect it. Close WPF first because both versions use the same local SQLite index. This preview is not a distributable replacement.
 
 ```
 +-------------------------------------------------------------------------------+

@@ -1,9 +1,9 @@
 [CmdletBinding()]
-param()
+param([string]$EngineExecutable)
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$exe = Join-Path $repo 'engine\bin\Release\net8.0-windows\ArborGraph.EngineHost.exe'
+$exe = if ($EngineExecutable) { [IO.Path]::GetFullPath($EngineExecutable) } else { Join-Path $repo 'engine\bin\Release\net8.0-windows\ArborGraph.EngineHost.exe' }
 if (-not (Test-Path -LiteralPath $exe)) { throw "Build the Release engine host first: $exe" }
 
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("ArborGraph_EngineHost_" + [guid]::NewGuid().ToString('N'))

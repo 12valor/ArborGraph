@@ -19,6 +19,12 @@ npm test
 npm start
 ```
 
+## Stage a portable preview
+
+After `npm ci` in `desktop/`, run `./scripts/build-desktop-preview.ps1` from the repository root. It copies the pinned Electron runtime, built renderer/main files, the self-contained win-x64 engine host, icon, EULA, and third-party notices into ignored `dist/desktop-preview/`. Run the script with `-BuildInstaller` to compile `installer/desktop-preview.iss` when Inno Setup 6 is installed. This preview uses a distinct installer AppId and install folder so the supported WPF application remains installed. No release workflow publishes the preview.
+
+The staged self-contained engine passed `./scripts/test-engine-host.ps1 -EngineExecutable ./dist/desktop-preview/resources/engine/ArborGraph.EngineHost.exe` against an isolated fixture. The Electron window and Inno installer have not yet passed a clean-install, upgrade, or uninstall test. The local machine does not currently have the Inno compiler, so no preview installer was built.
+
 For an isolated test database, launch `engine/bin/Release/net8.0-windows/ArborGraph.EngineHost.exe --data-dir <directory>`, or set `ARBORGRAPH_DEV_DATA_DIR` before `npm start`. Without an override, the existing `%LOCALAPPDATA%\ArborGraph` database and settings are used. In that mode, the host acquires WPF's existing single-instance mutex and refuses to start if WPF owns it. Electron main owns the host process and enforces one active application instance.
 
 ## Protocol version 1

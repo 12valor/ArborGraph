@@ -165,7 +165,9 @@ async function createWindow(): Promise<void> {
     show: false,
     backgroundColor: '#f6f7f9',
     title: 'ArborGraph',
-    icon: path.resolve(app.getAppPath(), '..', 'Resources', 'ArborGraph.ico'),
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, 'ArborGraph.ico')
+      : path.resolve(app.getAppPath(), '..', 'Resources', 'ArborGraph.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

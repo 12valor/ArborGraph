@@ -56,7 +56,7 @@ def main():
     master_svg = get_svg_content(stroke_weight=3.5, apex_r=7.5, term_r=5.5, edge_dash=True, is_dark=False)
     
     svg_paths = [
-        root_dir / "arborgraph-logo.svg",
+        root_dir / "Resources" / "brand" / "arborgraph-logo.svg",
         root_dir / "site" / "assets" / "logo.svg",
         root_dir / "Resources" / "ArborGraph.svg"
     ]
@@ -70,7 +70,7 @@ def main():
     # 2. Render high-res PNG (1024x1024 and 512x512)
     png_bytes_1024 = resvg_py.svg_to_bytes(master_svg, width=1024, height=1024)
     png_paths = [
-        root_dir / "arborgraph-logo.png",
+        root_dir / "Resources" / "brand" / "arborgraph-logo.png",
         root_dir / "site" / "assets" / "logo.png"
     ]
     for p in png_paths:
@@ -123,7 +123,7 @@ def main():
 
     # 4. Save multi-resolution Windows ICO
     ico_paths = [
-        root_dir / "arborgraph.ico",
+        root_dir / "Resources" / "brand" / "arborgraph.ico",
         root_dir / "Resources" / "ArborGraph.ico",
         root_dir / "site" / "favicon.ico"
     ]

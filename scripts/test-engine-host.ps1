@@ -9,10 +9,13 @@ if (-not (Test-Path -LiteralPath $exe)) { throw "Build the Release engine host f
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("ArborGraph_EngineHost_" + [guid]::NewGuid().ToString('N'))
 $scanRoot = Join-Path $testRoot 'target'
 $dataRoot = Join-Path $testRoot 'data'
+$nestedRoot = Join-Path $scanRoot 'nested'
 [IO.Directory]::CreateDirectory($scanRoot) | Out-Null
 [IO.Directory]::CreateDirectory($dataRoot) | Out-Null
+[IO.Directory]::CreateDirectory($nestedRoot) | Out-Null
 for ($i = 0; $i -lt 1200; $i++) {
-    [IO.File]::WriteAllText((Join-Path $scanRoot "file_$i.txt"), "ArborGraph engine test $i")
+    $parent = if ($i -lt 20) { $nestedRoot } else { $scanRoot }
+    [IO.File]::WriteAllText((Join-Path $parent "file_$i.txt"), "ArborGraph engine test $i")
 }
 
 $start = [Diagnostics.ProcessStartInfo]::new()
@@ -89,6 +92,38 @@ try {
     $reply = Expect-Response 'overview'
     if (-not $reply.ok -or $reply.data.indexedFiles -ne 1200) { throw 'Overview index count is incorrect.' }
 
+    Send-Request @{ id = 'files'; command = 'getFiles'; limit = 25; search = 'file_'; sortBy = 'size' }
+    $reply = Expect-Response 'files'
+    if (-not $reply.ok -or $reply.data.total -ne 1200 -or $reply.data.files.Count -ne 25) {
+        throw 'Paged file query did not match the index.'
+    }
+
+    Send-Request @{ id = 'folders'; command = 'getLargestFolders'; limit = 5 }
+    $reply = Expect-Response 'folders'
+    if (-not $reply.ok -or $reply.data.Count -lt 1) { throw 'Largest folder query returned no index data.' }
+
+    Send-Request @{ id = 'directory'; command = 'getDirectoryContents'; path = $scanRoot; limit = 100 }
+    $reply = Expect-Response 'directory'
+    if (-not $reply.ok -or $reply.data.totalItems -ne 1181 -or $reply.data.items.Count -ne 100 -or
+        $reply.data.logicalBytes -ne $finished.indexedLogicalBytes) {
+        throw 'Directory contents did not preserve the indexed size and item count.'
+    }
+
+    Send-Request @{ id = 'nestedDirectory'; command = 'getDirectoryContents'; path = $nestedRoot }
+    $reply = Expect-Response 'nestedDirectory'
+    if (-not $reply.ok -or $reply.data.totalItems -ne 20 -or $reply.data.items.Count -ne 20 -or
+        $reply.data.logicalBytes -ne ($reply.data.items | Measure-Object -Property logicalBytes -Sum).Sum) {
+        throw 'Nested directory rollup does not match its direct files.'
+    }
+
+    Send-Request @{ id = 'badSort'; command = 'getFiles'; sortBy = 'arbitrary_sql' }
+    $reply = Expect-Response 'badSort'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Invalid file sort was accepted.' }
+
+    Send-Request @{ id = 'relativeDirectory'; command = 'getDirectoryContents'; path = 'relative' }
+    $reply = Expect-Response 'relativeDirectory'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative directory was accepted.' }
+
     Send-Request @{ id = 'secondScan'; command = 'startScan'; roots = @($scanRoot) }
     $reply = Expect-Response 'secondScan'
     if (-not $reply.ok) { throw 'Second scan was not accepted.' }
@@ -118,7 +153,7 @@ try {
     if (-not $reply.ok) { throw 'Shutdown response failed.' }
     $process.StandardInput.Close()
     if (-not $process.WaitForExit(10000) -or $process.ExitCode -ne 0) { throw 'Engine host did not exit cleanly.' }
-    Write-Output 'Engine host process test passed: validation, scan totals, event order, duplicate scan rejection, cancellation, shutdown.'
+    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, event order, duplicate scan rejection, cancellation, shutdown.'
 }
 finally {
     if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit() }

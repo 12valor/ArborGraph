@@ -30,11 +30,16 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `ping` | None | Engine name and protocol version |
 | `listDrives` | None | Available drive geometry |
 | `getOverview` | None | Current indexed file count, logical bytes, and categories |
+| `getFiles` | Bounded page, search, category, extension, location, and sort | File count and up to 200 indexed file records |
+| `getLargestFolders` | Limit up to 100 | Largest rolled-up folder sizes and file counts |
+| `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
 | `startScan` | `roots`: 1–16 existing, distinct directories | Acceptance response, then `scanProgress` and `scanFinished` or `scanFailed` events |
 | `cancelScan` | None | Cancellation acknowledgment, or `NO_ACTIVE_SCAN` |
 | `shutdown` | None | Acknowledgment; cancels an active scan and exits |
 
 `startScan` uses a full scan. A second active scan returns `SCAN_IN_PROGRESS`. Invalid or oversized messages and unknown commands receive errors. The scan event reports logical indexed bytes, discovered/indexed counts, skipped counts, elapsed time, and state. It does not imply physical disk allocation or complete filesystem coverage.
+
+Directory children use the scanner's `directories` rollup table for folder sizes and direct `files` rows for file sizes. Each level reports the full logical byte total even when the item list is capped. The queries only read the current index; they do not enumerate arbitrary paths on disk.
 
 ## Next boundaries
 

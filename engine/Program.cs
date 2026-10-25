@@ -130,6 +130,21 @@ internal sealed class EngineHost : IDisposable
                             categories = _database.GetCategoryBreakdown().Select(x => new
                             { category = x.Key, fileCount = x.Value.Count, logicalBytes = x.Value.TotalSize }).ToList() });
                         break;
+                    case "getFiles":
+                        GetFiles(id, root);
+                        break;
+                    case "getLargestFolders":
+                        int folderLimit = ReadInt(root, "limit", 30, 1, 100);
+                        Respond(id, _database.GetLargestFolders(folderLimit).Select(folder => new
+                        {
+                            path = folder.Path, name = folder.Name, parent = folder.Parent,
+                            logicalBytes = folder.Size, fileCount = folder.FileCount,
+                            subfolderCount = folder.SubfolderCount
+                        }).ToList());
+                        break;
+                    case "getDirectoryContents":
+                        GetDirectoryContents(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -150,6 +165,10 @@ internal sealed class EngineHost : IDisposable
             {
                 RespondError(id, "INVALID_JSON", "Request is not valid JSON.");
             }
+            catch (ArgumentException ex)
+            {
+                RespondError(id, "INVALID_ARGUMENT", ex.Message);
+            }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex);
@@ -158,6 +177,74 @@ internal sealed class EngineHost : IDisposable
         }
 
         await StopScanAsync();
+    }
+
+    private static int ReadInt(JsonElement root, string name, int fallback, int min, int max)
+    {
+        if (!root.TryGetProperty(name, out var value)) return fallback;
+        if (value.ValueKind != JsonValueKind.Number || !value.TryGetInt32(out int result) || result < min || result > max)
+            throw new ArgumentException($"{name} must be between {min} and {max}.");
+        return result;
+    }
+
+    private static string? ReadText(JsonElement root, string name, int maxLength)
+    {
+        if (!root.TryGetProperty(name, out var value) || value.ValueKind == JsonValueKind.Null) return null;
+        if (value.ValueKind != JsonValueKind.String || value.GetString() is not { } text || text.Length > maxLength)
+            throw new ArgumentException($"{name} must be a string of at most {maxLength} characters.");
+        return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static bool ReadBool(JsonElement root, string name, bool fallback)
+    {
+        if (!root.TryGetProperty(name, out var value)) return fallback;
+        if (value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new ArgumentException($"{name} must be a boolean.");
+        return value.GetBoolean();
+    }
+
+    private void GetFiles(string id, JsonElement root)
+    {
+        int offset = ReadInt(root, "offset", 0, 0, 10_000_000);
+        int limit = ReadInt(root, "limit", 50, 1, 200);
+        string? search = ReadText(root, "search", 200);
+        string? category = ReadText(root, "category", 80);
+        string? extension = ReadText(root, "extension", 32);
+        string? location = ReadText(root, "locationPrefix", 32767);
+        string sortBy = ReadText(root, "sortBy", 32) ?? "size";
+        if (sortBy is not ("size" or "name" or "path" or "modified_time" or "category" or "extension"))
+            throw new ArgumentException("sortBy is not supported.");
+        bool sortDesc = ReadBool(root, "sortDesc", true);
+        long total = _database.GetFilteredFileCount(category: category, search: search,
+            extension: extension, locationPrefix: location);
+        var files = _database.GetFilesPaged(offset, limit, category: category, search: search,
+            sortBy: sortBy, sortDesc: sortDesc, extension: extension, locationPrefix: location)
+            .Select(file => new
+            {
+                path = file.Path, name = file.Name, parent = file.Parent, logicalBytes = file.Size,
+                modifiedTime = file.ModifiedTime, extension = file.Extension,
+                category = file.Category, accessible = file.Accessible == 1
+            }).ToList();
+        Respond(id, new { total, offset, limit, files });
+    }
+
+    private void GetDirectoryContents(string id, JsonElement root)
+    {
+        string? path = ReadText(root, "path", 32767);
+        int limit = ReadInt(root, "limit", 100, 1, 150);
+        if (path != null && !Path.IsPathFullyQualified(path))
+            throw new ArgumentException("path must be an absolute indexed directory.");
+        var contents = _database.GetDirectoryContents(path, limit);
+        var items = contents.Folders.Select(folder => new
+        {
+            path = folder.Path, name = folder.Name, logicalBytes = folder.Size,
+            isDirectory = true, fileCount = folder.FileCount, category = "Folder"
+        }).Concat(contents.Files.Select(file => new
+        {
+            path = file.Path, name = file.Name, logicalBytes = file.Size,
+            isDirectory = false, fileCount = 1L, category = file.Category
+        })).OrderByDescending(item => item.logicalBytes).Take(limit).ToList();
+        Respond(id, new { path, logicalBytes = contents.TotalBytes, totalItems = contents.TotalItems, items });
     }
 
     private void StartScan(string id, JsonElement request)

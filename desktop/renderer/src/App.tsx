@@ -37,6 +37,8 @@ function Workspace() {
   const [error, setError] = useState<string | null>(null)
   const [engineConnected, setEngineConnected] = useState(true)
   const [activity, setActivity] = useState<string[]>([])
+  const [reportExporting, setReportExporting] = useState(false)
+  const [reportMessage, setReportMessage] = useState('')
 
   const refresh = async () => {
     const [newDrives, newOverview] = await Promise.all([window.arbor.listDrives(), window.arbor.getOverview()])
@@ -105,6 +107,17 @@ function Workspace() {
     catch (cause) { setStatus('Failed'); setError(cause instanceof Error ? cause.message : String(cause)) }
   }
 
+  const exportReport = async (format: 'html' | 'json') => {
+    setReportExporting(true)
+    setReportMessage('')
+    setError(null)
+    try {
+      const result = await window.arbor.exportAuditReport(format)
+      if (result) setReportMessage(`${format.toUpperCase()} report saved to ${result.filePath}`)
+    } catch (cause) { setError(String(cause)) }
+    finally { setReportExporting(false) }
+  }
+
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">A</div><div><strong>ArborGraph</strong><small>Storage intelligence</small></div></div>
@@ -144,6 +157,7 @@ function Workspace() {
             <section className="panel"><div className="section-heading"><div><h2>Largest categories</h2><p>Share of indexed logical file bytes.</p></div></div>{categories.length ? <div className="category-list">{categories.map((category) => <div className="category-row" key={category.category}><div><strong>{category.category || 'Other'}</strong><span>{bytes(category.logicalBytes)}</span></div><div className="bar"><span style={{ width: `${overview?.indexedLogicalBytes ? Math.min(100, category.logicalBytes / overview.indexedLogicalBytes * 100) : 0}%` }} /></div><small>{category.fileCount.toLocaleString()} files</small></div>)}</div> : <div className="empty">No indexed files yet. Run a scan to see category sizes.</div>}</section>
             <section className="panel next-panel"><div className="section-heading"><div><h2>Run a scan</h2><p>Index selected drives with the existing C# scanner.</p></div></div><p>Scanning records logical file sizes and reports skipped items. It does not measure physical allocation.</p><button className="primary-button" onClick={() => void startScan()} disabled={status === 'Scanning' || status === 'Stopping'}>Scan selected drives <span>→</span></button></section>
           </div>
+          <section className="panel report-panel"><div className="section-heading"><div><h2>Audit report</h2><p>Export current indexed totals, categories, and largest files. Duplicate estimates are labeled by verification status.</p></div></div><div className="report-actions"><button className="secondary-button" disabled={reportExporting || status === 'Scanning' || status === 'Stopping'} onClick={() => void exportReport('html')}>Export HTML</button><button className="secondary-button" disabled={reportExporting || status === 'Scanning' || status === 'Stopping'} onClick={() => void exportReport('json')}>Export JSON</button>{reportMessage && <span role="status">{reportMessage}</span>}</div></section>
         </> : page === 'scanner' ? <>
           <div className="page-heading"><div><p className="eyebrow">FILESYSTEM SCANNER</p><h1>Scan your storage</h1><p className="subhead">Index a drive or a chosen folder. The analysis runs outside the interface.</p></div><span className={`state-pill ${status.toLowerCase()}`}>{status}</span></div>
           <section className="panel scan-targets"><div className="section-heading"><div><h2>Scan target</h2><p>Choose drives or use a specific folder.</p></div></div><div className="target-options">{drives.map((drive) => <label key={drive.path}><input type="checkbox" checked={selected.includes(drive.path)} disabled={!!folder || status === 'Scanning' || status === 'Stopping'} onChange={(event) => setSelected((old) => event.target.checked ? [...old, drive.path] : old.filter((x) => x !== drive.path))} />{drive.label || 'Local disk'} <span>{drive.path}</span></label>)}</div><div className="folder-row"><button className="secondary-button" onClick={() => void chooseFolder()} disabled={status === 'Scanning' || status === 'Stopping'}>Choose folder</button><span title={folder ?? ''}>{folder ?? 'No custom folder selected'}</span>{folder && <button className="text-button" onClick={() => setFolder(null)}>Clear</button>}</div><div className="scan-actions"><button className="primary-button" onClick={() => void startScan()} disabled={status === 'Scanning' || status === 'Stopping'}>Start scan</button><button className="secondary-button" onClick={() => void stopScan()} disabled={status !== 'Scanning'}>Stop scan</button></div></section>

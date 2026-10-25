@@ -40,10 +40,12 @@ public class AuditReport
     public List<FileRecord> TopLargestFiles { get; set; } = [];
     public List<DuplicateGroup> DuplicateGroups { get; set; } = [];
     public long TotalDuplicateWastedBytes { get; set; }
+    public bool DuplicateBytesAreVerified { get; set; }
     public string FormattedDuplicateWasted => FormatSize(TotalDuplicateWastedBytes);
 
     public List<JunkTarget> JunkTargets { get; set; } = [];
     public long TotalCleanableJunkBytes { get; set; }
+    public bool JunkTargetsAnalyzed { get; set; }
     public string FormattedCleanableJunk => FormatSize(TotalCleanableJunkBytes);
 
     private static string FormatSize(long bytes)

@@ -12,6 +12,7 @@ interface ArborApi {
   getOverview(): Promise<Overview>
   getFiles(query: FileQuery): Promise<FilePage>
   exportFilesCsv(query: FileQuery): Promise<{ saved: boolean; filePath: string; fileBytes: number } | null>
+  exportAuditReport(format: 'html' | 'json'): Promise<{ saved: boolean; format: string; filePath: string; fileBytes: number } | null>
   getLargestFolders(limit: number): Promise<IndexedFolder[]>
   getDirectoryContents(path: string | null, limit?: number): Promise<DirectoryContents>
   getScanHistory(limit: number): Promise<ScanHistoryItem[]>

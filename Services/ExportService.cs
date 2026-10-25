@@ -13,7 +13,8 @@ public class ExportService
         JunkCleanerService? junkService = null,
         ScanStats? stats = null,
         string targetRoots = "",
-        IEnumerable<DuplicateGroup>? duplicates = null)
+        IEnumerable<DuplicateGroup>? duplicates = null,
+        bool duplicatesVerified = false)
     {
         return await Task.Run(async () =>
         {
@@ -46,10 +47,11 @@ public class ExportService
             report.TopLargestFiles = dbService.GetFilesPaged(0, 50, sortBy: "size", sortDesc: true);
 
             // Duplicate groups
-            if (duplicates != null && duplicates.Any())
+            if (duplicates != null && (duplicatesVerified || duplicates.Any()))
             {
                 report.DuplicateGroups = duplicates.ToList();
                 report.TotalDuplicateWastedBytes = report.DuplicateGroups.Sum(g => g.WastedBytes);
+                report.DuplicateBytesAreVerified = true;
             }
             else
             {
@@ -66,6 +68,8 @@ public class ExportService
                     var junkScanTask = junkService.ScanAllAsync(defaultTargets);
                     if (await Task.WhenAny(junkScanTask, Task.Delay(1500)) == junkScanTask)
                     {
+                        await junkScanTask;
+                        report.JunkTargetsAnalyzed = true;
                         report.JunkTargets = defaultTargets.Where(t => t.SizeInBytes > 0).ToList();
                         report.TotalCleanableJunkBytes = report.JunkTargets.Sum(j => j.SizeInBytes);
                     }
@@ -461,21 +465,21 @@ public class ExportService
         // Metric Summary Grid
         sb.AppendLine("    <div class=\"summary-grid\">");
         sb.AppendLine("        <div class=\"summary-card\">");
-        sb.AppendLine("            <div class=\"summary-card-title\">Total Indexed Volume</div>");
+        sb.AppendLine("            <div class=\"summary-card-title\">Indexed Logical Size</div>");
         sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedTotalSize)}</div>");
         sb.AppendLine($"            <div class=\"summary-card-desc\">{report.TotalFilesIndexed:N0} total files indexed</div>");
         sb.AppendLine("        </div>");
 
         sb.AppendLine("        <div class=\"summary-card\">");
-        sb.AppendLine("            <div class=\"summary-card-title\">Disposable Caches</div>");
-        sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedCleanableJunk)}</div>");
-        sb.AppendLine($"            <div class=\"summary-card-desc\">{report.JunkTargets.Count:N0} identified cache locations</div>");
+        sb.AppendLine("            <div class=\"summary-card-title\">Cache Candidates</div>");
+        sb.AppendLine($"            <div class=\"summary-card-value\">{(report.JunkTargetsAnalyzed ? WebUtility.HtmlEncode(report.FormattedCleanableJunk) : "Not analyzed")}</div>");
+        sb.AppendLine($"            <div class=\"summary-card-desc\">{(report.JunkTargetsAnalyzed ? $"{report.JunkTargets.Count:N0} identified locations; review before cleanup" : "No cache scan was included in this report")}</div>");
         sb.AppendLine("        </div>");
 
         sb.AppendLine("        <div class=\"summary-card\">");
-        sb.AppendLine("            <div class=\"summary-card-title\">Duplicate Redundancy</div>");
+        sb.AppendLine($"            <div class=\"summary-card-title\">{(report.DuplicateBytesAreVerified ? "Verified Duplicate Redundancy" : "Possible Duplicate Redundancy")}</div>");
         sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedDuplicateWasted)}</div>");
-        sb.AppendLine("            <div class=\"summary-card-desc\">Redundant duplicate copy storage</div>");
+        sb.AppendLine($"            <div class=\"summary-card-desc\">{(report.DuplicateBytesAreVerified ? "Full hashes confirm matching content; retaining one copy is assumed" : "Same-size candidates only; content has not been verified")}</div>");
         sb.AppendLine("        </div>");
 
         sb.AppendLine("        <div class=\"summary-card\">");

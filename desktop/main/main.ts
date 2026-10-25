@@ -81,6 +81,18 @@ function registerIpc(): void {
       search: valid.search, category: valid.category, extension: valid.extension,
       locationPrefix: valid.locationPrefix, sortBy: valid.sortBy, sortDesc: valid.sortDesc }, 120_000)
   })
+  ipcMain.handle('arbor:export-audit-report', async (event, format: unknown) => {
+    requireWindowSender(event.sender.id)
+    if (format !== 'html' && format !== 'json') throw new Error('Choose HTML or JSON report format.')
+    const result = await dialog.showSaveDialog(window!, {
+      title: `Export ${format.toUpperCase()} audit report`,
+      defaultPath: `arborgraph_audit_${new Date().toISOString().slice(0, 10)}.${format}`,
+      filters: [{ name: format.toUpperCase(), extensions: [format] }],
+    })
+    if (result.canceled || !result.filePath) return null
+    if (path.extname(result.filePath).toLowerCase() !== `.${format}`) throw new Error('Choose a destination matching the report format.')
+    return engineRequest('exportAuditReport', { format, filePath: result.filePath }, 120_000)
+  })
   ipcMain.handle('arbor:get-largest-folders', (event, limit: unknown) => {
     requireWindowSender(event.sender.id)
     return engineRequest('getLargestFolders', { limit: validateFolderLimit(limit) })

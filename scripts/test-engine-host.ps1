@@ -160,6 +160,25 @@ try {
     $reply = Expect-Response 'badExport'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative CSV export path was accepted.' }
 
+    $jsonReportPath = Join-Path $testRoot 'audit.json'
+    Send-Request @{ id = 'jsonReport'; command = 'exportAuditReport'; format = 'json'; filePath = $jsonReportPath }
+    $reply = Expect-Response 'jsonReport'
+    if (-not $reply.ok -or -not $reply.data.saved) { throw 'JSON audit report failed.' }
+    $jsonReport = Get-Content -LiteralPath $jsonReportPath -Raw | ConvertFrom-Json
+    if ($jsonReport.TotalFilesIndexed -ne 1201 -or $jsonReport.DuplicateBytesAreVerified -or $jsonReport.JunkTargetsAnalyzed -or
+        $jsonReport.TargetRoots -ne $scanRoot) { throw 'JSON audit report metadata or duplicate status was incorrect.' }
+    $htmlReportPath = Join-Path $testRoot 'audit.html'
+    Send-Request @{ id = 'htmlReport'; command = 'exportAuditReport'; format = 'html'; filePath = $htmlReportPath }
+    $reply = Expect-Response 'htmlReport'
+    if (-not $reply.ok -or -not $reply.data.saved) { throw 'HTML audit report failed.' }
+    $htmlReport = Get-Content -LiteralPath $htmlReportPath -Raw
+    if ($htmlReport -notlike '*Possible Duplicate Redundancy*' -or $htmlReport -notlike '*Not analyzed*' -or $htmlReport -notlike '*1,201*') {
+        throw 'HTML audit report omitted index or verification context.'
+    }
+    Send-Request @{ id = 'badReport'; command = 'exportAuditReport'; format = 'html'; filePath = $jsonReportPath }
+    $reply = Expect-Response 'badReport'
+    if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Mismatched report extension was accepted.' }
+
     Send-Request @{ id = 'folders'; command = 'getLargestFolders'; limit = 5 }
     $reply = Expect-Response 'folders'
     if (-not $reply.ok -or $reply.data.Count -lt 1) { throw 'Largest folder query returned no index data.' }

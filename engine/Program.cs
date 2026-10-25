@@ -249,6 +249,9 @@ internal sealed class EngineHost : IDisposable
                     case "exportFilesCsv":
                         await ExportFilesCsvAsync(id, root);
                         break;
+                    case "exportAuditReport":
+                        await ExportAuditReportAsync(id, root);
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;
@@ -404,6 +407,34 @@ internal sealed class EngineHost : IDisposable
             search: search, sortBy: sortBy, sortDesc: sortDesc,
             extension: extension, locationPrefix: location);
         Respond(id, new { saved = true, filePath, fileBytes = new FileInfo(filePath).Length });
+    }
+
+    private async Task ExportAuditReportAsync(string id, JsonElement root)
+    {
+        if (_scanCancellation != null) throw new ArgumentException("Wait for the active scan before exporting a report.");
+        string format = ReadText(root, "format", 8) ?? throw new ArgumentException("format is required.");
+        if (format is not ("html" or "json")) throw new ArgumentException("Choose HTML or JSON report format.");
+        string filePath = ReadText(root, "filePath", 32767) ?? throw new ArgumentException("filePath is required.");
+        if (!Path.IsPathFullyQualified(filePath) || !string.Equals(Path.GetExtension(filePath), "." + format, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Choose an absolute report destination matching its format.");
+        if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            throw new ArgumentException("The report folder is unavailable.");
+
+        var latest = _database.GetScanHistory(100).FirstOrDefault(item => item.ScanStatus == "Completed");
+        var exporter = new ExportService();
+        List<DuplicateGroup>? verified;
+        lock (_duplicateLock) verified = _duplicateHasRun ? _duplicateGroups.ToList() : null;
+        var report = await exporter.BuildAuditReportAsync(_database, targetRoots: latest?.Roots ?? "No completed scan",
+            duplicates: verified, duplicatesVerified: verified != null);
+        if (latest != null && latest.FinishTime > latest.StartTime)
+        {
+            double seconds = (latest.FinishTime - latest.StartTime).TotalSeconds;
+            report.ScanDuration = $"{seconds:N1} s";
+            report.FilesPerSecond = latest.FilesIndexed / seconds;
+        }
+        if (format == "html") await exporter.ExportToHtmlAsync(report, filePath);
+        else await exporter.ExportToJsonAsync(report, filePath);
+        Respond(id, new { saved = true, format, filePath, fileBytes = new FileInfo(filePath).Length });
     }
 
     private void GetDirectoryContents(string id, JsonElement root)

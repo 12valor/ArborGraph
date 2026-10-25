@@ -2,7 +2,7 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
-The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search and CSV export, directory treemap drilldown, logical-size rankings, stored scan comparisons, file age analysis, Photoshop-associated file analysis, read-only duplicate verification, and indexed developer project findings. It has Overview, Scanner, Files, Treemap, Analytics, Scan History, File Types, Old Files, Photoshop, Duplicates, scanner Settings, and Developer Storage screens, plus a first-run license gate; there is no installer or release artifact for it.
+The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search and CSV export, HTML and JSON audit reports, directory treemap drilldown, logical-size rankings, stored scan comparisons, file age analysis, Photoshop-associated file analysis, read-only duplicate verification, and indexed developer project findings. It has Overview, Scanner, Files, Treemap, Analytics, Scan History, File Types, Old Files, Photoshop, Duplicates, scanner Settings, and Developer Storage screens, plus a first-run license gate; there is no installer or release artifact for it.
 
 For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
 
@@ -36,6 +36,7 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `getOverview` | None | Current indexed file count, logical bytes, and categories |
 | `getFiles` | Bounded page, search, category, extension, location, and sort | File count and up to 200 indexed file records |
 | `exportFilesCsv` | Absolute CSV destination and bounded file filters | Streams all matching indexed files through the existing C# exporter |
+| `exportAuditReport` | HTML or JSON format and matching absolute destination | Builds and saves a report through the existing C# exporter |
 | `getLargestFolders` | Limit up to 100 | Largest rolled-up folder sizes and file counts |
 | `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
 | `getScanHistory` | Limit up to 100 | Stored scan metadata in newest-first order |
@@ -70,6 +71,8 @@ The duplicate overview counts equal-size candidates of at least 1 KB, before con
 Developer Storage applies the existing project context checks to indexed directory names and rollups. It excludes global package caches in this stage and reports indexed logical bytes, not reclaimable space. No cleanup commands are exposed.
 
 The Files screen exports all rows matching its applied filters, independent of the current page. Electron main chooses the destination with a native Save dialog; the renderer cannot provide an arbitrary output path. Export is unavailable during an active scan. The result describes indexed files and is not a filesystem inventory.
+
+The Overview report export uses current indexed totals and the most recent completed scan's target and duration. It does not run a cache scan. HTML marks cache findings as not analyzed and same-size duplicate bytes as possible until the session's duplicate analysis has completed; JSON carries `JunkTargetsAnalyzed` and `DuplicateBytesAreVerified`. Reports do not claim physical allocation or reclaimable bytes.
 
 ## Next boundaries
 

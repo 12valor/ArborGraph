@@ -1,4 +1,4 @@
-import type { DesktopSettings, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from '../../main/contracts'
+import type { DesktopSettings, DeveloperEcosystem, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from '../../main/contracts'
 
 interface ArborApi {
   getLegal(): Promise<LegalStatus>
@@ -22,6 +22,7 @@ interface ArborApi {
   startDuplicateAnalysis(): Promise<{ accepted: boolean }>
   cancelDuplicateAnalysis(): Promise<{ cancelling: boolean }>
   getDuplicateResults(offset: number, limit: number): Promise<DuplicateResults>
+  getIndexedDeveloperStorage(): Promise<DeveloperEcosystem[]>
   chooseFolder(): Promise<string | null>
   startScan(roots: string[]): Promise<{ accepted: boolean; roots: string[] }>
   cancelScan(): Promise<{ cancelling: boolean }>

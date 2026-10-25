@@ -9,7 +9,7 @@ if (-not (Test-Path -LiteralPath $exe)) { throw "Build the Release engine host f
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("ArborGraph_EngineHost_" + [guid]::NewGuid().ToString('N'))
 $scanRoot = Join-Path $testRoot 'target'
 $dataRoot = Join-Path $testRoot 'data'
-$nestedRoot = Join-Path $scanRoot 'nested'
+$nestedRoot = Join-Path $scanRoot 'node_modules'
 [IO.Directory]::CreateDirectory($scanRoot) | Out-Null
 [IO.Directory]::CreateDirectory($dataRoot) | Out-Null
 [IO.Directory]::CreateDirectory($nestedRoot) | Out-Null
@@ -23,6 +23,7 @@ for ($i = 0; $i -lt 1200; $i++) {
 [IO.File]::WriteAllText((Join-Path $scanRoot 'file_100.txt'), ('D' * 2048))
 [IO.File]::WriteAllText((Join-Path $scanRoot 'file_101.txt'), ('D' * 2048))
 [IO.File]::WriteAllText((Join-Path $scanRoot 'file_102.txt'), ('E' * 2048))
+[IO.File]::WriteAllText((Join-Path $scanRoot 'package.json'), '{}')
 
 $start = [Diagnostics.ProcessStartInfo]::new()
 $start.FileName = $exe
@@ -119,7 +120,7 @@ try {
         if ($message.eventName -eq 'scanFailed') { throw "Scan failed: $($message.message)" }
     }
     if ($null -eq $finished -or $finished.state -ne 'Completed' -or
-        $finished.filesDiscovered -ne 1200 -or $finished.filesIndexed -ne 1200 -or
+        $finished.filesDiscovered -ne 1201 -or $finished.filesIndexed -ne 1201 -or
         $finished.directoriesProcessed -lt 1) {
         throw 'Scan completion totals did not match the test data.'
     }
@@ -133,7 +134,13 @@ try {
 
     Send-Request @{ id = 'overview'; command = 'getOverview' }
     $reply = Expect-Response 'overview'
-    if (-not $reply.ok -or $reply.data.indexedFiles -ne 1200) { throw 'Overview index count is incorrect.' }
+    if (-not $reply.ok -or $reply.data.indexedFiles -ne 1201) { throw 'Overview index count is incorrect.' }
+
+    Send-Request @{ id = 'developer'; command = 'getIndexedDeveloperStorage' }
+    $reply = Expect-Response 'developer'
+    $nodeSummary = @($reply.data | Where-Object { $_.name -like 'Node.js*' })
+    if (-not $reply.ok -or $nodeSummary.Count -ne 1 -or $nodeSummary[0].itemCount -ne 1 -or
+        $nodeSummary[0].items[0].path -ne $nestedRoot) { throw 'Indexed Node.js dependencies were not recognized.' }
 
     Send-Request @{ id = 'files'; command = 'getFiles'; limit = 25; search = 'file_'; sortBy = 'size' }
     $reply = Expect-Response 'files'
@@ -147,7 +154,7 @@ try {
 
     Send-Request @{ id = 'directory'; command = 'getDirectoryContents'; path = $scanRoot; limit = 100 }
     $reply = Expect-Response 'directory'
-    if (-not $reply.ok -or $reply.data.totalItems -ne 1181 -or $reply.data.items.Count -ne 100 -or
+    if (-not $reply.ok -or $reply.data.totalItems -ne 1182 -or $reply.data.items.Count -ne 100 -or
         $reply.data.logicalBytes -ne $finished.indexedLogicalBytes) {
         throw 'Directory contents did not preserve the indexed size and item count.'
     }
@@ -170,7 +177,7 @@ try {
     Send-Request @{ id = 'ages'; command = 'getFileAgeInsights'; daysOld = 180; limit = 100 }
     $reply = Expect-Response 'ages'
     if (-not $reply.ok -or $reply.data.oldFiles.Count -lt 5 -or
-        ($reply.data.ageBuckets | Measure-Object -Property fileCount -Sum).Sum -ne 1200) {
+        ($reply.data.ageBuckets | Measure-Object -Property fileCount -Sum).Sum -ne 1201) {
         throw 'File age index summaries are incorrect.'
     }
 
@@ -213,7 +220,7 @@ try {
 
     Send-Request @{ id = 'history'; command = 'getScanHistory'; limit = 5 }
     $reply = Expect-Response 'history'
-    if (-not $reply.ok -or $reply.data.Count -ne 1 -or $reply.data[0].filesIndexed -ne 1200) {
+    if (-not $reply.ok -or $reply.data.Count -ne 1 -or $reply.data[0].filesIndexed -ne 1201) {
         throw 'Completed scan history did not match the test scan.'
     }
     $firstScanId = $reply.data[0].id

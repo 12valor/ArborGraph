@@ -170,6 +170,14 @@ export interface DuplicateResults {
   groups: DuplicateGroup[]
 }
 
+export interface DeveloperEcosystem {
+  name: string
+  logicalBytes: number
+  itemCount: number
+  itemsTruncated: boolean
+  items: Array<{ path: string; name: string; projectName: string; logicalBytes: number; fileCount: number; type: string; reason: string }>
+}
+
 export interface ScanEvent {
   eventName: 'scanProgress' | 'scanFinished' | 'scanFailed' | 'engineExited' | 'duplicateProgress' | 'duplicateFinished' | 'duplicateFailed'
   sequence?: number

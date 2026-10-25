@@ -25,6 +25,22 @@ public class DeveloperStorageService
         "build"
     ];
 
+    public Task<List<DeveloperEcosystemSummary>> ScanIndexedStorageAsync(CancellationToken ct = default)
+    {
+        return Task.Run(() =>
+        {
+            var detectedItems = new List<DeveloperJunkItem>();
+            foreach (var candidate in _dbService.GetDirectoriesByNames(CandidateDirectoryNames))
+            {
+                ct.ThrowIfCancellationRequested();
+                var item = EvaluateContextualJunk(candidate.Path, candidate.Name, candidate.Parent,
+                    candidate.Size, (int)Math.Min(int.MaxValue, candidate.FileCount));
+                if (item != null) detectedItems.Add(item);
+            }
+            return GroupByEcosystem(detectedItems);
+        }, ct);
+    }
+
     public async Task<List<DeveloperEcosystemSummary>> ScanDeveloperStorageAsync(CancellationToken ct = default)
     {
         return await Task.Run(() =>

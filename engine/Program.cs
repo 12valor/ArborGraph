@@ -227,6 +227,25 @@ internal sealed class EngineHost : IDisposable
                     case "getDuplicateResults":
                         GetDuplicateResults(id, root);
                         break;
+                    case "getIndexedDeveloperStorage":
+                        var developer = await new DeveloperStorageService(_database).ScanIndexedStorageAsync();
+                        int remainingDeveloperPathCharacters = 500_000;
+                        Respond(id, developer.Select(ecosystem =>
+                        {
+                            var items = new List<object>();
+                            foreach (var item in ecosystem.Items.Take(100))
+                            {
+                                if (item.Path.Length > remainingDeveloperPathCharacters) break;
+                                remainingDeveloperPathCharacters -= item.Path.Length;
+                                items.Add(new { path = item.Path, name = item.Name,
+                                    projectName = item.ProjectName, logicalBytes = item.SizeBytes,
+                                    fileCount = item.FileCount, type = item.TypeDisplay, reason = item.ContextReason });
+                            }
+                            return new { name = ecosystem.Name, logicalBytes = ecosystem.TotalBytes,
+                                itemCount = ecosystem.ItemCount, items,
+                                itemsTruncated = ecosystem.ItemCount > items.Count };
+                        }).ToList());
+                        break;
                     case "startScan":
                         StartScan(id, root);
                         break;

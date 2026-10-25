@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DesktopSettings, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from './contracts'
+import type { DesktopSettings, DeveloperEcosystem, DirectoryContents, Drive, DuplicateOverview, DuplicateResults, DuplicateStatus, FileAgeInsights, FilePage, FileQuery, IndexedFolder, LegalStatus, Overview, PhotoshopInsights, ScanComparison, ScanEvent, ScanHistoryItem, ScanSettings } from './contracts'
 
 const api = {
   getLegal: (): Promise<LegalStatus> => ipcRenderer.invoke('arbor:get-legal'),
@@ -23,6 +23,7 @@ const api = {
   startDuplicateAnalysis: (): Promise<{ accepted: boolean }> => ipcRenderer.invoke('arbor:start-duplicate-analysis'),
   cancelDuplicateAnalysis: (): Promise<{ cancelling: boolean }> => ipcRenderer.invoke('arbor:cancel-duplicate-analysis'),
   getDuplicateResults: (offset: number, limit: number): Promise<DuplicateResults> => ipcRenderer.invoke('arbor:get-duplicate-results', offset, limit),
+  getIndexedDeveloperStorage: (): Promise<DeveloperEcosystem[]> => ipcRenderer.invoke('arbor:get-indexed-developer-storage'),
   chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('arbor:choose-folder'),
   startScan: (roots: string[]): Promise<{ accepted: boolean; roots: string[] }> => ipcRenderer.invoke('arbor:start-scan', roots),
   cancelScan: (): Promise<{ cancelling: boolean }> => ipcRenderer.invoke('arbor:cancel-scan'),

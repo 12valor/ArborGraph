@@ -111,6 +111,10 @@ function registerIpc(): void {
     requireWindowSender(event.sender.id)
     return engineRequest('getDuplicateResults', validateDuplicatePage(offset, limit))
   })
+  ipcMain.handle('arbor:get-indexed-developer-storage', (event) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getIndexedDeveloperStorage', {}, 60_000)
+  })
   ipcMain.handle('arbor:choose-folder', async (event) => {
     requireWindowSender(event.sender.id)
     const result = await dialog.showOpenDialog(window!, { properties: ['openDirectory'], title: 'Choose a folder to scan' })

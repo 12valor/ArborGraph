@@ -151,8 +151,11 @@ internal sealed class EngineHost : IDisposable
                     case "compareScans":
                         CompareScans(id, root);
                         break;
-                    case "getFileInsights":
-                        GetFileInsights(id, root);
+                    case "getFileAgeInsights":
+                        GetFileAgeInsights(id, root);
+                        break;
+                    case "getPhotoshopInsights":
+                        GetPhotoshopInsights(id, root);
                         break;
                     case "startScan":
                         StartScan(id, root);
@@ -312,10 +315,15 @@ internal sealed class EngineHost : IDisposable
             categories });
     }
 
-    private void GetFileInsights(string id, JsonElement root)
+    private void GetFileAgeInsights(string id, JsonElement root)
     {
         int daysOld = ReadInt(root, "daysOld", 180, 1, 3650);
         int limit = ReadInt(root, "limit", 100, 1, 200);
+        Respond(id, BuildFileAgeInsights(daysOld, limit));
+    }
+
+    private object BuildFileAgeInsights(int daysOld, int limit)
+    {
         var ageBuckets = _database.GetFileAgeBreakdown().Select(bucket => new
         {
             name = bucket.Name, description = bucket.Description,
@@ -326,22 +334,33 @@ internal sealed class EngineHost : IDisposable
             path = file.Path, name = file.Name, logicalBytes = file.Size,
             modifiedTime = file.ModifiedTime, category = file.Category
         }).ToList();
+        return new { daysOld, ageBuckets, oldFiles };
+    }
+
+    private void GetPhotoshopInsights(string id, JsonElement root)
+    {
+        int limit = ReadInt(root, "limit", 100, 1, 200);
+        Respond(id, BuildPhotoshopInsights(limit));
+    }
+
+    private object BuildPhotoshopInsights(int limit)
+    {
         var photoshop = _database.GetPhotoshopDetailedItems(limit).Select(item => new
         {
             path = item.File.Path, name = item.File.Name, logicalBytes = item.File.Size,
             type = item.TypeLabel, modifiedTime = item.File.ModifiedTime
         }).ToList();
         var psStats = _database.GetPhotoshopStats();
-        Respond(id, new
+        return new
         {
-            daysOld, ageBuckets, oldFiles, photoshop,
+            photoshop,
             photoshopSummary = new
             {
                 psdCount = psStats.PsdCount, psbCount = psStats.PsbCount,
                 otherCount = psStats.OtherCount, identifiedLogicalBytes = psStats.TotalBytes,
                 psdBytes = psStats.PsdBytes, psbBytes = psStats.PsbBytes
             }
-        });
+        };
     }
 
     private void StartScan(string id, JsonElement request)

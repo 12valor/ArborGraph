@@ -111,6 +111,17 @@ export interface ScanComparison {
   categories: CategoryComparison[]
 }
 
+export interface FileAgeInsights {
+  daysOld: number
+  ageBuckets: Array<{ name: string; description: string; fileCount: number; logicalBytes: number }>
+  oldFiles: Array<{ path: string; name: string; logicalBytes: number; modifiedTime: number; category: string }>
+}
+
+export interface PhotoshopInsights {
+  photoshop: Array<{ path: string; name: string; logicalBytes: number; type: string; modifiedTime: number }>
+  photoshopSummary: { psdCount: number; psbCount: number; otherCount: number; identifiedLogicalBytes: number; psdBytes: number; psbBytes: number }
+}
+
 export interface ScanEvent {
   eventName: 'scanProgress' | 'scanFinished' | 'scanFailed' | 'engineExited'
   sequence?: number

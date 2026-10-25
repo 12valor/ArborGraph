@@ -32,7 +32,7 @@ export class EngineClient extends EventEmitter {
     await this.request('ping')
   }
 
-  request(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
+  request(command: string, args: Record<string, unknown> = {}, timeoutMs = 20_000): Promise<unknown> {
     if (!this.process) return Promise.reject(new Error('Engine host is not running.'))
     if (this.pending.size >= 32) return Promise.reject(new Error('Too many pending engine requests.'))
     const id = String(++this.nextId)
@@ -40,7 +40,7 @@ export class EngineClient extends EventEmitter {
       const timer = setTimeout(() => {
         this.pending.delete(id)
         reject(new Error(`Engine request timed out: ${command}`))
-      }, 20_000)
+      }, timeoutMs)
       this.pending.set(id, { resolve, reject, timer })
       this.process!.stdin.write(JSON.stringify({ id, command, ...args }) + '\n', (error) => {
         if (!error) return

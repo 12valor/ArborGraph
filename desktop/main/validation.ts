@@ -60,6 +60,12 @@ export function validateScanIds(olderId: unknown, newerId: unknown): { olderId: 
   return { olderId: olderId as number, newerId: newerId as number }
 }
 
+export function validateFileInsightsQuery(daysOld: unknown, limit: unknown): { daysOld: number; limit: number } {
+  if (!Number.isInteger(daysOld) || (daysOld as number) < 1 || (daysOld as number) > 3650) throw new Error('Invalid age threshold.')
+  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 200) throw new Error('Invalid insights limit.')
+  return { daysOld: daysOld as number, limit: limit as number }
+}
+
 export function validateScanRoots(value: unknown, allowedRoots: ReadonlySet<string>): string[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 16) {
     throw new Error('Select between 1 and 16 scan targets.')

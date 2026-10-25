@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session } from 'electron'
 import path from 'node:path'
 import { EngineClient, findEngineExecutable } from './engine-client'
-import { validateDirectoryQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
+import { validateDirectoryQuery, validateFileInsightsQuery, validateFileQuery, validateFolderLimit, validateHistoryLimit, validateScanIds, validateScanRoots } from './validation'
 import type { Drive, ScanEvent } from './contracts'
 
 let window: BrowserWindow | null = null
@@ -15,9 +15,9 @@ function requireWindowSender(senderId: number): void {
   }
 }
 
-function engineRequest(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
+function engineRequest(command: string, args: Record<string, unknown> = {}, timeoutMs?: number): Promise<unknown> {
   if (!engine) throw new Error('Engine is unavailable.')
-  return engine.request(command, args)
+  return engine.request(command, args, timeoutMs)
 }
 
 function registerIpc(): void {
@@ -50,6 +50,14 @@ function registerIpc(): void {
   ipcMain.handle('arbor:compare-scans', (event, olderId: unknown, newerId: unknown) => {
     requireWindowSender(event.sender.id)
     return engineRequest('compareScans', { ...validateScanIds(olderId, newerId) })
+  })
+  ipcMain.handle('arbor:get-file-age-insights', (event, daysOld: unknown, limit: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getFileAgeInsights', { ...validateFileInsightsQuery(daysOld, limit) })
+  })
+  ipcMain.handle('arbor:get-photoshop-insights', (event, limit: unknown) => {
+    requireWindowSender(event.sender.id)
+    return engineRequest('getPhotoshopInsights', { limit: validateFileInsightsQuery(180, limit).limit }, 60_000)
   })
   ipcMain.handle('arbor:choose-folder', async (event) => {
     requireWindowSender(event.sender.id)

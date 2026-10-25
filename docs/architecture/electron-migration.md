@@ -2,7 +2,7 @@
 
 The first migration stage adds `engine/ArborGraph.EngineHost.csproj`. It is a separate console process that calls the current `DatabaseService`, `ScannerService`, `SettingsService`, and `DiskService`. It does not create a WPF window or write protocol diagnostics to stdout. The existing WPF app remains the supported release and fallback.
 
-The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, logical-size rankings, and stored scan comparisons. It has Overview, Scanner, Files, Treemap, Analytics, and Scan History screens; there is no installer or release artifact for it.
+The next stages add `desktop/`, an Electron main process, sandboxed React renderer, and narrow preload bridge. The preview currently offers real drive geometry, indexed category totals, folder or drive selection, scan progress, cancellation, paged indexed file search, directory treemap drilldown, logical-size rankings, stored scan comparisons, file age analysis, and Photoshop-associated file analysis. It has Overview, Scanner, Files, Treemap, Analytics, Scan History, File Types, Old Files, and Photoshop screens; there is no installer or release artifact for it.
 
 For UI testing, set `ARBORGRAPH_DEV_DATA_DIR` to a dedicated test folder before `npm start`. Development builds pass that folder only to the engine host. Packaged builds ignore this variable. This avoids changing the user's existing scan index while testing the preview.
 
@@ -35,7 +35,8 @@ Requests and responses are one UTF-8 JSON object per line. Each request has a st
 | `getDirectoryContents` | Indexed absolute directory path or root, limit up to 150 | Immediate child files and folders, total size, and total item count |
 | `getScanHistory` | Limit up to 100 | Stored scan metadata in newest-first order |
 | `compareScans` | Two completed scan IDs, oldest first | Indexed byte, file, and category deltas for identical targets |
-| `getFileInsights` | Age threshold and item limit | File age buckets, old indexed files, and Photoshop-associated indexed files |
+| `getFileAgeInsights` | Age threshold and item limit | File age buckets and old indexed files |
+| `getPhotoshopInsights` | Item limit | Photoshop-associated indexed files and summary |
 | `startScan` | `roots`: 1–16 existing, distinct directories | Acceptance response, then `scanProgress` and `scanFinished` or `scanFailed` events |
 | `cancelScan` | None | Cancellation acknowledgment, or `NO_ACTIVE_SCAN` |
 | `shutdown` | None | Acknowledgment; cancels an active scan and exits |

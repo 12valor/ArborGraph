@@ -15,7 +15,7 @@ $nestedRoot = Join-Path $scanRoot 'nested'
 [IO.Directory]::CreateDirectory($nestedRoot) | Out-Null
 for ($i = 0; $i -lt 1200; $i++) {
     $parent = if ($i -lt 20) { $nestedRoot } else { $scanRoot }
-    $extension = if ($i -eq 0) { '.psd' } elseif ($i -eq 1) { '.psb' } else { '.txt' }
+    $extension = if ($i -eq 0) { '.psd' } elseif ($i -eq 1) { '.psb' } elseif ($i -eq 2) { '.abr' } else { '.txt' }
     $filePath = Join-Path $parent "file_$i$extension"
     [IO.File]::WriteAllText($filePath, "ArborGraph engine test $i")
     if ($i -lt 5) { [IO.File]::SetLastWriteTimeUtc($filePath, [DateTime]::UtcNow.AddDays(-400)) }
@@ -127,15 +127,23 @@ try {
     $reply = Expect-Response 'relativeDirectory'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Relative directory was accepted.' }
 
-    Send-Request @{ id = 'insights'; command = 'getFileInsights'; daysOld = 180; limit = 100 }
-    $reply = Expect-Response 'insights'
-    if (-not $reply.ok -or $reply.data.oldFiles.Count -lt 5 -or $reply.data.photoshop.Count -ne 2 -or
-        $reply.data.photoshopSummary.psdCount -ne 1 -or $reply.data.photoshopSummary.psbCount -ne 1 -or
+    Send-Request @{ id = 'ages'; command = 'getFileAgeInsights'; daysOld = 180; limit = 100 }
+    $reply = Expect-Response 'ages'
+    if (-not $reply.ok -or $reply.data.oldFiles.Count -lt 5 -or
         ($reply.data.ageBuckets | Measure-Object -Property fileCount -Sum).Sum -ne 1200) {
-        throw 'File age or Photoshop index summaries are incorrect.'
+        throw 'File age index summaries are incorrect.'
     }
 
-    Send-Request @{ id = 'badInsights'; command = 'getFileInsights'; daysOld = -1 }
+    Send-Request @{ id = 'photoshop'; command = 'getPhotoshopInsights'; limit = 100 }
+    $reply = Expect-Response 'photoshop'
+    if (-not $reply.ok -or $reply.data.photoshop.Count -ne 3 -or
+        $reply.data.photoshopSummary.psdCount -ne 1 -or $reply.data.photoshopSummary.psbCount -ne 1 -or
+        $reply.data.photoshopSummary.otherCount -ne 1 -or
+        ($reply.data.photoshop | Where-Object { $_.name -like '*.abr' })[0].type -ne 'Preset / Asset') {
+        throw 'Photoshop index summaries are incorrect.'
+    }
+
+    Send-Request @{ id = 'badInsights'; command = 'getFileAgeInsights'; daysOld = -1 }
     $reply = Expect-Response 'badInsights'
     if ($reply.ok -or $reply.error.code -ne 'INVALID_ARGUMENT') { throw 'Invalid file age threshold was accepted.' }
 

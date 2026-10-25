@@ -160,5 +160,16 @@ h2 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
 .compare-metrics span, .compare-metrics small { color: #778a92; font-size: 11px; }
 .compare-metrics strong { margin: 6px 0; font-size: 20px; }
 .comparison-results h3 { margin: 0; padding: 0 24px 13px; font-size: 13px; }
+.heading-select { display: flex; align-items: center; gap: 8px; color: #667d85; font-size: 11px; font-weight: 600; }
+.heading-select select { height: 35px; padding: 0 8px; border: 1px solid #d7e1e2; border-radius: 6px; background: white; color: #263a40; font-size: 12px; }
+.insight-table { margin-bottom: 18px; }
+.category-choice-list { padding: 0 24px 22px; display: grid; gap: 8px; }
+.category-choice-list button { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 7px 15px; padding: 12px; background: white; border: 1px solid #e4eceb; border-radius: 7px; color: #2d454c; text-align: left; }
+.category-choice-list button:hover, .category-choice-list button.selected { border-color: #88b6a9; background: #f3f9f7; }
+.category-choice-list strong, .category-choice-list small { display: block; }
+.category-choice-list strong { font-size: 12px; }
+.category-choice-list small { color: #81929a; font-size: 10px; margin-top: 3px; }
+.category-choice-list b { font-size: 12px; }
+.category-choice-list .bar { grid-column: 1 / -1; height: 4px; }
 @media (max-width: 1150px) { .content { padding: 26px 25px; } .sidebar { width: 190px; flex-basis: 190px; } .drive-meter { width: 95px; } .metric strong { font-size: 20px; } }
 @media (max-width: 1150px) { .analytics-columns, .map-lower { grid-template-columns: 1fr; } }

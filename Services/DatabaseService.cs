@@ -1608,6 +1608,10 @@ public class DatabaseService : IDisposable
                     {
                         type = PhotoshopItemType.UserDocument;
                     }
+                    else if (ext == ".abr" || ext == ".asl" || ext == ".atn" || ext == ".pat" || ext == ".grd")
+                    {
+                        type = PhotoshopItemType.PresetOrAsset;
+                    }
                     else if (path.Contains("Temp", StringComparison.OrdinalIgnoreCase) || 
                              path.Contains("Scratch", StringComparison.OrdinalIgnoreCase) || 
                              ext == ".tmp" || ext == ".dmp")
@@ -1620,10 +1624,6 @@ public class DatabaseService : IDisposable
                              path.Contains("Cache", StringComparison.OrdinalIgnoreCase))
                     {
                         type = PhotoshopItemType.AdobeCache;
-                    }
-                    else if (ext == ".abr" || ext == ".asl" || ext == ".atn" || ext == ".pat" || ext == ".grd")
-                    {
-                        type = PhotoshopItemType.PresetOrAsset;
                     }
                     else
                     {
@@ -1658,7 +1658,7 @@ public class DatabaseService : IDisposable
                     SELECT 
                         SUM(CASE WHEN LOWER(extension) = '.psd' THEN 1 ELSE 0 END),
                         SUM(CASE WHEN LOWER(extension) = '.psb' THEN 1 ELSE 0 END),
-                        SUM(CASE WHEN LOWER(extension) NOT IN ('.psd', '.psb') AND (category = 'Photoshop' OR path LIKE '%Adobe%Photoshop%') THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN COALESCE(LOWER(extension), '') NOT IN ('.psd', '.psb') THEN 1 ELSE 0 END),
                         SUM(size),
                         SUM(CASE WHEN LOWER(extension) = '.psd' THEN size ELSE 0 END),
                         SUM(CASE WHEN LOWER(extension) = '.psb' THEN size ELSE 0 END)

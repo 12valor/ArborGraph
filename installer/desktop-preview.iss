@@ -2,7 +2,7 @@
 ; Keep the supported WPF installer and its AppId unchanged.
 #define PreviewName "ArborGraph Desktop Preview"
 #define PreviewExe "ArborGraph Desktop Preview.exe"
-#define PreviewVersion "0.1.0"
+#define PreviewVersion "1.3.0"
 #define PreviewSource "..\dist\desktop-preview"
 
 [Setup]

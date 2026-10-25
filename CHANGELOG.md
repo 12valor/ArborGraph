@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-10-26
+
+### Added
+- **Modern Dark Blue Visual Theme:** Replaced the legacy green palette across the desktop preview UI with an elegant deep dark blue design system (`#0f1e36` sidebar, Fluent `#005fb8` primary accents, `#93c5fd` & `#bfdbfe` treemap tiles, and crisp slate neutral tones).
+- **Refined Non-Bold Light Typography:** Prioritized `Segoe UI Semilight` and `Segoe UI Light` with lighter display weights (`font-weight: 300` for headings and stat figures) and standardized all UI elements to clean `font-weight: 400`, eliminating harsh bold styling.
+- **Cross-Platform Electron Desktop Preview Package:** Packaged side-by-side Electron 45 desktop preview with independent executable (`ArborGraph Desktop Preview.exe`), side-by-side Inno Setup installer (`ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe`), and Vite-based production bundling.
+- **Out-of-Process .NET Engine Host:** Integrated high-performance `ArborGraph.EngineHost.exe` providing structured JSON IPC protocol over stdin/stdout with comprehensive automated protocol test coverage (`scripts/test-engine-host.ps1`).
+- **Comprehensive Desktop Analytics & Insights:** Introduced interactive file age analysis, Photoshop temporary file inspector, read-only duplicate verification, scan history comparison, and developer project store detection.
+- **Audit Report & Data Exports:** Added full multi-format export support for scan results in HTML, JSON, and CSV formats.
+
+### Fixed
+- **PowerShell 5.1 Host Test Compatibility:** Restored compatibility for `[Diagnostics.ProcessStartInfo]` in `test-engine-host.ps1` across Windows PowerShell 5.1 (.NET Framework) and PowerShell 7+.
+- **Typography Inheritance & Baseline Resets:** Standardized font-family inheritance across legal dialogs and added defensive baseline resets to prevent browser heading/optgroup bold overrides.
+
+---
+
 ## [1.2.1] - 2026-10-14
 
 ### Performance & Optimization

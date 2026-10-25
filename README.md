@@ -136,13 +136,23 @@ ArborGraph is organized into 9 dedicated workspace panels accessible from the si
 
 ## Core Architecture
 
-An experimental headless engine host now lives in [`engine/`](engine/). It exposes a small JSON-lines process protocol for a future Electron desktop client. The existing WPF application, installer, and release workflow remain the supported distribution. See [the migration notes](docs/architecture/electron-migration.md) for the current contract and limitations.
+ArborGraph features a dual presentation architecture sharing a high-performance local SQLite storage core:
 
-The experimental Electron/React shell lives in [`desktop/`](desktop/). It currently implements Overview, Scanner, Files, Treemap, Analytics, and Scan History using real engine data; the other WPF features have not been migrated. Build the engine host in Release, then run `npm ci`, `npm run build`, and `npm start` from `desktop/` to inspect it. Close WPF first because both versions use the same local SQLite index. This preview is not a distributable replacement.
+1. **WPF Desktop Application (Production):**
+   - Built on C# and WPF on .NET 8 (`net8.0-windows`, x64).
+   - Modern Windows 11 Fluent 2 design language (`WPF-UI`) featuring native Mica backdrop, integrated title bar, SkiaSharp-backed LiveCharts2 distribution series, and real-time GPU-accelerated CPU and RAM monitors.
+   - Bounded `System.Threading.Channels` traversal pipeline streaming filesystem records directly into high-throughput SQLite WAL bulk insert transactions.
+
+2. **Electron Desktop Preview & Out-of-Process Engine Host (v1.3.0 Preview):**
+   - **Modern Dark Blue Identity:** Styled with an elegant dark blue theme (`#0f1e36` midnight shell, `#005fb8` Fluent blue accents, `#93c5fd` & `#bfdbfe` treemap tiles, and slate `#64748b` neutral tones).
+   - **Airy Non-Bold Typography:** Refined typography powered by `Segoe UI Semilight` and `Segoe UI Light` with light `font-weight: 300` display metrics and standard `font-weight: 400` body elements.
+   - **Engine Host (`engine/`):** Standalone .NET 8 engine (`ArborGraph.EngineHost.exe`) communicating with the Electron main process over stdin/stdout using a structured JSON-lines protocol with automated protocol test coverage (`scripts/test-engine-host.ps1`).
+   - **Comprehensive Workspace Views:** Features Overview, Scanner with live feed, Files, Treemap, Analytics, Scan History comparison, Duplicate verification, Developer Storage, File Age, Photoshop Inspector, Settings, Diagnostics, and full HTML, JSON, and CSV report exports.
+   - **Distribution:** Packaged via `scripts/build-desktop-preview.ps1 -BuildInstaller` into a side-by-side Inno Setup installer (`ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe`).
 
 ```
 +-------------------------------------------------------------------------------+
-|                           WPF Desktop UI (XAML)                               |
+|                       WPF Desktop UI (Production XAML)                        |
 |   Overview  | Scanner | Files | Treemap | Duplicates | Cleanup | Dev | PS     |
 +-------------------------------------------------------------------------------+
                                         |
@@ -166,10 +176,25 @@ The experimental Electron/React shell lives in [`desktop/`](desktop/). It curren
 |   WAL Mode, Memory Pragmas,     |            |   Kernel32, Shell32            |
 |   Indexed Directory Rollups     |            |   Recycle Bin, NTFS Journal    |
 +---------------------------------+            +--------------------------------+
+                 ^
+                 |  (Shared Local Database)
+                 v
++-------------------------------------------------------------------------------+
+|             Out-of-Process Engine Host (ArborGraph.EngineHost.exe)            |
+|                JSON-lines Protocol over Stdin / Stdout (IPC)                  |
++-------------------------------------------------------------------------------+
+                                        ^
+                                        |  (Preload ContextBridge)
+                                        v
++-------------------------------------------------------------------------------+
+|                 Electron Desktop Preview (React 19 + TypeScript)              |
+|        Dark Blue Theme | Segoe UI Semilight | Treemap | Audit Exports         |
++-------------------------------------------------------------------------------+
 ```
 
 - **Runtime:** .NET 8.0 Windows Desktop SDK (`net8.0-windows`, x64).
 - **Presentation:** Windows Presentation Foundation (WPF) with Windows 11 Fluent 2 design language (`WPF-UI`), Mica material window backdrop, vector symbol glyphs, LiveCharts2 analytical series, and real-time GPU-accelerated metric graph rendering.
+- **Desktop Preview:** Modern dark blue React 19 + TypeScript shell with airy Segoe UI Semilight typography, powered out-of-process by `ArborGraph.EngineHost.exe`.
 - **Persistence:** Local SQLite database via `Microsoft.Data.Sqlite` in Write-Ahead Logging (`WAL`) mode with `synchronous=NORMAL` and cache sizing pragmas.
 - **Concurrency:** Bounded `System.Threading.Channels` pipeline streaming file records from multi-threaded traversal tasks directly into bulk SQLite transaction workers.
 
@@ -180,31 +205,36 @@ The experimental Electron/React shell lives in [`desktop/`](desktop/). It curren
 ```
 arborgraph/
 ├── App.xaml / App.xaml.cs       # Application entry point and exception logging
-├── DiskScope.csproj             # .NET 8 project definition (Produces ArborGraph.exe)
-├── ArborGraph.exe               # Precompiled compressed standalone binary
-├── start.bat / start.ps1        # Universal CLI and GUI launchers
-├── Controls/                    # Custom WPF controls (Treemap canvas, Metric graphs)
-├── Infrastructure/              # Base classes (RelayCommand, ObservableObject)
-├── Models/                      # File records, drive metrics, duplicate groups
-├── Resources/                   # Vector assets, themes, and ArborGraph icons
-├── Services/                    # Core business logic:
-│   ├── DatabaseService.cs       # SQLite schema, ingestion, and query engine
-│   ├── DeveloperStorageService.cs# Developer workspace detection and cache clean
-│   ├── DiskService.cs           # Drive enumeration and volume geometry
-│   ├── DuplicateAnalyzer.cs     # 3-stage cryptographic duplicate engine
-│   ├── ExportService.cs         # CSV, JSON, and HTML report generator
-│   ├── FileActionService.cs     # Recycle Bin and permanent deletion
-│   ├── JunkCleanerService.cs    # System and browser cache scanners
-│   ├── ScannerService.cs        # BFS traversal, streaming channel, and live feed
-│   ├── SettingsService.cs       # Configuration persistence and exclusions
-│   └── UsnJournalService.cs     # NTFS USN Change Journal reader
-├── ViewModels/                  # MVVM view models for all 9 workspace views
-├── Views/                       # WPF XAML views for all workspace panels
-├── installer/                   # Inno Setup 6 packaging script (`installer.iss`)
-├── site/                        # Offline documentation and setup wizard portal
-├── tests/                       # Automated integration test suite (`DiskScope.Tests.csproj`)
+├── DiskScope.csproj             # .NET 8 WPF project definition (Produces ArborGraph.exe)
+├── ArborGraph.exe               # Precompiled compressed standalone production binary
+├── CHANGELOG.md                 # Semantic version release log
+├── index.html                   # Web portal redirect
 ├── LICENSE.md                   # End User License Agreement
-└── THIRD_PARTY_LICENSES.md      # Open source license notices
+├── README.md                    # Project documentation and architecture guide
+├── start.bat / start.ps1        # Universal CLI and GUI launchers
+├── THIRD_PARTY_LICENSES.md      # Open source license notices
+├── Controls/                    # Custom WPF controls (Treemap canvas, Metric graphs)
+├── desktop/                     # Electron 45 / React 19 desktop preview application
+│   ├── main/                    # Electron main process, IPC handlers, validation contracts
+│   └── renderer/                # React 19 + TypeScript views (Dark Blue theme)
+├── docs/                        # Architecture and testing documentation
+│   ├── architecture/            # Migration notes and design contracts
+│   └── testing/                 # Test plans, bug logs, and reports/
+├── engine/                      # Standalone .NET 8 headless engine host (IPC protocol)
+├── Infrastructure/              # Base classes (RelayCommand, ObservableObject)
+├── installer/                   # Inno Setup 6 packaging scripts:
+│   ├── installer.iss            # WPF production installer configuration
+│   └── desktop-preview.iss      # Electron preview installer configuration
+├── Models/                      # File records, drive metrics, duplicate groups
+├── Resources/                   # Vector assets, themes, and icons:
+│   ├── brand/                   # Official logo files, icons, and mascot graphics
+│   └── Fonts/                   # Bundled fonts and typography assets
+├── scripts/                     # Packaging, test, and release automation scripts
+├── Services/                    # Core business logic and database engine
+├── site/                        # Offline documentation and setup wizard portal
+├── tests/                       # Automated 47-stage integration test suite
+├── ViewModels/                  # MVVM view models for all workspace views
+└── Views/                       # WPF XAML views for all workspace panels
 ```
 
 ---
@@ -246,35 +276,60 @@ The resulting binary is created at `dist\ArborGraph.exe`.
 
 ---
 
-## Building the Windows Installer
+## Building the Windows Installers
 
-ArborGraph includes an Inno Setup script configured for packaging a standard Windows installer:
+ArborGraph provides automated Inno Setup 6 packaging scripts for both production and preview distributions:
 
-1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php).
-2. Generate the single-file published binary:
-   ```cmd
-   dotnet publish DiskScope.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableCompressionInSingleFile=true -o dist
-   ```
-3. Compile the installer script:
-   ```cmd
-   iscc installer\installer.iss
-   ```
-4. The generated installer will be located in `dist\setup\ArborGraph-Setup-1.0.0-x64.exe`.
+### 1. Supported WPF Windows Installer
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-release.ps1 -Version 1.3.0
+```
+- Compiles the self-contained production binary `dist\ArborGraph.exe`.
+- Compiles the official Windows installer via Inno Setup into `dist\setup\ArborGraph-Setup-v1.3.0-x64.exe`.
+- Packages portable ZIP archives (`dist\ArborGraph.zip` and `dist\ArborGraph-v1.3.0-portable.zip`).
+- Generates cryptographic SHA-256 digest manifest (`dist\SHA256SUMS.txt`).
+
+### 2. Side-by-Side Electron Desktop Preview Installer
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-desktop-preview.ps1 -BuildInstaller
+```
+- Bundles the React 19 + TypeScript frontend with Electron 45.
+- Publishes the self-contained out-of-process `ArborGraph.EngineHost.exe` runtime into `resources/engine/`.
+- Generates side-by-side installer `dist\desktop-setup\ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe`.
 
 ---
 
 ## Running Automated Tests
 
-The test suite validates the full operational lifecycle across 40 automated test suites: SQLite ingestion in WAL mode, recursive directory rollups, cryptographic duplicate detection, safe cancellation, junk file deletion, treemap layout, live directory feed buffer, XAML StaticResource integrity, report exports, and persistent scan history lifecycle verification.
+ArborGraph includes comprehensive test harnesses verifying functional, architectural, security, and protocol integrity:
 
-Run the test suite via the launcher:
-```cmd
+### 1. 47-Stage Integration & QA Suite (WPF & Database Engine)
+Validates SQLite WAL ingestion, multi-drive scoping, directory rollups, cryptographic SHA-256 duplicate pipelines, cancellation, junk cleaning, treemap algorithms, EULA gates, and persistent scan history:
+```powershell
 start.bat --test
 ```
+Or directly via .NET:
+```powershell
+dotnet run --project tests\DiskScope.Tests.csproj -c Release
+```
 
-Or directly via `dotnet`:
-```cmd
-dotnet run --project tests\DiskScope.Tests.csproj
+### 2. Dedicated Security & Data-Safety Audits
+Validates system root deletion shields, relative path traversal guards, prefix collision boundaries, DOS device name safety, and SQL injection immunization:
+```powershell
+dotnet run --project tests\DiskScope.Tests.csproj -c Release --no-build -- --security
+```
+
+### 3. Out-of-Process Engine Host Protocol Suite
+Tests stdin/stdout JSON-lines IPC protocol, validation limits, scan cancellation, rollups, and graceful shutdown:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-engine-host.ps1
+```
+
+### 4. Desktop Client Contract Tests
+Runs TypeScript compiler verification and Node test runner contract tests:
+```powershell
+cd desktop
+npm test
 ```
 
 ---

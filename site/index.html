@@ -164,42 +164,10 @@
                                 <td><a id="btnDownloadSetup" href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe" class="btn-primary" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
                             </tr>
                             <tr>
-                                <td><span class="file-name-cell" id="pkgClassicSetupName">ArborGraph-Setup-v1.3.0-x64.exe</span></td>
-                                <td>Classic WPF Setup Wizard</td>
-                                <td>Windows 10 / 11 (x64)</td>
-                                <td id="pkgClassicSetupSize">74.7 MB</td>
-                                <td><button class="btn-mini copy-hash-btn" id="btnCopyClassicSetupHash" data-hash="50D1F9713095A26F0D725EE9B6A786A88586865C42AF64A8DC0573C43F0DC04B" title="Copy SHA-256 checksum for classic WPF installer">Copy SHA-256</button></td>
-                                <td><a id="btnDownloadClassicSetup" href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph-Setup-v1.3.0-x64.exe" class="btn-action" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
-                            </tr>
-                            <tr>
-                                <td><span class="file-name-cell">ArborGraph.exe</span></td>
-                                <td>Single-File Standalone</td>
-                                <td>Windows 10 / 11 (x64)</td>
-                                <td id="pkgExeSize">79.8 MB</td>
-                                <td><button class="btn-mini copy-hash-btn" id="btnCopyExeHash" data-hash="26E2EE718CF07E82551AD1B5E8A02D74411C10C0862A10F809894F41BD4CDE14" title="Copy SHA-256 checksum for portable executable">Copy SHA-256</button></td>
-                                <td><a href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.exe" class="btn-action" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
-                            </tr>
-                            <tr>
-                                <td><span class="file-name-cell">ArborGraph.zip</span></td>
-                                <td>Portable Zip Archive</td>
-                                <td>Windows 10 / 11 (x64)</td>
-                                <td id="pkgZipSize">74.3 MB</td>
-                                <td><button class="btn-mini copy-hash-btn" id="btnCopyZipHash" data-hash="2C22539719EF65DE750522761BF26DA7408C2BF42132CF488D0F7B6BEE19C372" title="Copy SHA-256 checksum for zip package">Copy SHA-256</button></td>
-                                <td><a href="https://github.com/12valor/ArborGraph/releases/latest/download/ArborGraph.zip" class="btn-action" style="padding: 4px 10px; font-size: 11px;" target="_blank" rel="noopener noreferrer">Download</a></td>
-                            </tr>
-                            <tr>
-                                <td><span class="file-name-cell">installer.iss</span></td>
-                                <td>Inno Setup 6 Script</td>
-                                <td>Windows Installer Compiler</td>
-                                <td>2.8 KB</td>
-                                <td><span class="mono-text" style="color: var(--color-text-muted);">Inno Setup 6.x</span></td>
-                                <td><a href="https://github.com/12valor/ArborGraph/blob/main/installer/installer.iss" target="_blank" rel="noopener noreferrer" class="btn-action" style="padding: 4px 10px; font-size: 11px;">View Script</a></td>
-                            </tr>
-                            <tr>
                                 <td><span class="file-name-cell">Source Code (.zip)</span></td>
-                                <td>C# / WPF (.NET 8)</td>
-                                <td>Any Platform</td>
-                                <td>1.2 MB</td>
+                                <td>Electron + .NET 8 Engine</td>
+                                <td>Windows / Any</td>
+                                <td>Repository Source</td>
                                 <td><span class="mono-text" style="color: var(--color-text-muted);">Git HEAD</span></td>
                                 <td><a href="https://github.com/12valor/ArborGraph" target="_blank" rel="noopener noreferrer" class="btn-action" style="padding: 4px 10px; font-size: 11px;">Repository</a></td>
                             </tr>
@@ -652,9 +620,9 @@
 
                 <div class="verify-grid">
                     <div class="verify-panel">
-                        <div class="verify-label">OFFICIAL SHA-256 CHECKSUM (ArborGraph.exe):</div>
+                        <div class="verify-label">OFFICIAL SHA-256 CHECKSUM (ArborGraph Desktop Installer):</div>
                         <div class="hash-copy-bar">
-                            <span class="hash-text" id="officialHash">E7EEC1445ED5974CD36C6DD62158630169A803028F986E69CE3459F1D31ACBC6</span>
+                            <span class="hash-text" id="officialHash">BD3874384F53F21AAB712652DD7C3F1B1412AB7FB99D88793641A58355B1F880</span>
                             <button type="button" class="btn-secondary" id="copyOfficialHashBtn">Copy SHA-256</button>
                         </div>
 
@@ -670,7 +638,7 @@
                         <div style="margin-top: 18px;">
                             <div class="verify-label">CALCULATE HASH VIA WINDOWS POWERSHELL:</div>
                             <div class="code-snippet-box">
-                                <span id="psCommand">Get-FileHash .\ArborGraph.exe -Algorithm SHA256</span>
+                                <span id="psCommand">Get-FileHash .\ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe -Algorithm SHA256</span>
                                 <button type="button" class="btn-mini copy-cmd-btn" data-target="psCommand">Copy</button>
                             </div>
                         </div>
@@ -819,7 +787,7 @@
                                 <p>ArborGraph is an offline Windows desktop utility designed for rapid disk analysis, visual storage breakdown, and safe developer junk cleanup on 64-bit Windows machines.</p>
                                 <h3>First Scan Workflow</h3>
                                 <ol>
-                                    <li><strong>Launch the Application:</strong> Double-click <code>ArborGraph.exe</code>. The executable runs natively without external runtime installers.</li>
+                                    <li><strong>Launch the Application:</strong> Launch the installed <strong>ArborGraph Desktop</strong> application from your Start Menu or Desktop shortcut.</li>
                                     <li><strong>Select Target Volume:</strong> Choose your system drive (e.g., <code>C:\</code>) or secondary development volume from the top drive dropdown.</li>
                                     <li><strong>Execute Scan:</strong> Click <strong>Start Scan</strong>. The bounded multi-threaded traversal engine immediately crawls the directory hierarchy, indexing file attributes into a local SQLite database in WAL mode.</li>
                                     <li><strong>Review Disk Consumption:</strong> Inspect the Treemap view to locate oversized directories, video caches, RAW camera files, or large Photoshop assets.</li>
@@ -837,14 +805,12 @@
                                 <div class="article-meta">Document ID: AG-DOC-002 &bull; Version 1.0</div>
                             </div>
                             <div class="article-body">
-                                <h3>Standalone Portable Deployment</h3>
-                                <p>ArborGraph requires zero installation steps to execute. You can place <code>ArborGraph.exe</code> in any folder, USB flash drive, or desktop directory.</p>
                                 <h3>Windows Setup Wizard Deployment</h3>
-                                <p>To install ArborGraph as a registered Windows application:</p>
+                                <p>To install ArborGraph as a registered Windows desktop application:</p>
                                 <ul>
-                                    <li>Download the official installer package or compile <code>installer/installer.iss</code> with Inno Setup 6.</li>
+                                    <li>Download the official desktop installer package (<code>ArborGraph-Desktop-Preview-Setup-v1.3.0-x64.exe</code>).</li>
                                     <li>Launch the installer executable. You must accept the End User License Agreement (EULA) before proceeding.</li>
-                                    <li>Target installation defaults to <code>C:\Program Files\ArborGraph</code> with optional desktop and Start Menu shortcuts.</li>
+                                    <li>Target installation defaults to <code>C:\Program Files\ArborGraph Desktop Preview</code> with optional desktop and Start Menu shortcuts.</li>
                                 </ul>
                             </div>
                         </div>
@@ -951,7 +917,7 @@
                             <div class="article-body">
                                 <h3>Complete Application Removal</h3>
                                 <ol>
-                                    <li><strong>Portable Binary:</strong> Delete <code>ArborGraph.exe</code> from your chosen folder.</li>
+                                    <li><strong>Desktop Application:</strong> Uninstall via Windows Settings &rarr; Installed Apps &rarr; <strong>ArborGraph Desktop Preview</strong>.</li>
                                     <li><strong>Installed Version:</strong> Open <em>Windows Settings &gt; Apps &gt; Installed Apps</em>, locate <strong>ArborGraph</strong>, and select <strong>Uninstall</strong>.</li>
                                     <li><strong>Purge Local Catalog Data:</strong> Delete the local application directory:
                                         <div class="code-snippet-box" style="margin-top: 8px;">

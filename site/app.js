@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    let currentOfficialHash = 'E7EEC1445ED5974CD36C6DD62158630169A803028F986E69CE3459F1D31ACBC6';
+    let currentOfficialHash = 'BD3874384F53F21AAB712652DD7C3F1B1412AB7FB99D88793641A58355B1F880';
     const STATIC_FALLBACK_HASH = currentOfficialHash;
 
     // =========================================================================
@@ -1208,9 +1208,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (Array.isArray(data.assets)) {
-                // Primary Desktop Setup Installer (Electron + Engine Host from dist/desktop-setup)
+                // Primary Desktop Setup Installer (Electron + Engine Host)
                 const desktopSetupAsset = data.assets.find(a => a.name.includes('Desktop-Preview-Setup') && a.name.endsWith('.exe'))
-                    || data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
+                    || data.assets.find(a => a.name.includes('Setup') && a.name.endsWith('.exe'));
                 if (desktopSetupAsset) {
                     const setupNameEl = document.getElementById('pkgSetupName');
                     if (setupNameEl) setupNameEl.textContent = desktopSetupAsset.name;
@@ -1231,39 +1231,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Classic WPF Setup Installer
-                const classicSetupAsset = data.assets.find(a => a.name.startsWith('ArborGraph-Setup') && a.name.endsWith('.exe'));
-                if (classicSetupAsset) {
-                    const classicNameEl = document.getElementById('pkgClassicSetupName');
-                    if (classicNameEl) classicNameEl.textContent = classicSetupAsset.name;
-
-                    const classicSizeEl = document.getElementById('pkgClassicSetupSize');
-                    if (classicSizeEl && classicSetupAsset.size) {
-                        classicSizeEl.textContent = `${(classicSetupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
-                    }
-
-                    const classicBtn = document.getElementById('btnDownloadClassicSetup');
-                    if (classicBtn && classicSetupAsset.browser_download_url) {
-                        classicBtn.href = classicSetupAsset.browser_download_url;
-                    }
-                }
-
-                const exeAsset = data.assets.find(a => a.name === 'ArborGraph.exe');
-                if (exeAsset) {
-                    const exeSizeEl = document.getElementById('pkgExeSize');
-                    if (exeSizeEl && exeAsset.size) {
-                        exeSizeEl.textContent = `${(exeAsset.size / (1024 * 1024)).toFixed(1)} MB`;
-                    }
-                }
-
-                const zipAsset = data.assets.find(a => a.name === 'ArborGraph.zip' || a.name.endsWith('-portable.zip'));
-                if (zipAsset) {
-                    const zipSizeEl = document.getElementById('pkgZipSize');
-                    if (zipSizeEl && zipAsset.size) {
-                        zipSizeEl.textContent = `${(zipAsset.size / (1024 * 1024)).toFixed(1)} MB`;
-                    }
-                }
-
                 let foundSetupHash = false;
                 const sumsAsset = data.assets.find(a => a.name === 'SHA256SUMS.txt');
                 if (sumsAsset && sumsAsset.browser_download_url) {
@@ -1279,14 +1246,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (match) {
                                     const hash = match[1].toUpperCase();
                                     const filename = match[2].trim();
-                                    if (filename === 'ArborGraph.exe') {
+                                    if (filename.includes('Desktop-Preview-Setup') && filename.endsWith('.exe') || filename.includes('Setup')) {
+                                        foundSetupHash = true;
                                         currentOfficialHash = hash;
                                         const offEl = document.getElementById('officialHash');
                                         if (offEl) offEl.textContent = hash;
-                                        const btnExe = document.getElementById('btnCopyExeHash');
-                                        if (btnExe) btnExe.setAttribute('data-hash', hash);
-                                    } else if (filename.includes('Desktop-Preview-Setup') && filename.endsWith('.exe')) {
-                                        foundSetupHash = true;
                                         const btnSetup = document.getElementById('btnCopySetupHash');
                                         if (btnSetup) {
                                             btnSetup.setAttribute('data-hash', hash);
@@ -1296,19 +1260,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                             btnSetup.style.opacity = '1';
                                             btnSetup.style.cursor = 'pointer';
                                         }
-                                    } else if (filename.startsWith('ArborGraph-Setup') && filename.endsWith('.exe')) {
-                                        const btnClassic = document.getElementById('btnCopyClassicSetupHash');
-                                        if (btnClassic) {
-                                            btnClassic.setAttribute('data-hash', hash);
-                                            btnClassic.removeAttribute('disabled');
-                                            btnClassic.textContent = 'Copy SHA-256';
-                                            btnClassic.title = 'Copy SHA-256 checksum for classic WPF installer';
-                                            btnClassic.style.opacity = '1';
-                                            btnClassic.style.cursor = 'pointer';
-                                        }
-                                    } else if (filename === 'ArborGraph.zip' || filename.endsWith('.zip')) {
-                                        const btnZip = document.getElementById('btnCopyZipHash');
-                                        if (btnZip) btnZip.setAttribute('data-hash', hash);
                                     }
                                 }
                             });

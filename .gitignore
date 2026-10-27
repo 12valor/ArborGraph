@@ -11,4 +11,5 @@ PrismDrive.exe
 site/downloads/
 *.zip
 scratch/
+.taste-skill/
 *.pdb

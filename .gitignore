@@ -8,8 +8,10 @@ dist/
 node_modules/
 DiskScope.exe
 PrismDrive.exe
-site/downloads/
+site/downloads/*
+!site/downloads/SHA256SUMS.txt
 *.zip
 scratch/
 .taste-skill/
+.pages/
 *.pdb

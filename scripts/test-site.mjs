@@ -15,7 +15,7 @@ assert.match(html, new RegExp(checksum))
 assert.match(html, /ArborGraph-Desktop-Preview-Setup-v1\.3\.0-x64\.exe/)
 assert.match(html, /releases\/download\/v1\.3\.0\/ArborGraph-Desktop-Preview-Setup-v1\.3\.0-x64\.exe/)
 
-const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.txt': 'text/plain' }
+const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.txt': 'text/plain', '.woff2': 'font/woff2' }
 const server = createServer((req, res) => {
   try {
     const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
@@ -43,12 +43,16 @@ try {
       title: document.title,
       missingAnchors: [...document.querySelectorAll('a[href^="#"]')].filter(a => !document.getElementById(a.hash.slice(1))).map(a => a.hash),
       brokenImages: [...document.images].filter(image => image.loading !== 'lazy' && (!image.complete || image.naturalWidth === 0)).map(image => image.src),
-      typefaces: [...new Set([...document.querySelectorAll('h1,h2,p,button')].map(element => getComputedStyle(element).fontFamily))]
+      typefaces: [...new Set([...document.querySelectorAll('h1,h2,p,button')].map(element => getComputedStyle(element).fontFamily))],
+      fontReady: document.fonts.check('600 16px Inter'),
+      externalFontRequests: performance.getEntriesByType('resource').filter(item => item.name.includes('fonts.googleapis') || item.name.includes('fonts.gstatic')).length
     }))
     assert.ok(result.overflow <= 1, `${width}px horizontal overflow: ${result.overflow}px`)
     assert.deepEqual(result.missingAnchors, [], `${width}px missing anchors`)
     assert.deepEqual(result.brokenImages, [], `${width}px broken images`)
     assert.ok(result.typefaces.every(font => font.startsWith('Inter')), `${width}px has non-Inter text`)
+    assert.ok(result.fontReady, `${width}px Inter font did not load`)
+    assert.equal(result.externalFontRequests, 0, `${width}px requested third-party fonts`)
     assert.deepEqual(page.consoleErrors, [], `${width}px console errors`)
     console.log(`PASS layout and assets at ${width}px`)
   }

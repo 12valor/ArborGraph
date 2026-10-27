@@ -1,3 +1,4 @@
+@font-face{font-family:Inter;src:url('./assets/fonts/InterVariable.woff2') format('woff2');font-style:normal;font-weight:100 900;font-display:swap}
 :root{color-scheme:light;--paper:#f6f5f1;--white:#fffefa;--ink:#17202b;--muted:#56616d;--blue:#165d9f;--navy:#10233d;--pale:#e9f0f5;--line:#cbd3d8;--page-pad:clamp(20px,5vw,88px)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}

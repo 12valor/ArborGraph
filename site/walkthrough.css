@@ -2033,6 +2033,7 @@ code, pre, .mono-text {
     }
 }
 /* Keep the archived walkthrough readable alongside the current Inter-only site. */
+@font-face{font-family:Inter;src:url('./assets/fonts/InterVariable.woff2') format('woff2');font-style:normal;font-weight:100 900;font-display:swap}
 html,body,button,input,select,textarea,code,pre,*{font-family:Inter,Arial,sans-serif!important}
 .legacy-banner{position:relative;z-index:20;display:flex;align-items:center;gap:15px;flex-wrap:wrap;background:#10233d;color:#fff;padding:13px max(20px,4vw);font-size:14px;line-height:1.5}
 .legacy-banner strong{font-weight:700}.legacy-banner span{flex:1;min-width:240px}.legacy-banner a{color:#b8dcff;text-decoration:underline;font-weight:700}

@@ -680,6 +680,31 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterDuplicateTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-STALE",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate analysis rejects files whose indexed size is stale",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Changed files must not be reported with an obsolete size or reclaimable space.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_stale");
+                string a = Path.Combine(root, "a.txt");
+                string b = Path.Combine(root, "b.txt");
+                File.WriteAllText(a, "original");
+                File.WriteAllText(b, "original");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_stale.db"));
+                db.Initialize();
+                await new ScannerService(db).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                File.WriteAllText(a, "changed to a longer matching value");
+                File.WriteAllText(b, "changed to a longer matching value");
+                var groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync(minSize: 0);
+                ctx.AssertEqual(0, groups.Count, "Files changed since indexing must not be reported at the old size");
+            }
+        ));
+
         // TC-DUP-01: 3-Stage Cryptographic Duplicate Detection & Collision Rejection
         runner.Register(new TestCase(
             TestId: "TC-DUP-01",

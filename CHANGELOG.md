@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-10-29
+
+### Fixed
+- Reject empty or unavailable scan targets before clearing the index and use full traversal for incremental scan requests.
+- Include small and empty files in duplicate analysis and skip candidates with stale indexed sizes.
+- In the WPF application, require a retained path and recheck duplicate content before cleanup.
+
+### Known limitations
+- Electron duplicate analysis remains limited to 250 size groups and does not provide duplicate deletion.
+- WPF duplicate cleanup does not eliminate the interval between rechecking content and deleting a file.
+
+---
+
 ## [1.3.0] - 2026-10-26
 
 ### Added

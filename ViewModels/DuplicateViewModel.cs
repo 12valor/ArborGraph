@@ -214,14 +214,18 @@ public class DuplicateViewModel : ObservableObject
             return;
         }
 
+        if (!ConfirmRetainedCopy(selectedFiles)) return;
+
         long totalBytes = selectedFiles.Sum(f => f.Size);
         var confirm = System.Windows.MessageBox.Show(
-            $"Move {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)}) to the Windows Recycle Bin?\n\nOne copy of each duplicate group will remain intact.",
+            $"Move {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)}) to the Windows Recycle Bin?\n\nAn unselected path exists for each group. Files may have changed since analysis.",
             "Confirm Recycle Bin Cleanup",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        var groupsAtConfirmation = SnapshotGroups();
 
         int successCount = 0;
         int failCount = 0;
@@ -229,6 +233,11 @@ public class DuplicateViewModel : ObservableObject
 
         foreach (var file in selectedFiles)
         {
+            if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles))
+            {
+                failCount++;
+                continue;
+            }
             if (_fileActionService.MoveToRecycleBin(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
@@ -243,10 +252,10 @@ public class DuplicateViewModel : ObservableObject
 
         RefreshTotals();
 
-        string msg = $"Cleaned {successCount:N0} duplicate file(s), recovering {SizeFormatter.Format(recoveredBytes)} to the Recycle Bin.";
+        string msg = $"Moved {successCount:N0} duplicate file(s) ({SizeFormatter.Format(recoveredBytes)}) to the Recycle Bin. Space may not be reclaimed until the Recycle Bin is emptied.";
         if (failCount > 0)
         {
-            msg += $"\n{failCount} file(s) could not be removed (in use or access denied).";
+            msg += $"\n{failCount} file(s) could not be removed or were skipped because no retained path was available.";
         }
 
         StatusMessage = msg;
@@ -270,6 +279,8 @@ public class DuplicateViewModel : ObservableObject
             return;
         }
 
+        if (!ConfirmRetainedCopy(selectedFiles)) return;
+
         long totalBytes = selectedFiles.Sum(f => f.Size);
         var confirm = System.Windows.MessageBox.Show(
             $"WARNING: Are you sure you want to PERMANENTLY delete {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)})?\n\nThis CANNOT be undone and will bypass the Recycle Bin.",
@@ -279,12 +290,19 @@ public class DuplicateViewModel : ObservableObject
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
+        var groupsAtConfirmation = SnapshotGroups();
+
         int successCount = 0;
         int failCount = 0;
         long recoveredBytes = 0;
 
         foreach (var file in selectedFiles)
         {
+            if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles))
+            {
+                failCount++;
+                continue;
+            }
             if (_fileActionService.DeletePermanently(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
@@ -302,7 +320,7 @@ public class DuplicateViewModel : ObservableObject
         string msg = $"Permanently removed {successCount:N0} duplicate file(s), recovering {SizeFormatter.Format(recoveredBytes)}.";
         if (failCount > 0)
         {
-            msg += $"\n{failCount} file(s) could not be deleted (in use or access denied).";
+            msg += $"\n{failCount} file(s) could not be deleted or were skipped because no retained path was available.";
         }
 
         StatusMessage = msg;
@@ -313,6 +331,7 @@ public class DuplicateViewModel : ObservableObject
     private void MoveFileToRecycleBin(FileRecord? file)
     {
         if (file == null) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         var confirm = System.Windows.MessageBox.Show(
             $"Move duplicate file to Recycle Bin?\n\n\"{file.Path}\" ({file.FormattedSize})",
@@ -321,6 +340,7 @@ public class DuplicateViewModel : ObservableObject
             System.Windows.MessageBoxImage.Question);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         if (_fileActionService.MoveToRecycleBin(file.Path, out string? error, skipConfirmation: true))
         {
@@ -337,6 +357,7 @@ public class DuplicateViewModel : ObservableObject
     private void DeleteFilePermanently(FileRecord? file)
     {
         if (file == null) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         var confirm = System.Windows.MessageBox.Show(
             $"WARNING: Are you sure you want to PERMANENTLY delete:\n\n\"{file.Path}\" ({file.FormattedSize})?\n\nThis CANNOT be undone.",
@@ -345,6 +366,7 @@ public class DuplicateViewModel : ObservableObject
             System.Windows.MessageBoxImage.Warning);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         if (_fileActionService.DeletePermanently(file.Path, out string? error, skipConfirmation: true))
         {
@@ -356,6 +378,20 @@ public class DuplicateViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Failed to permanently delete file: {error}", "Delete Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
+    }
+
+    private List<DuplicateGroup> SnapshotGroups() => DuplicateGroups.Select(group => new DuplicateGroup
+    {
+        Files = new ObservableCollection<FileRecord>(group.Files)
+    }).ToList();
+
+    private bool ConfirmRetainedCopy(IReadOnlyList<FileRecord> targets)
+    {
+        if (DuplicateSelectionGuard.HasRetainedCopy(DuplicateGroups, targets)) return true;
+        System.Windows.MessageBox.Show(
+            "Leave at least one existing, unselected file in every affected duplicate group. Run analysis again if files have moved or disappeared.",
+            "Keep a Copy", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        return false;
     }
 
     private void RemoveFileFromGroups(FileRecord file)

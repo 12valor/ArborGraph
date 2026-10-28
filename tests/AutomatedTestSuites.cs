@@ -681,6 +681,33 @@ public static class AutomatedTestSuites
     private static void RegisterDuplicateTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-DUP-KEEPER",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate cleanup requires an existing unselected path in every group",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateSelectionGuard",
+            AuditRiskNote: "Rejects selecting every copy, missing keepers, and targets outside the verified groups.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_keeper");
+                var a = new FileRecord { Path = Path.Combine(root, "a.txt") };
+                var b = new FileRecord { Path = Path.Combine(root, "b.txt") };
+                var c = new FileRecord { Path = Path.Combine(root, "c.txt") };
+                File.WriteAllText(a.Path, "same");
+                File.WriteAllText(b.Path, "same");
+                File.WriteAllText(c.Path, "same");
+                var group = new DuplicateGroup { Files = new System.Collections.ObjectModel.ObservableCollection<FileRecord> { a, b, c } };
+                ctx.Assert(DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b }), "An existing unselected path permits selection");
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b, c }), "Selecting all copies must be rejected");
+                File.Delete(c.Path);
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b }), "A missing keeper must be rejected");
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { new FileRecord { Path = Path.Combine(root, "other") } }), "An unknown target must be rejected");
+                await Task.CompletedTask;
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-DUP-STALE",
             FeatureId: "FEAT-22",
             Title: "Duplicate analysis rejects files whose indexed size is stale",

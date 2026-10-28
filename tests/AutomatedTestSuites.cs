@@ -374,6 +374,33 @@ public static class AutomatedTestSuites
     private static void RegisterScannerTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-SCN-INVALID-ROOTS",
+            FeatureId: "FEAT-03",
+            Title: "Invalid scan roots preserve the existing index",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Empty or unavailable targets must not trigger an index clear or report a completed scan.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("scan_invalid_roots");
+                File.WriteAllText(Path.Combine(root, "keep.txt"), "retained");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("scan_invalid_roots.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                foreach (var invalidRoots in new[] { Array.Empty<string>(), new[] { Path.Combine(root, "missing") } })
+                {
+                    bool rejected = false;
+                    try { await scanner.ScanDrivesAsync(invalidRoots, null, CancellationToken.None); }
+                    catch (ArgumentException) { rejected = true; }
+                    ctx.Assert(rejected, "Invalid scan targets must be rejected");
+                    ctx.AssertEqual(1, db.GetFilesPaged(0, 100).Count, "Rejected scan must preserve the index");
+                }
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-SCN-INCREMENTAL-FALLBACK",
             FeatureId: "FEAT-03",
             Title: "Incremental requests rebuild changed filesystem data",
@@ -680,6 +707,91 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterDuplicateTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-SMALL",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate analysis includes empty and small files",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Small and empty files should be grouped by actual content, not excluded by default.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_small");
+                File.WriteAllText(Path.Combine(root, "empty-a"), "");
+                File.WriteAllText(Path.Combine(root, "empty-b"), "");
+                File.WriteAllText(Path.Combine(root, "small-a"), "same");
+                File.WriteAllText(Path.Combine(root, "small-b"), "same");
+                File.WriteAllText(Path.Combine(root, "collision"), "else");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_small.db"));
+                db.Initialize();
+                await new ScannerService(db).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                var groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync();
+                ctx.AssertEqual(2, groups.Count, "Empty and small duplicate groups should be detected");
+                ctx.Assert(groups.Any(g => g.ExactSize == 0 && g.FileCount == 2), "Empty files should form a group");
+                ctx.Assert(groups.Any(g => g.ExactSize == 4 && g.FileCount == 2), "Only matching small files should form a group");
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-REVERIFY",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate cleanup rechecks target and keeper content",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateSelectionGuard",
+            AuditRiskNote: "Rejects changed, missing, or locked candidates before a cleanup action.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_reverify");
+                var a = new FileRecord { Path = Path.Combine(root, "a") };
+                var b = new FileRecord { Path = Path.Combine(root, "b") };
+                File.WriteAllText(a.Path, "same");
+                File.WriteAllText(b.Path, "same");
+                string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(a.Path)));
+                var group = new DuplicateGroup { ExactSize = 4, Sha256 = hash, Files = new System.Collections.ObjectModel.ObservableCollection<FileRecord> { a, b } };
+                ctx.Assert(DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Matching target and keeper should verify");
+                File.WriteAllText(b.Path, "else");
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Changed keeper must fail verification");
+                File.WriteAllText(b.Path, "same");
+                File.WriteAllText(a.Path, "else");
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Changed target must fail verification");
+                File.WriteAllText(a.Path, "same");
+                using (var locked = new FileStream(b.Path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                    ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Locked keeper must fail verification");
+                File.Delete(b.Path);
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Missing keeper must fail verification");
+                await Task.CompletedTask;
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-KEEPER",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate cleanup requires an existing unselected path in every group",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateSelectionGuard",
+            AuditRiskNote: "Rejects selecting every copy, missing keepers, and targets outside the verified groups.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_keeper");
+                var a = new FileRecord { Path = Path.Combine(root, "a.txt") };
+                var b = new FileRecord { Path = Path.Combine(root, "b.txt") };
+                var c = new FileRecord { Path = Path.Combine(root, "c.txt") };
+                File.WriteAllText(a.Path, "same");
+                File.WriteAllText(b.Path, "same");
+                File.WriteAllText(c.Path, "same");
+                var group = new DuplicateGroup { Files = new System.Collections.ObjectModel.ObservableCollection<FileRecord> { a, b, c } };
+                ctx.Assert(DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b }), "An existing unselected path permits selection");
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b, c }), "Selecting all copies must be rejected");
+                File.Delete(c.Path);
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { a, b }), "A missing keeper must be rejected");
+                ctx.Assert(!DuplicateSelectionGuard.HasRetainedCopy(new[] { group }, new[] { new FileRecord { Path = Path.Combine(root, "other") } }), "An unknown target must be rejected");
+                await Task.CompletedTask;
+            }
+        ));
+
         runner.Register(new TestCase(
             TestId: "TC-DUP-STALE",
             FeatureId: "FEAT-22",

@@ -67,8 +67,18 @@ public class ScannerService
         CancellationToken cancellationToken,
         bool enableIncremental = false)
     {
+        ArgumentNullException.ThrowIfNull(roots);
+        roots = roots.ToArray();
+        if (roots.Count == 0 || roots.Any(root => string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)))
+            throw new ArgumentException("Select at least one available directory before scanning.", nameof(roots));
+
         return Task.Run(async () =>
         {
+            // Recheck before clearing any previously indexed data; a drive may have
+            // become unavailable after the caller selected it.
+            if (roots.Any(root => !Directory.Exists(root)))
+                throw new IOException("A selected scan directory is no longer available.");
+
             // Reset counters
             Interlocked.Exchange(ref _directoriesVisited, 0);
             Interlocked.Exchange(ref _directoriesProcessed, 0);

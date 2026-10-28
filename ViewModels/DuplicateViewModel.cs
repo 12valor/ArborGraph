@@ -19,6 +19,7 @@ public class DuplicateViewModel : ObservableObject
     private int _totalDuplicateFiles;
     private bool _applyToAllGroups = false;
     private CancellationTokenSource? _cts;
+    private bool _isCleaning;
 
     public DuplicateViewModel(DuplicateAnalyzer analyzer, FileActionService fileActionService)
     {
@@ -26,7 +27,7 @@ public class DuplicateViewModel : ObservableObject
         _fileActionService = fileActionService;
         DuplicateGroups = [];
 
-        StartAnalysisCommand = new RelayCommand(async _ => await RunAnalysisAsync(), _ => !IsAnalyzing);
+        StartAnalysisCommand = new RelayCommand(async _ => await RunAnalysisAsync(), _ => !IsAnalyzing && !_isCleaning);
         CancelAnalysisCommand = new RelayCommand(_ => CancelAnalysis(), _ => IsAnalyzing);
 
         OpenFileCommand = new RelayCommand(_ => { if (SelectedFile != null) _fileActionService.OpenFile(SelectedFile.Path); }, _ => SelectedFile != null);
@@ -41,11 +42,11 @@ public class DuplicateViewModel : ObservableObject
         DeselectAllCommand = new RelayCommand(_ => DeselectAll(), _ => DuplicateGroups.Count > 0);
 
         // Safe cleanup commands
-        MoveSelectedToRecycleBinCommand = new RelayCommand(_ => MoveSelectedToRecycleBin(), _ => DuplicateGroups.Count > 0);
-        DeleteSelectedPermanentlyCommand = new RelayCommand(_ => DeleteSelectedPermanently(), _ => DuplicateGroups.Count > 0);
+        MoveSelectedToRecycleBinCommand = new RelayCommand(async _ => await RunCleanupAsync(MoveSelectedToRecycleBin), _ => DuplicateGroups.Count > 0 && !_isCleaning && !IsAnalyzing);
+        DeleteSelectedPermanentlyCommand = new RelayCommand(async _ => await RunCleanupAsync(DeleteSelectedPermanently), _ => DuplicateGroups.Count > 0 && !_isCleaning && !IsAnalyzing);
 
-        MoveFileToRecycleBinCommand = new RelayCommand(_ => MoveFileToRecycleBin(SelectedFile), _ => SelectedFile != null);
-        DeleteFilePermanentlyCommand = new RelayCommand(_ => DeleteFilePermanently(SelectedFile), _ => SelectedFile != null);
+        MoveFileToRecycleBinCommand = new RelayCommand(async _ => await RunCleanupAsync(() => MoveFileToRecycleBin(SelectedFile)), _ => SelectedFile != null && !_isCleaning && !IsAnalyzing);
+        DeleteFilePermanentlyCommand = new RelayCommand(async _ => await RunCleanupAsync(() => DeleteFilePermanently(SelectedFile)), _ => SelectedFile != null && !_isCleaning && !IsAnalyzing);
 
         ExportCsvCommand = new RelayCommand(async _ => await ExportCsvAsync(), _ => DuplicateGroups.Count > 0);
     }
@@ -198,7 +199,7 @@ public class DuplicateViewModel : ObservableObject
         }
     }
 
-    private void MoveSelectedToRecycleBin()
+    private async Task MoveSelectedToRecycleBin()
     {
         var selectedFiles = DuplicateGroups
             .SelectMany(g => g.Files.Where(f => f.IsSelected))
@@ -214,14 +215,18 @@ public class DuplicateViewModel : ObservableObject
             return;
         }
 
+        if (!ConfirmRetainedCopy(selectedFiles)) return;
+
         long totalBytes = selectedFiles.Sum(f => f.Size);
         var confirm = System.Windows.MessageBox.Show(
-            $"Move {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)}) to the Windows Recycle Bin?\n\nOne copy of each duplicate group will remain intact.",
+            $"Move {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)}) to the Windows Recycle Bin?\n\nAn unselected path exists for each group. Files may have changed since analysis.",
             "Confirm Recycle Bin Cleanup",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        var groupsAtConfirmation = SnapshotGroups();
 
         int successCount = 0;
         int failCount = 0;
@@ -229,6 +234,12 @@ public class DuplicateViewModel : ObservableObject
 
         foreach (var file in selectedFiles)
         {
+            if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles) ||
+                !await Task.Run(() => DuplicateSelectionGuard.HasVerifiedCopy(groupsAtConfirmation, selectedFiles, file)))
+            {
+                failCount++;
+                continue;
+            }
             if (_fileActionService.MoveToRecycleBin(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
@@ -243,10 +254,10 @@ public class DuplicateViewModel : ObservableObject
 
         RefreshTotals();
 
-        string msg = $"Cleaned {successCount:N0} duplicate file(s), recovering {SizeFormatter.Format(recoveredBytes)} to the Recycle Bin.";
+        string msg = $"Moved {successCount:N0} duplicate file(s) ({SizeFormatter.Format(recoveredBytes)}) to the Recycle Bin. Space may not be reclaimed until the Recycle Bin is emptied.";
         if (failCount > 0)
         {
-            msg += $"\n{failCount} file(s) could not be removed (in use or access denied).";
+            msg += $"\n{failCount} file(s) could not be removed or were skipped because the files could not be verified.";
         }
 
         StatusMessage = msg;
@@ -254,7 +265,7 @@ public class DuplicateViewModel : ObservableObject
             failCount > 0 ? System.Windows.MessageBoxImage.Warning : System.Windows.MessageBoxImage.Information);
     }
 
-    private void DeleteSelectedPermanently()
+    private async Task DeleteSelectedPermanently()
     {
         var selectedFiles = DuplicateGroups
             .SelectMany(g => g.Files.Where(f => f.IsSelected))
@@ -270,6 +281,8 @@ public class DuplicateViewModel : ObservableObject
             return;
         }
 
+        if (!ConfirmRetainedCopy(selectedFiles)) return;
+
         long totalBytes = selectedFiles.Sum(f => f.Size);
         var confirm = System.Windows.MessageBox.Show(
             $"WARNING: Are you sure you want to PERMANENTLY delete {selectedFiles.Count:N0} duplicate file(s) ({SizeFormatter.Format(totalBytes)})?\n\nThis CANNOT be undone and will bypass the Recycle Bin.",
@@ -279,12 +292,20 @@ public class DuplicateViewModel : ObservableObject
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
+        var groupsAtConfirmation = SnapshotGroups();
+
         int successCount = 0;
         int failCount = 0;
         long recoveredBytes = 0;
 
         foreach (var file in selectedFiles)
         {
+            if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles) ||
+                !await Task.Run(() => DuplicateSelectionGuard.HasVerifiedCopy(groupsAtConfirmation, selectedFiles, file)))
+            {
+                failCount++;
+                continue;
+            }
             if (_fileActionService.DeletePermanently(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
@@ -302,7 +323,7 @@ public class DuplicateViewModel : ObservableObject
         string msg = $"Permanently removed {successCount:N0} duplicate file(s), recovering {SizeFormatter.Format(recoveredBytes)}.";
         if (failCount > 0)
         {
-            msg += $"\n{failCount} file(s) could not be deleted (in use or access denied).";
+            msg += $"\n{failCount} file(s) could not be deleted or were skipped because the files could not be verified.";
         }
 
         StatusMessage = msg;
@@ -310,9 +331,10 @@ public class DuplicateViewModel : ObservableObject
             failCount > 0 ? System.Windows.MessageBoxImage.Warning : System.Windows.MessageBoxImage.Information);
     }
 
-    private void MoveFileToRecycleBin(FileRecord? file)
+    private async Task MoveFileToRecycleBin(FileRecord? file)
     {
         if (file == null) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         var confirm = System.Windows.MessageBox.Show(
             $"Move duplicate file to Recycle Bin?\n\n\"{file.Path}\" ({file.FormattedSize})",
@@ -321,6 +343,13 @@ public class DuplicateViewModel : ObservableObject
             System.Windows.MessageBoxImage.Question);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        if (!ConfirmRetainedCopy([file])) return;
+        var groupsAtConfirmation = SnapshotGroups();
+        if (!await Task.Run(() => DuplicateSelectionGuard.HasVerifiedCopy(groupsAtConfirmation, new[] { file }, file)))
+        {
+            ShowUnverifiedFileWarning();
+            return;
+        }
 
         if (_fileActionService.MoveToRecycleBin(file.Path, out string? error, skipConfirmation: true))
         {
@@ -334,9 +363,10 @@ public class DuplicateViewModel : ObservableObject
         }
     }
 
-    private void DeleteFilePermanently(FileRecord? file)
+    private async Task DeleteFilePermanently(FileRecord? file)
     {
         if (file == null) return;
+        if (!ConfirmRetainedCopy([file])) return;
 
         var confirm = System.Windows.MessageBox.Show(
             $"WARNING: Are you sure you want to PERMANENTLY delete:\n\n\"{file.Path}\" ({file.FormattedSize})?\n\nThis CANNOT be undone.",
@@ -345,6 +375,13 @@ public class DuplicateViewModel : ObservableObject
             System.Windows.MessageBoxImage.Warning);
 
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
+        if (!ConfirmRetainedCopy([file])) return;
+        var groupsAtConfirmation = SnapshotGroups();
+        if (!await Task.Run(() => DuplicateSelectionGuard.HasVerifiedCopy(groupsAtConfirmation, new[] { file }, file)))
+        {
+            ShowUnverifiedFileWarning();
+            return;
+        }
 
         if (_fileActionService.DeletePermanently(file.Path, out string? error, skipConfirmation: true))
         {
@@ -356,6 +393,44 @@ public class DuplicateViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Failed to permanently delete file: {error}", "Delete Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
+    }
+
+    private List<DuplicateGroup> SnapshotGroups() => DuplicateGroups.Select(group => new DuplicateGroup
+    {
+        ExactSize = group.ExactSize,
+        Sha256 = group.Sha256,
+        Files = new ObservableCollection<FileRecord>(group.Files)
+    }).ToList();
+
+    private static void ShowUnverifiedFileWarning() => System.Windows.MessageBox.Show(
+        "The selected file and a retained copy could not both be verified against the original analysis. Run analysis again.",
+        "Duplicate Verification Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+
+    private async Task RunCleanupAsync(Func<Task> cleanup)
+    {
+        if (_isCleaning || IsAnalyzing) return;
+        _isCleaning = true;
+        RefreshCleanupCommands();
+        try { await cleanup(); }
+        finally { _isCleaning = false; RefreshCleanupCommands(); }
+    }
+
+    private void RefreshCleanupCommands()
+    {
+        (StartAnalysisCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (MoveSelectedToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (DeleteSelectedPermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (MoveFileToRecycleBinCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (DeleteFilePermanentlyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+    }
+
+    private bool ConfirmRetainedCopy(IReadOnlyList<FileRecord> targets)
+    {
+        if (DuplicateSelectionGuard.HasRetainedCopy(DuplicateGroups, targets)) return true;
+        System.Windows.MessageBox.Show(
+            "Leave at least one existing, unselected file in every affected duplicate group. Run analysis again if files have moved or disappeared.",
+            "Keep a Copy", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        return false;
     }
 
     private void RemoveFileFromGroups(FileRecord file)
@@ -409,7 +484,7 @@ public class DuplicateViewModel : ObservableObject
 
     public async Task RunAnalysisAsync()
     {
-        if (IsAnalyzing) return;
+        if (IsAnalyzing || _isCleaning) return;
 
         IsAnalyzing = true;
         _cts = new CancellationTokenSource();
@@ -422,7 +497,7 @@ public class DuplicateViewModel : ObservableObject
         try
         {
             var results = await _analyzer.FindDuplicatesAsync(
-                minSize: 1024,
+                minSize: 0,
                 maxCandidates: 250,
                 statusProgress: progress,
                 onDuplicateFound: group =>

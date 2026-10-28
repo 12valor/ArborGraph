@@ -374,6 +374,33 @@ public static class AutomatedTestSuites
     private static void RegisterScannerTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-SCN-INVALID-ROOTS",
+            FeatureId: "FEAT-03",
+            Title: "Invalid scan roots preserve the existing index",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Empty or unavailable targets must not trigger an index clear or report a completed scan.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("scan_invalid_roots");
+                File.WriteAllText(Path.Combine(root, "keep.txt"), "retained");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("scan_invalid_roots.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                foreach (var invalidRoots in new[] { Array.Empty<string>(), new[] { Path.Combine(root, "missing") } })
+                {
+                    bool rejected = false;
+                    try { await scanner.ScanDrivesAsync(invalidRoots, null, CancellationToken.None); }
+                    catch (ArgumentException) { rejected = true; }
+                    ctx.Assert(rejected, "Invalid scan targets must be rejected");
+                    ctx.AssertEqual(1, db.GetFilesPaged(0, 100).Count, "Rejected scan must preserve the index");
+                }
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-SCN-INCREMENTAL-FALLBACK",
             FeatureId: "FEAT-03",
             Title: "Incremental requests rebuild changed filesystem data",

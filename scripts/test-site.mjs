@@ -45,7 +45,12 @@ try {
       brokenImages: [...document.images].filter(image => image.loading !== 'lazy' && (!image.complete || image.naturalWidth === 0)).map(image => image.src),
       typefaces: [...new Set([...document.querySelectorAll('h1,h2,p,button')].map(element => getComputedStyle(element).fontFamily))],
       fontReady: document.fonts.check('600 16px Inter'),
-      externalFontRequests: performance.getEntriesByType('resource').filter(item => item.name.includes('fonts.googleapis') || item.name.includes('fonts.gstatic')).length
+      externalFontRequests: performance.getEntriesByType('resource').filter(item => item.name.includes('fonts.googleapis') || item.name.includes('fonts.gstatic')).length,
+      screenshots: [...document.querySelectorAll('.screenshot-link')].map(link => {
+        const img = link.querySelector('img'), rect = img.getBoundingClientRect()
+        return { sameFile: link.href === img.src, insideViewport: rect.left >= -1 && rect.right <= innerWidth + 1,
+          ratio: rect.width / rect.height }
+      })
     }))
     assert.ok(result.overflow <= 1, `${width}px horizontal overflow: ${result.overflow}px`)
     assert.deepEqual(result.missingAnchors, [], `${width}px missing anchors`)
@@ -53,6 +58,9 @@ try {
     assert.ok(result.typefaces.every(font => font.startsWith('Inter')), `${width}px has non-Inter text`)
     assert.ok(result.fontReady, `${width}px Inter font did not load`)
     assert.equal(result.externalFontRequests, 0, `${width}px requested third-party fonts`)
+    assert.equal(result.screenshots.length, 4, `${width}px should have four expandable screenshots`)
+    assert.ok(result.screenshots.every(item => item.sameFile), `${width}px screenshot links must open their images`)
+    if (width <= 390) assert.ok(result.screenshots.every(item => item.insideViewport && Math.abs(item.ratio - 1360 / 900) < .03), `${width}px screenshots should fit without cropping`)
     assert.deepEqual(page.consoleErrors, [], `${width}px console errors`)
     console.log(`PASS layout and assets at ${width}px`)
   }

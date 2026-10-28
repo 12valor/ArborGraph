@@ -708,6 +708,38 @@ public static class AutomatedTestSuites
     private static void RegisterDuplicateTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-DUP-REVERIFY",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate cleanup rechecks target and keeper content",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateSelectionGuard",
+            AuditRiskNote: "Rejects changed, missing, or locked candidates before a cleanup action.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_reverify");
+                var a = new FileRecord { Path = Path.Combine(root, "a") };
+                var b = new FileRecord { Path = Path.Combine(root, "b") };
+                File.WriteAllText(a.Path, "same");
+                File.WriteAllText(b.Path, "same");
+                string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(a.Path)));
+                var group = new DuplicateGroup { ExactSize = 4, Sha256 = hash, Files = new System.Collections.ObjectModel.ObservableCollection<FileRecord> { a, b } };
+                ctx.Assert(DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Matching target and keeper should verify");
+                File.WriteAllText(b.Path, "else");
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Changed keeper must fail verification");
+                File.WriteAllText(b.Path, "same");
+                File.WriteAllText(a.Path, "else");
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Changed target must fail verification");
+                File.WriteAllText(a.Path, "same");
+                using (var locked = new FileStream(b.Path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                    ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Locked keeper must fail verification");
+                File.Delete(b.Path);
+                ctx.Assert(!DuplicateSelectionGuard.HasVerifiedCopy(new[] { group }, new[] { a }, a), "Missing keeper must fail verification");
+                await Task.CompletedTask;
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-DUP-KEEPER",
             FeatureId: "FEAT-22",
             Title: "Duplicate cleanup requires an existing unselected path in every group",

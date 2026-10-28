@@ -96,104 +96,11 @@ public class ScannerService
             // Immediate initial report so UI status and directory feed update without waiting
             EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, currentDirectory, scanMode, scanModeDetails);
 
-            // Check if single drive root on NTFS volume with an existing USN checkpoint
-            if (enableIncremental && roots.Count == 1)
-            {
-                string r = roots[0];
-                string dRoot = Path.GetPathRoot(Path.GetFullPath(r)) ?? string.Empty;
-                string cRoot = r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                string cDrive = dRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                if (string.Equals(cRoot, cDrive, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (_usnService.IsNtfsVolume(dRoot))
-                    {
-                        var checkpoint = _dbService.GetUsnCheckpoint(cDrive);
-                        if (checkpoint.HasValue)
-                        {
-                            var readResult = _usnService.ReadChanges(dRoot, checkpoint.Value.JournalId, checkpoint.Value.NextUsn);
-                            if (readResult.Success)
-                            {
-                                scanMode = "Incremental (NTFS USN Change Journal)";
-                                scanModeDetails = readResult.Reason;
-
-                                foreach (var change in readResult.Changes)
-                                {
-                                    if (cancellationToken.IsCancellationRequested) break;
-                                    if (change.ChangeType == UsnChangeType.Deleted)
-                                    {
-                                        _dbService.DeleteFilesByName(change.FileName);
-                                    }
-                                }
-
-                                if (cancellationToken.IsCancellationRequested)
-                                {
-                                    return new ScanStats
-                                    {
-                                        DirectoriesVisited = 1,
-                                        CurrentDirectory = cDrive,
-                                        State = ScanState.Cancelled
-                                    };
-                                }
-
-                                _dbService.SaveUsnCheckpoint(cDrive, checkpoint.Value.JournalId, readResult.NewNextUsn);
-                                _dbService.BuildDirectoryRollup(roots);
-
-                                var (incFiles, incBytes) = _dbService.GetTotalIndexedStorage();
-                                var incStats = new ScanStats
-                                {
-                                    DirectoriesVisited = 1,
-                                    DirectoriesProcessed = 1,
-                                    DirectoriesSkipped = 0,
-                                    FilesDiscovered = readResult.Changes.Count,
-                                    FilesIndexed = incFiles,
-                                    FilesSkipped = 0,
-                                    LogicalBytesIndexed = incBytes,
-                                    Elapsed = TimeSpan.FromMilliseconds(50),
-                                    FilesPerSecond = incFiles,
-                                    BytesPerSecond = incBytes,
-                                    CurrentDirectory = cDrive,
-                                    State = ScanState.Completed
-                                };
-
-                                _dbService.SaveScanMetadata(incStats, string.Join(";", roots), DateTime.UtcNow.AddMilliseconds(-50), DateTime.UtcNow);
-
-                                progress?.Report(new ScanProgressReport
-                                {
-                                    DirectoriesVisited = 1,
-                                    DirectoriesProcessed = 1,
-                                    DirectoriesSkipped = 0,
-                                    FilesDiscovered = readResult.Changes.Count,
-                                    FilesIndexed = incFiles,
-                                    FilesSkipped = 0,
-                                    LogicalBytesIndexed = incBytes,
-                                    Elapsed = TimeSpan.FromMilliseconds(50),
-                                    FilesPerSecond = incFiles,
-                                    BytesPerSecond = incBytes,
-                                    CurrentDirectory = cDrive,
-                                    State = ScanState.Completed,
-                                    ScanMode = scanMode,
-                                    ScanModeDetails = scanModeDetails
-                                });
-
-                                return incStats;
-                            }
-                            else
-                            {
-                                scanModeDetails = $"Incremental fallback: {readResult.Reason}";
-                            }
-                        }
-                        else
-                        {
-                            scanModeDetails = "Initial baseline scan on NTFS volume. Establishing USN checkpoint.";
-                        }
-                    }
-                    else
-                    {
-                        scanModeDetails = "Volume is non-NTFS. Standard filesystem traversal used.";
-                    }
-                }
-            }
+            // Journal records do not currently contain enough path information to safely
+            // reconcile creates, moves, modifications and deletes with the index. Until
+            // they do, an incremental request must use a complete traversal.
+            if (enableIncremental)
+                scanModeDetails = "Incremental scan unavailable; performing a full filesystem traversal.";
 
             using var progressCts = new CancellationTokenSource();
             string currentDirectoryRef = currentDirectory;

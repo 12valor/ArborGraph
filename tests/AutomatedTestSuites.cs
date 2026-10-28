@@ -373,6 +373,44 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterScannerTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-INCREMENTAL-FALLBACK",
+            FeatureId: "FEAT-03",
+            Title: "Incremental requests rebuild changed filesystem data",
+            Priority: "P1 / CRITICAL",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Incremental requests must not return stale or filename-only reconciled results.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("incremental_fallback");
+                string first = Path.Combine(root, "first");
+                string second = Path.Combine(root, "second");
+                Directory.CreateDirectory(first);
+                Directory.CreateDirectory(second);
+                string removed = Path.Combine(first, "same.txt");
+                string retained = Path.Combine(second, "same.txt");
+                File.WriteAllText(removed, "old");
+                File.WriteAllText(retained, "retained");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("incremental_fallback.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                File.Delete(removed);
+                File.WriteAllText(retained, "updated content");
+                string added = Path.Combine(first, "new.txt");
+                File.WriteAllText(added, "new");
+
+                var result = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None, enableIncremental: true);
+                var files = db.GetFilesPaged(0, 100);
+                ctx.AssertEqual(ScanState.Completed, result.State, "Fallback traversal should complete");
+                ctx.AssertEqual(2, files.Count, "Index should contain the current files");
+                ctx.Assert(!files.Any(f => f.Path == removed), "Deleted file should leave the index");
+                ctx.Assert(files.Any(f => f.Path == retained && f.Size == new FileInfo(retained).Length), "Same-named retained file should have its current size");
+                ctx.Assert(files.Any(f => f.Path == added), "New file should be indexed");
+            }
+        ));
+
         // TC-SCN-01: Scanner Cancellation Token Responsiveness
         runner.Register(new TestCase(
             TestId: "TC-SCN-01",

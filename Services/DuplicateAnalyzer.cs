@@ -15,7 +15,7 @@ public class DuplicateAnalyzer
     }
 
     public Task<List<DuplicateGroup>> FindDuplicatesAsync(
-        long minSize = 1024,
+        long minSize = 0,
         int maxCandidates = 250,
         IProgress<string>? statusProgress = null,
         Action<DuplicateGroup>? onDuplicateFound = null,

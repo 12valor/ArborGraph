@@ -708,6 +708,32 @@ public static class AutomatedTestSuites
     private static void RegisterDuplicateTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-DUP-SMALL",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate analysis includes empty and small files",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Small and empty files should be grouped by actual content, not excluded by default.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_small");
+                File.WriteAllText(Path.Combine(root, "empty-a"), "");
+                File.WriteAllText(Path.Combine(root, "empty-b"), "");
+                File.WriteAllText(Path.Combine(root, "small-a"), "same");
+                File.WriteAllText(Path.Combine(root, "small-b"), "same");
+                File.WriteAllText(Path.Combine(root, "collision"), "else");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_small.db"));
+                db.Initialize();
+                await new ScannerService(db).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                var groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync();
+                ctx.AssertEqual(2, groups.Count, "Empty and small duplicate groups should be detected");
+                ctx.Assert(groups.Any(g => g.ExactSize == 0 && g.FileCount == 2), "Empty files should form a group");
+                ctx.Assert(groups.Any(g => g.ExactSize == 4 && g.FileCount == 2), "Only matching small files should form a group");
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-DUP-REVERIFY",
             FeatureId: "FEAT-22",
             Title: "Duplicate cleanup rechecks target and keeper content",

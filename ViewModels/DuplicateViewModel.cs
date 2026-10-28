@@ -497,7 +497,7 @@ public class DuplicateViewModel : ObservableObject
         try
         {
             var results = await _analyzer.FindDuplicatesAsync(
-                minSize: 1024,
+                minSize: 0,
                 maxCandidates: 250,
                 statusProgress: progress,
                 onDuplicateFound: group =>

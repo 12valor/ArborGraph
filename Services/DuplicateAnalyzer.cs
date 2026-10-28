@@ -82,7 +82,7 @@ public class DuplicateAnalyzer
                         {
                             if (cancellationToken.IsCancellationRequested) return;
 
-                            string? fullHash = await ComputeFullSha256Async(f.Path, cancellationToken);
+                            string? fullHash = await ComputeFullSha256Async(f.Path, f.Size, cancellationToken);
                             if (fullHash == null) continue;
 
                             if (!fullGroups.TryGetValue(fullHash, out var list))
@@ -128,6 +128,7 @@ public class DuplicateAnalyzer
             });
 
             await Task.WhenAll(tasks);
+            cancellationToken.ThrowIfCancellationRequested();
 
             lock (syncLock)
             {
@@ -144,7 +145,8 @@ public class DuplicateAnalyzer
         try
         {
             const int chunkSize = 4096;
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, chunkSize, useAsync: true);
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, chunkSize, useAsync: true);
+            if (stream.Length != size) return null;
             using var md5 = MD5.Create();
 
             if (size <= chunkSize * 2)
@@ -192,30 +194,36 @@ public class DuplicateAnalyzer
                 return Convert.ToHexString(hash);
             }
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch
         {
             return null;
         }
     }
 
-    private static async Task<string?> ComputeFullSha256Async(string path, CancellationToken ct)
+    private static async Task<string?> ComputeFullSha256Async(string path, long expectedSize, CancellationToken ct)
     {
         try
         {
             const int bufferSize = 131072; // 128 KB buffer
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize, useAsync: true);
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync: true);
+            if (stream.Length != expectedSize) return null;
             using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             byte[] buffer = new byte[bufferSize];
             int bytesRead;
+            long totalRead = 0;
 
             while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, bufferSize), ct)) > 0)
             {
                 sha256.AppendData(buffer.AsSpan(0, bytesRead));
+                totalRead += bytesRead;
             }
 
+            if (totalRead != expectedSize || stream.Length != expectedSize) return null;
             byte[] hashBytes = sha256.GetHashAndReset();
             return Convert.ToHexString(hashBytes);
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch
         {
             return null;

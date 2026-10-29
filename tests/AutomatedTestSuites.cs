@@ -525,6 +525,40 @@ public static class AutomatedTestSuites
             }
         ));
 
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-JUNCTION-CYCLE",
+            FeatureId: "FEAT-03",
+            Title: "Following a junction cycle does not repeat directory contents",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Directory identity must prevent following a junction back to an already visited directory.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("junction_cycle");
+                string junction = Path.Combine(root, "loop");
+                File.WriteAllText(Path.Combine(root, "sample.txt"), "fixture");
+                var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{junction}\" \"{root}\"")
+                { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true });
+                if (process == null) throw new InvalidOperationException("Could not launch junction creation.");
+                using (process) { await process.WaitForExitAsync(); if (process.ExitCode != 0) throw new IOException("Could not create junction fixture."); }
+                try
+                {
+                    var settings = new SettingsService(Path.Combine(ctx.CreateTempDirectory("junction_settings"), "settings.json"));
+                    var values = settings.CurrentSettings;
+                    values.FollowJunctions = true;
+                    settings.SaveSettings(values);
+                    using var db = new DatabaseService(ctx.CreateTempDatabasePath("junction_cycle.db"));
+                    db.Initialize();
+                    var result = await new ScannerService(db, settingsService: settings).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                    ctx.AssertEqual(ScanState.Completed, result.State, "Scan should finish");
+                    ctx.AssertEqual(1L, result.FilesIndexed, "A junction to the root must not duplicate its files");
+                    ctx.Assert(result.DirectoriesSkipped >= 1, "The repeated directory target must be reported");
+                }
+                finally { Directory.Delete(junction); }
+            }
+        ));
+
         // TC-SCN-01: Scanner Cancellation Token Responsiveness
         runner.Register(new TestCase(
             TestId: "TC-SCN-01",

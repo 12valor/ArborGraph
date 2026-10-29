@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2026-10-30
+
+### Changed
+- Separate shared storage services from WPF, reducing the desktop preview package size.
+
+### Known limitations
+- Clean install, upgrade and uninstall testing remain incomplete; this is a preview release.
+- Existing scanner and duplicate-analysis issues are documented in the application audit.
+
+---
+
 ## [1.3.1] - 2026-10-29
 
 ### Fixed

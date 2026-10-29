@@ -70,16 +70,36 @@ function Invoke-Engine([string]$exe, [string]$phase) {
         if (-not $p.WaitForExit(10000) -or $p.ExitCode -ne 0) { throw 'Engine shutdown failed.' }
     } finally { if (-not $p.HasExited) { $p.Kill(); $p.WaitForExit() }; $p.Dispose() }
 }
+function Test-ApplicationLaunch([string]$label) {
+    $app = Join-Path $install 'ArborGraph Desktop Preview.exe'
+    $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'ArborGraph Desktop Preview.lnk'
+    if (-not (Test-Path -LiteralPath $shortcut)) { throw "Start menu shortcut missing after $label" }
+    $p = Start-Process -FilePath $app -PassThru
+    try {
+        $deadline = [Diagnostics.Stopwatch]::StartNew()
+        while ($deadline.Elapsed.TotalSeconds -lt 30) {
+            $p.Refresh()
+            if ($p.HasExited) { throw "Application exited before a window appeared after $label (exit $($p.ExitCode))." }
+            if ($p.MainWindowHandle -ne [IntPtr]::Zero) { break }
+            Start-Sleep -Milliseconds 200
+        }
+        if ($p.MainWindowHandle -eq [IntPtr]::Zero) { throw "Application window did not appear after $label." }
+        if (-not $p.CloseMainWindow() -or -not $p.WaitForExit(10000)) { throw "Application did not shut down normally after $label." }
+        Write-Output "PASS: installed application opened and shut down after $label."
+    } finally { if (-not $p.HasExited) { $p.Kill(); $p.WaitForExit() }; $p.Dispose() }
+}
 Run-Setup $downloads['1.3.0']
 $engine = Join-Path $install 'resources\engine\ArborGraph.EngineHost.exe'
 foreach ($p in @($engine, (Join-Path $install 'ArborGraph Desktop Preview.exe'), (Join-Path $install 'LICENSE.md'), (Join-Path $install 'THIRD_PARTY_LICENSES.md'), (Join-Path $install 'resources\ArborGraph.ico'))) {
     if (-not (Test-Path -LiteralPath $p)) { throw "Installed file missing: $p" }
 }
 Invoke-Engine $engine 'before'
+Test-ApplicationLaunch 'clean install'
 $oldHash = (Get-FileHash (Join-Path $data 'scan_index.db') -Algorithm SHA256).Hash
 Run-Setup $downloads['1.3.2']
 if ((Get-FileHash (Join-Path $data 'scan_index.db') -Algorithm SHA256).Hash -ne $oldHash) { throw 'Installer changed the existing database.' }
 Invoke-Engine $engine 'after'
+Test-ApplicationLaunch 'upgrade'
 $uninstaller = Join-Path $install 'unins000.exe'
 $p = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
 if ($p.ExitCode -ne 0 -or (Test-Path -LiteralPath $engine)) { throw 'Uninstall did not remove the installed engine.' }
@@ -87,4 +107,5 @@ if (-not (Test-Path -LiteralPath (Join-Path $data 'scan_index.db'))) { throw 'Un
 Run-Setup $downloads['1.3.2']
 if (-not (Test-Path -LiteralPath $engine)) { throw 'Reinstall failed.' }
 Invoke-Engine $engine 'after reinstall'
+Test-ApplicationLaunch 'reinstall'
 Write-Output 'PASS: verified release checksums, clean install, fixture scan, upgrade, search/history, uninstall data preservation and reinstall.'

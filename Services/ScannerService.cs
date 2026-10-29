@@ -242,6 +242,7 @@ public class ScannerService
         bool committed = false;
 
         var visitedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var visitedDirectories = new HashSet<(uint Volume, ulong Index)>();
 
         try
         {
@@ -252,6 +253,12 @@ public class ScannerService
 
                 string normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (!visitedPaths.Add(normalizedRoot)) continue;
+                if (settings.FollowJunctions)
+                {
+                    if (!DirectoryIdentity.TryGet(root, out var rootIdentity))
+                        throw new IOException($"Unable to identify scan root: {root}");
+                    if (!visitedDirectories.Add(rootIdentity)) continue;
+                }
 
                 var dirQueue = new Queue<string>();
                 dirQueue.Enqueue(root);
@@ -428,6 +435,22 @@ public class ScannerService
                                 if (!settings.FollowJunctions && (di.Attributes & FileAttributes.ReparsePoint) != 0)
                                 {
                                     continue;
+                                }
+
+                                if (settings.FollowJunctions)
+                                {
+                                    if (!DirectoryIdentity.TryGet(subDir, out var identity))
+                                    {
+                                        Interlocked.Increment(ref _directoriesSkipped);
+                                        if (_skippedDirs.Count < 500) _skippedDirs.Add((subDir, "Unable to identify directory target"));
+                                        continue;
+                                    }
+                                    if (!visitedDirectories.Add(identity))
+                                    {
+                                        Interlocked.Increment(ref _directoriesSkipped);
+                                        if (_skippedDirs.Count < 500) _skippedDirs.Add((subDir, "Directory target already visited"));
+                                        continue;
+                                    }
                                 }
 
                                 string normalizedSubDir = Path.GetFullPath(subDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);

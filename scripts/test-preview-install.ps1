@@ -18,7 +18,9 @@ foreach ($version in @('1.3.0', '1.3.2')) {
     $base = "https://github.com/12valor/ArborGraph/releases/download/v$version"
     $setup = Join-Path $root $name
     Invoke-WebRequest "$base/$name" -OutFile $setup
-    $sums = (Invoke-WebRequest "$base/SHA256SUMS.txt" -UseBasicParsing).Content
+    $sumsPath = Join-Path $root "SHA256SUMS-$version.txt"
+    Invoke-WebRequest "$base/SHA256SUMS.txt" -OutFile $sumsPath
+    $sums = Get-Content -LiteralPath $sumsPath -Raw
     $entry = @($sums -split "`n" | Where-Object { $_ -match [regex]::Escape($name) })
     if ($entry.Count -ne 1 -or $entry[0] -notmatch '^([0-9a-fA-F]{64})\s+\*?(.+?)\s*$') { throw "Invalid checksum for $name" }
     if ((Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash -ne $Matches[1].ToUpperInvariant()) { throw "Checksum mismatch for $name" }

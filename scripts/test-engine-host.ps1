@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$EngineExecutable)
+param([string]$EngineExecutable, [switch]$RequirePreservedIndex)
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -306,6 +306,14 @@ try {
         if ($message.eventName -eq 'scanFailed') { throw "Cancelled scan failed: $($message.message)" }
     }
     if ($null -eq $cancelled -or $cancelled.state -ne 'Cancelled') { throw 'Active scan did not cancel.' }
+    if ($RequirePreservedIndex) {
+        Send-Request @{ id = 'afterCancel'; command = 'getOverview' }
+        $reply = Expect-Response 'afterCancel'
+        if (-not $reply.ok -or $reply.data.indexedFiles -ne 1201) { throw 'Cancelled rescan did not preserve the previous index.' }
+        Send-Request @{ id = 'afterCancelDirectory'; command = 'getDirectoryContents'; path = $scanRoot; limit = 100 }
+        $reply = Expect-Response 'afterCancelDirectory'
+        if (-not $reply.ok -or $reply.data.totalItems -ne 1182) { throw 'Cancelled rescan did not preserve the directory rollup.' }
+    }
 
     Send-Request @{ id = 'cancel'; command = 'cancelScan' }
     $reply = Expect-Response 'cancel'

@@ -32,6 +32,11 @@ public static class AutomatedTestSuites
         RegisterDatabaseIntegrityIndicatorTests(runner);
     }
 
+    private sealed class InlineProgress<T>(Action<T> callback) : IProgress<T>
+    {
+        public void Report(T value) => callback(value);
+    }
+
     // =========================================================================
     // A. DATABASE / INDEX SAFETY SUITE
     // =========================================================================
@@ -435,6 +440,88 @@ public static class AutomatedTestSuites
                 ctx.Assert(!files.Any(f => f.Path == removed), "Deleted file should leave the index");
                 ctx.Assert(files.Any(f => f.Path == retained && f.Size == new FileInfo(retained).Length), "Same-named retained file should have its current size");
                 ctx.Assert(files.Any(f => f.Path == added), "New file should be indexed");
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-PRESERVE",
+            FeatureId: "FEAT-03",
+            Title: "Cancelled rescan preserves the previous index and rollups",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A cancelled repeat scan must not replace an existing index with partial results.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("scan_preserve");
+                string oldPath = Path.Combine(root, "old.txt");
+                File.WriteAllText(oldPath, "old content");
+                string otherRoot = ctx.CreateTempDirectory("scan_preserve_other");
+                string otherPath = Path.Combine(otherRoot, "other.txt");
+                File.WriteAllText(otherPath, "unrelated");
+                string dbPath = ctx.CreateTempDatabasePath("scan_preserve.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                var first = await scanner.ScanDrivesAsync(new[] { root, otherRoot }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, first.State, "Initial scan should complete");
+                var before = db.GetTotalIndexedStorage();
+                var beforeDirectory = db.GetDirectoryContents(root, 100);
+                var staged = db.GetFilesPaged(0, 100).Single(f => f.Path == oldPath);
+                staged.Path = Path.Combine(root, "staged.txt");
+                staged.Name = "staged.txt";
+                db.BeginScanStaging();
+                db.InsertBatch(new[] { staged }, staging: true);
+                using (var stagedCancellation = new CancellationTokenSource())
+                {
+                    stagedCancellation.Cancel();
+                    bool rejected = false;
+                    try { db.CommitScanStaging(new[] { root }, stagedCancellation.Token); }
+                    catch (OperationCanceledException) { rejected = true; }
+                    finally { db.DiscardScanStaging(); }
+                    ctx.Assert(rejected, "A canceled staged batch must not commit");
+                }
+                ctx.AssertEqual(before, db.GetTotalIndexedStorage(), "Staged records must not replace the live index");
+                db.BeginScanStaging();
+                db.InsertBatch(new[] { staged }, staging: true);
+                using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}"))
+                {
+                    connection.Open();
+                    using var command = connection.CreateCommand();
+                    command.CommandText = "CREATE TRIGGER fail_scan_publish BEFORE INSERT ON files BEGIN SELECT RAISE(ABORT, 'test failure'); END;";
+                    command.ExecuteNonQuery();
+                    bool failed = false;
+                    try { db.CommitScanStaging(new[] { root }, CancellationToken.None); }
+                    catch (Microsoft.Data.Sqlite.SqliteException) { failed = true; }
+                    finally
+                    {
+                        command.CommandText = "DROP TRIGGER fail_scan_publish;";
+                        command.ExecuteNonQuery();
+                        db.DiscardScanStaging();
+                    }
+                    ctx.Assert(failed, "A failed publish must report the database error");
+                }
+                ctx.AssertEqual(before, db.GetTotalIndexedStorage(), "A failed publish must roll back the live index");
+                ctx.Assert(db.GetFilesPaged(0, 100).Any(f => f.Path == oldPath), "Rollback must preserve prior entries");
+                File.Delete(oldPath);
+                File.WriteAllText(Path.Combine(root, "new.txt"), "new content");
+                using var cts = new CancellationTokenSource();
+                var progress = new InlineProgress<ScanProgressReport>(r =>
+                {
+                    if (r.NewRecentDirectory?.StartsWith("[PHASE] Traversal started") == true) cts.Cancel();
+                });
+                var cancelled = await scanner.ScanDrivesAsync(new[] { root }, progress, cts.Token);
+                ctx.AssertEqual(ScanState.Cancelled, cancelled.State, "Repeat scan should be cancelled");
+                ctx.AssertEqual(before, db.GetTotalIndexedStorage(), "Canceled scan must preserve totals");
+                ctx.Assert(db.GetFilesPaged(0, 100).Any(f => f.Path == oldPath), "Previous file entry must remain");
+                var afterDirectory = db.GetDirectoryContents(root, 100);
+                ctx.AssertEqual(beforeDirectory.TotalBytes, afterDirectory.TotalBytes, "Directory rollup must remain unchanged");
+                ctx.AssertEqual(beforeDirectory.TotalItems, afterDirectory.TotalItems, "Directory item count must remain unchanged");
+                var completed = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, completed.State, "A subsequent scan must complete");
+                var files = db.GetFilesPaged(0, 100);
+                ctx.Assert(files.Count == 2 && files.Any(f => f.Name == "new.txt") && files.Any(f => f.Path == otherPath),
+                    "Successful rescan must replace the target and preserve unrelated roots");
             }
         ));
 

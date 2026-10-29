@@ -114,6 +114,7 @@ public class ScannerService
 
             using var progressCts = new CancellationTokenSource();
             string currentDirectoryRef = currentDirectory;
+            _dbService.BeginScanStaging();
             var progressHeartbeat = Task.Run(async () =>
             {
                 while (!progressCts.Token.IsCancellationRequested)
@@ -127,9 +128,7 @@ public class ScannerService
                 }
             });
 
-            EmitProgress(progress, stopwatch, "Initializing target workspace...", ScanState.Scanning, "[PHASE] Initializing target workspace & clearing previous index...");
-            _dbService.BeginBulkIngestion();
-            _dbService.ClearIndex(roots);
+            EmitProgress(progress, stopwatch, "Initializing target workspace...", ScanState.Scanning, "[PHASE] Initializing scan workspace...");
             EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Traversal started on: {string.Join(", ", roots)}");
 
             var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(50000)
@@ -157,7 +156,7 @@ public class ScannerService
 
                     try
                     {
-                        _dbService.InsertBatch(records);
+                        _dbService.InsertBatch(records, staging: true);
                         Interlocked.Add(ref _filesIndexed, records.Count);
                         Interlocked.Add(ref _logicalBytesIndexed, totalBytes);
                     }
@@ -172,7 +171,7 @@ public class ScannerService
                             if (cancellationToken.IsCancellationRequested) return;
                             try
                             {
-                                _dbService.InsertSingle(r);
+                                _dbService.InsertSingle(r, staging: true);
                                 saved++;
                                 savedBytes += r.Size;
                             }
@@ -240,6 +239,7 @@ public class ScannerService
         }, CancellationToken.None);
 
         ScanState finalState = ScanState.Completed;
+        bool committed = false;
 
         var visitedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -487,35 +487,44 @@ public class ScannerService
                 channel.Writer.TryComplete();
                 await dbWorker;
 
-                if (!cancellationToken.IsCancellationRequested)
+                if (!cancellationToken.IsCancellationRequested && finalState == ScanState.Completed)
                 {
+                    _dbService.CommitScanStaging(roots, cancellationToken);
+                    committed = true;
                     currentDirectory = "Computing hierarchical folder size rollups...";
                     Volatile.Write(ref currentDirectoryRef, currentDirectory);
                     scanModeDetails = "Aggregating directory sizes & subfolder metrics";
                     EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Computing hierarchical folder size rollups...", scanMode, scanModeDetails);
-                    _dbService.BuildDirectoryRollup(roots, cancellationToken);
+                    _dbService.BuildDirectoryRollup(roots, CancellationToken.None);
                 }
 
                 currentDirectory = "Optimizing database indexes & WAL checkpoint...";
                 Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Building search indexes and flushing SQLite WAL";
                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Optimizing database indexes & flushing WAL...", scanMode, scanModeDetails);
-                _dbService.EndBulkIngestion();
-                EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Scan index ready: {Volatile.Read(ref _filesIndexed):N0} files recorded.", scanMode, scanModeDetails);
+                _dbService.DiscardScanStaging();
+                if (committed)
+                    EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Scan index ready: {Volatile.Read(ref _filesIndexed):N0} files recorded.", scanMode, scanModeDetails);
+            }
+            catch (OperationCanceledException)
+            {
+                finalState = ScanState.Cancelled;
             }
             catch (Exception ex)
             {
+                finalState = ScanState.Failed;
                 System.Diagnostics.Debug.WriteLine($"Post-processing error: {ex.Message}");
             }
             finally
             {
+                try { _dbService.DiscardScanStaging(); } catch { finalState = ScanState.Failed; }
                 progressCts.Cancel();
                 try { await progressHeartbeat; } catch { }
                 stopwatch.Stop();
             }
         }
 
-        if (cancellationToken.IsCancellationRequested && finalState != ScanState.Failed)
+        if (cancellationToken.IsCancellationRequested && !committed && finalState != ScanState.Failed)
         {
             finalState = ScanState.Cancelled;
         }

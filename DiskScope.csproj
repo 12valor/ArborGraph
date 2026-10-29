@@ -28,6 +28,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="core\**" />
+    <Compile Remove="Models\**" />
+    <Compile Include="Models\TreemapModels.cs" />
+    <Compile Remove="Services\**" />
+    <Compile Include="Services\FileActionService.cs;Services\UpdateService.cs" />
+    <Compile Remove="Infrastructure\ObservableObject.cs;Infrastructure\SizeFormatter.cs" />
+    <ProjectReference Include="core\ArborGraph.Core.csproj" />
     <Compile Remove="tests\**" />
     <Compile Remove="engine\**" />
     <Compile Remove="desktop\**" />
@@ -36,7 +43,6 @@
 
   <ItemGroup>
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="WPF-UI" Version="4.3.0" />
   </ItemGroup>
 

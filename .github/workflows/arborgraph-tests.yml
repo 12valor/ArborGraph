@@ -41,3 +41,10 @@ jobs:
       - name: Run Security & Data-Safety Audits
         run: |
           dotnet run --project tests/DiskScope.Tests.csproj -c Release --no-build -- --security
+
+      - name: Verify engine cancellation preserves the index
+        shell: pwsh
+        run: |
+          dotnet publish engine/ArborGraph.EngineHost.csproj -c Release -r win-x64 --self-contained true -o "$env:RUNNER_TEMP/arborgraph-engine"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/test-engine-host.ps1 -EngineExecutable "$env:RUNNER_TEMP/arborgraph-engine/ArborGraph.EngineHost.exe" -RequirePreservedIndex

@@ -340,7 +340,78 @@ public class DatabaseService : IDisposable
         }
     }
 
-    public void InsertBatch(IReadOnlyList<FileRecord> records)
+    private bool _scanStaging;
+
+    public void BeginScanStaging()
+    {
+        lock (_lock)
+        {
+            EnsureOpen();
+            if (_scanStaging) throw new InvalidOperationException("A scan is already staging records.");
+            using var cmd = _connection!.CreateCommand();
+            cmd.CommandText = @"CREATE TABLE IF NOT EXISTS scan_staging_files (
+                path TEXT PRIMARY KEY, name TEXT NOT NULL, parent TEXT NOT NULL, size INTEGER NOT NULL,
+                modified_time REAL NOT NULL, created_time REAL NOT NULL, extension TEXT, category TEXT,
+                accessible INTEGER NOT NULL DEFAULT 1
+            ); DELETE FROM scan_staging_files;";
+            cmd.ExecuteNonQuery();
+            _scanStaging = true;
+        }
+    }
+
+    public void CommitScanStaging(IReadOnlyList<string> roots, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            EnsureOpen();
+            if (!_scanStaging) throw new InvalidOperationException("No scan is staging records.");
+            cancellationToken.ThrowIfCancellationRequested();
+            using var tx = _connection!.BeginTransaction();
+            using var cmd = _connection.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = @"DELETE FROM files WHERE (path >= $prefix AND path < $upper) OR path = $root;";
+            var rootParam = cmd.Parameters.Add("$root", SqliteType.Text);
+            var prefixParam = cmd.Parameters.Add("$prefix", SqliteType.Text);
+            var upperParam = cmd.Parameters.Add("$upper", SqliteType.Text);
+            foreach (var root in roots)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var clean = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (clean.Length >= 2 && clean[1] == ':') clean = char.ToUpperInvariant(clean[0]) + clean[1..];
+                rootParam.Value = clean;
+                prefixParam.Value = clean + Path.DirectorySeparatorChar;
+                upperParam.Value = clean + (char)(Path.DirectorySeparatorChar + 1);
+                cmd.ExecuteNonQuery();
+            }
+            cmd.Parameters.Clear();
+            cmd.CommandText = @"INSERT OR REPLACE INTO files
+                (path,name,parent,size,modified_time,created_time,extension,category,accessible)
+                SELECT path,name,parent,size,modified_time,created_time,extension,category,accessible FROM scan_staging_files;
+                DELETE FROM directories;
+                DELETE FROM scan_staging_files;";
+            cmd.ExecuteNonQuery();
+            cancellationToken.ThrowIfCancellationRequested();
+            tx.Commit();
+            _scanStaging = false;
+        }
+    }
+
+    public void DiscardScanStaging()
+    {
+        lock (_lock)
+        {
+            if (!_scanStaging) return;
+            try
+            {
+                using var cmd = _connection!.CreateCommand();
+                cmd.CommandText = "DELETE FROM scan_staging_files;";
+                cmd.ExecuteNonQuery();
+            }
+            finally { _scanStaging = false; }
+        }
+    }
+
+    public void InsertBatch(IReadOnlyList<FileRecord> records, bool staging = false)
     {
         if (records.Count == 0) return;
 
@@ -353,8 +424,8 @@ public class DatabaseService : IDisposable
                 using var cmd = _connection.CreateCommand();
                 _activeCommand = cmd;
                 cmd.Transaction = tx;
-                cmd.CommandText = @"
-                    INSERT OR REPLACE INTO files 
+                cmd.CommandText = $@"
+                    INSERT OR REPLACE INTO {(staging ? "scan_staging_files" : "files")}
                     (path, name, parent, size, modified_time, created_time, extension, category, accessible)
                     VALUES 
                     ($path, $name, $parent, $size, $modified, $created, $extension, $category, $accessible);
@@ -399,14 +470,14 @@ public class DatabaseService : IDisposable
         }
     }
 
-    public void InsertSingle(FileRecord r)
+    public void InsertSingle(FileRecord r, bool staging = false)
     {
         lock (_lock)
         {
             EnsureOpen();
             using var cmd = _connection!.CreateCommand();
-            cmd.CommandText = @"
-                INSERT OR REPLACE INTO files 
+            cmd.CommandText = $@"
+                INSERT OR REPLACE INTO {(staging ? "scan_staging_files" : "files")}
                 (path, name, parent, size, modified_time, created_time, extension, category, accessible)
                 VALUES 
                 ($path, $name, $parent, $size, $modified, $created, $extension, $category, $accessible);

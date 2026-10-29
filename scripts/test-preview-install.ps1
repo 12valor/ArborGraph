@@ -101,6 +101,7 @@ Run-Setup $downloads['1.3.2']
 if ((Get-FileHash (Join-Path $data 'scan_index.db') -Algorithm SHA256).Hash -ne $oldHash) { throw 'Installer changed the existing database.' }
 Invoke-Engine $engine 'after'
 Test-ApplicationLaunch 'upgrade'
+& (Join-Path $PSScriptRoot 'test-engine-host.ps1') -EngineExecutable $engine
 $uninstaller = Join-Path $install 'unins000.exe'
 $p = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -PassThru
 if (-not $p.WaitForExit(120000)) { $p.Kill($true); throw 'Uninstaller timed out.' }

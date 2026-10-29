@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    let currentOfficialHash = '3156F60381C3C11A92BB14CE5130942394560CDBF82DD96B5C0DFE711FEC19F9';
+    let currentOfficialHash = 'B9AB9047472B65B78657882C5DB64C57673C4A88366386BFA14691315A6FFA4F';
     const STATIC_FALLBACK_HASH = currentOfficialHash;
 
     // =========================================================================
@@ -1183,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     async function initDynamicReleaseInfo() {
         try {
-            const response = await fetch('https://api.github.com/repos/12valor/ArborGraph/releases/latest', {
+            const response = await fetch('https://api.github.com/repos/12valor/ArborGraph/releases/tags/v1.3.2', {
                 headers: { 'Accept': 'application/vnd.github.v3+json' }
             });
             if (!response.ok) return;
@@ -1207,7 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const setupSizeEl = document.getElementById('pkgSetupSize');
                     if (setupSizeEl && desktopSetupAsset.size) {
-                        setupSizeEl.textContent = `${(desktopSetupAsset.size / (1024 * 1024)).toFixed(1)} MB`;
+                        setupSizeEl.textContent = `${(desktopSetupAsset.size / (1024 * 1024)).toFixed(1)} MiB`;
                     }
 
                     const setupBtn = document.getElementById('btnDownloadSetup');

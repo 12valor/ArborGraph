@@ -1,7 +1,7 @@
 # ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
-[![Latest Release: v1.3.1](https://img.shields.io/github/v/release/12valor/ArborGraph?label=Release&color=0078D4)](https://github.com/12valor/ArborGraph/releases/latest)
+[![Desktop preview: v1.3.2](https://img.shields.io/badge/Desktop_preview-v1.3.2-0078D4)](https://github.com/12valor/ArborGraph/releases/tag/v1.3.2)
 [![Framework: Electron 45](https://img.shields.io/badge/Framework-Electron%2045%20%2B%20React%2019-47848F?logo=electron&logoColor=white)](https://www.electronjs.org)
 [![Engine: .NET 8.0](https://img.shields.io/badge/Engine-.NET%208.0%20x64-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
@@ -51,9 +51,9 @@ ArborGraph operates 100% offline with zero telemetry, zero cloud dependencies, a
 
 ### 1. Download Official Installer
 
-Download the official setup package directly from [GitHub Releases](https://github.com/12valor/ArborGraph/releases/latest):
-- **Installer:** `ArborGraph-Desktop-Preview-Setup-v1.3.1-x64.exe` (164.8 MiB)
-- **SHA-256:** `3156F60381C3C11A92BB14CE5130942394560CDBF82DD96B5C0DFE711FEC19F9`
+Download the official setup package directly from [GitHub Releases](https://github.com/12valor/ArborGraph/releases/tag/v1.3.2):
+- **Installer:** `ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe` (133.7 MiB)
+- **SHA-256:** `B9AB9047472B65B78657882C5DB64C57673C4A88366386BFA14691315A6FFA4F`
 
 ### 2. Run from Source
 
@@ -212,7 +212,7 @@ This automated pipeline:
 1. Compiles the TypeScript and Vite React frontend in `desktop/`.
 2. Packages the Electron shell runtime.
 3. Publishes the self-contained out-of-process `ArborGraph.EngineHost.exe` runtime into `resources/engine/`.
-4. Invokes Inno Setup 6 to compile the installer into `dist\desktop-setup\ArborGraph-Desktop-Preview-Setup-v1.3.1-x64.exe`.
+4. Invokes Inno Setup 6 to compile the installer into `dist\desktop-setup\ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe`.
 
 ---
 

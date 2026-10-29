@@ -28,7 +28,8 @@ foreach ($version in @('1.3.0', '1.3.2')) {
 }
 function Run-Setup([string]$exe) {
     $args = @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER',"/DIR=`"$install`"")
-    $p = Start-Process -FilePath $exe -ArgumentList $args -PassThru -Wait
+    $p = Start-Process -FilePath $exe -ArgumentList $args -PassThru
+    if (-not $p.WaitForExit(120000)) { $p.Kill($true); throw "Installer timed out" }
     if ($p.ExitCode -ne 0) { throw "Installer failed with exit code $($p.ExitCode)" }
 }
 function Invoke-Engine([string]$exe, [string]$phase) {
@@ -74,7 +75,7 @@ function Test-ApplicationLaunch([string]$label) {
     $app = Join-Path $install 'ArborGraph Desktop Preview.exe'
     $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'ArborGraph Desktop Preview.lnk'
     if (-not (Test-Path -LiteralPath $shortcut)) { throw "Start menu shortcut missing after $label" }
-    $p = Start-Process -FilePath $app -PassThru
+    $p = Start-Process -FilePath $app -PassThru -RedirectStandardOutput (Join-Path $root "app-$label.out") -RedirectStandardError (Join-Path $root "app-$label.err")
     try {
         $deadline = [Diagnostics.Stopwatch]::StartNew()
         while ($deadline.Elapsed.TotalSeconds -lt 30) {
@@ -86,7 +87,7 @@ function Test-ApplicationLaunch([string]$label) {
         if ($p.MainWindowHandle -eq [IntPtr]::Zero) { throw "Application window did not appear after $label." }
         if (-not $p.CloseMainWindow() -or -not $p.WaitForExit(10000)) { throw "Application did not shut down normally after $label." }
         Write-Output "PASS: installed application opened and shut down after $label."
-    } finally { if (-not $p.HasExited) { $p.Kill(); $p.WaitForExit() }; $p.Dispose() }
+    } finally { if (-not $p.HasExited) { $p.Kill($true); $p.WaitForExit() }; $p.Dispose() }
 }
 Run-Setup $downloads['1.3.0']
 $engine = Join-Path $install 'resources\engine\ArborGraph.EngineHost.exe'
@@ -101,7 +102,8 @@ if ((Get-FileHash (Join-Path $data 'scan_index.db') -Algorithm SHA256).Hash -ne 
 Invoke-Engine $engine 'after'
 Test-ApplicationLaunch 'upgrade'
 $uninstaller = Join-Path $install 'unins000.exe'
-$p = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
+$p = Start-Process -FilePath $uninstaller -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -PassThru
+if (-not $p.WaitForExit(120000)) { $p.Kill($true); throw 'Uninstaller timed out.' }
 if ($p.ExitCode -ne 0 -or (Test-Path -LiteralPath $engine)) { throw 'Uninstall did not remove the installed engine.' }
 if (-not (Test-Path -LiteralPath (Join-Path $data 'scan_index.db'))) { throw 'Uninstall removed user scan data.' }
 Run-Setup $downloads['1.3.2']

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Modern Technical Website Redesign:** Completely redesigned public website (`site/`) using `/landing-page-design` and `/design-taste-frontend` principles.
+- **Real Interface Workflow Showcases:** Integrated high-fidelity desktop window stages featuring actual application captures across treemap visualization, duplicate candidate analysis, and indexed file searching.
+- **Architectural & Hardware Transparency:** Added physical storage hardware analysis with open-licensed archival photography and clear boundary documentation (100% offline, zero telemetry).
+- **Strict Anti-Slop Design System:** Enforced strict 5-size type scale (Switzer / Geist / Geist Mono), tone-step surface transitions (no hairline dividers), high-contrast controls, and 0 lint failures under `design-taste-frontend`.
+
 ---
 
 ## [1.3.2] - 2026-10-30

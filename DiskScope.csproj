@@ -39,6 +39,8 @@
     <Compile Remove="engine\**" />
     <Compile Remove="desktop\**" />
     <Compile Remove="dist\**" />
+    <Page Remove="dist\**\*.xaml" />
+    <ApplicationDefinition Remove="dist\**\*.xaml" />
   </ItemGroup>
 
   <ItemGroup>

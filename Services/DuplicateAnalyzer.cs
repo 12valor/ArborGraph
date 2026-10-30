@@ -135,7 +135,7 @@ public class DuplicateAnalyzer
                 confirmedDuplicates.Sort((a, b) => b.WastedBytes.CompareTo(a.WastedBytes));
             }
 
-            statusProgress?.Report($"Analysis complete. Found {confirmedDuplicates.Count:N0} confirmed duplicate groups ({SizeFormatter.Format(confirmedDuplicates.Sum(g => g.WastedBytes))} recoverable space).");
+            statusProgress?.Report($"Analysis complete. Found {confirmedDuplicates.Count:N0} confirmed duplicate groups ({SizeFormatter.Format(confirmedDuplicates.Sum(g => g.WastedBytes))} estimated allocated bytes).");
             return confirmedDuplicates;
         }, cancellationToken);
     }

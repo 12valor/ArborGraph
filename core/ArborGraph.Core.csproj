@@ -9,5 +9,6 @@
     <Compile Include="..\Services\*.cs" Exclude="..\Services\FileActionService.cs;..\Services\UpdateService.cs" />
     <Compile Include="..\Infrastructure\ObservableObject.cs;..\Infrastructure\SizeFormatter.cs" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
   </ItemGroup>
 </Project>

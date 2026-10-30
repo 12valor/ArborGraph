@@ -477,9 +477,9 @@ public class ExportService
         sb.AppendLine("        </div>");
 
         sb.AppendLine("        <div class=\"summary-card\">");
-        sb.AppendLine($"            <div class=\"summary-card-title\">{(report.DuplicateBytesAreVerified ? "Verified Duplicate Redundancy" : "Possible Duplicate Redundancy")}</div>");
+        sb.AppendLine($"            <div class=\"summary-card-title\">{(report.DuplicateBytesAreVerified ? "Known estimated duplicate allocation" : "Same-size logical collisions")}</div>");
         sb.AppendLine($"            <div class=\"summary-card-value\">{WebUtility.HtmlEncode(report.FormattedDuplicateWasted)}</div>");
-        sb.AppendLine($"            <div class=\"summary-card-desc\">{(report.DuplicateBytesAreVerified ? "Full hashes confirm matching content; retaining one copy is assumed" : "Same-size candidates only; content has not been verified")}</div>");
+        sb.AppendLine($"            <div class=\"summary-card-desc\">{(report.DuplicateBytesAreVerified ? "Content matches; estimates exclude groups with unavailable allocation" : "Logical sizes only; content and physical storage have not been verified")}</div>");
         sb.AppendLine("        </div>");
 
         sb.AppendLine("        <div class=\"summary-card\">");

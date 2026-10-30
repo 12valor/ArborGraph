@@ -2220,7 +2220,7 @@ public class DatabaseService : IDisposable
                     FROM (
                         SELECT size, COUNT(id) as cnt
                         FROM files
-                        WHERE size >= 1024
+                        WHERE size >= 0
                         GROUP BY size
                         HAVING cnt >= 2
                     );
@@ -2327,21 +2327,6 @@ public class DatabaseService : IDisposable
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Dev breakdown error: {ex.Message}");
-                }
-
-                // 2. Potential Duplicates (Exact size matches, counting only redundant copy bytes)
-                var dup = GetDuplicateOverview();
-                if (dup.PotentialWastedBytes > 0)
-                {
-                    list.Add(new ReclaimableItem
-                    {
-                        Category = "Duplicate Redundancy",
-                        Description = $"{dup.CandidateGroups:N0} collision groups sharing identical size",
-                        Bytes = dup.PotentialWastedBytes,
-                        FileCount = dup.CandidateFiles,
-                        ActionHint = "Verify cryptographically in Duplicates tab"
-                    });
-                    total += dup.PotentialWastedBytes;
                 }
 
                 // 3. Adobe Cache & Scratch Files

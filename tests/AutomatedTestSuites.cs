@@ -41,6 +41,26 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterDatabaseTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-DB-SQLITE-VERSION",
+            FeatureId: "FEAT-08",
+            Title: "SQLite runtime includes the aggregate-term security fix",
+            Priority: "P0 / BLOCKER",
+            Category: "Database & Multi-Drive Safety",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "The packaged SQLite runtime must be at least 3.50.2.",
+            ExecuteAsync: async ctx =>
+            {
+                using var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT sqlite_version()";
+                string value = (string)command.ExecuteScalar()!;
+                ctx.Assert(Version.TryParse(value, out var version) && version >= new Version(3, 50, 2), $"SQLite {value} is older than 3.50.2");
+                await Task.CompletedTask;
+            }
+        ));
+
         // TC-DRV-01: Multi-Drive Sequential Scan Data Isolation (ClearIndex Scoping Bug)
         runner.Register(new TestCase(
             TestId: "TC-DRV-01",
@@ -377,6 +397,41 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterScannerTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-PUBLISH-FAILURE",
+            FeatureId: "FEAT-03",
+            Title: "Publication failure rolls back index and history",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A database error during publication must preserve the completed index and its history.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("publish_failure");
+                string original = Path.Combine(root, "original.txt");
+                File.WriteAllText(original, "original");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("publish_failure.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                ctx.AssertEqual(ScanState.Completed, (await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None)).State, "Initial scan must complete");
+                long previousHistory = db.GetLatestCompletedScan()!.Id;
+                var field = typeof(DatabaseService).GetField("_connection", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+                var connection = (Microsoft.Data.Sqlite.SqliteConnection)field.GetValue(db)!;
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "CREATE TEMP TRIGGER fail_publish BEFORE DELETE ON main.files BEGIN SELECT RAISE(ABORT, 'injected publication failure'); END;";
+                    command.ExecuteNonQuery();
+                }
+                File.WriteAllText(Path.Combine(root, "new.txt"), "new");
+                var result = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Failed, result.State, "Injected publication error must fail the scan");
+                var files = db.GetFilesPaged(0, 10);
+                ctx.AssertEqual(1, files.Count, "Publication failure must preserve the previous index");
+                ctx.AssertEqual(original, files[0].Path, "The previous indexed file must remain");
+                ctx.AssertEqual(previousHistory, db.GetLatestCompletedScan()!.Id, "Failed publication must not add completed history");
+            }
+        ));
+
         runner.Register(new TestCase(
             TestId: "TC-SCN-ROOT-DISAPPEARS",
             FeatureId: "FEAT-03",
@@ -861,6 +916,79 @@ public static class AutomatedTestSuites
     private static void RegisterDuplicateTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-DUP-OVERVIEW-100K",
+            FeatureId: "FEAT-22",
+            Title: "Duplicate overview handles 100,000 indexed files",
+            Priority: "P1 / CRITICAL",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DatabaseService",
+            AuditRiskNote: "Large collision groups must return correct counts.",
+            ExecuteAsync: async ctx =>
+            {
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_overview_100k.db"));
+                db.Initialize();
+                var files = Enumerable.Range(0, 100000).Select(i => new FileRecord
+                {
+                    Path = $@"C:\fixture\file-{i}.dat", Name = $"file-{i}.dat", Parent = @"C:\fixture",
+                    Size = 4096, ModifiedTime = 0, CreatedTime = 0, Extension = ".dat",
+                    Category = FileCategory.Other, Accessible = 1
+                }).ToList();
+                db.InsertBatch(files);
+                var sw = Stopwatch.StartNew();
+                var overview = db.GetDuplicateOverview();
+                sw.Stop();
+                Console.WriteLine($"  Duplicate overview, 100,000 rows: {sw.Elapsed.TotalMilliseconds:F1} ms");
+                ctx.AssertEqual(1, overview.CandidateGroups, "All records should form one size group");
+                ctx.AssertEqual(100000L, overview.CandidateFiles, "All collision candidates should be counted");
+                await Task.CompletedTask;
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-DUP-HARDLINK-ACCOUNTING",
+            FeatureId: "FEAT-22",
+            Title: "Hard links do not count as independent duplicate storage",
+            Priority: "P0 / BLOCKER",
+            Category: "Duplicate Detection",
+            ProductionClass: "DiskScope.Services.DuplicateAnalyzer",
+            AuditRiskNote: "Two names for the same file cannot be counted as two independent copies.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("duplicate_hardlinks");
+                string original = Path.Combine(root, "original.bin");
+                string link = Path.Combine(root, "link.bin");
+                File.WriteAllBytes(original, new byte[4096]);
+                using (var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /H \"{link}\" \"{original}\"") { UseShellExecute = false, CreateNoWindow = true })!)
+                {
+                    process.WaitForExit();
+                    ctx.AssertEqual(0, process.ExitCode, "Hard-link creation must succeed");
+                }
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_hardlinks.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                var groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync();
+                ctx.AssertEqual(0L, groups.Single().WastedBytes, "Two names for one file must not report recoverable bytes");
+                File.Copy(original, Path.Combine(root, "independent.bin"));
+                await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync();
+                ctx.AssertEqual(4096L, groups.Single().WastedBytes, "One independent duplicate may be counted once");
+                string outside = ctx.CreateTempDirectory("duplicate_external_link");
+                using (var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /H \"{Path.Combine(outside, "external.bin")}\" \"{original}\"") { UseShellExecute = false, CreateNoWindow = true })!)
+                {
+                    process.WaitForExit();
+                    ctx.AssertEqual(0, process.ExitCode, "External hard-link creation must succeed");
+                }
+                groups.Single().NotifyCollectionChanged();
+                ctx.AssertEqual(4096L, groups.Single().WastedBytes, "An external hard link must not inflate the independent copy estimate");
+                File.Delete(Path.Combine(root, "independent.bin"));
+                groups.Single().NotifyCollectionChanged();
+                ctx.Assert(!groups.Single().AllocationKnown, "Missing files must make the allocation estimate unavailable");
+                ctx.AssertEqual("Unavailable", groups.Single().FormattedWasted, "Unavailable allocation must not be shown as zero");
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-DUP-SMALL",
             FeatureId: "FEAT-22",
             Title: "Duplicate analysis includes empty and small files",
@@ -879,6 +1007,9 @@ public static class AutomatedTestSuites
                 using var db = new DatabaseService(ctx.CreateTempDatabasePath("duplicate_small.db"));
                 db.Initialize();
                 await new ScannerService(db).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                var overview = db.GetDuplicateOverview();
+                ctx.AssertEqual(2, overview.CandidateGroups, "Overview should include empty and small size collisions");
+                ctx.AssertEqual(5L, overview.CandidateFiles, "Overview should include all files in the two collision groups");
                 var groups = await new DuplicateAnalyzer(db).FindDuplicatesAsync();
                 ctx.AssertEqual(2, groups.Count, "Empty and small duplicate groups should be detected");
                 ctx.Assert(groups.Any(g => g.ExactSize == 0 && g.FileCount == 2), "Empty files should form a group");

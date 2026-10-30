@@ -724,7 +724,7 @@ internal sealed class EngineHost : IDisposable
                 return new
                 {
                     exactSize = group.ExactSize, sha256 = group.Sha256,
-                    fileCount = group.FileCount, potentialRedundantBytes = group.WastedBytes,
+                    fileCount = group.FileCount, potentialRedundantBytes = group.WastedBytes, allocationKnown = group.AllocationKnown,
                     filesTruncated = group.FileCount > files.Count,
                     files
                 };

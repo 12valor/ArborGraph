@@ -159,6 +159,7 @@ export interface DuplicateGroup {
   sha256: string
   fileCount: number
   potentialRedundantBytes: number
+  allocationKnown: boolean
   filesTruncated: boolean
   files: Array<{ path: string; name: string; modifiedTime: number }>
 }

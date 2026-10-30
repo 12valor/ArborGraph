@@ -33,7 +33,7 @@ SOFTWARE.
 ---
 
 ## 2. SQLitePCLRaw.bundle_e_sqlite3
-- **Version:** 2.1.6+
+- **Version:** 2.1.12
 - **License:** Apache License, Version 2.0
 - **Copyright:** Copyright © 2014-2023 Eric Sink
 - **Repository:** https://github.com/ericsink/SQLitePCL.raw
@@ -55,7 +55,7 @@ limitations under the License.
 ---
 
 ## 3. SQLite Core Database Engine
-- **Version:** 3.45.x
+- **Version:** 3.53.3
 - **License:** Public Domain
 - **Authors:** D. Richard Hipp and SQLite contributors
 - **Official URL:** https://www.sqlite.org

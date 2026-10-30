@@ -57,7 +57,7 @@
                 <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" TextTrimming="CharacterEllipsis"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Wasted storage: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
+                    <TextBlock Text="Known estimated allocated bytes: " Foreground="{StaticResource BrushTextSecondary}" FontSize="12"/>
                     <TextBlock Text="{Binding FormattedTotalWasted}" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold" FontSize="12" FontFamily="{StaticResource MonoFont}"/>
                 </StackPanel>
             </Grid>
@@ -98,7 +98,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding FormattedSize}" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" FontFamily="{StaticResource MonoFont}"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding FormattedWasted, StringFormat='Wasting {0}'}" 
+                                            <TextBlock Grid.Column="1" Text="{Binding FormattedWasted, StringFormat='Estimated allocation {0}'}"
                                                        FontWeight="Medium" Foreground="{StaticResource BrushWarning}" FontSize="11" FontFamily="{StaticResource MonoFont}"/>
                                         </Grid>
                                         <Grid Grid.Row="1" Margin="0,3,0,0">

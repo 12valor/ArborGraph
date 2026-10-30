@@ -397,7 +397,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="DUPLICATE FILE REDUNDANCY" FontSize="11" FontWeight="Bold" Foreground="#D97706"/>
-                                <TextBlock Grid.Column="1" Text="{Binding FormattedDuplicateWasted, StringFormat='{}{0} Wasted'}" FontWeight="Bold" FontSize="12" Foreground="#D97706"/>
+                                <TextBlock Grid.Column="1" Text="{Binding FormattedDuplicateWasted, StringFormat='{}{0} logical size collisions'}" FontWeight="Bold" FontSize="12" Foreground="#D97706"/>
                             </Grid>
 
                             <Grid Margin="0,2,0,6">

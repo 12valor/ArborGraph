@@ -2,6 +2,26 @@
 param([string]$EngineExecutable)
 
 $ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @'
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+public static class EngineTestAllocation {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct StandardInfo { public long AllocationSize, EndOfFile; public uint Links; public byte DeletePending, Directory; }
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetFileInformationByHandleEx(SafeFileHandle handle, int kind, out StandardInfo info, uint size);
+    public static long Get(string path) {
+        using (var file = File.OpenRead(path)) {
+            StandardInfo info;
+            if (!GetFileInformationByHandleEx(file.SafeFileHandle, 1, out info, (uint)Marshal.SizeOf(typeof(StandardInfo))))
+                throw new System.ComponentModel.Win32Exception();
+            return info.AllocationSize;
+        }
+    }
+}
+'@
 $repo = Split-Path -Parent $PSScriptRoot
 $exe = if ($EngineExecutable) { [IO.Path]::GetFullPath($EngineExecutable) } else { Join-Path $repo 'engine\bin\Release\net8.0-windows\ArborGraph.EngineHost.exe' }
 if (-not (Test-Path -LiteralPath $exe)) { throw "Build the Release engine host first: $exe" }
@@ -176,7 +196,7 @@ try {
     $reply = Expect-Response 'htmlReport'
     if (-not $reply.ok -or -not $reply.data.saved) { throw 'HTML audit report failed.' }
     $htmlReport = Get-Content -LiteralPath $htmlReportPath -Raw
-    if ($htmlReport -notlike '*Possible Duplicate Redundancy*' -or $htmlReport -notlike '*Not analyzed*' -or $htmlReport -notlike '*1,201*') {
+    if ($htmlReport -notlike '*Same-size logical collisions*' -or $htmlReport -notlike '*physical storage have not been verified*' -or $htmlReport -notlike '*Not analyzed*' -or $htmlReport -notlike '*1,201*') {
         throw 'HTML audit report omitted index or verification context.'
     }
     Send-Request @{ id = 'badReport'; command = 'exportAuditReport'; format = 'html'; filePath = $jsonReportPath }
@@ -249,7 +269,8 @@ try {
     Send-Request @{ id = 'duplicateResults'; command = 'getDuplicateResults'; offset = 0; limit = 25 }
     $reply = Expect-Response 'duplicateResults'
     $verified = @($reply.data.groups | Where-Object { $_.exactSize -eq 2048 -and $_.fileCount -eq 2 })
-    if (-not $reply.ok -or $verified.Count -ne 1 -or $verified[0].potentialRedundantBytes -ne 2048) {
+    $expectedAllocation = [EngineTestAllocation]::Get((Join-Path $scanRoot 'file_100.txt'))
+    if (-not $reply.ok -or $verified.Count -ne 1 -or -not $verified[0].allocationKnown -or $verified[0].potentialRedundantBytes -ne $expectedAllocation) {
         throw 'Full-hash duplicate verification did not separate same-size different files.'
     }
 
@@ -311,15 +332,43 @@ try {
     $reply = Expect-Response 'cancel'
     if ($reply.ok -or $reply.error.code -ne 'NO_ACTIVE_SCAN') { throw 'Idle cancellation contract failed.' }
 
+    Send-Request @{ id = 'crashScan'; command = 'startScan'; roots = @($scanRoot) }
+    $reply = Expect-Response 'crashScan'
+    if (-not $reply.ok) { throw 'Crash-recovery scan was not accepted.' }
+    $observedStaging = $false
+    for ($attempt = 0; $attempt -lt 10000; $attempt++) {
+        $message = Read-Message
+        if ($message.eventName -eq 'scanFinished' -or $message.eventName -eq 'scanFailed') { break }
+        if ($message.eventName -eq 'scanProgress' -and @(Get-ChildItem -LiteralPath $dataRoot -Filter 'scan_index.db.scan-*').Count -gt 0) {
+            $observedStaging = $true
+            break
+        }
+    }
+    if (-not $observedStaging) { throw 'Could not observe an active staged scan for crash recovery.' }
+    $process.Kill()
+    $process.WaitForExit()
+    $process.Dispose()
+    $process = [Diagnostics.Process]::Start($start)
+    Send-Request @{ id = 'restartPing'; command = 'ping' }
+    if (-not (Expect-Response 'restartPing').ok) { throw 'Engine did not restart after interrupted staging.' }
+    Send-Request @{ id = 'restartHistory'; command = 'getScanHistory'; limit = 5 }
+    $reply = Expect-Response 'restartHistory'
+    if (-not $reply.ok -or $reply.data.Count -ne 2 -or $reply.data[0].id -ne $secondScanId) {
+        throw 'Interrupted staging changed completed scan history.'
+    }
+    Send-Request @{ id = 'restartOverview'; command = 'getOverview' }
+    $reply = Expect-Response 'restartOverview'
+    if (-not $reply.ok -or $reply.data.indexedFiles -ne 1201) { throw 'Interrupted staging changed the previous index.' }
+
     Send-Request @{ id = 'shutdown'; command = 'shutdown' }
     $reply = Expect-Response 'shutdown'
     if (-not $reply.ok) { throw 'Shutdown response failed.' }
     $process.StandardInput.Close()
     if (-not $process.WaitForExit(10000) -or $process.ExitCode -ne 0) { throw 'Engine host did not exit cleanly.' }
-    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, file insights, history comparison, event order, duplicate scan rejection, cancellation, shutdown.'
+    Write-Output 'Engine host process test passed: validation, scan totals, indexed queries and rollups, file insights, history comparison, event order, duplicate scan rejection, cancellation, interrupted staging recovery, shutdown.'
 }
 finally {
-    if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit() }
+    if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit() }
     $process.Dispose()
     if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force }
 }

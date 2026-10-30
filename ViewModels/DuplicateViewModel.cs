@@ -230,8 +230,6 @@ public class DuplicateViewModel : ObservableObject
 
         int successCount = 0;
         int failCount = 0;
-        long recoveredBytes = 0;
-
         foreach (var file in selectedFiles)
         {
             if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles) ||
@@ -243,7 +241,6 @@ public class DuplicateViewModel : ObservableObject
             if (_fileActionService.MoveToRecycleBin(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
-                recoveredBytes += file.Size;
                 RemoveFileFromGroups(file);
             }
             else
@@ -254,7 +251,7 @@ public class DuplicateViewModel : ObservableObject
 
         RefreshTotals();
 
-        string msg = $"Moved {successCount:N0} duplicate file(s) ({SizeFormatter.Format(recoveredBytes)}) to the Recycle Bin. Space may not be reclaimed until the Recycle Bin is emptied.";
+        string msg = $"Moved {successCount:N0} duplicate file(s) to the Recycle Bin. Space may not be reclaimed until the Recycle Bin is emptied.";
         if (failCount > 0)
         {
             msg += $"\n{failCount} file(s) could not be removed or were skipped because the files could not be verified.";
@@ -296,8 +293,6 @@ public class DuplicateViewModel : ObservableObject
 
         int successCount = 0;
         int failCount = 0;
-        long recoveredBytes = 0;
-
         foreach (var file in selectedFiles)
         {
             if (!DuplicateSelectionGuard.HasRetainedCopy(groupsAtConfirmation, selectedFiles) ||
@@ -309,7 +304,6 @@ public class DuplicateViewModel : ObservableObject
             if (_fileActionService.DeletePermanently(file.Path, out _, skipConfirmation: true))
             {
                 successCount++;
-                recoveredBytes += file.Size;
                 RemoveFileFromGroups(file);
             }
             else
@@ -320,7 +314,7 @@ public class DuplicateViewModel : ObservableObject
 
         RefreshTotals();
 
-        string msg = $"Permanently removed {successCount:N0} duplicate file(s), recovering {SizeFormatter.Format(recoveredBytes)}.";
+        string msg = $"Permanently removed {successCount:N0} duplicate file(s). Freed space depends on file links and allocation.";
         if (failCount > 0)
         {
             msg += $"\n{failCount} file(s) could not be deleted or were skipped because the files could not be verified.";
@@ -472,7 +466,7 @@ public class DuplicateViewModel : ObservableObject
                 var overview = db.GetDuplicateOverview();
                 if (overview.CandidateGroups > 0)
                 {
-                    StatusMessage = $"{overview.CandidateGroups:N0} candidate collision groups detected (~{SizeFormatter.Format(overview.PotentialWastedBytes)} unverified). Click 'Start Analysis' to verify duplicates.";
+                    StatusMessage = $"{overview.CandidateGroups:N0} candidate size groups detected. Click 'Start Analysis' to verify duplicates.";
                 }
                 else
                 {
@@ -523,12 +517,12 @@ public class DuplicateViewModel : ObservableObject
                 cancellationToken: _cts.Token);
 
             SelectedGroup ??= DuplicateGroups.FirstOrDefault();
-            StatusMessage = $"Analysis complete. Found {DuplicateGroups.Count:N0} duplicate groups ({SizeFormatter.Format(TotalWastedBytes)} wasted).";
+            StatusMessage = $"Analysis complete. Found {DuplicateGroups.Count:N0} duplicate groups ({SizeFormatter.Format(TotalWastedBytes)} estimated allocated bytes).";
             (ExportCsvCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = $"Analysis stopped. Retained {DuplicateGroups.Count:N0} duplicate groups found so far ({SizeFormatter.Format(TotalWastedBytes)} wasted).";
+            StatusMessage = $"Analysis stopped. Retained {DuplicateGroups.Count:N0} duplicate groups found so far ({SizeFormatter.Format(TotalWastedBytes)} estimated allocated bytes).";
         }
         catch (Exception ex)
         {

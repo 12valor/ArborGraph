@@ -228,7 +228,7 @@ public class ScannerService
             foreach (var root in roots)
             {
                 if (cancellationToken.IsCancellationRequested) break;
-                if (!Directory.Exists(root)) continue;
+                if (!Directory.Exists(root)) throw new IOException($"A selected scan directory is no longer available: {root}");
 
                 var rootId = DirectoryIdentity.TryGet(root) ?? throw new IOException($"Cannot identify scan root: {root}");
                 if (!visitedDirectories.Add(rootId)) continue;

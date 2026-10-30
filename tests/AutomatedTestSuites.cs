@@ -378,6 +378,42 @@ public static class AutomatedTestSuites
     private static void RegisterScannerTests(TestRunner runner)
     {
         runner.Register(new TestCase(
+            TestId: "TC-SCN-ROOT-DISAPPEARS",
+            FeatureId: "FEAT-03",
+            Title: "Disappearing scan root preserves the completed index",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A scan root that disappears after staging must fail without replacing the previous index.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("missing_scan_root");
+                string path = Path.Combine(root, "original.txt");
+                File.WriteAllText(path, "original");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("missing_scan_root.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                ctx.AssertEqual(ScanState.Completed, (await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None)).State, "Initial scan must complete");
+                long initialHistory = db.GetLatestCompletedScan()!.Id;
+                bool removed = false;
+                var progress = new InlineProgress<ScanProgressReport>(report =>
+                {
+                    if (!removed && report.NewRecentDirectory?.Contains("Traversal started") == true)
+                    {
+                        File.Delete(path);
+                        Directory.Delete(root);
+                        removed = true;
+                    }
+                });
+                var result = await scanner.ScanDrivesAsync(new[] { root }, progress, CancellationToken.None);
+                ctx.Assert(removed, "Fixture must remove the scan root after staging");
+                ctx.AssertEqual(ScanState.Failed, result.State, "Missing root must fail the scan");
+                ctx.Assert(db.GetFilesPaged(0, 10).Any(f => f.Path == path), "The last completed index must remain available");
+                ctx.AssertEqual(initialHistory, db.GetLatestCompletedScan()!.Id, "Failed scan must not create completed history");
+            }
+        ));
+
+        runner.Register(new TestCase(
             TestId: "TC-SCN-LINK-SCOPE",
             FeatureId: "FEAT-03",
             Title: "Junction cycles and outside targets are not traversed",

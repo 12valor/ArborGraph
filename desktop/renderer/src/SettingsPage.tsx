@@ -43,9 +43,8 @@ export function SettingsPage() {
     <div className="page-heading"><div><p className="eyebrow">PREFERENCES</p><h1>Settings</h1><p className="subhead">Scanner options use the existing ArborGraph settings file and apply to future scans.</p></div></div>
     {error && <div className="inline-error" role="alert">{error}</div>}{message && <p className="settings-message" role="status">{message}</p>}
     {!settings ? <p role="status">Loading settings…</p> : <>
-      <section className="panel settings-panel"><div className="section-heading"><div><h2>Scanning</h2><p>Keep junction traversal off unless you need to follow linked directories.</p></div></div><div className="settings-fields">
+      <section className="panel settings-panel"><div className="section-heading"><div><h2>Scanning</h2><p>Directory junctions and symbolic links are skipped.</p></div></div><div className="settings-fields">
         <label><span>Worker count</span><select value={settings.workerCount} onChange={(event) => update({ workerCount: Number(event.target.value) })}><option value={0}>Automatic</option>{[1, 2, 4, 8, 16, 32, 64].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
-        <label><input type="checkbox" checked={settings.followJunctions} onChange={(event) => update({ followJunctions: event.target.checked })} /> Follow directory junctions</label>
         <label><input type="checkbox" checked={settings.includeHiddenFiles} onChange={(event) => update({ includeHiddenFiles: event.target.checked })} /> Include hidden files</label>
         <label><input type="checkbox" checked={settings.includeSystemFiles} onChange={(event) => update({ includeSystemFiles: event.target.checked })} /> Include system files</label>
         <button className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Saving…' : 'Save scan settings'}</button>

@@ -149,8 +149,7 @@
                     <StackPanel MaxWidth="720" HorizontalAlignment="Left">
                         <TextBlock Text="SCANNING ENGINE" Style="{StaticResource SectionHeadingStyle}"/>
 
-                        <CheckBox Content="Follow directory junctions and symbolic links" 
-                                  IsChecked="{Binding FollowJunctions}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Directory junctions and symbolic links are skipped." Margin="0,0,0,8"/>
 
                         <CheckBox Content="Include hidden files in scan index" 
                                   IsChecked="{Binding IncludeHiddenFiles}" Margin="0,0,0,8"/>

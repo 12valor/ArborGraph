@@ -12,6 +12,10 @@ namespace DiskScope.Tests;
 
 public static class AutomatedTestSuites
 {
+    private sealed class InlineProgress<T>(Action<T> callback) : IProgress<T>
+    {
+        public void Report(T value) => callback(value);
+    }
     public static void RegisterAll(TestRunner runner)
     {
         RegisterDatabaseTests(runner);
@@ -373,6 +377,119 @@ public static class AutomatedTestSuites
     // =========================================================================
     private static void RegisterScannerTests(TestRunner runner)
     {
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-LINK-SCOPE",
+            FeatureId: "FEAT-03",
+            Title: "Junction cycles and outside targets are not traversed",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Directory links must not repeat or escape the selected root.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("link_scope");
+                string outside = ctx.CreateTempDirectory("link_outside");
+                string child = Path.Combine(root, "child");
+                Directory.CreateDirectory(child);
+                File.WriteAllText(Path.Combine(child, "inside.txt"), "inside");
+                File.WriteAllText(Path.Combine(outside, "outside.txt"), "outside");
+                string[] links = { Path.Combine(child, "cycle"), Path.Combine(root, "alias"), Path.Combine(root, "outside") };
+                string[] targets = { root, child, outside };
+                try
+                {
+                    for (int i = 0; i < links.Length; i++)
+                    {
+                        using var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{links[i]}\" \"{targets[i]}\"") { UseShellExecute = false, CreateNoWindow = true })!;
+                        process.WaitForExit();
+                        ctx.AssertEqual(0, process.ExitCode, "Junction creation must succeed");
+                    }
+                    using var db = new DatabaseService(ctx.CreateTempDatabasePath("link_scope.db"));
+                    db.Initialize();
+                    var result = await new ScannerService(db).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                    ctx.AssertEqual(ScanState.Completed, result.State, "Scan must complete");
+                    var files = db.GetFilesPaged(0, 10);
+                    ctx.AssertEqual(1, files.Count, "Only the real in-root file should be indexed once");
+                    ctx.AssertEqual("inside.txt", files[0].Name, "Outside target must not be indexed");
+                    ctx.Assert(result.DirectoriesSkipped >= 3, "Skipped links must be reported");
+                }
+                finally
+                {
+                    foreach (string link in links)
+                        if (Directory.Exists(link)) Directory.Delete(link);
+                }
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-ATOMIC-CONFLICT",
+            FeatureId: "FEAT-03",
+            Title: "Index changes during a rescan prevent publication",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A scan must not overwrite concurrent changes to the active index.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("atomic_conflict");
+                File.WriteAllText(Path.Combine(root, "old.txt"), "old");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("atomic_conflict.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                var initial = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, initial.State, "Initial scan must complete");
+                var existing = db.GetFilesPaged(0, 10).Single();
+                File.WriteAllText(Path.Combine(root, "new.txt"), "new");
+                bool changed = false;
+                var progress = new InlineProgress<ScanProgressReport>(report =>
+                {
+                    if (!changed && report.NewRecentDirectory?.Contains("Traversal started") == true)
+                    {
+                        changed = true;
+                        db.InsertSingle(existing);
+                    }
+                });
+                var result = await scanner.ScanDrivesAsync(new[] { root }, progress, CancellationToken.None);
+                ctx.Assert(changed, "Test must modify the active index during traversal");
+                ctx.AssertEqual(ScanState.Failed, result.State, "Conflicting scan must fail");
+                ctx.AssertEqual(1, db.GetFilesPaged(0, 10).Count, "Unpublished scan must not replace the active index");
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-ATOMIC-CANCEL",
+            FeatureId: "FEAT-03",
+            Title: "Cancelled rescan preserves the completed index",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A cancelled replacement scan must leave the previous index intact.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("atomic_cancel");
+                string original = Path.Combine(root, "original.txt");
+                File.WriteAllText(original, "original");
+                using var db = new DatabaseService(ctx.CreateTempDatabasePath("atomic_cancel.db"));
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                var initial = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, initial.State, "Initial scan must complete");
+                using var cancelled = new CancellationTokenSource();
+                bool previousReadable = false;
+                var progress = new InlineProgress<ScanProgressReport>(report =>
+                {
+                    if (report.NewRecentDirectory?.Contains("Traversal started") == true)
+                    {
+                        previousReadable = db.GetFilesPaged(0, 10).Any(f => f.Path == original);
+                        cancelled.Cancel();
+                    }
+                });
+                var result = await scanner.ScanDrivesAsync(new[] { root }, progress, cancelled.Token);
+                ctx.Assert(previousReadable, "Previous index must be readable while the replacement is staged");
+                ctx.AssertEqual(ScanState.Cancelled, result.State, "Rescan must report cancellation");
+                ctx.Assert(db.GetFilesPaged(0, 10).Any(f => f.Path == original), "Previous index must survive cancellation");
+            }
+        ));
+
         runner.Register(new TestCase(
             TestId: "TC-SCN-INVALID-ROOTS",
             FeatureId: "FEAT-03",

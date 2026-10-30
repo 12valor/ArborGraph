@@ -79,6 +79,10 @@ public class ScannerService
             if (roots.Any(root => !Directory.Exists(root)))
                 throw new IOException("A selected scan directory is no longer available.");
 
+            var (scanDb, startingChanges, startingVersion) = _dbService.CreateScanStaging();
+            try
+            {
+
             // Reset counters
             Interlocked.Exchange(ref _directoriesVisited, 0);
             Interlocked.Exchange(ref _directoriesProcessed, 0);
@@ -127,9 +131,9 @@ public class ScannerService
                 }
             });
 
-            EmitProgress(progress, stopwatch, "Initializing target workspace...", ScanState.Scanning, "[PHASE] Initializing target workspace & clearing previous index...");
-            _dbService.BeginBulkIngestion();
-            _dbService.ClearIndex(roots);
+            EmitProgress(progress, stopwatch, "Initializing target workspace...", ScanState.Scanning, "[PHASE] Preparing staged index...");
+            scanDb.BeginBulkIngestion();
+            scanDb.ClearIndex(roots);
             EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Traversal started on: {string.Join(", ", roots)}");
 
             var channel = Channel.CreateBounded<FileRecord>(new BoundedChannelOptions(50000)
@@ -140,6 +144,7 @@ public class ScannerService
             });
 
             // Background SQLite Ingestion Task
+            Exception? ingestionFailure = null;
             var dbWorker = Task.Run(async () =>
             {
                 const int batchSize = 10000;
@@ -155,36 +160,9 @@ public class ScannerService
                     long totalBytes = 0;
                     for (int i = 0; i < records.Count; i++) totalBytes += records[i].Size;
 
-                    try
-                    {
-                        _dbService.InsertBatch(records);
-                        Interlocked.Add(ref _filesIndexed, records.Count);
-                        Interlocked.Add(ref _logicalBytesIndexed, totalBytes);
-                    }
-                    catch (Exception dbEx)
-                    {
-                        if (cancellationToken.IsCancellationRequested) return;
-
-                        int saved = 0;
-                        long savedBytes = 0;
-                        foreach (var r in records)
-                        {
-                            if (cancellationToken.IsCancellationRequested) return;
-                            try
-                            {
-                                _dbService.InsertSingle(r);
-                                saved++;
-                                savedBytes += r.Size;
-                            }
-                            catch { }
-                        }
-                        Interlocked.Add(ref _filesIndexed, saved);
-                        Interlocked.Add(ref _logicalBytesIndexed, savedBytes);
-                        if (_skippedFiles.Count < 500)
-                        {
-                            _skippedFiles.Add(("Batch Ingestion", $"{dbEx.Message} (Recovered {saved}/{records.Count} files)"));
-                        }
-                    }
+                    scanDb.InsertBatch(records);
+                    Interlocked.Add(ref _filesIndexed, records.Count);
+                    Interlocked.Add(ref _logicalBytesIndexed, totalBytes);
                 }
 
                 try
@@ -212,11 +190,13 @@ public class ScannerService
                 }
                 catch (Exception ex)
                 {
-                    _skippedFiles.Add(("DB Worker", ex.Message));
+                    ingestionFailure = ex;
+                    channel.Writer.TryComplete(ex);
+                    throw;
                 }
                 finally
                 {
-                    if (!cancellationToken.IsCancellationRequested)
+                    if (!cancellationToken.IsCancellationRequested && ingestionFailure == null)
                     {
                         // Drain any items remaining in the channel
                         while (reader.TryRead(out var item))
@@ -241,7 +221,7 @@ public class ScannerService
 
         ScanState finalState = ScanState.Completed;
 
-        var visitedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var visitedDirectories = new HashSet<(uint Volume, ulong Index)>();
 
         try
         {
@@ -250,8 +230,8 @@ public class ScannerService
                 if (cancellationToken.IsCancellationRequested) break;
                 if (!Directory.Exists(root)) continue;
 
-                string normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                if (!visitedPaths.Add(normalizedRoot)) continue;
+                var rootId = DirectoryIdentity.TryGet(root) ?? throw new IOException($"Cannot identify scan root: {root}");
+                if (!visitedDirectories.Add(rootId)) continue;
 
                 var dirQueue = new Queue<string>();
                 dirQueue.Enqueue(root);
@@ -366,6 +346,7 @@ public class ScannerService
                             }
                             catch (Exception ex)
                             {
+                                if (ingestionFailure != null) throw new IOException("Index ingestion failed.", ingestionFailure);
                                 // File Skipped
                                 Interlocked.Increment(ref _filesSkipped);
                                 if (_skippedFiles.Count < 500)
@@ -389,6 +370,7 @@ public class ScannerService
                     }
                     catch (Exception ex)
                     {
+                        if (ingestionFailure != null) throw new IOException("Index ingestion failed.", ingestionFailure);
                         dirEnumerationSucceeded = false;
                         // Directory Skipped: enumeration failed
                         Interlocked.Increment(ref _directoriesSkipped);
@@ -421,17 +403,25 @@ public class ScannerService
                                 continue;
                             }
 
-                            // Skip reparse points / symlinks if inaccessible or configured to not follow
+                            // Reparse targets can escape the selected root, so traversal stays within it.
                             try
                             {
                                 var di = new DirectoryInfo(subDir);
-                                if (!settings.FollowJunctions && (di.Attributes & FileAttributes.ReparsePoint) != 0)
+                                if ((di.Attributes & FileAttributes.ReparsePoint) != 0)
                                 {
+                                    Interlocked.Increment(ref _directoriesSkipped);
+                                    if (_skippedDirs.Count < 500) _skippedDirs.Add((subDir, "Directory links are not followed"));
                                     continue;
                                 }
 
-                                string normalizedSubDir = Path.GetFullPath(subDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                                if (!visitedPaths.Add(normalizedSubDir))
+                                var id = DirectoryIdentity.TryGet(subDir);
+                                if (id == null)
+                                {
+                                    Interlocked.Increment(ref _directoriesSkipped);
+                                    if (_skippedDirs.Count < 500) _skippedDirs.Add((subDir, "Directory identity unavailable"));
+                                    continue;
+                                }
+                                if (!visitedDirectories.Add(id.Value))
                                 {
                                     continue;
                                 }
@@ -487,25 +477,26 @@ public class ScannerService
                 channel.Writer.TryComplete();
                 await dbWorker;
 
-                if (!cancellationToken.IsCancellationRequested)
+                if (!cancellationToken.IsCancellationRequested && finalState == ScanState.Completed)
                 {
                     currentDirectory = "Computing hierarchical folder size rollups...";
                     Volatile.Write(ref currentDirectoryRef, currentDirectory);
                     scanModeDetails = "Aggregating directory sizes & subfolder metrics";
                     EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Computing hierarchical folder size rollups...", scanMode, scanModeDetails);
-                    _dbService.BuildDirectoryRollup(roots, cancellationToken);
+                    scanDb.BuildDirectoryRollup(roots, cancellationToken);
                 }
 
                 currentDirectory = "Optimizing database indexes & WAL checkpoint...";
                 Volatile.Write(ref currentDirectoryRef, currentDirectory);
                 scanModeDetails = "Building search indexes and flushing SQLite WAL";
                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, "[PHASE] Optimizing database indexes & flushing WAL...", scanMode, scanModeDetails);
-                _dbService.EndBulkIngestion();
+                scanDb.EndBulkIngestion();
                 EmitProgress(progress, stopwatch, currentDirectory, ScanState.Scanning, $"[PHASE] Scan index ready: {Volatile.Read(ref _filesIndexed):N0} files recorded.", scanMode, scanModeDetails);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Post-processing error: {ex.Message}");
+                finalState = ScanState.Failed;
+                _skippedFiles.Add(("Index finalization", ex.Message));
             }
             finally
             {
@@ -538,12 +529,23 @@ public class ScannerService
             State = finalState
         };
 
-        // Save scan metadata in SQLite safely
-        try
+        if (finalStats.State == ScanState.Completed)
         {
-            _dbService.SaveScanMetadata(finalStats, string.Join(";", roots), scanStartTime, scanFinishTime);
+            try
+            {
+                scanDb.SaveScanMetadata(finalStats, string.Join(";", roots), scanStartTime, scanFinishTime);
+                _dbService.PublishScan(scanDb, startingChanges, startingVersion, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                finalStats.State = finalState = ScanState.Cancelled;
+            }
+            catch (Exception ex)
+            {
+                finalStats.State = finalState = ScanState.Failed;
+                _skippedFiles.Add(("Index publication", ex.Message));
+            }
         }
-        catch { }
 
         // If scanning a full NTFS volume, save/update the USN Change Journal checkpoint
         if (roots.Count == 1 && finalState == ScanState.Completed)
@@ -584,9 +586,9 @@ public class ScannerService
                 BytesPerSecond = finalStats.BytesPerSecond,
                 CurrentDirectory = finalStats.CurrentDirectory,
                 State = finalStats.State,
-                NewRecentDirectory = finalStats.State == ScanState.Cancelled
-                    ? "[STATUS] Scan cancelled safely by user."
-                    : $"[COMPLETE] Indexed {finalStats.FilesIndexed:N0} files across {finalStats.DirectoriesProcessed:N0} folders in {finalStats.FormattedElapsed}.",
+                NewRecentDirectory = finalStats.State == ScanState.Completed
+                    ? $"[COMPLETE] Indexed {finalStats.FilesIndexed:N0} files across {finalStats.DirectoriesProcessed:N0} folders in {finalStats.FormattedElapsed}."
+                    : $"[STATUS] Scan {finalStats.State.ToString().ToLowerInvariant()}; previous index preserved.",
                 ScanMode = scanMode,
                 ScanModeDetails = scanModeDetails
             });
@@ -594,6 +596,16 @@ public class ScannerService
         catch { }
 
         return finalStats;
+            }
+            finally
+            {
+                string stagingPath = scanDb.DatabasePath;
+                scanDb.Dispose();
+                foreach (string path in new[] { stagingPath, stagingPath + "-wal", stagingPath + "-shm" })
+                {
+                    try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                }
+            }
     });
 }
 

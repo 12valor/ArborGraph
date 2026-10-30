@@ -64,14 +64,89 @@ public class DatabaseService : IDisposable
 
     public string DatabasePath => _dbPath;
 
+    internal (DatabaseService Database, long Changes, long Version) CreateScanStaging()
+    {
+        lock (_lock)
+        {
+            EnsureOpen();
+            string path = _dbPath + ".scan-" + Guid.NewGuid().ToString("N");
+            var staging = new DatabaseService(path);
+            try
+            {
+                staging.Initialize();
+                (long Changes, long Version) ReadVersion()
+                {
+                    using var cmd = _connection!.CreateCommand();
+                    cmd.CommandText = "SELECT total_changes(), (SELECT data_version FROM pragma_data_version);";
+                    using var reader = cmd.ExecuteReader();
+                    reader.Read();
+                    return (reader.GetInt64(0), reader.GetInt64(1));
+                }
+                var before = ReadVersion();
+                _connection!.BackupDatabase(staging._connection!);
+                var after = ReadVersion();
+                if (before != after)
+                    throw new InvalidOperationException("The index changed while preparing the scan; try again.");
+                return (staging, after.Changes, after.Version);
+            }
+            catch
+            {
+                staging.Dispose();
+                throw;
+            }
+        }
+    }
+
+    internal void PublishScan(DatabaseService staging, long changes, long version, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            EnsureOpen();
+            using var attach = _connection!.CreateCommand();
+            attach.CommandText = "ATTACH DATABASE $path AS scan_stage";
+            attach.Parameters.AddWithValue("$path", staging.DatabasePath);
+            attach.ExecuteNonQuery();
+            try
+            {
+                using var tx = _connection.BeginTransaction();
+                using var check = _connection.CreateCommand();
+                check.Transaction = tx;
+                check.CommandText = "SELECT total_changes(), (SELECT data_version FROM pragma_data_version);";
+                using (var reader = check.ExecuteReader())
+                {
+                    reader.Read();
+                    if (reader.GetInt64(0) != changes || reader.GetInt64(1) != version)
+                        throw new InvalidOperationException("The index changed during the scan; the previous index was preserved.");
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+                using var publish = _connection.CreateCommand();
+                publish.Transaction = tx;
+                publish.CommandText = @"
+                    DELETE FROM files; INSERT INTO files SELECT * FROM scan_stage.files;
+                    DELETE FROM directories; INSERT INTO directories SELECT * FROM scan_stage.directories;
+                    DELETE FROM scan_history_categories; INSERT INTO scan_history_categories SELECT * FROM scan_stage.scan_history_categories;
+                    DELETE FROM scan_metadata; INSERT INTO scan_metadata SELECT * FROM scan_stage.scan_metadata;
+                    DELETE FROM duplicate_files; DELETE FROM duplicate_groups;";
+                publish.ExecuteNonQuery();
+                cancellationToken.ThrowIfCancellationRequested();
+                tx.Commit();
+            }
+            finally
+            {
+                using var detach = _connection.CreateCommand();
+                detach.CommandText = "DETACH DATABASE scan_stage";
+                detach.ExecuteNonQuery();
+            }
+        }
+    }
+
     public void Initialize()
     {
         lock (_lock)
         {
-            _connection = new SqliteConnection(_connectionString);
-            _connection.Open();
+            EnsureOpen();
 
-            using var cmd = _connection.CreateCommand();
+            using var cmd = _connection!.CreateCommand();
             cmd.CommandText = @"
                 PRAGMA journal_mode = WAL;
                 PRAGMA synchronous = NORMAL;
@@ -282,6 +357,7 @@ public class DatabaseService : IDisposable
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ClearIndex exception: {ex.Message}");
+                throw;
             }
         }
     }
@@ -315,6 +391,7 @@ public class DatabaseService : IDisposable
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"BeginBulkIngestion error: {ex.Message}");
+                throw;
             }
         }
     }
@@ -336,6 +413,7 @@ public class DatabaseService : IDisposable
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"EndBulkIngestion error: {ex.Message}");
+                throw;
             }
         }
     }
@@ -523,6 +601,7 @@ public class DatabaseService : IDisposable
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"SaveScanMetadata error: {ex.Message}");
+                throw;
             }
         }
     }
@@ -929,6 +1008,7 @@ public class DatabaseService : IDisposable
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"BuildDirectoryRollup error: {ex.Message}");
+                throw;
             }
         }
     }

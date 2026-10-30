@@ -540,9 +540,12 @@ public class MainViewModel : ObservableObject
 
             OverviewVM.ValidateStartupDatabaseState(isAsync: true);
 
-            string statusMsg = finalStats.State == ScanState.Cancelled
-                ? "Scan cancelled safely by user."
-                : $"Scan complete: {finalStats.FilesIndexed:N0} files indexed in {finalStats.FormattedElapsed}.";
+            string statusMsg = finalStats.State switch
+            {
+                ScanState.Cancelled => "Scan cancelled safely by user.",
+                ScanState.Failed => "Scan failed; the previous index was preserved.",
+                _ => $"Scan complete: {finalStats.FilesIndexed:N0} files indexed in {finalStats.FormattedElapsed}."
+            };
 
             ScanLogVM.AddLog("INFO", statusMsg);
 
@@ -562,30 +565,31 @@ public class MainViewModel : ObservableObject
                         CustomScanPath,
                         selectedDrives,
                         statusMsg);
-                    _lastScanService.SaveLastScan(lastScan);
+                    if (!_lastScanService.SaveLastScan(lastScan))
+                        ScanLogVM.AddLog("WARN", "The scan was saved in the index, but its legacy history file could not be written.");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to persist completed scan: {ex.Message}");
+                    ScanLogVM.AddLog("WARN", "The scan was saved in the index, but its legacy history file could not be written.", ex.Message);
                 }
             }
             else
             {
                 // Incomplete or cancelled scan: keep previous successful scan available
-                RestorePreviousCompletedScanOnCancellation();
+                RestorePreviousCompletedScanOnCancellation(finalStats.State);
             }
         }
         catch (OperationCanceledException)
         {
             OverviewVM.Stats.State = ScanState.Cancelled;
             ScanLogVM.AddLog("INFO", "Scan cancelled safely by user.");
-            RestorePreviousCompletedScanOnCancellation();
+            RestorePreviousCompletedScanOnCancellation(ScanState.Cancelled);
         }
         catch (Exception ex)
         {
             OverviewVM.Stats.State = ScanState.Failed;
             ScanLogVM.AddLog("ERROR", "Scan encountered an unhandled error", ex.Message);
-            RestorePreviousCompletedScanOnCancellation();
+            RestorePreviousCompletedScanOnCancellation(ScanState.Failed);
             if (Application.Current != null && !SuppressCompletionDialog)
             {
                 MessageBox.Show($"Scan failed: {ex.Message}", "ArborGraph", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -641,7 +645,6 @@ public class MainViewModel : ObservableObject
                 ScanLogVM.AddLog("INFO", "Stop requested. Finalizing SQLite transaction and stopping scan safely...");
                 OverviewVM.AddRecentDirectory("Stop requested by user. Terminating traversal safely...", force: true);
                 _scanCts.Cancel();
-                _dbService.CancelActiveOperations();
             }
         }
         catch (ObjectDisposedException) { }
@@ -664,13 +667,13 @@ public class MainViewModel : ObservableObject
     {
         try
         {
-            var lastScan = _lastScanService.LoadLastScan();
+            LastScanInfo? lastScan = null;
             if (lastScan == null)
             {
                 // Fallback: Check if existing SQLite index has a completed scan session
                 var latestDbScan = _dbService.GetLatestCompletedScan();
                 var (filesInDb, bytesInDb) = _dbService.GetTotalIndexedStorage();
-                if (latestDbScan != null && filesInDb > 0)
+                if (latestDbScan != null)
                 {
                     lastScan = new LastScanInfo
                     {
@@ -692,25 +695,10 @@ public class MainViewModel : ObservableObject
                         CurrentDirectory = !string.IsNullOrWhiteSpace(latestDbScan.Roots) ? latestDbScan.Roots : "C:\\",
                         State = ScanState.Completed.ToString()
                     };
-                    _lastScanService.SaveLastScan(lastScan);
-                    _dbService.BackupIndex(_lastScanService.BackupDbPath);
                 }
             }
 
             if (lastScan == null)
-            {
-                return;
-            }
-
-            // Verify SQLite database has valid indexed records using rapid probe
-            bool hasRecords = _dbService.HasAnyIndexedFiles();
-            if (!hasRecords && File.Exists(_lastScanService.BackupDbPath))
-            {
-                _dbService.RestoreIndex(_lastScanService.BackupDbPath);
-                hasRecords = _dbService.HasAnyIndexedFiles();
-            }
-
-            if (!hasRecords)
             {
                 return;
             }
@@ -761,15 +749,14 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    private void RestorePreviousCompletedScanOnCancellation()
+    private void RestorePreviousCompletedScanOnCancellation(ScanState state)
     {
         try
         {
-            var lastScan = _lastScanService.LoadLastScan();
-            if (lastScan != null && File.Exists(_lastScanService.BackupDbPath))
+            if (_dbService.GetLatestCompletedScan() != null)
             {
-                _dbService.RestoreIndex(_lastScanService.BackupDbPath);
-                OverviewVM.Stats = lastScan.ToScanStats();
+                RestoreLastScanIfAvailable();
+                OverviewVM.Stats.State = state;
                 RefreshAllViews();
                 ScanLogVM.AddLog("INFO", "Previous successful scan preserved.");
             }

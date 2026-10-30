@@ -10,7 +10,14 @@ $electronDistribution = Join-Path $desktop 'node_modules\electron\dist'
 $dotnet = Join-Path $env:USERPROFILE '.dotnet\dotnet.exe'
 if (-not (Test-Path -LiteralPath $dotnet)) { $dotnet = 'dotnet' }
 if (-not (Test-Path -LiteralPath (Join-Path $electronDistribution 'electron.exe'))) {
-    throw 'Install desktop dependencies with npm ci before building the preview.'
+    $electronInstaller = Join-Path $desktop 'node_modules\electron\install.js'
+    if (-not (Test-Path -LiteralPath $electronInstaller)) {
+        throw 'Install desktop dependencies with npm ci before building the preview.'
+    }
+    & node $electronInstaller
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $electronDistribution 'electron.exe'))) {
+        throw 'Electron runtime installation failed.'
+    }
 }
 
 Push-Location $desktop

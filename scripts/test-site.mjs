@@ -38,25 +38,27 @@ try {
   for (const width of [1920, 1440, 1024, 768, 390, 320]) {
     await page.setViewport({ width, height: 900, mobile: width <= 390 })
     await page.goto(base, { settleMs: 500 })
-    const result = await page.eval(() => ({
+    const result = await page.eval(async () => {
+      await document.fonts.load('600 16px Geist')
+      return ({
       overflow: document.documentElement.scrollWidth - innerWidth,
       title: document.title,
       missingAnchors: [...document.querySelectorAll('a[href^="#"]')].filter(a => !document.getElementById(a.hash.slice(1))).map(a => a.hash),
       brokenImages: [...document.images].filter(image => image.loading !== 'lazy' && (!image.complete || image.naturalWidth === 0)).map(image => image.src),
       typefaces: [...new Set([...document.querySelectorAll('h1,h2,p,button')].map(element => getComputedStyle(element).fontFamily))],
-      fontReady: document.fonts.check('600 16px Inter'),
+      fontReady: document.fonts.check('600 16px Geist'),
       externalFontRequests: performance.getEntriesByType('resource').filter(item => item.name.includes('fonts.googleapis') || item.name.includes('fonts.gstatic')).length,
-      screenshots: [...document.querySelectorAll('.screenshot-link')].map(link => {
+      screenshots: [...document.querySelectorAll('.screenshot-modal-trigger')].map(link => {
         const img = link.querySelector('img'), rect = img.getBoundingClientRect()
         return { sameFile: link.href === img.src, insideViewport: rect.left >= -1 && rect.right <= innerWidth + 1,
           ratio: rect.width / rect.height }
       })
-    }))
+    })})
     assert.ok(result.overflow <= 1, `${width}px horizontal overflow: ${result.overflow}px`)
     assert.deepEqual(result.missingAnchors, [], `${width}px missing anchors`)
     assert.deepEqual(result.brokenImages, [], `${width}px broken images`)
-    assert.ok(result.typefaces.every(font => font.startsWith('Inter')), `${width}px has non-Inter text`)
-    assert.ok(result.fontReady, `${width}px Inter font did not load`)
+    assert.ok(result.typefaces.every(font => font.includes('Switzer') || font.includes('Geist')), `${width}px has an unexpected text font`)
+    assert.ok(result.fontReady, `${width}px Geist font did not load`)
     assert.equal(result.externalFontRequests, 0, `${width}px requested third-party fonts`)
     assert.equal(result.screenshots.length, 4, `${width}px should have four expandable screenshots`)
     assert.ok(result.screenshots.every(item => item.sameFile), `${width}px screenshot links must open their images`)
@@ -84,14 +86,14 @@ try {
   await sleep(100)
   const copied = await page.eval(() => ({ value: window.__copied, feedback: document.querySelector('[data-copy="official-hash"]').textContent }))
   assert.equal(copied.value, checksum)
-  assert.equal(copied.feedback, 'Copied')
+  assert.equal(copied.feedback, 'Copied!')
   const compared = await page.eval((digest) => {
     const input = document.getElementById('entered-hash')
     const button = document.getElementById('compare-hash')
     const result = document.getElementById('verify-result')
     input.value = digest.toLowerCase(); button.click(); const match = result.className === 'success'
-    input.value = '0'.repeat(64); button.click(); const mismatch = result.className === 'error' && result.textContent.includes('No match')
-    input.value = 'abc'; button.click(); const invalid = result.textContent.includes('64-character')
+    input.value = '0'.repeat(64); button.click(); const mismatch = result.className === 'error' && result.textContent.includes('Mismatch')
+    input.value = 'abc'; button.click(); const invalid = result.className === 'error' && result.textContent.includes('64 hexadecimal')
     return { match, mismatch, invalid }
   }, checksum)
   assert.deepEqual(compared, { match: true, mismatch: true, invalid: true })
@@ -154,7 +156,7 @@ try {
 
   const reduced = await browser.newPage({ width: 390, height: 900, mobile: true, reducedMotion: true })
   await reduced.goto(base, { settleMs: 300 })
-  const motion = await reduced.eval(() => ({ duration: getComputedStyle(document.querySelector('.hero-visual img')).animationDuration, hidden: document.querySelectorAll('.will-reveal').length }))
+  const motion = await reduced.eval(() => ({ duration: getComputedStyle(document.querySelector('.hero-stage')).animationDuration, hidden: document.querySelectorAll('.reveal-word:not(.is-revealed)').length }))
   assert.ok(parseFloat(motion.duration) < 0.01, `reduced motion duration ${motion.duration}`)
   assert.equal(motion.hidden, 0)
   console.log('PASS reduced motion')

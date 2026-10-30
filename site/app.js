@@ -184,7 +184,7 @@
       }
 
       if (entered === officialDigest) {
-        verifyResult.textContent = '✓ Checksum Match. This installer matches the verified official v1.3.2 release.';
+        verifyResult.textContent = '✓ Checksum Match. This installer matches the verified official v1.3.3 release.';
         verifyResult.classList.add('success');
       } else {
         verifyResult.textContent = '✗ Checksum Mismatch! Do not run this file. Check the download source.';

@@ -12,8 +12,8 @@ const html = readFileSync(join(site, 'index.html'), 'utf8')
 const checksum = readFileSync(join(site, 'downloads/SHA256SUMS.txt'), 'utf8').slice(0, 64)
 assert.match(html, /Understand where your storage goes\./)
 assert.match(html, new RegExp(checksum))
-assert.match(html, /ArborGraph-Desktop-Preview-Setup-v1\.3\.2-x64\.exe/)
-assert.match(html, /releases\/download\/v1\.3\.2\/ArborGraph-Desktop-Preview-Setup-v1\.3\.2-x64\.exe/)
+assert.match(html, /ArborGraph-Desktop-Preview-Setup-v1\.3\.3-x64\.exe/)
+assert.match(html, /releases\/download\/v1\.3\.3\/ArborGraph-Desktop-Preview-Setup-v1\.3\.3-x64\.exe/)
 
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.txt': 'text/plain', '.woff2': 'font/woff2' }
 const server = createServer((req, res) => {
@@ -30,7 +30,7 @@ const server = createServer((req, res) => {
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
 const base = `http://127.0.0.1:${server.address().port}/ArborGraph/site/`
 assert.match(await (await fetch(base + '../')).text(), /url=\.\/site\//)
-assert.ok(!existsSync(join(site, 'downloads/ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe')))
+assert.ok(!existsSync(join(site, 'downloads/ArborGraph-Desktop-Preview-Setup-v1.3.3-x64.exe')))
 let browser
 try {
   browser = await Browser.launch({ width: 1440, height: 900 })

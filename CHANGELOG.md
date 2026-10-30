@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.3] - 2026-10-30
+
+### Changed
+- License the current source, installer, and first-run notice under MIT.
+- Stage scans before publishing results and preserve existing indexes on failed or cancelled scans.
+- Account for hard links when estimating duplicate storage and update the bundled SQLite runtime.
+
+### Known limitations
+- This desktop release remains a preview; cleanup is not available in the Electron application.
+- Duplicate storage values are estimates and can change when files change.
+
 ## [Unreleased]
 
 ### Added

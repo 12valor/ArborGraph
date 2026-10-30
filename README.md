@@ -1,7 +1,7 @@
 # ArborGraph
 
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
-[![Desktop preview: v1.3.2](https://img.shields.io/badge/Desktop_preview-v1.3.2-0078D4)](https://github.com/12valor/ArborGraph/releases/tag/v1.3.2)
+[![Desktop preview: v1.3.3](https://img.shields.io/badge/Desktop_preview-v1.3.3-0078D4)](https://github.com/12valor/ArborGraph/releases/tag/v1.3.3)
 [![Framework: Electron 45](https://img.shields.io/badge/Framework-Electron%2045%20%2B%20React%2019-47848F?logo=electron&logoColor=white)](https://www.electronjs.org)
 [![Engine: .NET 8.0](https://img.shields.io/badge/Engine-.NET%208.0%20x64-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
@@ -63,9 +63,9 @@ Scan data is stored locally. The separate WPF application includes cleanup tools
 
 ### 1. Download Official Installer
 
-Download the **v1.3.2 desktop preview** from [GitHub Releases](https://github.com/12valor/ArborGraph/releases/tag/v1.3.2):
-- **Installer:** `ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe` (133.7 MiB)
-- **SHA-256:** `B9AB9047472B65B78657882C5DB64C57673C4A88366386BFA14691315A6FFA4F`
+Download the **v1.3.3 desktop preview** from [GitHub Releases](https://github.com/12valor/ArborGraph/releases/tag/v1.3.3):
+- **Installer:** `ArborGraph-Desktop-Preview-Setup-v1.3.3-x64.exe` (134.0 MiB)
+- **SHA-256:** `60EA31065023EAEBC9E0FFC11603A7CE01C4BF8F2FAC94F32365E9F12CD6BE8B`
 
 Run the installer and follow its prompts. Open ArborGraph Desktop Preview, accept the displayed license if you agree, choose a drive or folder, and start a scan. Use the Files, Treemap and Duplicates views to review the resulting index.
 
@@ -223,7 +223,7 @@ This automated pipeline:
 1. Compiles the TypeScript and Vite React frontend in `desktop/`.
 2. Packages the Electron shell runtime.
 3. Publishes the self-contained out-of-process `ArborGraph.EngineHost.exe` runtime into `resources/engine/`.
-4. Invokes Inno Setup 6 to compile the installer into `dist\desktop-setup\ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe`.
+4. Invokes Inno Setup 6 to compile the installer into `dist\desktop-setup\ArborGraph-Desktop-Preview-Setup-v1.3.3-x64.exe`.
 
 ---
 

@@ -1,0 +1,19 @@
+name: Preview installer lifecycle
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test released preview upgrade and uninstall
+        shell: pwsh
+        run: ./scripts/test-preview-install.ps1

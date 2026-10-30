@@ -7,7 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    let currentOfficialHash = 'B9AB9047472B65B78657882C5DB64C57673C4A88366386BFA14691315A6FFA4F';
+    let currentOfficialHash = '60EA31065023EAEBC9E0FFC11603A7CE01C4BF8F2FAC94F32365E9F12CD6BE8B';
     const STATIC_FALLBACK_HASH = currentOfficialHash;
 
     // =========================================================================
@@ -1183,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     async function initDynamicReleaseInfo() {
         try {
-            const response = await fetch('https://api.github.com/repos/12valor/ArborGraph/releases/tags/v1.3.2', {
+            const response = await fetch('https://api.github.com/repos/12valor/ArborGraph/releases/tags/v1.3.3', {
                 headers: { 'Accept': 'application/vnd.github.v3+json' }
             });
             if (!response.ok) return;

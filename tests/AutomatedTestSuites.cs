@@ -12,10 +12,6 @@ namespace DiskScope.Tests;
 
 public static class AutomatedTestSuites
 {
-    private sealed class InlineProgress<T>(Action<T> callback) : IProgress<T>
-    {
-        public void Report(T value) => callback(value);
-    }
     public static void RegisterAll(TestRunner runner)
     {
         RegisterDatabaseTests(runner);
@@ -34,6 +30,11 @@ public static class AutomatedTestSuites
         RegisterUpdateSystemTests(runner);
         RegisterScanHistoryTests(runner);
         RegisterDatabaseIntegrityIndicatorTests(runner);
+    }
+
+    private sealed class InlineProgress<T>(Action<T> callback) : IProgress<T>
+    {
+        public void Report(T value) => callback(value);
     }
 
     // =========================================================================
@@ -643,6 +644,86 @@ public static class AutomatedTestSuites
                 ctx.Assert(!files.Any(f => f.Path == removed), "Deleted file should leave the index");
                 ctx.Assert(files.Any(f => f.Path == retained && f.Size == new FileInfo(retained).Length), "Same-named retained file should have its current size");
                 ctx.Assert(files.Any(f => f.Path == added), "New file should be indexed");
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-PRESERVE",
+            FeatureId: "FEAT-03",
+            Title: "Cancelled rescan preserves the previous index and rollups",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "A cancelled repeat scan must not replace an existing index with partial results.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("scan_preserve");
+                string oldPath = Path.Combine(root, "old.txt");
+                File.WriteAllText(oldPath, "old content");
+                string otherRoot = ctx.CreateTempDirectory("scan_preserve_other");
+                string otherPath = Path.Combine(otherRoot, "other.txt");
+                File.WriteAllText(otherPath, "unrelated");
+                string dbPath = ctx.CreateTempDatabasePath("scan_preserve.db");
+                using var db = new DatabaseService(dbPath);
+                db.Initialize();
+                var scanner = new ScannerService(db);
+                var first = await scanner.ScanDrivesAsync(new[] { root, otherRoot }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, first.State, "Initial scan should complete");
+                var before = db.GetTotalIndexedStorage();
+                var beforeDirectory = db.GetDirectoryContents(root, 100);
+                File.Delete(oldPath);
+                File.WriteAllText(Path.Combine(root, "new.txt"), "new content");
+                using var cts = new CancellationTokenSource();
+                var progress = new InlineProgress<ScanProgressReport>(r =>
+                {
+                    if (r.NewRecentDirectory?.StartsWith("[PHASE] Traversal started") == true) cts.Cancel();
+                });
+                var cancelled = await scanner.ScanDrivesAsync(new[] { root }, progress, cts.Token);
+                ctx.AssertEqual(ScanState.Cancelled, cancelled.State, "Repeat scan should be cancelled");
+                ctx.AssertEqual(before, db.GetTotalIndexedStorage(), "Canceled scan must preserve totals");
+                ctx.Assert(db.GetFilesPaged(0, 100).Any(f => f.Path == oldPath), "Previous file entry must remain");
+                var afterDirectory = db.GetDirectoryContents(root, 100);
+                ctx.AssertEqual(beforeDirectory.TotalBytes, afterDirectory.TotalBytes, "Directory rollup must remain unchanged");
+                ctx.AssertEqual(beforeDirectory.TotalItems, afterDirectory.TotalItems, "Directory item count must remain unchanged");
+                var completed = await scanner.ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                ctx.AssertEqual(ScanState.Completed, completed.State, "A subsequent scan must complete");
+                var files = db.GetFilesPaged(0, 100);
+                ctx.Assert(files.Count == 2 && files.Any(f => f.Name == "new.txt") && files.Any(f => f.Path == otherPath),
+                    "Successful rescan must replace the target and preserve unrelated roots");
+            }
+        ));
+
+        runner.Register(new TestCase(
+            TestId: "TC-SCN-JUNCTION-CYCLE",
+            FeatureId: "FEAT-03",
+            Title: "Following a junction cycle does not repeat directory contents",
+            Priority: "P0 / BLOCKER",
+            Category: "Scanner Traversal",
+            ProductionClass: "DiskScope.Services.ScannerService",
+            AuditRiskNote: "Directory identity must prevent following a junction back to an already visited directory.",
+            ExecuteAsync: async ctx =>
+            {
+                string root = ctx.CreateTempDirectory("junction_cycle");
+                string junction = Path.Combine(root, "loop");
+                File.WriteAllText(Path.Combine(root, "sample.txt"), "fixture");
+                var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{junction}\" \"{root}\"")
+                { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true });
+                if (process == null) throw new InvalidOperationException("Could not launch junction creation.");
+                using (process) { await process.WaitForExitAsync(); if (process.ExitCode != 0) throw new IOException("Could not create junction fixture."); }
+                try
+                {
+                    var settings = new SettingsService(Path.Combine(ctx.CreateTempDirectory("junction_settings"), "settings.json"));
+                    var values = settings.CurrentSettings;
+                    values.FollowJunctions = true;
+                    settings.SaveSettings(values);
+                    using var db = new DatabaseService(ctx.CreateTempDatabasePath("junction_cycle.db"));
+                    db.Initialize();
+                    var result = await new ScannerService(db, settingsService: settings).ScanDrivesAsync(new[] { root }, null, CancellationToken.None);
+                    ctx.AssertEqual(ScanState.Completed, result.State, "Scan should finish");
+                    ctx.AssertEqual(1L, result.FilesIndexed, "A junction to the root must not duplicate its files");
+                    ctx.Assert(result.DirectoriesSkipped >= 1, "The repeated directory target must be reported");
+                }
+                finally { Directory.Delete(junction); }
             }
         ));
 

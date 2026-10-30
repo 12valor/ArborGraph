@@ -83,7 +83,7 @@ try {
     Send-Request @{ id = 'legal'; command = 'getLegal' }
     $reply = Expect-Response 'legal'
     if (-not $reply.ok -or $reply.data.accepted -or $reply.data.version -ne '1.0' -or
-        $reply.data.text -notlike '*License Grant*') { throw 'Embedded first-run EULA is unavailable.' }
+        $reply.data.text -notlike '*Permission is hereby granted*') { throw 'Embedded first-run EULA is unavailable.' }
 
     Send-Request @{ id = 'beforeConsent'; command = 'getOverview' }
     $reply = Expect-Response 'beforeConsent'

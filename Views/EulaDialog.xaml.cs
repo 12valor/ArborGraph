@@ -6,54 +6,6 @@ namespace DiskScope.Views;
 
 public partial class EulaDialog : Window
 {
-    private const string DefaultEulaText = 
-@"ARBORGRAPH END USER LICENSE AGREEMENT (EULA)
-Version: 1.0
-Effective Date: September 29, 2026 (Updated for ArborGraph, previously known as DiskScope Pro)
-Publisher: AG DIAZ EVANGELISTA
-Contact: evangelista.agdiaz@gmail.com
-
-IMPORTANT NOTICE: PLEASE READ THIS END USER LICENSE AGREEMENT (""EULA"" OR ""AGREEMENT"") CAREFULLY BEFORE INSTALLING, COPYING, OR USING ARBORGRAPH (""SOFTWARE""). BY DOWNLOADING, INSTALLING, COPYING, OR USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL, COPY, OR USE THE SOFTWARE.
-
-1. LICENSE GRANT
-Subject to the terms and conditions of this Agreement, AG DIAZ EVANGELISTA (""Licensor"") grants you a non-exclusive, non-transferable, revocable, royalty-free license to download, install, and execute ArborGraph in binary executable form on compatible 64-bit Windows devices for personal, educational, or internal commercial purposes.
-
-2. PERMITTED AND RESTRICTED USES
-(a) Permitted Use: You may install and execute an unlimited number of copies of the Software on hardware you own, lease, or manage.
-(b) Reverse Engineering Restrictions: Except to the extent that applicable law expressly permits despite this limitation, you may not decompile, disassemble, reverse engineer, decrypt, modify, or create derivative works of the compiled Software binary.
-(c) Redistribution Restrictions: You may not sell, rent, lease, sub-license, host as a commercial cloud service, or redistribute the Software binaries for commercial financial gain without explicit prior written authorization from the Licensor.
-(d) Automated Abuse: You may not bundle the Software with third-party software, malware, adware, or unwanted software distributors.
-
-3. LOCAL ARCHITECTURE & PRIVACY COMMITMENT
-ArborGraph operates exclusively as a local, on-device utility. The Software:
-(a) Does not collect, transmit, or synchronize personal data, filenames, or filesystem metadata with remote servers.
-(b) Contains zero network analytics, tracking cookies, telemetry SDKs, or background telemetry services.
-(c) Stores scan catalog data exclusively on the local host within the user profile directory (%LocalAppData%\ArborGraph).
-
-4. FILE DELETION, SYSTEM ACCESS & USER RESPONSIBILITY
-(a) Deletion Capabilities: The Software includes tools (such as the Junk Cleaner and duplicate file manager) capable of permanently deleting files and directories from your system storage upon your explicit command.
-(b) User Sole Responsibility: YOU ACKNOWLEDGE AND AGREE THAT YOU ARE SOLELY RESPONSIBLE FOR SELECTING, REVIEWING, AND CONFIRMING ANY FILES OR DIRECTORIES TARGETED FOR DELETION.
-(c) Data Backups: Licensor strongly advises maintaining verified, independent system backups prior to executing disk cleanup operations. Licensor shall not be liable for the loss, alteration, or corruption of any files, data, system configurations, or system stability resulting from your use of the Software.
-
-5. INTELLECTUAL PROPERTY RIGHTS
-The Software, including its graphical interface, binary code, design layouts, icons, documentation, and name, is protected by copyright, trademark, and other applicable intellectual property laws. Licensor retains all title, ownership rights, and intellectual property rights in and to the Software.
-
-6. THIRD-PARTY COMPONENTS
-The Software incorporates certain third-party libraries and runtime components, including Microsoft.Data.Sqlite, SQLitePCLRaw, SQLite, and the Microsoft .NET Runtime. These components are distributed pursuant to their respective open-source licenses (MIT, Apache 2.0, and Public Domain). A complete schedule of third-party licenses and notices is available in the Software documentation and the accompanying THIRD_PARTY_LICENSES file. Nothing in this Agreement restricts or overrides rights granted to you under applicable open-source component licenses.
-
-7. DISCLAIMER OF WARRANTIES (""AS IS"")
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ARBORGRAPH IS PROVIDED ""AS IS"" AND ""AS AVAILABLE"", WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, AND NON-INFRINGEMENT. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL MEET YOUR REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, BE ERROR-FREE, OR BE COMPATIBLE WITH ALL HARDWARE OR SOFTWARE CONFIGURATIONS.
-
-8. LIMITATION OF LIABILITY
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR, ITS CONTRIBUTORS, OR SUPPLIERS BE LIABLE FOR ANY DIRECT, INDIRECT, PUNITIVE, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF DATA, LOSS OF PROFITS, LOSS OF REVENUE, BUSINESS INTERRUPTION, LOSS OF GOODWILL, OR HARDWARE FAILURE, ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
-9. TERMINATION
-This Agreement is effective until terminated. Your rights under this Agreement will terminate automatically without notice if you fail to comply with any of its terms. Upon termination, you must cease all use of the Software and delete all copies in your possession or control.
-
-10. CONTACT & INQUIRIES
-For legal notices, licensing inquiries, or permissions, contact:
-evangelista.agdiaz@gmail.com";
-
     private readonly bool _isReviewMode;
 
     public EulaDialog(bool isReviewMode = false)
@@ -104,7 +56,10 @@ evangelista.agdiaz@gmail.com";
             // Fall back to embedded text
         }
 
-        EulaTextBox.Text = DefaultEulaText;
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("ArborGraph.License")
+            ?? throw new InvalidOperationException("The MIT license text is missing.");
+        using var reader = new StreamReader(stream);
+        EulaTextBox.Text = reader.ReadToEnd();
     }
 
     public bool IsAgreementChecked

@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="LICENSE.md" LogicalName="ArborGraph.License" />
     <Resource Include="Resources\ArborGraph.ico" />
     <Resource Include="Resources\DiskScope.ico" />
     <Resource Include="Resources\app.ico" />

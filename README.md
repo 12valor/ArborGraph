@@ -5,8 +5,8 @@
 [![Framework: Electron 45](https://img.shields.io/badge/Framework-Electron%2045%20%2B%20React%2019-47848F?logo=electron&logoColor=white)](https://www.electronjs.org)
 [![Engine: .NET 8.0](https://img.shields.io/badge/Engine-.NET%208.0%20x64-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Database: SQLite WAL](https://img.shields.io/badge/Database-SQLite%20(WAL)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
-[![Privacy: Local scanning](https://img.shields.io/badge/Privacy-Local%20scanning-107C41)](LICENSE.md#3-local-architecture--privacy-commitment)
-[![License: EULA](https://img.shields.io/badge/License-ArborGraph%20EULA-gray)](LICENSE.md)
+[![Privacy: Local scanning](https://img.shields.io/badge/Privacy-Local%20scanning-107C41)](#privacy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE.md)
 
 **ArborGraph** is a Windows storage analysis tool. Its Electron desktop preview indexes selected drives and folders locally, shows storage usage and treemaps, searches indexed files, compares scan history, and verifies duplicate content using SHA-256. The preview does not delete files or clean caches.
 
@@ -204,7 +204,7 @@ arborgraph/
 ├── site/                        # Official web portal and documentation
 ├── tests/                       # Automated QA integration test suite
 ├── CHANGELOG.md                 # Semantic version release log
-├── LICENSE.md                   # End User License Agreement
+├── LICENSE.md                   # MIT License
 ├── README.md                    # Project documentation and architecture guide
 └── THIRD_PARTY_LICENSES.md      # Open source license notices
 ```
@@ -267,9 +267,13 @@ All runtime files are kept in standard local app data directories:
 
 ---
 
+## Privacy
+
+Scan data remains local. The WPF application can check GitHub for updates.
+
 ## Documentation & Legal
 
-- **End User License Agreement:** See [LICENSE.md](LICENSE.md).
+- **MIT License:** See [LICENSE.md](LICENSE.md). Previously published preview binaries retain their bundled license terms.
 - **Third-Party Notices:** See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 - **Web Portal:** Open `site/index.html` in your browser.
 - **Report an issue:** Use [GitHub Issues](https://github.com/12valor/ArborGraph/issues) and include your version and steps to reproduce. Avoid sharing private filenames or logs publicly.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ArborGraph: Filesystem Analytics & Visualization for Windows 10 and 11. 100% offline, zero-telemetry disk storage intelligence utility.">
+    <meta name="description" content="An interactive historical walkthrough of ArborGraph storage analysis for Windows.">
     <title>ArborGraph — Filesystem Analytics &amp; Visualization</title>
     <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
     <link rel="preload" href="./assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
@@ -82,7 +82,7 @@
                             <h1 class="hero-title">ArborGraph</h1>
                             <div class="hero-subtitle">Filesystem Analytics &amp; Visualization</div>
                             <p class="hero-desc">
-                                Analyze storage usage, locate large files, visualize directories, and identify potentially reclaimable files with cryptographic SHA-256 precision. Built for Windows 10 and 11. Operates 100% offline with zero telemetry and zero background services.
+                                This historical simulation illustrates storage analysis, treemaps, and duplicate discovery for Windows. It does not scan your computer.
                             </p>
                             <div class="hero-cta-bar">
                                 <a href="https://github.com/12valor/ArborGraph/releases/download/v1.3.2/ArborGraph-Desktop-Preview-Setup-v1.3.2-x64.exe" class="btn-primary" target="_blank" rel="noopener noreferrer">
@@ -123,7 +123,7 @@
                         </div>
                         <div class="hero-meta-item">
                             <span class="hero-meta-dot"></span>
-                            <span>100% Offline • Zero Telemetry</span>
+                            <span>Local scanning • Historical simulation</span>
                         </div>
                     </div>
                 </div>
@@ -246,7 +246,7 @@
                                 <div class="note-box" style="margin-top: 14px;">
                                     <div><strong>Architecture:</strong> Windows 10 / 11 (64-bit x64)</div>
                                     <div><strong>Packaging:</strong> Self-Contained Single-File Executable (Bundled .NET 8 Runtime)</div>
-                                    <div><strong>Privacy:</strong> 100% Offline execution. Zero network calls or telemetry SDKs.</div>
+                                    <div><strong>Privacy:</strong> Scan data stays local. The WPF application can check GitHub for updates.</div>
                                 </div>
                                 <p class="wizard-pane-text" style="color: var(--color-text-muted); font-size: 11.5px; margin-top: 12px;">
                                     Click <strong>Next &gt;</strong> to review the End User License Agreement before installation.
@@ -398,7 +398,7 @@
                         </div>
                         <div class="setup-spec-row">
                             <div class="setup-spec-label">Network &amp; Telemetry</div>
-                            <div class="setup-spec-value" style="color: var(--color-success); font-weight: 600;">100% Offline (Zero Calls)</div>
+                            <div class="setup-spec-value" style="color: var(--color-success); font-weight: 600;">Local scan data</div>
                         </div>
                         <div class="setup-spec-row">
                             <div class="setup-spec-label">Execution Scope</div>
@@ -704,7 +704,7 @@
                                 </tr>
                                 <tr>
                                     <td class="specs-key">Privacy Guarantee</td>
-                                    <td class="specs-val">100% Offline, Zero Network Calls</td>
+                                    <td class="specs-val">Local scan data; WPF update checks use GitHub</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -881,7 +881,7 @@
                                 <h3>Locked Files &amp; Access Control Lists</h3>
                                 <p>Files locked by other running processes or restricted by NTFS permissions are logged as skipped items without throwing unhandled exceptions.</p>
                                 <div class="note-box">
-                                    <strong>ZERO NETWORK TELEMETRY:</strong> ArborGraph has no outbound network communication, analytics endpoints, or cloud synchronizers.
+                                    <strong>LOCAL SCAN DATA:</strong> Scans are stored locally. The separate WPF application can contact GitHub to check for updates.
                                 </div>
                             </div>
                         </div>
@@ -1001,7 +1001,7 @@
                             </div>
                             <div class="article-body">
                                 <div class="note-box">
-                                    <strong>VERIFIED COMMITMENT:</strong> ArborGraph was architected from the ground up as a 100% offline, local Windows utility.
+                                    <strong>LOCAL SCANNING:</strong> ArborGraph stores scan data on the computer. The separate WPF application can contact GitHub to check for updates.
                                 </div>
                                 <h3>Part A: ArborGraph Desktop Application</h3>
                                 <ul>
@@ -1230,7 +1230,7 @@ Licensed under the Apache License, Version 2.0 (the "License").</div>
                 <div>
                     <div class="footer-col-title">ArborGraph</div>
                     <p class="footer-desc">
-                        Windows filesystem analytics, disk diagnostic visualization, and storage optimization utility. 100% offline local system software.
+                        A historical browser simulation of Windows storage analysis.
                     </p>
                     <div style="font-size: 11px; color: var(--color-text-muted);">Version 1.3.2 &bull; Windows x64</div>
                 </div>
